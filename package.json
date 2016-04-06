@@ -1,0 +1,28 @@
+{
+    "name": "angular-generic",
+    "version": "1.0.0",
+    "description": "useful services, filters and directives for every project needs",
+    "keywords": ["angular", "generic", "tools"],
+    "files": ["index.coffee"],
+    "repository": {
+        "type": "git", "url": "https://github.com/thaibault/angular-generic"
+    },
+    "homepage": "http://torben.website/angular-generic",
+    "main": "index.compiled.js",
+    "scripts": {
+        "build": "webOptimizer build",
+        "clear": "webOptimizer clear",
+        "lint": "webOptimizer lint",
+        "test": "webOptimizer test",
+        "preinstall": "webOptimizer preinstall",
+        "postinstall": "webOptimizer build"
+    },
+    "license": "ISC",
+    "dependencies": {
+        "jQuery-tools": "git+ssh://git@github.com/thaibault/jQuery-tools.git"
+    },
+    "devDependencies": {
+        "webOptimizer": "git+ssh://git@github.com/thaibault/webOptimizer.git",
+        "qunitjs": "*"
+    }
+}
