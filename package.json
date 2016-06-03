@@ -12,17 +12,22 @@
     "scripts": {
         "build": "webOptimizer build",
         "clear": "webOptimizer clear",
+        "document": "webOptimizer document",
         "lint": "webOptimizer lint",
-        "test": "webOptimizer test",
+        "postinstall": "webOptimizer build",
         "preinstall": "webOptimizer preinstall",
-        "postinstall": "webOptimizer build"
+        "test": "webOptimizer test",
+        "testInBrowser": "webOptimizer testInBrowser",
+        "watch": "webOptimizer build --watch"
     },
     "license": "ISC",
     "dependencies": {
+        "webOptimizer": "git+ssh://git@github.com/thaibault/webOptimizer.git",
         "jQuery-tools": "git+ssh://git@github.com/thaibault/jQuery-tools.git"
     },
     "devDependencies": {
-        "webOptimizer": "git+ssh://git@github.com/thaibault/webOptimizer.git",
-        "qunitjs": "*"
+        "jsdom": "*",
+        "qunitjs": "*",
+        "qunit-cli": "*"
     }
 }
