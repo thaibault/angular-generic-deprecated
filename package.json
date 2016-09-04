@@ -3,14 +3,14 @@
     "version": "1.0.0",
     "description": "useful services, filters and directives for every project needs",
     "keywords": ["angular", "generic", "tools"],
-    "files": ["index.coffee"],
+    "files": ["index.js", "index.compiled.js"],
     "repository": {
         "type": "git", "url": "https://github.com/thaibault/angular-generic"
     },
     "homepage": "http://torben.website/angular-generic",
     "main": "index.compiled.js",
     "webOptimizer": {"injection": {"externalAliases": {
-        "jQuery-tools": "$.Tools"
+        "clientNode": "$.Tools"
     }}},
     "scripts": {
         "build": "webOptimizer build",
@@ -29,14 +29,12 @@
         "watchDLL": "webOptimizer buildDLL --watch"
     },
     "license": "CC-BY-3.0",
-    "dependencies": {
-        "webOptimizer": "git+ssh://git@github.com/thaibault/webOptimizer.git",
-        "jQuery-tools": "git+ssh://git@github.com/thaibault/jQuery-tools.git"
-    },
+    "dependencies": {"clientNode": "latest"},
     "devDependencies": {
-        "jsdom": ">=9.4.1",
-        "qunitjs": ">=2.0.0",
-        "qunit-cli": ">=0.2.0*",
-        "source-map-support": ">=0.4.2"
+        "jsdom": "latest",
+        "qunitjs": "latest",
+        "qunit-cli": "latest",
+        "source-map-support": "latest",
+        "webOptimizer": "latest"
     }
 }
