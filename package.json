@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "useful services, filters and directives for every project needs",
     "keywords": ["angular", "generic", "tools"],
-    "files": ["index.js", "index.compiled.js"],
+    "files": ["index.js"],
     "repository": {
         "type": "git", "url": "https://github.com/thaibault/angular-generic"
     },
