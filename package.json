@@ -30,7 +30,7 @@
     "document": "webOptimizer document",
     "export": "webOptimizer build '{exportFormat:{external:\"var\",self:\"var\"}}'",
     "lint": "webOptimizer lint",
-    "prepublish_": "npm run build",
+    "prepublish": "npm run build",
     "serve": "webOptimizer serve",
     "start": "npm run serve",
     "test": "webOptimizer test",
