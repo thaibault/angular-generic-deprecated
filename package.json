@@ -1,40 +1,53 @@
 {
-    "name": "angular-generic",
-    "version": "1.0.0",
-    "description": "useful services, filters and directives for every project needs",
-    "keywords": ["angular", "generic", "tools"],
-    "files": ["index.js"],
-    "repository": {
-        "type": "git", "url": "https://github.com/thaibault/angular-generic"
-    },
-    "homepage": "http://torben.website/angular-generic",
-    "main": "index.compiled.js",
-    "webOptimizer": {"injection": {"externalAliases": {
+  "name": "angular-generic",
+  "version": "1.0.1",
+  "description": "useful services, filters and directives for every project needs",
+  "keywords": [
+    "angular",
+    "generic",
+    "tools"
+  ],
+  "files": [
+    "index.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thaibault/angular-generic"
+  },
+  "homepage": "http://torben.website/angular-generic",
+  "main": "index.compiled.js",
+  "webOptimizer": {
+    "injection": {
+      "externalAliases": {
         "clientNode": "$.Tools"
-    }}},
-    "scripts": {
-        "build": "webOptimizer build",
-        "buildDLL": "webOptimizer buildDLL",
-        "clear": "webOptimizer clear",
-        "document": "webOptimizer document",
-        "export": "webOptimizer build '{exportFormat:{external:\"var\",self:\"var\"}}'",
-        "lint": "webOptimizer lint",
-        "prepublish_": "npm run build",
-        "serve": "webOptimizer serve",
-        "start": "npm run serve",
-        "test": "webOptimizer test",
-        "testInBrowser": "webOptimizer testInBrowser",
-        "update": "npm version patch && npm publish",
-        "watch": "webOptimizer build --watch",
-        "watchDLL": "webOptimizer buildDLL --watch"
-    },
-    "license": "CC-BY-3.0",
-    "dependencies": {"clientNode": "latest"},
-    "devDependencies": {
-        "jsdom": "latest",
-        "qunitjs": "latest",
-        "qunit-cli": "latest",
-        "source-map-support": "latest",
-        "webOptimizer": "latest"
+      }
     }
+  },
+  "scripts": {
+    "build": "webOptimizer build",
+    "buildDLL": "webOptimizer buildDLL",
+    "clear": "webOptimizer clear",
+    "document": "webOptimizer document",
+    "export": "webOptimizer build '{exportFormat:{external:\"var\",self:\"var\"}}'",
+    "lint": "webOptimizer lint",
+    "prepublish_": "npm run build",
+    "serve": "webOptimizer serve",
+    "start": "npm run serve",
+    "test": "webOptimizer test",
+    "testInBrowser": "webOptimizer testInBrowser",
+    "update": "npm version patch && npm publish",
+    "watch": "webOptimizer build --watch",
+    "watchDLL": "webOptimizer buildDLL --watch"
+  },
+  "license": "CC-BY-3.0",
+  "dependencies": {
+    "clientNode": "latest"
+  },
+  "devDependencies": {
+    "jsdom": "latest",
+    "qunitjs": "latest",
+    "qunit-cli": "latest",
+    "source-map-support": "latest",
+    "webOptimizer": "latest"
+  }
 }
