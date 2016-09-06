@@ -19,7 +19,7 @@
   "webOptimizer": {
     "injection": {
       "externalAliases": {
-        "clientNode": "$.Tools"
+        "clientnode": "$.Tools"
       }
     }
   },
@@ -41,13 +41,13 @@
   },
   "license": "CC-BY-3.0",
   "dependencies": {
-    "clientNode": "latest"
+    "clientnode": "latest"
   },
   "devDependencies": {
     "jsdom": "latest",
     "qunitjs": "latest",
     "qunit-cli": "latest",
     "source-map-support": "latest",
-    "webOptimizer": "latest"
+    "weboptimizer": "latest"
   }
 }
