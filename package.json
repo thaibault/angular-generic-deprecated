@@ -2,6 +2,9 @@
   "name": "angular-generic",
   "version": "1.0.1",
   "description": "useful services, filters and directives for every project needs",
+  "documentationWebsite": {
+    "analyticsCode": "TODO"
+  },
   "keywords": [
     "angular",
     "generic",
