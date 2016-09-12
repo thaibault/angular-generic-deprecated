@@ -19,13 +19,6 @@
   },
   "homepage": "http://torben.website/angular-generic",
   "main": "index.compiled.js",
-  "webOptimizer": {
-    "injection": {
-      "externalAliases": {
-        "clientnode": "$.Tools"
-      }
-    }
-  },
   "scripts": {
     "build": "webOptimizer build",
     "buildDLL": "webOptimizer buildDLL",
