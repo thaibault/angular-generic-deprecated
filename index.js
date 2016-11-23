@@ -325,27 +325,19 @@ export class GenericInputComponent {
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
-    tools:Tools
+    _tools:Tools
     constructor(tools:GenericToolsService):void {
-        this.tools = tools.tools
+        this._tools = tools.tools
     }
     ngOnInit():void {
-        this.tools.extendObject(this.model, this.tools.extendObject({
+        this._tools.extendObject(this.model, this._tools.extendObject({
             disabled: false,
-            maximum: null,
-            minimum: null,
+            maximum: Infinity,
+            minimum: (this.model.type === 'string') ? 0 : -Infinity,
             nullable: true,
             regularExpressionPattern: '.*',
             type: 'string'
         }, this.model))
-        if (this.model.type === 'string')
-            this.tools.extendObject(this.model, this.tools.extendObject({
-                maximum: Infinity, minimum: 0
-            }, this.model))
-        else
-            this.tools.extendObject(this.model, this.tools.extendObject({
-                maximum: Infinity, minimum: -Infinity
-            }, this.model))
     }
     onChange(state:Object):void {
         this.model.state = state
@@ -361,27 +353,19 @@ export class GenericTextareaComponent {
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
-    tools:Tools
+    _tools:Tools
     constructor(tools:GenericToolsService):void {
-        this.tools = tools.tools
+        this._tools = tools.tools
     }
     ngOnInit():void {
-        this.tools.extendObject(this.model, this.tools.extendObject({
+        this._tools.extendObject(this.model, this._tools.extendObject({
             disabled: false,
-            maximum: null,
-            minimum: null,
+            maximum: Infinity,
+            minimum: (this.model.type === 'string') ? 0 : -Infinity,
             nullable: true,
             regularExpressionPattern: '.*',
             type: 'string'
         }, this.model))
-        if (this.model.type === 'string')
-            this.tools.extendObject(this.model, this.tools.extendObject({
-                maximum: Infinity, minimum: 0
-            }, this.model))
-        else
-            this.tools.extendObject(this.model, this.tools.extendObject({
-                maximum: Infinity, minimum: -Infinity
-            }, this.model))
     }
     onChange(state:Object):void {
         this.model.state = state
