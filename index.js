@@ -76,21 +76,28 @@ export class DataService {
             `${initialData.configuration.database.user.name}:` +
             `${initialData.configuration.database.user.password}@`
         ) + `/${initialData.configuration.name}`)
-        //this.connection = new this.database('local')
+        /*
+            For local database:
+
+            this.connection = new this.database('local')
+        */
         this.connection.installValidationMethods()
         /*
-        this.synchronisation = PouchDB.sync(Tools.stringFormat(
-            initialData.configuration.database.url,
-            `${initialData.configuration.database.user.name}:` +
-            `${initialData.configuration.database.user.password}@`
-        ) + `/${initialData.configuration.name}`, 'local', {
-            live: true, retry: true
-        }).on('change', (info:Object):void => console.info('change', info))
-        .on('paused', (error:Object):void => console.info('paused', error))
-        .on('active', ():void => console.info('active'))
-        .on('denied', (error:Object):void => console.info('denied', error))
-        .on('complete', (info:Object):void => console.log('complete', info))
-        .on('error', (error:Object):void => console.log('error', error))
+            For local database:
+
+            this.synchronisation = PouchDB.sync(Tools.stringFormat(
+                initialData.configuration.database.url,
+                `${initialData.configuration.database.user.name}:` +
+                `${initialData.configuration.database.user.password}@`
+            ) + `/${initialData.configuration.name}`, 'local', {
+                live: true, retry: true
+            }).on('change', (info:Object):void => console.info('change', info))
+            .on('paused', (error:Object):void => console.info('paused', error))
+            .on('active', ():void => console.info('active'))
+            .on('denied', (error:Object):void => console.info('denied', error))
+            .on('complete', (info:Object):void =>
+                console.log('complete', info))
+            .on('error', (error:Object):void => console.log('error', error))
         */
     }
     async get(
