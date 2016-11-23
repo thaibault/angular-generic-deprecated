@@ -39,9 +39,18 @@
   },
   "license": "CC-BY-3.0",
   "dependencies": {
-    "clientnode": "latest"
+    "clientnode": "latest",
+    "@angular/core": "latest",
+    "@angular/material": "latest",
+    "@angular/router": "latest",
+    "pouchdb": "latest",
+    "pouchdb-find": "latest",
+    "pouchdb-validation": "latest",
+    "rxjs": "5.0.0-beta.12"
   },
   "devDependencies": {
+    "babel-plugin-angular2-annotations": "latest",
+    "babel-plugin-transform-decorators-legacy": "latest",
     "documentation-website": "latest",
     "jsdom": "latest",
     "qunitjs": "latest",
