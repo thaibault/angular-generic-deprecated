@@ -32,7 +32,7 @@ import {Observable} from 'rxjs/Observable'
 // endregion
 // region pipes
 @Pipe({name: 'extractRawData'})
-export default class ExtractRawDataPipe implements PipeTransform {
+export class ExtractRawDataPipe implements PipeTransform {
     transform(data:PlainObject):string {
         const result:PlainObject = {}
         for (const name:string in data)
@@ -46,7 +46,7 @@ export default class ExtractRawDataPipe implements PipeTransform {
 // endregion
 // region services
 @Injectable()
-export default class InitialDataService {
+export class InitialDataService {
     configuration:PlainObject
     constructor():void {
         for (const key:string in globalContext.bpvWebNodePluginInitialData)
@@ -64,7 +64,7 @@ export class CanDeactivateRouteLeaveGuard implements CanDeactivate<Object> {
     }
 }
 @Injectable()
-export default class DataService {
+export class DataService {
     database:PouchDB
     connection:PouchDB
     synchronisation:Object
@@ -298,7 +298,7 @@ const mdInputContent:string = `
     selector: 'generic-input',
     template: `<md-input ${propertyInputContent}>${mdInputContent}</md-input>`
 })
-export default class GenericInputComponent {
+export class GenericInputComponent {
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
@@ -330,7 +330,7 @@ export default class GenericInputComponent {
     template: `
         <md-textarea ${propertyInputContent}>${mdInputContent}</md-textarea>`
 })
-export default class GenericTextareaComponent {
+export class GenericTextareaComponent {
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
@@ -365,7 +365,7 @@ export default class GenericTextareaComponent {
         <input type="file"/>
     `
 })
-export default class FileInputComponent {
+export class FileInputComponent {
     @Input() model:?PlainObject = null
     @Output() modelChange:EventEmitter<?PlainObject> = new EventEmitter()
 }
@@ -381,7 +381,7 @@ export default class FileInputComponent {
         <input #input type="file"/>
     `
 })
-export default class MediumInputComponent implements AfterViewInit {
+export class MediumInputComponent implements AfterViewInit {
     _data:DataService
     @ViewChild('input') input:ElementRef
     @Input() model:{

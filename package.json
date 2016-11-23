@@ -57,5 +57,50 @@
     "qunit-cli": "latest",
     "source-map-support": "latest",
     "weboptimizer": "latest"
+  },
+  "webOptimizer": {
+    "module": {
+      "cascadingStyleSheet": {
+        "exclude": "filePath.endsWith('.component.css')"
+      },
+      "contextReplacements": [
+        [
+          "/angular(\\\\|\\/)core(\\\\|\\/)(esm(\\\\|\\/)src|src)(\\\\|\\/)linker/",
+          "__dirname"
+        ]
+      ],
+      "preprocessor": {
+        "html": {
+          "exclude": "filePath.endsWith('.component.pug')"
+        },
+        "javaScript": {
+          "configuration": {
+            "plugins": {
+              "__prepend__": [
+                "angular2-annotations",
+                "transform-decorators-legacy"
+              ]
+            }
+          }
+        }
+      },
+      "additional": [
+        {
+          "exclude": "rejectFilePathInDependencies(filePath)",
+          "loader": "`angular2-template-loader`",
+          "test": "'\\\\.component\\\\.js(?:\\\\?.*)?$'"
+        },
+        {
+          "exclude": "rejectFilePathInDependencies(filePath)",
+          "loader": "`raw!${loader.cascadingStyleSheet}!${loader.preprocessor.cascadingStyleSheet}`",
+          "test": "'\\\\.component\\\\.css(?:\\\\?.*)?$'"
+        },
+        {
+          "exclude": "rejectFilePathInDependencies(filePath)",
+          "loader": "`${loader.html}!${loader.preprocessor.html}`",
+          "test": "'\\\\.component\\\\.pug(?:\\\\?.*)?$'"
+        }
+      ]
+    }
   }
 }
