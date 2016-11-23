@@ -19,6 +19,8 @@
 */
 // region imports
 import type {PlainObject} from 'clientnode'
+import Tools from 'clientnode'
+// TODO make "Tools" service and use it everywhere.
 import {globalContext, Tools} from 'clientnode'
 import {
     AfterViewInit, Component, ElementRef, EventEmitter, Injectable, Input,
