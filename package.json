@@ -38,14 +38,14 @@
     "watchDLL": "webOptimizer buildDLL --watch"
   },
   "license": "CC-BY-3.0",
-  "dependencies": {
-    "clientnode": "latest",
-    "@angular/core": "latest",
-    "@angular/material": "latest",
-    "@angular/router": "latest",
-    "pouchdb": "latest",
-    "pouchdb-find": "latest",
-    "pouchdb-validation": "latest"
+  "peerDependencies": {
+    "clientnode": "*",
+    "@angular/core": "*",
+    "@angular/material": "*",
+    "@angular/router": "*",
+    "pouchdb": "*",
+    "pouchdb-find": "*",
+    "pouchdb-validation": "*"
   },
   "devDependencies": {
     "babel-plugin-angular2-annotations": "latest",
