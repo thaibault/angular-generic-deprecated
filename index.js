@@ -19,9 +19,7 @@
 */
 // region imports
 import type {PlainObject} from 'clientnode'
-import Tools from 'clientnode'
-// TODO make "Tools" service and use it everywhere.
-import {globalContext, Tools} from 'clientnode'
+import {$, globalContext, Tools} from 'clientnode'
 import {
     AfterViewInit, Component, ElementRef, EventEmitter, Injectable, Input,
     Output, Pipe, PipeTransform, ViewChild
@@ -32,21 +30,13 @@ import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
 import {Observable} from 'rxjs/Observable'
 // endregion
-// region pipes
-@Pipe({name: 'genericExtractRawData'})
-export class GenericExtractRawDataPipe implements PipeTransform {
-    transform(data:PlainObject):string {
-        const result:PlainObject = {}
-        for (const name:string in data)
-            if (data.hasOwnProperty(name) && ![undefined, null, ''].includes(
-                data[name]
-            ) && name !== '_revisions')
-                result[name] = data[name]
-        return result
-    }
-}
-// endregion
 // region services
+@Injectable()
+export default class GenericToolsService {
+    $:any = $
+    globalContext:Object = globalContext
+    tools:Tools = Tools
+}
 @Injectable()
 export class GenericInitialDataService {
     configuration:PlainObject
@@ -71,10 +61,14 @@ export class GenericDataService {
     database:PouchDB
     connection:PouchDB
     synchronisation:Object
-    constructor(initialData:InitialDataService):void {
+    tools:Tools
+    constructor(
+        tools:GenericToolsService, initialData:InitialDataService
+    ):void {
+        this.tools = tools.tools
         this.database = PouchDB.plugin(PouchDBFindPlugin)
                                .plugin(PouchDBValidationPlugin)
-        this.connection = new this.database(Tools.stringFormat(
+        this.connection = new this.database(this.tools.stringFormat(
             initialData.configuration.database.url,
             `${initialData.configuration.database.user.name}:` +
             `${initialData.configuration.database.user.password}@`
@@ -88,7 +82,7 @@ export class GenericDataService {
         /*
             For local database:
 
-            this.synchronisation = PouchDB.sync(Tools.stringFormat(
+            this.synchronisation = PouchDB.sync(this.tools.stringFormat(
                 initialData.configuration.database.url,
                 `${initialData.configuration.database.user.name}:` +
                 `${initialData.configuration.database.user.password}@`
@@ -106,9 +100,9 @@ export class GenericDataService {
     async get(
         selector:PlainObject, options:PlainObject = {}
     ):Promise<Array<PlainObject>> {
-        return (await this.connection.find(Tools.extendObject(true, {
-            selector
-        }, options))).docs
+        return (await this.connection.find(this.tools.extendObject(
+            true, {selector}, options
+        ))).docs
     }
     put(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.put(...parameter)
@@ -121,9 +115,14 @@ export class GenericDataService {
 export class GenericDataScopeService {
     configuration:PlainObject
     data:DataService
-    constructor(data:DataService, initialData:InitialDataService):void {
+    tools:Tools
+    constructor(
+        data:DataService, initialData:InitialDataService,
+        tools:GenericToolsService
+    ):void {
         this.configuration = initialData.configuration
         this.data = data
+        this.tools = tools.tools
     }
     generate(
         modelName:string, propertyNames:?Array<string> = null,
@@ -137,14 +136,14 @@ export class GenericDataScopeService {
                     for (const fileName:string in modelSpecification[name])
                         if (modelSpecification[name].hasOwnProperty(fileName))
                             modelSpecification[name][fileName] =
-                                Tools.extendObject(
-                                    true, Tools.copyLimitedRecursively(
+                                this.tools.extendObject(
+                                    true, this.tools.copyLimitedRecursively(
                                         this.configuration.modelConfiguration
                                             .default.propertySpecification
                                     ), modelSpecification[name][fileName])
                 } else
-                    modelSpecification[name] = Tools.extendObject(
-                        true, Tools.copyLimitedRecursively(
+                    modelSpecification[name] = this.tools.extendObject(
+                        true, this.tools.copyLimitedRecursively(
                             this.configuration.modelConfiguration.default
                                 .propertySpecification,
                         ), modelSpecification[name])
@@ -153,10 +152,10 @@ export class GenericDataScopeService {
         const result:PlainObject = {}
         for (const name:string of propertyNames) {
             if (modelSpecification.hasOwnProperty(name))
-                result[name] = Tools.copyLimitedRecursively(
+                result[name] = this.tools.copyLimitedRecursively(
                     modelSpecification[name])
             else if (modelSpecification._attachments.hasOwnProperty(name))
-                result[name] = Tools.copyLimitedRecursively(
+                result[name] = this.tools.copyLimitedRecursively(
                     modelSpecification._attachments[name])
             else
                 result[name] = {}
@@ -229,7 +228,7 @@ export class GenericDataScopeService {
             if (!Array.isArray(scope))
                 scope = [scope]
             for (const object:Object of scope)
-                Tools.extendObject(true, object, result)
+                this.tools.extendObject(true, object, result)
             return result
         }
         return result
@@ -246,6 +245,20 @@ export class GenericDataScopeService {
         for (const name:string of ['_id', '_rev', '-type'])
             if (scope.hasOwnProperty(name))
                 result[name] = scope[name]
+        return result
+    }
+}
+// endregion
+// region pipes
+@Pipe({name: 'genericExtractRawData'})
+export class GenericExtractRawDataPipe implements PipeTransform {
+    transform(data:PlainObject):string {
+        const result:PlainObject = {}
+        for (const name:string in data)
+            if (data.hasOwnProperty(name) && ![undefined, null, ''].includes(
+                data[name]
+            ) && name !== '_revisions')
+                result[name] = data[name]
         return result
     }
 }
@@ -312,8 +325,12 @@ export class GenericInputComponent {
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
+    tools:Tools
+    constructor(tools:GenericToolsService):void {
+        this.tools = tools.tools
+    }
     ngOnInit():void {
-        Tools.extendObject(this.model, Tools.extendObject({
+        this.tools.extendObject(this.model, this.tools.extendObject({
             disabled: false,
             maximum: null,
             minimum: null,
@@ -322,11 +339,11 @@ export class GenericInputComponent {
             type: 'string'
         }, this.model))
         if (this.model.type === 'string')
-            Tools.extendObject(this.model, Tools.extendObject({
+            this.tools.extendObject(this.model, this.tools.extendObject({
                 maximum: Infinity, minimum: 0
             }, this.model))
         else
-            Tools.extendObject(this.model, Tools.extendObject({
+            this.tools.extendObject(this.model, this.tools.extendObject({
                 maximum: Infinity, minimum: -Infinity
             }, this.model))
     }
@@ -344,8 +361,12 @@ export class GenericTextareaComponent {
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
+    tools:Tools
+    constructor(tools:GenericToolsService):void {
+        this.tools = tools.tools
+    }
     ngOnInit():void {
-        Tools.extendObject(this.model, Tools.extendObject({
+        this.tools.extendObject(this.model, this.tools.extendObject({
             disabled: false,
             maximum: null,
             minimum: null,
@@ -354,11 +375,11 @@ export class GenericTextareaComponent {
             type: 'string'
         }, this.model))
         if (this.model.type === 'string')
-            Tools.extendObject(this.model, Tools.extendObject({
+            this.tools.extendObject(this.model, this.tools.extendObject({
                 maximum: Infinity, minimum: 0
             }, this.model))
         else
-            Tools.extendObject(this.model, Tools.extendObject({
+            this.tools.extendObject(this.model, this.tools.extendObject({
                 maximum: Infinity, minimum: -Infinity
             }, this.model))
     }
@@ -403,7 +424,7 @@ export class GenericMediumInputComponent implements AfterViewInit {
     constructor(data:DataService):void {
         this._data = data
     }
-    ngAfterViewInit():Promise<void> {
+    ngAfterViewInit():void {
         this.input.nativeElement.addEventListener('change', async (
         ):Promise<void> => {
             try {
