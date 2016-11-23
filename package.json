@@ -45,8 +45,7 @@
     "@angular/router": "latest",
     "pouchdb": "latest",
     "pouchdb-find": "latest",
-    "pouchdb-validation": "latest",
-    "rxjs": "5.0.0-beta.12"
+    "pouchdb-validation": "latest"
   },
   "devDependencies": {
     "babel-plugin-angular2-annotations": "latest",
