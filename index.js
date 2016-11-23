@@ -63,7 +63,7 @@ export class GenericDataService {
     synchronisation:Object
     tools:Tools
     constructor(
-        tools:GenericToolsService, initialData:InitialDataService
+        tools:GenericToolsService, initialData:GenericInitialDataService
     ):void {
         this.tools = tools.tools
         this.database = PouchDB.plugin(PouchDBFindPlugin)
@@ -114,10 +114,10 @@ export class GenericDataService {
 @Injectable()
 export class GenericDataScopeService {
     configuration:PlainObject
-    data:DataService
+    data:GenericDataService
     tools:Tools
     constructor(
-        data:DataService, initialData:InitialDataService,
+        data:GenericDataService, initialData:GenericInitialDataService,
         tools:GenericToolsService
     ):void {
         this.configuration = initialData.configuration
@@ -397,7 +397,7 @@ export class GenericFileInputComponent {
     `
 })
 export class GenericMediumInputComponent implements AfterViewInit {
-    _data:DataService
+    _data:GenericDataService
     @ViewChild('input') input:ElementRef
     @Input() model:{
         id:?string;
@@ -405,7 +405,7 @@ export class GenericMediumInputComponent implements AfterViewInit {
     } = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() name:?string
-    constructor(data:DataService):void {
+    constructor(data:GenericDataService):void {
         this._data = data
     }
     ngAfterViewInit():void {
