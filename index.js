@@ -31,8 +31,8 @@ import PouchDBValidationPlugin from 'pouchdb-validation'
 import {Observable} from 'rxjs/Observable'
 // endregion
 // region pipes
-@Pipe({name: 'extractRawData'})
-export class ExtractRawDataPipe implements PipeTransform {
+@Pipe({name: 'genericExtractRawData'})
+export class GenericExtractRawDataPipe implements PipeTransform {
     transform(data:PlainObject):string {
         const result:PlainObject = {}
         for (const name:string in data)
@@ -46,7 +46,7 @@ export class ExtractRawDataPipe implements PipeTransform {
 // endregion
 // region services
 @Injectable()
-export class InitialDataService {
+export class GenericInitialDataService {
     configuration:PlainObject
     constructor():void {
         for (const key:string in globalContext.bpvWebNodePluginInitialData)
@@ -56,7 +56,8 @@ export class InitialDataService {
     }
 }
 @Injectable()
-export class CanDeactivateRouteLeaveGuard implements CanDeactivate<Object> {
+export class GenericCanDeactivateRouteLeaveGuard implements
+CanDeactivate<Object> {
     canDeactivate(
         component:Object
     ):Observable<boolean>|Promise<boolean>|boolean {
@@ -64,7 +65,7 @@ export class CanDeactivateRouteLeaveGuard implements CanDeactivate<Object> {
     }
 }
 @Injectable()
-export class DataService {
+export class GenericDataService {
     database:PouchDB
     connection:PouchDB
     synchronisation:Object
@@ -115,7 +116,7 @@ export class DataService {
     }
 }
 @Injectable()
-export class DataScopeService {
+export class GenericDataScopeService {
     configuration:PlainObject
     data:DataService
     constructor(data:DataService, initialData:InitialDataService):void {
@@ -366,19 +367,19 @@ export class GenericTextareaComponent {
 }
 // // endregion
 @Component({
-    selector: 'file-input',
+    selector: 'generic-file-input',
     template: `
         {{label}}
         <input type="file"/>
     `
 })
-export class FileInputComponent {
+export class GenericFileInputComponent {
     @Input() model:?PlainObject = null
     @Output() modelChange:EventEmitter<?PlainObject> = new EventEmitter()
 }
 // / endregion
 @Component({
-    selector: 'medium-input',
+    selector: 'generic-medium-input',
     template: `
         <ng-content></ng-content>
         <img
@@ -388,7 +389,7 @@ export class FileInputComponent {
         <input #input type="file"/>
     `
 })
-export class MediumInputComponent implements AfterViewInit {
+export class GenericMediumInputComponent implements AfterViewInit {
     _data:DataService
     @ViewChild('input') input:ElementRef
     @Input() model:{
