@@ -41,11 +41,16 @@ export class GenericToolsService {
 @Injectable()
 export class GenericInitialDataService {
     configuration:PlainObject
-    constructor():void {
-        for (const key:string in globalContext.bpvWebNodePluginInitialData)
-            if (globalContext.bpvWebNodePluginInitialData.hasOwnProperty(key))
+    constructor(tools:GenericToolsService):void {
+        for (
+            const key:string in tools.globalContext.bpvWebNodePluginInitialData
+        )
+            if (tools.globalContext.bpvWebNodePluginInitialData.hasOwnProperty(
+                key
+            ))
                 // IgnoreTypeCheck
-                this[key] = globalContext.bpvWebNodePluginInitialData[key]
+                this[key] = tools.globalContext.bpvWebNodePluginInitialData[
+                    key]
     }
 }
 @Injectable()
@@ -269,7 +274,6 @@ export class GenericExtractRawDataPipe implements PipeTransform {
 // / region default inputs
 // // region text
 const propertyInputContent:string = `
-    [type]="model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
     [disabled]="model.disabled || model.mutable === false || model.writable === false"
     [max]="model.type === 'number' ? model.maximum : null"
     [maxlength]="model.type === 'string' ? model.maximum : null"
@@ -321,7 +325,10 @@ const mdInputContent:string = `
 `
 @Component({
     selector: 'generic-input',
-    template: `<md-input ${propertyInputContent}>${mdInputContent}</md-input>`
+    template: `<md-input
+        [type]="model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+        ${propertyInputContent}>${mdInputContent}</md-input>
+    `
 })
 export class GenericInputComponent {
     @Input() model:PlainObject = {}
