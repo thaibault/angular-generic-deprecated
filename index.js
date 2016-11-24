@@ -31,8 +31,9 @@ import PouchDBValidationPlugin from 'pouchdb-validation'
 import {Observable} from 'rxjs/Observable'
 // endregion
 // region services
+export default globalContext
 @Injectable()
-export default class GenericToolsService {
+export class GenericToolsService {
     $:any = $
     globalContext:Object = globalContext
     tools:Tools = Tools
