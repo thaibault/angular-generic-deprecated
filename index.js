@@ -278,6 +278,7 @@ const propertyInputContent:string = `
     [maxlength]="model.type === 'string' ? model.maximum : null"
     [minlength]="model.type === 'string' ? model.minimum : null"
     [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
+    [placeholder]="model.description || model.name"
     [required]="!model.nullable"
     [(ngModel)]="model.value"
     #state="ngModel"
@@ -325,7 +326,6 @@ const mdInputContent:string = `
     template: `<md-input
         [max]="model.type === 'number' ? model.maximum : null"
         [min]="model.type === 'number' ? model.minimum : null"
-        [placeholder]="model.description || model.name"
         [type]="model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
         ${propertyInputContent}>${mdInputContent}</md-input>
     `
