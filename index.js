@@ -275,9 +275,7 @@ export class GenericExtractRawDataPipe implements PipeTransform {
 // // region text
 const propertyInputContent:string = `
     [disabled]="model.disabled || model.mutable === false || model.writable === false"
-    [max]="model.type === 'number' ? model.maximum : null"
     [maxlength]="model.type === 'string' ? model.maximum : null"
-    [min]="model.type === 'number' ? model.minimum : null"
     [minlength]="model.type === 'string' ? model.minimum : null"
     [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
     [placeholder]="model.description || model.name"
@@ -326,6 +324,8 @@ const mdInputContent:string = `
 @Component({
     selector: 'generic-input',
     template: `<md-input
+        [max]="model.type === 'number' ? model.maximum : null"
+        [min]="model.type === 'number' ? model.minimum : null"
         [type]="model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
         ${propertyInputContent}>${mdInputContent}</md-input>
     `
