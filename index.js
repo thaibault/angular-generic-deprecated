@@ -19,7 +19,7 @@
 */
 // region imports
 import type {PlainObject} from 'clientnode'
-import {$, globalContext, Tools} from 'clientnode'
+import {$, globalContext, default as Tools} from 'clientnode'
 import {
     AfterViewInit, Component, ElementRef, EventEmitter, Injectable, Input,
     Output, Pipe, PipeTransform, ViewChild
@@ -31,9 +31,8 @@ import PouchDBValidationPlugin from 'pouchdb-validation'
 import {Observable} from 'rxjs/Observable'
 // endregion
 // region services
-export default globalContext
 @Injectable()
-export class GenericToolsService {
+export default class GenericToolsService {
     $:any = $
     globalContext:Object = globalContext
     tools:Tools = Tools
