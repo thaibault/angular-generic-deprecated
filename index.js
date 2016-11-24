@@ -250,6 +250,7 @@ export class GenericDataScopeService {
 }
 // endregion
 // region pipes
+// TODO generate all possible pipes automatically
 @Pipe({name: 'genericExtractRawData'})
 export class GenericExtractRawDataPipe implements PipeTransform {
     transform(data:PlainObject):string {
