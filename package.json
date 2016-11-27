@@ -38,19 +38,17 @@
     "watchDLL": "webOptimizer buildDLL --watch"
   },
   "license": "CC-BY-3.0",
-  "peerDependencies": {
-    "clientnode": "*",
-    "@angular/core": "*",
-    "@angular/material": "*",
-    "@angular/router": "*",
-    "pouchdb": "*",
-    "pouchdb-find": "*",
-    "pouchdb-validation": "*"
-  },
   "devDependencies": {
+    "@angular/core": "latest",
+    "@angular/material": "latest",
+    "@angular/router": "latest",
     "babel-plugin-angular2-annotations": "latest",
     "babel-plugin-transform-decorators-legacy": "latest",
+    "clientnode": "latest",
     "documentation-website": "latest",
+    "pouchdb": "latest",
+    "pouchdb-find": "latest",
+    "pouchdb-validation": "latest",
     "jsdom": "latest",
     "qunitjs": "latest",
     "qunit-cli": "latest",
@@ -59,6 +57,26 @@
   },
   "webOptimizer": {
     "module": {
+      "additional": [
+        {
+          "exclude": "rejectFilePathInDependencies(filePath)",
+          "loader": "`angular2-template-loader`",
+          "test": "'\\\\.component\\\\.js(?:\\\\?.*)?$'"
+        },
+        {
+          "exclude": "rejectFilePathInDependencies(filePath)",
+          "loader": "`raw!${loader.cascadingStyleSheet}!${loader.preprocessor.cascadingStyleSheet}`",
+          "test": "'\\\\.component\\\\.css(?:\\\\?.*)?$'"
+        },
+        {
+          "exclude": "rejectFilePathInDependencies(filePath)",
+          "loader": "`${loader.html}!${loader.preprocessor.html}`",
+          "test": "'\\\\.component\\\\.pug(?:\\\\?.*)?$'"
+        }
+      ],
+      "aliases": {
+        "clientnode/test$": "clientnode/test.compiled"
+      },
       "cascadingStyleSheet": {
         "exclude": "filePath.endsWith('.component.css')"
       },
@@ -83,23 +101,9 @@
           }
         }
       },
-      "additional": [
-        {
-          "exclude": "rejectFilePathInDependencies(filePath)",
-          "loader": "`angular2-template-loader`",
-          "test": "'\\\\.component\\\\.js(?:\\\\?.*)?$'"
-        },
-        {
-          "exclude": "rejectFilePathInDependencies(filePath)",
-          "loader": "`raw!${loader.cascadingStyleSheet}!${loader.preprocessor.cascadingStyleSheet}`",
-          "test": "'\\\\.component\\\\.css(?:\\\\?.*)?$'"
-        },
-        {
-          "exclude": "rejectFilePathInDependencies(filePath)",
-          "loader": "`${loader.html}!${loader.preprocessor.html}`",
-          "test": "'\\\\.component\\\\.pug(?:\\\\?.*)?$'"
-        }
-      ]
+      "skipParseRegularExpressions": {
+        "__evaluate__": "/\\/(?:(?:jquery\\/dist\\/jquery)|(?:module)|([^/]+\\.min))\\.js(?:\\?.+|$)/"
+      }
     }
   }
 }
