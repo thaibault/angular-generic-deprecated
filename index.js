@@ -424,8 +424,8 @@ export class GenericMediumInputComponent implements AfterViewInit {
                     _id: this.model.id,
                     _attachments: {
                         filename: {
-                            type: this.file.type,
-                            data: this.file
+                            type: this.input.type,
+                            data: this.input
                         }
                     }
                 })
