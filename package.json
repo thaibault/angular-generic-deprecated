@@ -96,7 +96,8 @@
               "__prepend__": [
                 "angular2-annotations",
                 "transform-decorators-legacy"
-              ]
+              ],
+              "__remove__": "transform-runtime"
             }
           }
         }
