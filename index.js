@@ -693,6 +693,9 @@ export class GenericFileInputComponent {
             <md-card-actions>
                 <input #input type="file" style="display:none"/>
                 <button md-button (click)="input.click()">Neu</button>
+                <button md-button *ngIf="file" (click)="remove()">
+                    Löschen
+                </button>
             </md-card-actions>
         </md-card>
     `
@@ -718,7 +721,7 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
     state:PlainObject = {}
     // Indicates weather changed file selections should be immediately attached
     // to given document.
-    @Input() uploadImmediately:boolean = false
+    @Input() synchronizeImmediately:boolean = false
     constructor(data:GenericDataService, tools:GenericToolsService):void {
         this._data = data
         this._tools = tools.tools
@@ -760,7 +763,7 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
             for (const name:string of ['digest', 'revpos', 'stub'])
                 delete this.file[name]
             this.model._attachments[this.internalName].value = this.file
-            if (this.uploadImmediately) {
+            if (this.synchronizeImmediately) {
                 let result:PlainObject
                 const newData:PlainObject = {
                     '-type': this.model['-type'],
@@ -802,6 +805,29 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
             this.fileChange.emit(this.file)
             this.modelChange.emit(this.model)
         })
+    }
+    async remove() {
+        if (this.synchronizeImmediately && this.file) {
+            let result:PlainObject
+            try {
+                result = await this._data.put({
+                    '-type': this.model['-type'],
+                    _id: this.model._id,
+                    _rev: this.model._rev,
+                    _attachments: {
+                        [this.file.name]: null
+                    }
+                })
+            } catch (error) {
+                console.error(error)
+                this.state.errors = {
+                    initialize: this._tools.representObject(error)
+                }
+                return
+            }
+            this.model._rev = result.rev
+        }
+        this.model._attachments[this.internalName].value = this.file = null
     }
 }
 // endregion
