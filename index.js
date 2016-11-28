@@ -21,8 +21,8 @@
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
-    AfterViewInit, Component, ElementRef, EventEmitter, Injectable, Input,
-    Output, Pipe, PipeTransform, ViewChild
+    AfterViewInit, Component, ElementRef, EventEmitter, Injectable, Injector,
+    Input, Output, Pipe, PipeTransform, ReflectiveInjector, ViewChild
 } from '@angular/core'
 import {CanDeactivate} from '@angular/router'
 import PouchDB from 'pouchdb'
@@ -255,7 +255,84 @@ export class GenericDataScopeService {
 }
 // endregion
 // region pipes
-// TODO generate all possible pipes automatically
+// / region forwarded methods
+// // region dynamic
+const reference:Object = {}
+for (const name:string of Object.getOwnPropertyNames(Tools))
+    if (!['caller', 'arguments'].includes(name))
+        reference[name] = Tools[name]
+for (const configuration:PlainObject of [
+    {
+        reference: window,
+        invert: ['array'],
+        methodGroups: {
+            string: ['encodeURIComponent'],
+            number: ['pow']
+        }
+    }, {
+        reference: reference,
+        invert: ['array'],
+        methodGroups: {
+            '': ['equals', 'sort'],
+            array: '*',
+            string: '*',
+            number: '*'
+        }
+    }
+])
+    for (const methodTypePrefix:string in configuration.methodGroups)
+        if (configuration.methodGroups.hasOwnProperty(methodTypePrefix)) {
+            let methodNames:Array<string> = []
+            if (configuration.methodGroups[methodTypePrefix] === '*') {
+                for (const name:string in configuration.reference)
+                    if (configuration.reference.hasOwnProperty(
+                        name
+                    ) && configuration.reference.hasOwnProperty(name) && (
+                        new RegExp(`^${methodTypePrefix}[A-Z0-9]`)
+                    ).test(name))
+                        methodNames.push(name)
+            } else
+                methodNames = configuration.methodGroups[methodTypePrefix]
+            for (const methodName:string of methodNames) {
+                const pipeName:string = Tools.stringCapitalize(methodName)
+                module.exports[`Generic${pipeName}Pipe`] = class {
+                    tools:Tools
+                    constructor():void {
+                        const injector:ReflectiveInjector =
+                            ReflectiveInjector.resolveAndCreate(
+                                [GenericToolsService])
+                        this.tools = injector.get(GenericToolsService).tools
+                    }
+                    transform(...parameter:Array<any>):any {
+                        return this.tools[methodName](...parameter)
+                    }
+                }
+                Pipe({name: `generic${pipeName}`})(
+                    module.exports[`Generic${pipeName}Pipe`])
+                if (configuration.invert.includes(methodTypePrefix)) {
+                    module.exports[`generic${pipeName}InvertedPipe`] = class {
+                        tools:Tools
+                        constructor():void {
+                            const injector:ReflectiveInjector =
+                                ReflectiveInjector.resolveAndCreate(
+                                    [GenericToolsService])
+                            this.tools = injector.get(
+                                GenericToolsService
+                            ).tools
+                        }
+                        transform(...parameter:Array<any>):any {
+                            return this.tools.invertArrayFilter(
+                                this.tools[methodName]
+                            )(...parameter)
+                        }
+                    }
+                    Pipe({name: `generic${pipeName}Inverted`})(
+                        module.exports[`generic${pipeName}InvertedPipe`])
+                }
+            }
+        }
+// // endregion
+// / region object
 @Pipe({name: 'genericExtractRawData'})
 export class GenericExtractRawDataPipe implements PipeTransform {
     transform(data:PlainObject):string {
@@ -268,6 +345,254 @@ export class GenericExtractRawDataPipe implements PipeTransform {
         return result
     }
 }
+/**
+ * Returns given object with where each item was processed through given
+ * filter.
+*/
+@Pipe({name: 'genericMap'})
+export class GenericMapPipe implements PipeTransform {
+    injector:Injector
+    constructor(injector:Injector):void {
+        this.injector = injector
+    }
+    transform(
+        object:any, filterName:string, ...additionalArguments:Array<any>
+    ):any {
+        if (Array.isArray(object)) {
+            const result:Array<any> = []
+            for (const item:any of object)
+                result.push(this.injector.get(filterName).transform(
+                    item, ...additionalArguments))
+            return result
+        }
+        const result:Object = {}
+        for (const key:string in object)
+            if (object.hasOwnProperty(key))
+                result[key] = this.injector.get(filterName).transform(
+                    value, ...additionalArguments)
+        return result
+    }
+}
+/**
+ * Returns type of given object.
+ */
+@Pipe({name: 'genericType'})
+export class GenericTypePipe implements PipeTransform {
+    transform(object:any):string {
+        return typeof object
+    }
+}
+/**
+ * Checks if given reference is defined.
+ */
+@Pipe({name: 'genericIsDefined'})
+export class GenericIsDefinedPipe implements PipeTransform {
+    transform(object:any, nullIsUndefined:boolean = false):boolean {
+        return !(object === undefined || nullIsUndefined && indicator === null)
+    }
+}
+/* TODO
+.filter('genericLimitTo', ($window) -> (input, limit, begin) ->
+    ###
+        Implements native "String.substring()" method as filter and angular's
+        native "limitTo" filter in one.
+    ###
+    # TODO: Remove this method if angular-2.0 is ported.
+    if $window.Math.abs($window.Number limit) is $window.Infinity
+        limit = $window.Number limit
+    else
+        limit = $window.parseInt limit
+    return input if $window.isNaN limit
+    input = input.toString() if $window.angular.isNumber input
+    if not ($window.angular.isArray(input) or $window.angular.isString input)
+        return input
+    if not begin or $window.isNaN begin
+        begin = 0
+    else
+        begin = $window.parseInt begin
+    begin = $window.Math.max(0, input.length + begin) if begin < 0
+    if limit >= 0
+        return input.slice begin, begin + limit
+    else if begin is 0
+        return input.slice limit, input.length
+    input.slice $window.Math.max(0, begin + limit), begin
+).filter('genericShallowFilter', ($filter, $window) -> (
+    data, searchQuery, comparator=null
+) ->
+    ###Like angular's native filter but doesn't search recursively.###
+    if not $window.angular.isDefined(data) or not $window.angular.isDefined(
+        searchQuery
+    ) or searchQuery is ''
+        return data
+    match = (date, index, data) ->
+        if $window.angular.isFunction searchQuery
+            return searchQuery date, index, data
+        if $window.angular.isObject date
+            hasMatch = false
+            for key, value of date
+                if date.hasOwnProperty(key) and not $window.angular.isFunction(
+                    value
+                ) and key.charAt(0) isnt '$'
+                    if $window.angular.isObject searchQuery
+                        if searchQuery.hasOwnProperty key
+                            currentSearchQuery = "#{searchQuery[key]}"
+                        else
+                            continue
+                    else
+                        currentSearchQuery = "#{searchQuery}"
+                    value = "#{value}"
+                    if comparator isnt null and not comparator
+                        currentSearchQuery = currentSearchQuery.toLowerCase()
+                        value = value.toLowerCase()
+                    else if $window.angular.isFunction comparator
+                        if comparator value, currentSearchQuery
+                            hasMatch = true
+                        continue
+                    if comparator is true
+                        if $filter('genericEquals')(
+                            currentSearchQuery, value, null, 1
+                        )
+                            hasMatch = true
+                    else if value.indexOf(currentSearchQuery) isnt -1
+                        hasMatch = true
+            return hasMatch
+        searchQuery = "#{searchQuery}"
+        date = "#{date}"
+        if comparator isnt null and not comparator
+            searchQuery = searchQuery.toLowerCase()
+            date = date.toLowerCase()
+        else if $window.angular.isFunction comparator
+            return comparator date, searchQuery
+        return searchQuery is date if comparator is true
+        date.indexOf(searchQuery) isnt -1
+    result = []
+    for index, date of data
+        index = $window.parseInt index
+        result.push(date) if match date, index, data
+    result
+).filter('genericShallowFilterInverted', ($filter, genericTool) ->
+    ###Inverted version of the shallow filter implementation.###
+    # TODO test
+    genericTool.constructor.invertArrayFilter $filter 'genericShallowFilter'
+).filter('genericSliceObjects', ($window) -> (item) ->
+    ###Removes all model connections from given item.###
+    # TODO test
+    result = {}
+    for key, value of item
+        if not (['_', '$'].indexOf(
+            key.charAt 0
+        ) is -1 and $window.angular.isObject value)
+            result[key] = value
+    result
+).filter('genericSliceMethods', ($window) -> (item) ->
+    ###Removes all model connections from given item.###
+    # TODO test
+    result = {}
+    for key, value of item
+        if not (['_', '$'].indexOf(
+            key.charAt 0
+        ) is -1 and $window.angular.isFunction value)
+            result[key] = value
+    result
+).filter('genericFilterInverted', ($filter, genericTool) ->
+    ###Inverted version of angular's native filter implementation.###
+    genericTool.constructor.invertArrayFilter $filter 'filter'
+).filter('genericNullIgnoreFilterInverted', ($filter, genericTool) -> ->
+    ###
+        Inverted version of angular's native filter implementation which
+        doesn't filter if filter property is null.
+    ###
+    if arguments.length > 1 and arguments[1] is null
+        return arguments[0]
+    genericTool.constructor.invertArrayFilter($filter 'filter').apply this, arguments
+).filter('genericFilterIfDefined', ($filter, $window) -> (
+    data, filterName, indicator, parameter...
+) ->
+    ###
+        Apply given filter with given parameter if given indicator is defined.
+        If indicator isn't defined first argument will be returned.
+    ###
+    undefinedValues = [undefined, null]
+    if $window.angular.isArray filterName
+        undefinedValues = undefinedValues.concat filterName.slice(
+            0, filterName.length - 1)
+        filterName = filterName[filterName.length - 1]
+    if indicator not in undefinedValues
+        return $filter(filterName).apply this, [data, indicator].concat(
+            parameter)
+    data
+)
+// / endregion
+// region string
+*/
+@Pipe({name: 'genericStringReplace'})
+export class GenericStringReplacePipe implements PipeTransform {
+    transform(
+        string:string, search:string|RegExp, replacement:string = '',
+        modifier:string = ''
+    ):string {
+        return string.replace(new RegExp(search, modifier), replacement)
+    }
+}
+/*
+.filter('genericStringShowIfPatternMatches', ($window) -> (
+    string, pattern, invert
+) ->
+    ###Returns given string if it matches given pattern.###
+    indicator = new $window.RegExp(pattern, 'g').test string
+    indicator = not indicator if invert
+    if indicator then string else ''
+# TODO test
+).filter('genericStringStartsWith', ($window) -> (string, needle) ->
+    ###Replaces a string with given replacement.###
+    if string and typeof needle is 'string'
+        return string.startsWith(needle)
+    false
+# TODO test
+).filter('genericStringEndsWith', ($window) -> (string, needle) ->
+    ###Replaces a string with given replacement.###
+    if string and typeof needle is 'string'
+        return string.endsWith(needle)
+    false
+).filter('genericStringMatch', ($window) -> (pattern, subject) ->
+    ###Tests if given pattern matches against given subject.###
+    (new $window.RegExp(pattern)).test subject
+).filter('genericStringSliceMatch', ($window) -> (subject, pattern, index=0) ->
+    ###
+        Returns a matched part of given subject with given pattern. Default is
+        the whole (zero) matched part.
+    ###
+    return subject.match(new $window.RegExp pattern)[index] if subject
+    ''
+).filter('genericStringGetLastDataStateHeaderName', (
+    $filter, genericOption
+) -> (resourceName='data') ->
+    ###Determines last data write time stamp for given resource name.###
+    $filter('genericStringCapitalize')(
+        $filter('genericStringCamelCaseToDelimited')(
+            genericOption.lastDataWriteHeaderName
+        ).replace /-([a-z])/g, (match) -> "-#{match[1].toUpperCase()}"
+    ).replace 'Data', $filter('genericStringCapitalize') resourceName
+).filter('genericStringHasTimeSuffix', ($filter) -> (string) ->
+    ###Determines if given string has a time indicating suffix.###
+    return false if not string?
+    $filter('genericStringEndsWith')(string, 'DateTime') or $filter(
+        'genericStringEndsWith'
+    )(string, 'Date') or $filter('genericStringEndsWith')(
+        string, 'Time'
+    ) or string is 'timestamp'
+)
+// / endregion
+// / region number
+.filter('genericNumberPercent', ($window) -> (part, all) ->
+    ###Returns part in percent of all.###
+    (part / all) * 100
+).filter('genericNumberDistance', ($filter) -> (number) ->
+    ###Returns a distance representation for given number.###
+    $filter('number')(number) + ' km'
+)
+*/
+// / endregion
 // endregion
 // region components
 // / region default inputs
@@ -396,43 +721,74 @@ export class GenericFileInputComponent {
 @Component({
     selector: 'generic-medium-input',
     template: `
-        <ng-content></ng-content>
+        <span>
+            {{model[name]?.description || (name | genericStringReplace:'\\.[^.]+$' | genericStringCapitalize)}}
+        </span>
         <img
             [attr.alt]="name"
-            [attr.src]="'http://127.0.0.1:5984/bpvWebNodePlugin/' + model._id + '/' + name"
+            [attr.src]="'http://127.0.0.1:5984/bpvWebNodePlugin/' + model._id + '/' + name + '#' + hash"
         />
         <input #input type="file"/>
+        <span
+            md-suffix (click)="showDeclaration = !showDeclaration" title="info"
+            *ngIf="model.declaration"
+        >[i]</span>
+        <span>
+            <span *ngIf="showValidationErrorMessages">
+                <span *ngIf="state.errors?.required">
+                    Bitte füllen Sie das Feld "{{model.description}}" aus.
+                </span>
+            </span>
+            <span *ngIf="showDeclaration">{{model.declaration}}</span>
+        </span>
     `
 })
 export class GenericMediumInputComponent implements AfterViewInit {
     _data:GenericDataService
+    _tools:Tools
+    hash:number = (new Date()).getTime()
     @ViewChild('input') input:ElementRef
     @Input() model:{
         id:?string;
         [key:string]:any;
     } = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
-    @Input() name:?string
-    constructor(data:GenericDataService):void {
+    @Input() name:?string = null
+    @Input() showValidationErrorMessages:boolean = true
+    state:PlainObject = {}
+    constructor(data:GenericDataService, tools:GenericToolsService):void {
         this._data = data
+        this._tools = tools.tools
+        this._data.state = this.state
     }
     ngAfterViewInit():void {
         this.input.nativeElement.addEventListener('change', async (
         ):Promise<void> => {
+            this.state.errors = null
+            console.log('A', this.input.nativeElement.files[0].name)
+            if (!this.name)
+                this.name = this.input.nativeElement.files[0].name
+            let result:PlainObject
             try {
-                await this._data.put({
-                    _id: this.model.id,
+                result = await this._data.put({
+                    '-type': this.model['-type'],
+                    _id: this.model._id,
+                    _rev: this.model._rev,
                     _attachments: {
-                        filename: {
-                            type: this.input.type,
-                            data: this.input
+                        [this.name]: {
+                            content_type: this.input.nativeElement.files[0].type,
+                            data: this.input.nativeElement.files[0]
                         }
                     }
                 })
             } catch (error) {
-                console.error(error)
+                this.state.errors = {
+                    initialize: this._tools.representObject(error)
+                }
                 return
             }
+            this.model._rev = result.rev
+            this.hash = (new Date()).getTime()
             this.modelChange.emit(this.model)
         })
     }
