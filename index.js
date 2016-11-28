@@ -22,9 +22,12 @@ import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
     AfterViewInit, Component, ElementRef, EventEmitter, Injectable, Injector,
-    Input, Output, Pipe, PipeTransform, ReflectiveInjector, ViewChild
+    Input, NgModule, Output, Pipe, PipeTransform, ReflectiveInjector, ViewChild
 } from '@angular/core'
+import {FormsModule} from '@angular/forms'
+import {MaterialModule} from '@angular/material'
 import {CanDeactivate} from '@angular/router'
+import {BrowserModule} from '@angular/platform-browser'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
@@ -32,7 +35,7 @@ import {Observable} from 'rxjs/Observable'
 // endregion
 // region services
 @Injectable()
-export default class GenericToolsService {
+export class GenericToolsService {
     $:any = $
     globalContext:Object = globalContext
     tools:Tools = Tools
@@ -256,7 +259,6 @@ export class GenericDataScopeService {
 // endregion
 // region pipes
 // / region forwarded methods
-// // region dynamic
 const reference:Object = {}
 for (const name:string of Object.getOwnPropertyNames(Tools))
     if (!['caller', 'arguments'].includes(name))
@@ -331,7 +333,7 @@ for (const configuration:PlainObject of [
                 }
             }
         }
-// // endregion
+// / endregion
 // / region object
 @Pipe({name: 'genericExtractRawData'})
 export class GenericExtractRawDataPipe implements PipeTransform {
@@ -794,6 +796,29 @@ export class GenericMediumInputComponent implements AfterViewInit {
     }
 }
 // endregion
+const declarations:Array<Object> = Object.keys(module.exports).filter((
+    name:string
+):boolean => name.endsWith('Component') || name.endsWith('Pipe')).map((
+    name:string
+):Object => module.exports[name])
+const providers:Array<Object> = Object.keys(module.exports).filter((
+    name:string
+):boolean =>
+    name.endsWith('Resolver') || name.endsWith('Pipe') ||
+    name.endsWith('Guard') || name.endsWith('Service')
+).map((name:string):Object => module.exports[name])
+const modules:Array<Object> = [
+    BrowserModule,
+    FormsModule,
+    MaterialModule.forRoot()
+]
+@NgModule({
+    declarations,
+    exports: declarations,
+    imports: modules,
+    providers
+})
+export default class GenericModule {}
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:

@@ -40,7 +40,9 @@
   "license": "CC-BY-3.0",
   "devDependencies": {
     "@angular/core": "latest",
+    "@angular/forms": "latest",
     "@angular/material": "latest",
+    "@angular/platform-browser": "latest",
     "@angular/router": "latest",
     "babel-plugin-angular2-annotations": "latest",
     "babel-plugin-transform-decorators-legacy": "latest",
