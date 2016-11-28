@@ -204,6 +204,10 @@ export class GenericDataScopeService {
                     result[name].selection
                 ) && result[name].selection.length)
                     result[name].value = result[name].selection[0]
+                if (!(result[name].value instanceof Date) && name.endsWith(
+                    'Time'
+                ))
+                    result[name].value = new Date(result[name].value)
             }
         }
         for (const name:string of ['_id', '_rev', '-type'])
