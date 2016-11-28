@@ -22,7 +22,8 @@ import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
     AfterViewInit, Component, ElementRef, EventEmitter, Injectable, Injector,
-    Input, NgModule, Output, Pipe, PipeTransform, ReflectiveInjector, ViewChild
+    Input, NgModule, OnInit, Output, Pipe, PipeTransform, ReflectiveInjector,
+    ViewChild
 } from '@angular/core'
 import {FormsModule} from '@angular/forms'
 import {MaterialModule} from '@angular/material'
@@ -167,8 +168,54 @@ export class GenericDataScopeService {
                     modelSpecification._attachments[name])
             else
                 result[name] = {}
-            result[name].name = name
-            if (!name.startsWith('_')) {
+            if (name === '_attachments') {
+                for (const type:string in modelSpecification[name])
+                    if (modelSpecification[name].hasOwnProperty(type)) {
+                        result[name][type].name = type
+                        result[name][type].value = null
+                        if (Object.keys(data).length === 0)
+                            for (const constraintType:string of [
+                                'onCreateExpression', 'onCreateExecution'
+                            ])
+                                if (result[name][type].hasOwnProperty(
+                                    costraintType
+                                ))
+                                    result[name][type].value = (new Function(
+                                        'newDocument', 'oldDocument', 'userContext',
+                                        'securitySettings', 'name', 'models',
+                                        'modelConfiguration', 'serialize', 'modelName',
+                                        'model', 'propertySpecification', (
+                                            constraintType.endsWith(
+                                                'Expression'
+                                            ) ? 'return ' : ''
+                                        ) + result[name][type][constraintType]
+                                    ))(
+                                        data, null, {}, {}, type,
+                                        this.configuration.modelConfiguration.models,
+                                        this.configuration.modelConfiguration[name][type],
+                                        (object:Object):string => JSON.stringify(
+                                            object, null, 4
+                                        ), modelName, modelSpecification, result[name][type])
+                        let fileFound:boolean = false
+                        if (data.hasOwnProperty(name) && ![
+                            undefined, null
+                        ].includes(data[name]))
+                            for (const fileName:string in data[name])
+                                if (result[name].hasOwnProperty(type) && (
+                                    new RegExp(type)
+                                ).test(fileName)) {
+                                    fileFound = true
+                                    result[name][type].value = data[name][fileName]
+                                    result[name][type].value.name = fileName
+                                    break
+                                }
+                        if (!fileFound && result[name][type].hasOwnProperty('default') && ![
+                            undefined, null
+                        ].includes(result[name][type].default))
+                            result[name][type].value = result[name][type].default
+                    }
+            } else if (!name.startsWith('_')) {
+                result[name].name = name
                 result[name].value = null
                 if (Object.keys(data).length === 0)
                     for (const type:string of [
@@ -180,8 +227,8 @@ export class GenericDataScopeService {
                                 'securitySettings', 'name', 'models',
                                 'modelConfiguration', 'serialize', 'modelName',
                                 'model', 'propertySpecification', (
-                                    type.endsWith('Expression') ?
-                                    'return ' : ''
+                                    type.endsWith('Expression') ? 'return ' :
+                                    ''
                                 ) + result[name][type]
                             ))(
                                 data, null, {}, {}, name,
@@ -619,74 +666,140 @@ export class GenericFileInputComponent {
 @Component({
     selector: 'generic-medium-input',
     template: `
-        <span>
-            {{model[name]?.description || (name | genericStringReplace:'\\.[^.]+$' | genericStringCapitalize)}}
-        </span>
-        <img
-            [attr.alt]="name"
-            [attr.src]="'http://127.0.0.1:5984/bpvWebNodePlugin/' + model._id + '/' + name + '#' + hash"
-        />
-        <input #input type="file"/>
-        <span
-            md-suffix (click)="showDeclaration = !showDeclaration" title="info"
-            *ngIf="model.declaration"
-        >[i]</span>
-        <span>
-            <span *ngIf="showValidationErrorMessages">
-                <span *ngIf="state.errors?.required">
-                    Bitte füllen Sie das Feld "{{model.description}}" aus.
+        <md-card>
+            <md-card-header>
+                <h3>
+                    {{model._attachments[internalName]?.description || name}}
+                </h3>
+            </md-card-header>
+            <img md-card-image
+                *ngIf="file.source" [attr.alt]="name" [attr.src]="file.source"
+            >
+            <md-card-content>
+                <ng-content></ng-content>
+                <span
+                    md-suffix (click)="showDeclaration = !showDeclaration"
+                    title="info" *ngIf="model.declaration"
+                >[i]</span>
+                <span>
+                    <span *ngIf="showValidationErrorMessages">
+                        <span *ngIf="state.errors?.required">
+                            Bitte geben wählen Sie eine Medium aus.
+                        </span>
+                    </span>
+                    <span *ngIf="showDeclaration">{{model.declaration}}</span>
                 </span>
-            </span>
-            <span *ngIf="showDeclaration">{{model.declaration}}</span>
-        </span>
+            </md-card-content>
+            <md-card-actions>
+                <input #input type="file" style="display:none"/>
+                <button md-button (click)="input.click()">Neu</button>
+            </md-card-actions>
+        </md-card>
     `
 })
-export class GenericMediumInputComponent implements AfterViewInit {
+export class GenericMediumInputComponent implements OnInit, AfterViewInit {
     _data:GenericDataService
     _tools:Tools
-    hash:number = (new Date()).getTime()
+    _prefixMatch:boolean = false
+    // Holds the current selected file object if present.
+    file:?PlainObject = null
+    @Output() fileChange:EventEmitter = new EventEmitter()
     @ViewChild('input') input:ElementRef
+    // Technical regular expression style file type.
+    internalName:?string = null
     @Input() model:{
         id:?string;
         [key:string]:any;
     } = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
+    // Asset name.
     @Input() name:?string = null
     @Input() showValidationErrorMessages:boolean = true
     state:PlainObject = {}
+    // Indicates weather changed file selections should be immediately attached
+    // to given document.
+    @Input() uploadImmediately:boolean = false
     constructor(data:GenericDataService, tools:GenericToolsService):void {
         this._data = data
         this._tools = tools.tools
-        this._data.state = this.state
+    }
+    ngOnInit():void {
+        for (const name:string in this.model._attachments)
+            if (this.model._attachments.hasOwnProperty(name) && name.startsWith(
+                this.name
+            )) {
+                if (name !== this.name)
+                    this._prefixMatch = true
+                this.internalName = name
+                this.file = this.model._attachments[this.internalName].value
+                if (this.file) {
+                    this.file.state = this.state
+                    this.file.hash = `#${this.file.digest}`
+                    this.file.source =
+                        'http://127.0.0.1:5984/bpvWebNodePlugin/' +
+                        this.model._id + '/' + this.file.name + this.file.hash
+                }
+                this.fileChange.emit(this.file)
+                break
+            }
     }
     ngAfterViewInit():void {
         this.input.nativeElement.addEventListener('change', async (
         ):Promise<void> => {
             this.state.errors = null
-            console.log('A', this.input.nativeElement.files[0].name)
+            const oldFileName:string = this.file.name
+            this.file.name = this.input.nativeElement.files[0].name
             if (!this.name)
-                this.name = this.input.nativeElement.files[0].name
-            let result:PlainObject
-            try {
-                result = await this._data.put({
+                this.name = this.file.name
+            else if (this._prefixMatch && this.file.name.includes('.'))
+                this.file.name = this.name + this.file.name.substring(
+                    this.file.name.lastIndexOf('.'))
+            this.file.data = this.input.nativeElement.files[0]
+            this.file.content_type = this.file.data.type
+            this.file.length = this.file.data.size
+            for (const name:string of ['digest', 'revpos', 'stub'])
+                delete this.file[name]
+            this.model._attachments[this.internalName].value = this.file
+            if (this.uploadImmediately) {
+                let result:PlainObject
+                const newData:PlainObject = {
                     '-type': this.model['-type'],
                     _id: this.model._id,
                     _rev: this.model._rev,
                     _attachments: {
-                        [this.name]: {
-                            content_type: this.input.nativeElement.files[0].type,
-                            data: this.input.nativeElement.files[0]
+                        [this.file.name]: {
+                            content_type: this.file.content_type,
+                            data: this.file.data
                         }
                     }
-                })
-            } catch (error) {
-                this.state.errors = {
-                    initialize: this._tools.representObject(error)
                 }
-                return
+                // NOTE: We want to replace old medium.
+                if (oldFileName !== this.file.name)
+                    newData._attachments[oldFileName] = null
+                try {
+                    result = await this._data.put(newData)
+                } catch (error) {
+                    console.error(error)
+                    this.state.errors = {
+                        initialize: this._tools.representObject(error)
+                    }
+                    return
+                }
+                this.file.revision = this.model._rev = result.rev
+                this.file.hash = `#${result.rev}`
+                this.file.source =
+                    'http://127.0.0.1:5984/bpvWebNodePlugin/' + this.model._id +
+                    '/' + this.file.name + this.file.hash
+            } else {
+                const fileReader:FileReader = new FileReader()
+                fileReader.onload = (event:Object):void => {
+                    this.file.source = event.target.result
+                }
+                fileReader.readAsDataURL(this.file.data)
+                // TODO do validation on "content_type"
+                console.log(this.file)
             }
-            this.model._rev = result.rev
-            this.hash = (new Date()).getTime()
+            this.fileChange.emit(this.file)
             this.modelChange.emit(this.model)
         })
     }
