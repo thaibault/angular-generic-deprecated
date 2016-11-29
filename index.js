@@ -178,24 +178,29 @@ export class GenericDataScopeService {
                                 'onCreateExpression', 'onCreateExecution'
                             ])
                                 if (result[name][type].hasOwnProperty(
-                                    costraintType
+                                    constraintType
                                 ))
                                     result[name][type].value = (new Function(
-                                        'newDocument', 'oldDocument', 'userContext',
-                                        'securitySettings', 'name', 'models',
-                                        'modelConfiguration', 'serialize', 'modelName',
-                                        'model', 'propertySpecification', (
+                                        'newDocument', 'oldDocument',
+                                        'userContext', 'securitySettings',
+                                        'name', 'models', 'modelConfiguration',
+                                        'serialize', 'modelName', 'model',
+                                        'propertySpecification', (
                                             constraintType.endsWith(
                                                 'Expression'
                                             ) ? 'return ' : ''
                                         ) + result[name][type][constraintType]
                                     ))(
                                         data, null, {}, {}, type,
-                                        this.configuration.modelConfiguration.models,
-                                        this.configuration.modelConfiguration[name][type],
-                                        (object:Object):string => JSON.stringify(
-                                            object, null, 4
-                                        ), modelName, modelSpecification, result[name][type])
+                                        this.configuration.modelConfiguration
+                                            .models,
+                                        this.configuration.modelConfiguration[
+                                            name
+                                        ][type], (object:Object):string =>
+                                            JSON.stringify(
+                                                object, null, 4
+                                            ), modelName, modelSpecification,
+                                            result[name][type])
                         let fileFound:boolean = false
                         if (data.hasOwnProperty(name) && ![
                             undefined, null
@@ -205,14 +210,19 @@ export class GenericDataScopeService {
                                     new RegExp(type)
                                 ).test(fileName)) {
                                     fileFound = true
-                                    result[name][type].value = data[name][fileName]
+                                    result[name][type].value = data[name][
+                                        fileName]
                                     result[name][type].value.name = fileName
                                     break
                                 }
-                        if (!fileFound && result[name][type].hasOwnProperty('default') && ![
-                            undefined, null
-                        ].includes(result[name][type].default))
-                            result[name][type].value = result[name][type].default
+                        if (!fileFound && result[name][type].hasOwnProperty(
+                            'default'
+                        ) && ![undefined, null].includes(result[name][
+                            type
+                        ].default))
+                            result[name][type].value = result[name][
+                                type
+                            ].default
                     }
             } else if (!name.startsWith('_')) {
                 result[name].name = name
@@ -309,7 +319,8 @@ export class GenericDataScopeService {
                     typeof scope._attachments[key] === 'object' &&
                     scope._attachments[key] !== null &&
                     'hasOwnProperty' in scope._attachments &&
-                    scope._attachments[key].hasOwnProperty('value')
+                    scope._attachments[key].hasOwnProperty('value') &&
+                    scope._attachments[key].value
                 )
                     result._attachments[scope._attachments[
                         key
@@ -682,58 +693,61 @@ export class GenericTextareaComponent {
             <md-card-header>
                 <h3>
                     {{model._attachments[internalName]?.description || name}}
+                    <span
+                        md-suffix (click)="showDeclaration = !showDeclaration"
+                        title="info"
+                        *ngIf="model._attachments[internalName]?.declaration"
+                    >[i]</span>
                 </h3>
+                <p *ngIf="showDeclaration">
+                    {{model._attachments[internalName].declaration}}
+                </p>
             </md-card-header>
             <img md-card-image
                 *ngIf="file?.type === 'image' && file?.source"
                 [attr.alt]="name" [attr.src]="file.source"
             >
-            <video md-card-image
+            <video
+                md-card-image autoplay muted loop
                 *ngIf="file?.type === 'video' && file?.source"
-                [attr.src]="file.source" autoplay muted loop
-            ></video>
-            <div
-                md-card-image *ngIf="file?.type === 'text' && file?.source"
-                style="max-height:150px;overflow:auto"
             >
-                <span *ngIf="(file.source | genericType) === 'string'">
-                    {{file.source}}
-                </span>
-                <iframe
-                    *ngIf="(file.source | genericType) !== 'string'"
-                    [src]="file.source" style=""
-                    style="border:none;width:100%;max-height:150px"
-                ></iframe>
-            </div>
+                <source [attr.src]="file.source" [type]="file.content_type">
+                Keine Vorschau möglich.
+            </video>
+            <iframe
+                [src]="file.source"
+                *ngIf="file?.type === 'text' && file?.source"
+                style="border:none;width:100%;max-height:150px"
+            ></iframe>
             <div
                 md-card-image
                 *ngIf="!file?.type && (file?.source || (file?.source | genericType) === 'string')"
             >Keine Vorschau möglich.</div>
-            <div
-                md-card-image
-                *ngIf="!file?.source && (file?.source | genericType) !== 'string'"
-            >Keine Datei ausgewählt.</div>
+            <div md-card-image *ngIf="!file">Keine Datei ausgewählt.</div>
             <md-card-content>
                 <ng-content></ng-content>
-                <span
-                    md-suffix (click)="showDeclaration = !showDeclaration"
-                    title="info" *ngIf="model.declaration"
-                >[i]</span>
-                <span>
-                    <span *ngIf="showValidationErrorMessages">
-                        <span *ngIf="state.errors?.required">
-                            Bitte geben wählen Sie eine Medium aus.
-                        </span>
-                        <span *ngIf="state.errors?.contentType">
-                            Der Daten-Typ "{{file.content_type}}" entspricht
-                            nicht dem vorgegebenen Muster
-                            "{{model._attachments[internalName].contentTypeRegularExpressionPattern}}".
-                        </span>
-                        <span *ngIf="state.errors?.database">
-                            {{state.errors?.database}}
-                        </span>
-                    </span>
-                    <span *ngIf="showDeclaration">{{model.declaration}}</span>
+                <span *ngIf="showValidationErrorMessages">
+                    <p
+                        *ngIf="model._attachments[internalName]?.state.errors?.required"
+                    >Bitte wählen Sie eine Datei aus.</p>
+                    <p
+                        *ngIf="model._attachments[internalName]?.state.errors?.name"
+                    >
+                        Der Dateiname "{{file.name}}" entspricht nicht dem
+                        vorgegebenen Muster "{{this.internalName}}".
+                    </p>
+                    <p
+                        *ngIf="model._attachments[internalName]?.state.errors?.contentType"
+                    >
+                        Der Daten-Typ "{{file.content_type}}" entspricht
+                        nicht dem vorgegebenen Muster
+                        "{{model._attachments[internalName].contentTypeRegularExpressionPattern}}".
+                    </p>
+                    <p
+                        *ngIf="model._attachments[internalName]?.state.errors?.database"
+                    >
+                        {{model._attachments[internalName]?.state.errors?.database}}
+                    </p>
                 </span>
             </md-card-content>
             <md-card-actions>
@@ -742,6 +756,9 @@ export class GenericTextareaComponent {
                 <button md-button *ngIf="file" (click)="remove()">
                     Löschen
                 </button>
+                <a *ngIf="file" [download]="file.name" [href]="file.source">
+                    <button md-button>Download</button>
+                </a>
             </md-card-actions>
         </md-card>
     `
@@ -750,8 +767,12 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
     static imageMimeTypeRegularExpression:RegExp = new RegExp(
         '^image/(?:p?jpe?g|png|svg(?:\\+xml)?|vnd\\.microsoft\\.icon|gif|' +
         'tiff|webp|vnd\\.wap\\.wbmp|x-(?:icon|jng|ms-bmp))$')
-    static textMimeTypeRegularExpression:RegExp = new RegExp('^text/plain$')
-    static videoMimeTypeRegularExpression:RegExp = new RegExp('^video/webm$')
+    static textMimeTypeRegularExpression:RegExp = new RegExp(
+        '^(?:application/xml)|(?:text/(?:plain|x-ndpb[wy]html|(?:x-)csv))$')
+    static videoMimeTypeRegularExpression:RegExp = new RegExp(
+        '^video/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|' +
+        '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
+        '(?:application/(?:x-)?shockwave-flash)$')
     _data:GenericDataService
     _domSanitization:DomSanitizer
     _tools:Tools
@@ -770,7 +791,6 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
     // Asset name.
     @Input() name:?string = null
     @Input() showValidationErrorMessages:boolean = false
-    state:PlainObject = {}
     // Indicates weather changed file selections should be immediately attached
     // to given document.
     @Input() synchronizeImmediately:boolean = false
@@ -791,8 +811,13 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                     this._prefixMatch = true
                 this.internalName = name
                 this.file = this.model._attachments[this.internalName].value
+                this.model._attachments[this.internalName].state = {}
+                if (this.file)
+                    this.file.descriptionName = this.name
+                else if (!this.model._attachments[this.internalName].nullable)
+                    this.model._attachments[this.internalName].state.errors = {
+                        required: true}
                 if (this.file) {
-                    this.file.state = this.state
                     this.file.hash = `#${this.file.digest}`
                     this.file.source =
                         this._domSanitizer.bypassSecurityTrustResourceUrl(
@@ -810,11 +835,11 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         ):Promise<void> => {
             if (this.input.nativeElement.files.length < 1)
                 return
-            this.state.errors = null
+            this.model._attachments[this.internalName].state = {}
             const oldFileName:?string = this.file ? this.file.name : null
             this.file = {
-                name: this.input.nativeElement.files[0].name,
-                state: this.state
+                descriptionName: this.name,
+                name: this.input.nativeElement.files[0].name
             }
             if (!this.name)
                 this.name = this.file.name
@@ -830,18 +855,25 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
             this.file.content_type = this.file.data.type || 'text/plain'
             this.file.length = this.file.data.size
             this.model._attachments[this.internalName].value = this.file
+            if (!(new RegExp(this.internalName)).test(this.file.name))
+                this.model._attachments[this.internalName].state.errors = {
+                    name: true}
             if (!([undefined, null].includes(this.model._attachments[
                 this.internalName].contentTypeRegularExpressionPattern
             ) || (new RegExp(this.model._attachments[
                 this.internalName].contentTypeRegularExpressionPattern
             )).test(this.file.content_type))) {
-                this.file.source = null
-                this.state.errors = {contentType: true}
+                if (this.model._attachments[this.internalName].state.errors)
+                    this.model._attachments[this.internalName].state.errors
+                        .contentType = true
+                else
+                    this.model._attachments[this.internalName].state.errors = {
+                        contentType: true}
                 this.determinePresentationType()
-                this.fileChange.emit(this.file)
-                this.modelChange.emit(this.model)
             }
-            if (this.synchronizeImmediately && !this.state.errors) {
+            if (this.synchronizeImmediately && !this.model._attachments[
+                this.internalName
+            ].state.errors) {
                 let result:PlainObject
                 const newData:PlainObject = {
                     '-type': this.model['-type'],
@@ -860,9 +892,8 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 try {
                     result = await this._data.put(newData)
                 } catch (error) {
-                    this.state.errors = {
-                        database: this._tools.representObject(error)
-                    }
+                    this.model._attachments[this.internalName].state.errors = {
+                        database: this._tools.representObject(error)}
                     return
                 }
                 this.file.revision = this.model._rev = result.rev
@@ -878,16 +909,14 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 this.determinePresentationType()
                 const fileReader:FileReader = new FileReader()
                 fileReader.onload = (event:Object):void => {
-                    this.file.source = event.target.result
+                    this.file.source =
+                        this._domSanitizer.bypassSecurityTrustResourceUrl(
+                            event.target.result)
                     this.fileChange.emit(this.file)
                     this.modelChange.emit(this.model)
                 }
-                if (['image', 'video'].includes(this.file.type))
-                    fileReader.readAsDataURL(this.file.data)
-                else
-                    fileReader.readAsText(this.file.data)
+                fileReader.readAsDataURL(this.file.data)
             }
-
         })
     }
     async remove() {
@@ -901,14 +930,19 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                     _attachments: {[this.file.name]: {data: null}}
                 })
             } catch (error) {
-                this.state.errors = {
+                this.model._attachments[this.internalName].state.errors = {
                     database: this._tools.representObject(error)
                 }
                 return
             }
             this.model._rev = result.rev
         }
-        this.model._attachments[this.internalName].value = this.file = null
+        this.model._attachments[this.internalName].state.errors =
+            this.model._attachments[this.internalName].value =
+            this.file = null
+        if (!this.model._attachments[this.internalName].nullable)
+            this.model._attachments[this.internalName].state.errors = {
+                required: true}
         this.fileChange.emit(this.file)
         this.modelChange.emit(this.model)
     }
