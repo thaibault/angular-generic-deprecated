@@ -663,6 +663,10 @@ export class GenericTextareaComponent {
                 *ngIf="file?.type === 'image' && file?.source"
                 [attr.alt]="name" [attr.src]="file.source"
             >
+            <video md-card-image
+                *ngIf="file?.type === 'video' && file?.source"
+                [attr.src]="file.source" autoplay muted loop
+            ></video>
             <div
                 md-card-image *ngIf="file?.type === 'text' && file?.source"
                 style="max-height:150px;overflow:auto"
