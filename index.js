@@ -673,7 +673,7 @@ export class GenericFileInputComponent {
                 </h3>
             </md-card-header>
             <img md-card-image
-                *ngIf="file.source" [attr.alt]="name" [attr.src]="file.source"
+                *ngIf="file?.source" [attr.alt]="name" [attr.src]="file.source"
             >
             <md-card-content>
                 <ng-content></ng-content>
@@ -685,6 +685,14 @@ export class GenericFileInputComponent {
                     <span *ngIf="showValidationErrorMessages">
                         <span *ngIf="state.errors?.required">
                             Bitte geben wählen Sie eine Medium aus.
+                        </span>
+                        <span *ngIf="state.errors?.contentType">
+                            Der Daten-Typ "{{file.content_type}}" entspricht
+                            nicht dem vorgegebenen Muster
+                            "{{model._attachments[internalName].contentTypeRegularExpressionPattern}}".
+                        </span>
+                        <span *ngIf="state.errors?.database">
+                            {{state.errors?.database}}
                         </span>
                     </span>
                     <span *ngIf="showDeclaration">{{model.declaration}}</span>
@@ -750,19 +758,34 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
         this.input.nativeElement.addEventListener('change', async (
         ):Promise<void> => {
             this.state.errors = null
-            const oldFileName:string = this.file.name
-            this.file.name = this.input.nativeElement.files[0].name
+            const oldFileName:?string = this.file ? this.file.name : null
+            this.file = {
+                name: this.input.nativeElement.files[0].name,
+                state: this.state
+            }
             if (!this.name)
                 this.name = this.file.name
-            else if (this._prefixMatch && this.file.name.includes('.'))
-                this.file.name = this.name + this.file.name.substring(
-                    this.file.name.lastIndexOf('.'))
+            else if (this._prefixMatch) {
+                const lastIndex:number = this.file.name.lastIndexOf('.')
+                if ([0, -1].includes(lastIndex))
+                    this.file.name = this.name
+                else
+                    this.file.name = this.name + this.file.name.substring(
+                        lastIndex)
+            }
             this.file.data = this.input.nativeElement.files[0]
-            this.file.content_type = this.file.data.type
+            this.file.content_type = this.file.data.type || 'text/plain'
             this.file.length = this.file.data.size
-            for (const name:string of ['digest', 'revpos', 'stub'])
-                delete this.file[name]
             this.model._attachments[this.internalName].value = this.file
+            if (!([undefined, null].includes(this.model._attachments[
+                this.internalName].contentTypeRegularExpressionPattern
+            ) || (new RegExp(this.model._attachments[
+                this.internalName].contentTypeRegularExpressionPattern
+            )).test(this.file.content_type))) {
+                this.file.source = null
+                this.state.errors = {contentType: true}
+                return
+            }
             if (this.synchronizeImmediately) {
                 let result:PlainObject
                 const newData:PlainObject = {
@@ -777,14 +800,13 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
                     }
                 }
                 // NOTE: We want to replace old medium.
-                if (oldFileName !== this.file.name)
-                    newData._attachments[oldFileName] = null
+                if (oldFileName && oldFileName !== this.file.name)
+                    newData._attachments[oldFileName] = {data: null}
                 try {
                     result = await this._data.put(newData)
                 } catch (error) {
-                    console.error(error)
                     this.state.errors = {
-                        initialize: this._tools.representObject(error)
+                        database: this._tools.representObject(error)
                     }
                     return
                 }
@@ -793,17 +815,18 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
                 this.file.source =
                     'http://127.0.0.1:5984/bpvWebNodePlugin/' + this.model._id +
                     '/' + this.file.name + this.file.hash
+                this.fileChange.emit(this.file)
+                this.modelChange.emit(this.model)
             } else {
                 const fileReader:FileReader = new FileReader()
                 fileReader.onload = (event:Object):void => {
                     this.file.source = event.target.result
+                    this.fileChange.emit(this.file)
+                    this.modelChange.emit(this.model)
                 }
                 fileReader.readAsDataURL(this.file.data)
-                // TODO do validation on "content_type"
-                console.log(this.file)
             }
-            this.fileChange.emit(this.file)
-            this.modelChange.emit(this.model)
+
         })
     }
     async remove() {
@@ -814,20 +837,19 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
                     '-type': this.model['-type'],
                     _id: this.model._id,
                     _rev: this.model._rev,
-                    _attachments: {
-                        [this.file.name]: null
-                    }
+                    _attachments: {[this.file.name]: {data: null}}
                 })
             } catch (error) {
-                console.error(error)
                 this.state.errors = {
-                    initialize: this._tools.representObject(error)
+                    database: this._tools.representObject(error)
                 }
                 return
             }
             this.model._rev = result.rev
         }
         this.model._attachments[this.internalName].value = this.file = null
+        this.fileChange.emit(this.file)
+        this.modelChange.emit(this.model)
     }
 }
 // endregion
