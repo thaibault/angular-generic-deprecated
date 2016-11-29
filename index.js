@@ -725,7 +725,7 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
     @Output() modelChange:EventEmitter = new EventEmitter()
     // Asset name.
     @Input() name:?string = null
-    @Input() showValidationErrorMessages:boolean = true
+    @Input() showValidationErrorMessages:boolean = false
     state:PlainObject = {}
     // Indicates weather changed file selections should be immediately attached
     // to given document.
@@ -757,6 +757,8 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
     ngAfterViewInit():void {
         this.input.nativeElement.addEventListener('change', async (
         ):Promise<void> => {
+            if (this.input.nativeElement.files.length < 1)
+                return
             this.state.errors = null
             const oldFileName:?string = this.file ? this.file.name : null
             this.file = {
@@ -784,6 +786,8 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
             )).test(this.file.content_type))) {
                 this.file.source = null
                 this.state.errors = {contentType: true}
+                this.fileChange.emit(this.file)
+                this.modelChange.emit(this.model)
                 return
             }
             if (this.synchronizeImmediately) {
