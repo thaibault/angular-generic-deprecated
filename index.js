@@ -28,7 +28,7 @@ import {
 import {FormsModule} from '@angular/forms'
 import {MaterialModule} from '@angular/material'
 import {CanDeactivate} from '@angular/router'
-import {BrowserModule} from '@angular/platform-browser'
+import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
@@ -540,7 +540,6 @@ export class GenericNumberPercent implements PipeTransform {
 // / endregion
 // endregion
 // region components
-// / region default inputs
 // // region text
 const propertyInputContent:string = `
     [disabled]="model.disabled || model.mutable === false || model.writable === false"
@@ -654,18 +653,6 @@ export class GenericTextareaComponent {
 @Component({
     selector: 'generic-file-input',
     template: `
-        {{label}}
-        <input type="file"/>
-    `
-})
-export class GenericFileInputComponent {
-    @Input() model:?PlainObject = null
-    @Output() modelChange:EventEmitter<?PlainObject> = new EventEmitter()
-}
-// / endregion
-@Component({
-    selector: 'generic-medium-input',
-    template: `
         <md-card>
             <md-card-header>
                 <h3>
@@ -673,8 +660,30 @@ export class GenericFileInputComponent {
                 </h3>
             </md-card-header>
             <img md-card-image
-                *ngIf="file?.source" [attr.alt]="name" [attr.src]="file.source"
+                *ngIf="file?.type === 'image' && file?.source"
+                [attr.alt]="name" [attr.src]="file.source"
             >
+            <div
+                md-card-image *ngIf="file?.type === 'text' && file?.source"
+                style="max-height:150px;overflow:auto"
+            >
+                <span *ngIf="(file.source | genericType) === 'string'">
+                    {{file.source}}
+                </span>
+                <iframe
+                    *ngIf="(file.source | genericType) !== 'string'"
+                    [src]="file.source" style=""
+                    style="border:none;width:100%;max-height:150px"
+                ></iframe>
+            </div>
+            <div
+                md-card-image
+                *ngIf="!file?.type && (file?.source || (file?.source | genericType) === 'string')"
+            >Keine Vorschau möglich.</div>
+            <div
+                md-card-image
+                *ngIf="!file?.source && (file?.source | genericType) !== 'string'"
+            >Keine Datei ausgewählt.</div>
             <md-card-content>
                 <ng-content></ng-content>
                 <span
@@ -708,8 +717,14 @@ export class GenericFileInputComponent {
         </md-card>
     `
 })
-export class GenericMediumInputComponent implements OnInit, AfterViewInit {
+export class GenericFileInputComponent implements OnInit, AfterViewInit {
+    static imageMimeTypeRegularExpression:RegExp = new RegExp(
+        '^image/(?:p?jpe?g|png|svg(?:\\+xml)?|vnd\\.microsoft\\.icon|gif|' +
+        'tiff|webp|vnd\\.wap\\.wbmp|x-(?:icon|jng|ms-bmp))$')
+    static textMimeTypeRegularExpression:RegExp = new RegExp('^text/plain$')
+    static videoMimeTypeRegularExpression:RegExp = new RegExp('^video/webm$')
     _data:GenericDataService
+    _domSanitization:DomSanitizer
     _tools:Tools
     _prefixMatch:boolean = false
     // Holds the current selected file object if present.
@@ -730,8 +745,12 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
     // Indicates weather changed file selections should be immediately attached
     // to given document.
     @Input() synchronizeImmediately:boolean = false
-    constructor(data:GenericDataService, tools:GenericToolsService):void {
+    constructor(
+        data:GenericDataService, domSanitizer:DomSanitizer,
+        tools:GenericToolsService
+    ):void {
         this._data = data
+        this._domSanitizer = domSanitizer
         this._tools = tools.tools
     }
     ngOnInit():void {
@@ -747,9 +766,12 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
                     this.file.state = this.state
                     this.file.hash = `#${this.file.digest}`
                     this.file.source =
-                        'http://127.0.0.1:5984/bpvWebNodePlugin/' +
-                        this.model._id + '/' + this.file.name + this.file.hash
+                        this._domSanitizer.bypassSecurityTrustResourceUrl(
+                            'http://127.0.0.1:5984/bpvWebNodePlugin/' +
+                            this.model._id + '/' + this.file.name +
+                            this.file.hash)
                 }
+                this.determinePresentationType()
                 this.fileChange.emit(this.file)
                 break
             }
@@ -786,11 +808,11 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
             )).test(this.file.content_type))) {
                 this.file.source = null
                 this.state.errors = {contentType: true}
+                this.determinePresentationType()
                 this.fileChange.emit(this.file)
                 this.modelChange.emit(this.model)
-                return
             }
-            if (this.synchronizeImmediately) {
+            if (this.synchronizeImmediately && !this.state.errors) {
                 let result:PlainObject
                 const newData:PlainObject = {
                     '-type': this.model['-type'],
@@ -817,18 +839,24 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
                 this.file.revision = this.model._rev = result.rev
                 this.file.hash = `#${result.rev}`
                 this.file.source =
-                    'http://127.0.0.1:5984/bpvWebNodePlugin/' + this.model._id +
-                    '/' + this.file.name + this.file.hash
+                    this._domSanitizer.bypassSecurityTrustResourceUrl(
+                        'http://127.0.0.1:5984/bpvWebNodePlugin/' +
+                        this.model._id + '/' + this.file.name + this.file.hash)
+                this.determinePresentationType()
                 this.fileChange.emit(this.file)
                 this.modelChange.emit(this.model)
             } else {
+                this.determinePresentationType()
                 const fileReader:FileReader = new FileReader()
                 fileReader.onload = (event:Object):void => {
                     this.file.source = event.target.result
                     this.fileChange.emit(this.file)
                     this.modelChange.emit(this.model)
                 }
-                fileReader.readAsDataURL(this.file.data)
+                if (['image', 'video'].includes(this.file.type))
+                    fileReader.readAsDataURL(this.file.data)
+                else
+                    fileReader.readAsText(this.file.data)
             }
 
         })
@@ -854,6 +882,26 @@ export class GenericMediumInputComponent implements OnInit, AfterViewInit {
         this.model._attachments[this.internalName].value = this.file = null
         this.fileChange.emit(this.file)
         this.modelChange.emit(this.model)
+    }
+    determinePresentationType() {
+        if (
+            this.file && this.file.content_type &&
+            this.constructor.textMimeTypeRegularExpression.test(
+                this.file.content_type)
+        )
+            this.file.type = 'text'
+        else if (
+            this.file && this.file.content_type &&
+            this.constructor.imageMimeTypeRegularExpression.test(
+                this.file.content_type)
+        )
+            this.file.type = 'image'
+        else if (
+            this.file && this.file.content_type &&
+            this.constructor.videoMimeTypeRegularExpression.test(
+                this.file.content_type)
+        )
+            this.file.type = 'video'
     }
 }
 // endregion
