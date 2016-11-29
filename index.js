@@ -301,6 +301,20 @@ export class GenericDataScopeService {
                 'hasOwnProperty' in scope && scope[key].hasOwnProperty('value')
             )
                 result[key] = scope[key].value
+        if (scope.hasOwnProperty('_attachments') && scope._attachments) {
+            result._attachments = {}
+            for (const key:string in scope._attachments)
+                if (
+                    scope._attachments.hasOwnProperty(key) &&
+                    typeof scope._attachments[key] === 'object' &&
+                    scope._attachments[key] !== null &&
+                    'hasOwnProperty' in scope._attachments &&
+                    scope._attachments[key].hasOwnProperty('value')
+                )
+                    result._attachments[scope._attachments[
+                        key
+                    ].value.name] = scope._attachments[key].value
+        }
         for (const name:string of ['_id', '_rev', '-type'])
             if (scope.hasOwnProperty(name))
                 result[name] = scope[name]
@@ -394,7 +408,18 @@ export class GenericExtractRawDataPipe implements PipeTransform {
             if (data.hasOwnProperty(name) && ![undefined, null, ''].includes(
                 data[name]
             ) && name !== '_revisions')
-                result[name] = data[name]
+                if (name === '_attachments') {
+                    result[name] = {}
+                    for (const fileName:string in data[name])
+                        if (data[name].hasOwnProperty(fileName) && data[name][
+                            fileName
+                        ].hasOwnProperty('data'))
+                            result[name][fileName] = {
+                                content_type: data[name][fileName].content_type,
+                                data: data[name][fileName].data
+                            }
+                } else
+                    result[name] = data[name]
         return result
     }
 }
