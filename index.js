@@ -163,9 +163,6 @@ export class GenericDataScopeService {
             if (modelSpecification.hasOwnProperty(name))
                 result[name] = this.tools.copyLimitedRecursively(
                     modelSpecification[name])
-            else if (modelSpecification._attachments.hasOwnProperty(name))
-                result[name] = this.tools.copyLimitedRecursively(
-                    modelSpecification._attachments[name])
             else
                 result[name] = {}
             if (name === '_attachments') {
@@ -194,13 +191,12 @@ export class GenericDataScopeService {
                                         data, null, {}, {}, type,
                                         this.configuration.modelConfiguration
                                             .models,
-                                        this.configuration.modelConfiguration[
-                                            name
-                                        ][type], (object:Object):string =>
-                                            JSON.stringify(
-                                                object, null, 4
-                                            ), modelName, modelSpecification,
-                                            result[name][type])
+                                        modelSpecification, (
+                                            object:Object
+                                        ):string => JSON.stringify(
+                                            object, null, 4
+                                        ), modelName, modelSpecification,
+                                        result[name][type])
                         let fileFound:boolean = false
                         if (data.hasOwnProperty(name) && ![
                             undefined, null
