@@ -768,7 +768,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         '^image/(?:p?jpe?g|png|svg(?:\\+xml)?|vnd\\.microsoft\\.icon|gif|' +
         'tiff|webp|vnd\\.wap\\.wbmp|x-(?:icon|jng|ms-bmp))$')
     static textMimeTypeRegularExpression:RegExp = new RegExp(
-        '^(?:application/xml)|(?:text/(?:plain|x-ndpb[wy]html|(?:x-)csv))$')
+        '^(?:application/xml)|(?:text/(?:plain|x-ndpb[wy]html|(?:x-)?csv))$')
     static videoMimeTypeRegularExpression:RegExp = new RegExp(
         '^video/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|' +
         '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
