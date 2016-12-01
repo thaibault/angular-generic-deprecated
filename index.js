@@ -428,6 +428,15 @@ export class GenericExtractRawDataPipe implements PipeTransform {
         return result
     }
 }
+@Pipe({name: 'genericGetFilenameByPrefix'})
+export class GenericGetFilenameByPrefixPipe implements PipeTransform {
+    transform(attachments:PlainObject, prefix:string):?string {
+        for (const name:string in attachments)
+            if (attachments.hasOwnProperty(name) && name.startsWith(prefix))
+                return name
+        return null
+    }
+}
 /**
  * Returns given object with where each item was processed through given
  * filter.
@@ -790,39 +799,36 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
     @Input() synchronizeImmediately:boolean = false
     constructor(
         data:GenericDataService, domSanitizer:DomSanitizer,
+        getFilenameByPrefix:GenericGetFilenameByPrefixPipe,
         tools:GenericToolsService
     ):void {
         this._data = data
         this._domSanitizer = domSanitizer
+        this._getFilenameByPrefix = getFilenameByPrefix
         this._tools = tools.tools
     }
     ngOnInit():void {
-        for (const name:string in this.model._attachments)
-            if (this.model._attachments.hasOwnProperty(name) && name.startsWith(
-                this.name
-            )) {
-                if (name !== this.name)
-                    this._prefixMatch = true
-                this.internalName = name
-                this.file = this.model._attachments[this.internalName].value
-                this.model._attachments[this.internalName].state = {}
-                if (this.file)
-                    this.file.descriptionName = this.name
-                else if (!this.model._attachments[this.internalName].nullable)
-                    this.model._attachments[this.internalName].state.errors = {
-                        required: true}
-                if (this.file) {
-                    this.file.hash = `#${this.file.digest}`
-                    this.file.source =
-                        this._domSanitizer.bypassSecurityTrustResourceUrl(
-                            'http://127.0.0.1:5984/bpvWebNodePlugin/' +
-                            this.model._id + '/' + this.file.name +
-                            this.file.hash)
-                }
-                this.determinePresentationType()
-                this.fileChange.emit(this.file)
-                break
-            }
+        const name:string = this._getFilenameByPrefix.transform(
+            this.model._attachments, this.name)
+        if (name !== this.name)
+            this._prefixMatch = true
+        this.internalName = name
+        this.file = this.model._attachments[this.internalName].value
+        this.model._attachments[this.internalName].state = {}
+        if (this.file)
+            this.file.descriptionName = this.name
+        else if (!this.model._attachments[this.internalName].nullable)
+            this.model._attachments[this.internalName].state.errors = {
+                required: true}
+        if (this.file) {
+            this.file.hash = `#${this.file.digest}`
+            this.file.source =
+                this._domSanitizer.bypassSecurityTrustResourceUrl(
+                    'http://127.0.0.1:5984/bpvWebNodePlugin/' +
+                    this.model._id + '/' + this.file.name + this.file.hash)
+        }
+        this.determinePresentationType()
+        this.fileChange.emit(this.file)
     }
     ngAfterViewInit():void {
         this.input.nativeElement.addEventListener('change', async (
