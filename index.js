@@ -401,7 +401,7 @@ for (const configuration:PlainObject of [
         reference: reference,
         invert: ['array'],
         methodGroups: {
-            '': ['equals', 'sort'],
+            '': ['convertCircularObjectToJSON', 'equals', 'sort'],
             array: '*',
             string: '*',
             number: '*'
