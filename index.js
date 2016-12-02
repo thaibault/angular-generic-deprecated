@@ -407,7 +407,10 @@ for (const configuration:PlainObject of [
 // / region object
 @Pipe({name: 'genericExtractRawData'})
 export class GenericExtractRawDataPipe implements PipeTransform {
-    transform(newDocument:PlainObject, oldDocument:?PlainObject):PlainObject {
+    transform(
+        newDocument:PlainObject, oldDocument:?PlainObject,
+        typeReplacement:boolean = true
+    ):PlainObject {
         const result:PlainObject = {}
         const untouchedAttachments:Array<string> = []
         for (const name:string in newDocument)
@@ -462,13 +465,14 @@ export class GenericExtractRawDataPipe implements PipeTransform {
                                 data: null}}
                         continue
                     }
-                    for (const fileName:string in result._attachments)
-                        if (result._attachments.hasOwnProperty(
-                            fileName
-                        ) && (new RegExp(type)).test(fileName))
-                            result._attachments[oldDocument._attachments[
-                                type
-                            ].value.name] = {data: null}
+                    if (typeReplacement)
+                        for (const fileName:string in result._attachments)
+                            if (result._attachments.hasOwnProperty(
+                                fileName
+                            ) && (new RegExp(type)).test(fileName))
+                                result._attachments[oldDocument._attachments[
+                                    type
+                                ].value.name] = {data: null}
                 }
         return result
     }
