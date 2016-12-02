@@ -71,6 +71,13 @@ export class GenericDataService {
     connection:PouchDB
     synchronisation:Object
     tools:Tools
+    middlewares:{
+        pre:{[key:string]:Array<Function>};
+        post:{[key:string]:Array<Function>};
+    } = {
+        pre: {},
+        post: {}
+    }
     constructor(
         tools:GenericToolsService, initialData:GenericInitialDataService
     ):void {
@@ -80,6 +87,36 @@ export class GenericDataService {
         this.connection = new this.database(this.tools.stringFormat(
             initialData.configuration.database.url, ''
         ) + `/${initialData.configuration.name}`, {skip_setup: true})
+        for (const name:string in this.connection)
+            if (typeof this.connection[name] === 'function') {
+                const method:Function = this.connection[name]
+                this.connection[name] = (...parameter):any => {
+                    for (const methodName:string of [name, '_all'])
+                        if (this.middlewares.pre.hasOwnProperty(methodName))
+                            for (
+                                const interceptor:Function of
+                                this.middlewares.pre[methodName]
+                            )
+                                parameter = interceptor.apply(
+                                    this.connection, parameter.concat(
+                                        methodName === '_all' ? name : []))
+                    let result:any = method.apply(
+                        this.connection, parameter)
+                    for (const methodName:string of [name, '_all'])
+                        if (this.middlewares.post.hasOwnProperty(
+                            methodName
+                        ))
+                            for (
+                                const interceptor:Function of
+                                this.middlewares.post[methodName]
+                            )
+                                result = interceptor.call(
+                                    this.connection, result,
+                                    ...parameter.concat(
+                                        methodName === '_all' ? name : []))
+                    return result
+                }
+            }
         /*
             For local database:
 
@@ -116,6 +153,25 @@ export class GenericDataService {
     }
     remove(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.remove(...parameter)
+    }
+    register(
+        names:string|Array<string>, callback:Function, type:string = 'post'
+    ):Function {
+        if (!Array.isArray(names))
+            names = [names]
+        for (const name:string of names) {
+            if (!this.middlewares[type].hasOwnProperty(name))
+                this.middlewares[type][name] = []
+            this.middlewares[type][name].push(callback)
+        }
+        return ():void => {
+            for (const name:string of names) {
+                const index:number = this.middlewares[type][name].indexOf(
+                    callback)
+                if (index !== -1)
+                    this.middlewares[type][name].splice(index, 1)
+            }
+        }
     }
 }
 @Injectable()
