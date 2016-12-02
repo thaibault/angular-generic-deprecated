@@ -407,24 +407,69 @@ for (const configuration:PlainObject of [
 // / region object
 @Pipe({name: 'genericExtractRawData'})
 export class GenericExtractRawDataPipe implements PipeTransform {
-    transform(data:PlainObject):string {
+    transform(newDocument:PlainObject, oldDocument:?PlainObject):PlainObject {
         const result:PlainObject = {}
-        for (const name:string in data)
-            if (data.hasOwnProperty(name) && ![undefined, null, ''].includes(
-                data[name]
-            ) && name !== '_revisions')
+        const untouchedAttachments:Array<string> = []
+        for (const name:string in newDocument)
+            if (newDocument.hasOwnProperty(name) && ![
+                undefined, null, ''
+            ].includes(newDocument[name]) && name !== '_revisions')
                 if (name === '_attachments') {
                     result[name] = {}
-                    for (const fileName:string in data[name])
-                        if (data[name].hasOwnProperty(fileName) && data[name][
+                    let empty:boolean = true
+                    for (const fileName:string in newDocument[name])
+                        if (newDocument[name].hasOwnProperty(
                             fileName
-                        ].hasOwnProperty('data'))
-                            result[name][fileName] = {
-                                content_type: data[name][fileName].content_type,
-                                data: data[name][fileName].data
-                            }
+                        ))
+                            if (newDocument[name][fileName].hasOwnProperty(
+                                'data'
+                            ) && !(oldDocument.hasOwnProperty(
+                                name
+                            ) && oldDocument[name].hasOwnProperty(
+                                fileName
+                            ) && newDocument[name][
+                                fileName
+                            ].data === oldDocument[name][fileName].data)) {
+                                result[name][fileName] = {
+                                    content_type: newDocument[name][
+                                        fileName
+                                    ].content_type,
+                                    data: newDocument[name][fileName].data
+                                }
+                                empty = false
+                            } else
+                                untouchedAttachments.push(fileName)
+                    if (empty)
+                        delete result[name]
                 } else
-                    result[name] = data[name]
+                    result[name] = newDocument[name]
+        // Handle attachment removes or replacements.
+        if (oldDocument && oldDocument.hasOwnProperty('_attachments'))
+            for (const type:string in oldDocument._attachments)
+                if (oldDocument._attachments.hasOwnProperty(type) && ![
+                    undefined, null
+                ].includes(oldDocument._attachments[type].value)) {
+                    if (result._attachments) {
+                        if (result._attachments.hasOwnProperty(
+                            oldDocument._attachments[type].value.name
+                        ))
+                            continue
+                    } else if (!untouchedAttachments.includes(
+                        oldDocument._attachments[type].value.name
+                    )) {
+                        result._attachments = {
+                            [oldDocument._attachments[type].value.name]: {
+                                data: null}}
+                        continue
+                    }
+                    for (const fileName:string in result._attachments)
+                        if (result._attachments.hasOwnProperty(
+                            fileName
+                        ) && (new RegExp(type)).test(fileName))
+                            result._attachments[oldDocument._attachments[
+                                type
+                            ].value.name] = {data: null}
+                }
         return result
     }
 }
