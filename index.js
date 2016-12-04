@@ -27,7 +27,7 @@ import {
 } from '@angular/core'
 import {FormsModule} from '@angular/forms'
 import {MaterialModule} from '@angular/material'
-import {CanDeactivate} from '@angular/router'
+import {CanDeactivate, Router} from '@angular/router'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -70,21 +70,25 @@ export class GenericDataService {
     database:PouchDB
     connection:PouchDB
     synchronisation:Object
-    tools:Tools
+    stringFormat:Function
+    extendObject:Function
     middlewares:{
         pre:{[key:string]:Array<Function>};
         post:{[key:string]:Array<Function>};
     } = {
-        pre: {},
-        post: {}
+        post: {},
+        pre: {}
     }
     constructor(
-        tools:GenericToolsService, initialData:GenericInitialDataService
+        stringFormat:GenericStringFormatPipe,
+        initialData:GenericInitialDataService,
+        extendObject:GenericExtendObjectPipe
     ):void {
-        this.tools = tools.tools
+        this.stringFormat = stringFormat.transform
+        this.extendObject = extendObject.transform
         this.database = PouchDB.plugin(PouchDBFindPlugin)
                                .plugin(PouchDBValidationPlugin)
-        this.connection = new this.database(this.tools.stringFormat(
+        this.connection = new this.database(this.stringFormat(
             initialData.configuration.database.url, ''
         ) + `/${initialData.configuration.name}`, {skip_setup: true})
         for (const name:string in this.connection)
@@ -126,7 +130,7 @@ export class GenericDataService {
         /*
             For local database:
 
-            this.synchronisation = PouchDB.sync(this.tools.stringFormat(
+            this.synchronisation = PouchDB.sync(this.stringFormat(
                 initialData.configuration.database.url,
                 `${initialData.configuration.database.user.name}:` +
                 `${initialData.configuration.database.user.password}@`
@@ -144,7 +148,7 @@ export class GenericDataService {
     async get(
         selector:PlainObject, options:PlainObject = {}
     ):Promise<Array<PlainObject>> {
-        return (await this.connection.find(this.tools.extendObject(
+        return (await this.connection.find(this.extendObject(
             true, {selector}, options
         ))).docs
     }
@@ -178,13 +182,15 @@ export class GenericDataService {
 export class GenericDataScopeService {
     configuration:PlainObject
     data:GenericDataService
+    extendObject:Function
     tools:Tools
     constructor(
         data:GenericDataService, initialData:GenericInitialDataService,
-        tools:GenericToolsService
+        extendObjec:GenericExtendObjectPipe, tools:GenericToolsService
     ):void {
         this.configuration = initialData.configuration
         this.data = data
+        this.extendObject = extendObject.transform
         this.tools = tools.tools
     }
     generate(
@@ -199,13 +205,13 @@ export class GenericDataScopeService {
                     for (const fileName:string in modelSpecification[name])
                         if (modelSpecification[name].hasOwnProperty(fileName))
                             modelSpecification[name][fileName] =
-                                this.tools.extendObject(
+                                this.extendObject(
                                     true, this.tools.copyLimitedRecursively(
                                         this.configuration.modelConfiguration
                                             .default.propertySpecification
                                     ), modelSpecification[name][fileName])
                 } else
-                    modelSpecification[name] = this.tools.extendObject(
+                    modelSpecification[name] = this.extendObject(
                         true, this.tools.copyLimitedRecursively(
                             this.configuration.modelConfiguration.default
                                 .propertySpecification,
@@ -347,7 +353,7 @@ export class GenericDataScopeService {
             if (!Array.isArray(scope))
                 scope = [scope]
             for (const object:Object of scope)
-                this.tools.extendObject(true, object, result)
+                this.extendObject(true, object, result)
             return result
         }
         return result
@@ -391,21 +397,24 @@ for (const name:string of Object.getOwnPropertyNames(Tools))
         reference[name] = Tools[name]
 for (const configuration:PlainObject of [
     {
-        reference: window,
         invert: ['array'],
         methodGroups: {
             string: ['encodeURIComponent'],
             number: ['pow']
-        }
+        },
+        reference: window
     }, {
-        reference: reference,
         invert: ['array'],
         methodGroups: {
-            '': ['convertCircularObjectToJSON', 'equals', 'sort'],
+            '': [
+                'convertCircularObjectToJSON', 'equals', 'extendObject',
+                'representObject', 'sort'
+            ],
             array: '*',
-            string: '*',
-            number: '*'
-        }
+            number: '*',
+            string: '*'
+        },
+        reference: reference
     }
 ])
     for (const methodTypePrefix:string in configuration.methodGroups)
@@ -746,12 +755,12 @@ export class GenericInputComponent {
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
-    _tools:Tools
-    constructor(tools:GenericToolsService):void {
-        this._tools = tools.tools
+    _extendObject:Function
+    constructor(extendObject:GenericExtendObjectPipe):void {
+        this._extendObject = extendObject.transform
     }
     ngOnInit():void {
-        this._tools.extendObject(this.model, this._tools.extendObject({
+        this._extendObject(this.model, this._extendObject({
             disabled: false,
             maximum: Infinity,
             minimum: (this.model.type === 'string') ? 0 : -Infinity,
@@ -774,12 +783,12 @@ export class GenericTextareaComponent {
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
-    _tools:Tools
-    constructor(tools:GenericToolsService):void {
-        this._tools = tools.tools
+    _extendObjec:Function
+    constructor(extendObjec:GenericExtendObjectPipe):void {
+        this._extendObject = extendObject.transform
     }
     ngOnInit():void {
-        this._tools.extendObject(this.model, this._tools.extendObject({
+        this._extendObject(this.model, this._extendObject({
             disabled: false,
             maximum: Infinity,
             minimum: (this.model.type === 'string') ? 0 : -Infinity,
@@ -883,7 +892,8 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         '(?:application/(?:x-)?shockwave-flash)$')
     _data:GenericDataService
     _domSanitization:DomSanitizer
-    _tools:Tools
+    _getFilenameByPrefix:Function
+    _representObject:Function
     _prefixMatch:boolean = false
     // Holds the current selected file object if present.
     file:?PlainObject = null
@@ -905,15 +915,15 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
     constructor(
         data:GenericDataService, domSanitizer:DomSanitizer,
         getFilenameByPrefix:GenericGetFilenameByPrefixPipe,
-        tools:GenericToolsService
+        representObject:GenericRepresentObjectPipe
     ):void {
         this._data = data
         this._domSanitizer = domSanitizer
-        this._getFilenameByPrefix = getFilenameByPrefix
-        this._tools = tools.tools
+        this._getFilenameByPrefix = getFilenameByPrefix.transform
+        this._representObject = representObject.transform
     }
     ngOnInit():void {
-        const name:string = this._getFilenameByPrefix.transform(
+        const name:string = this._getFilenameByPrefix(
             this.model._attachments, this.name)
         if (name !== this.name)
             this._prefixMatch = true
@@ -998,7 +1008,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                     result = await this._data.put(newData)
                 } catch (error) {
                     this.model._attachments[this.internalName].state.errors = {
-                        database: this._tools.representObject(error)}
+                        database: this._representObject(error)}
                     return
                 }
                 this.file.revision = this.model._rev = result.rev
@@ -1036,7 +1046,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 })
             } catch (error) {
                 this.model._attachments[this.internalName].state.errors = {
-                    database: this._tools.representObject(error)
+                    database: this._representObject(error)
                 }
                 return
             }
@@ -1070,6 +1080,54 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 this.file.content_type)
         )
             this.file.type = 'video'
+    }
+}
+@Component({
+    selector: 'generic-pagination',
+    template: `
+        <ul *ngIf="getTotalPages() > 1">
+            <li *ngIf="page !== 1">
+                <a (click)="change(getPrevPage())">«</a>
+            </li>
+            <li *ngFor="let p of getPagesRange()">
+                <a (click)="change(p)">{{p}}</a>
+            </li>
+            <li *ngIf="getTotalPages() > page">
+                <a (click)="change(getNextPage())">»</a>
+            </li>
+        </ul>
+    `
+})
+export class PaginationComponent {
+    totalPage:number = 0
+    @Input() total:number = 0
+    @Input() page:number = 1
+    @Input() itemsPerPage:number = 10
+    _roter:Router
+    _makeRange:Function
+    constructor(router:Router, mMakeRange:GenericArrayMakeRangePipe):void {
+        this._router = router
+        this._makeRange = makeRange.transform
+    }
+    getTotalPages():number {
+        return Math.ceil(this.total / this.itemsPerPage)
+    }
+    getRangeStart():number {
+        return Math.floor(this.page / this.itemsPerPage) * this.itemsPerPage + 1
+    }
+    getPagesRange():number {
+        return this._makeRange([this.getRangeStart(), Math.min(
+            this.getRangeStart() + this.itemsPerPage, this.getTotalPages() + 1
+        )])
+    }
+    getPrevPage():number {
+        return Math.max(this.getRangeStart(), this.page - 1)
+    }
+    getNextPage():number {
+        return Math.min(this.page + 1, this.getTotalPages())
+    }
+    change():void {
+        this._router
     }
 }
 // endregion
