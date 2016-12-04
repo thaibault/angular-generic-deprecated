@@ -34,7 +34,7 @@ import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
 import {Observable} from 'rxjs/Observable'
 // endregion
-// region services
+// region basic services
 @Injectable()
 export class GenericToolsService {
     $:any = $
@@ -56,6 +56,305 @@ export class GenericInitialDataService {
                     key]
     }
 }
+// endregion
+// region pipes
+// / region forwarded methods
+const reference:Object = {}
+for (const name:string of Object.getOwnPropertyNames(Tools))
+    if (!['caller', 'arguments'].includes(name))
+        reference[name] = Tools[name]
+for (const configuration:PlainObject of [
+    {
+        invert: ['array'],
+        methodGroups: {
+            string: ['encodeURIComponent'],
+            number: ['pow']
+        },
+        reference: window
+    }, {
+        invert: ['array'],
+        methodGroups: {
+            '': [
+                'convertCircularObjectToJSON', 'equals', 'extendObject',
+                'representObject', 'sort'
+            ],
+            array: '*',
+            number: '*',
+            string: '*'
+        },
+        reference: reference
+    }
+])
+    for (const methodTypePrefix:string in configuration.methodGroups)
+        if (configuration.methodGroups.hasOwnProperty(methodTypePrefix)) {
+            let methodNames:Array<string> = []
+            if (configuration.methodGroups[methodTypePrefix] === '*') {
+                for (const name:string in configuration.reference)
+                    if (configuration.reference.hasOwnProperty(
+                        name
+                    ) && configuration.reference.hasOwnProperty(name) && (
+                        new RegExp(`^${methodTypePrefix}[A-Z0-9]`)
+                    ).test(name))
+                        methodNames.push(name)
+            } else
+                methodNames = configuration.methodGroups[methodTypePrefix]
+            for (const methodName:string of methodNames) {
+                const pipeName:string = Tools.stringCapitalize(methodName)
+                module.exports[`Generic${pipeName}Pipe`] = class {
+                    transform(...parameter:Array<any>):any {
+                        return ReflectiveInjector.resolveAndCreate([
+                            GenericToolsService
+                        ]).get(GenericToolsService).tools[methodName](
+                            ...parameter)
+                    }
+                }
+                Pipe({name: `generic${pipeName}`})(
+                    module.exports[`Generic${pipeName}Pipe`])
+                if (configuration.invert.includes(methodTypePrefix)) {
+                    module.exports[`generic${pipeName}InvertedPipe`] = class {
+                        transform(...parameter:Array<any>):any {
+                            const tools:Tools =
+                                ReflectiveInjector.resolveAndCreate(
+                                    [GenericToolsService]
+                                ).tools
+                            return tools.invertArrayFilter(tools[methodName])(
+                                ...parameter)
+                        }
+                    }
+                    Pipe({name: `generic${pipeName}Inverted`})(
+                        module.exports[`generic${pipeName}InvertedPipe`])
+                }
+            }
+        }
+// / endregion
+// / region object
+@Pipe({name: 'genericExtractRawData'})
+export class GenericExtractRawDataPipe implements PipeTransform {
+    transform(
+        newDocument:PlainObject, oldDocument:?PlainObject,
+        typeReplacement:boolean = true
+    ):PlainObject {
+        const result:PlainObject = {}
+        const untouchedAttachments:Array<string> = []
+        for (const name:string in newDocument)
+            if (newDocument.hasOwnProperty(name) && ![
+                undefined, null, ''
+            ].includes(newDocument[name]) && name !== '_revisions')
+                if (name === '_attachments') {
+                    result[name] = {}
+                    let empty:boolean = true
+                    for (const fileName:string in newDocument[name])
+                        if (newDocument[name].hasOwnProperty(
+                            fileName
+                        ))
+                            if (newDocument[name][fileName].hasOwnProperty(
+                                'data'
+                            ) && !(oldDocument.hasOwnProperty(
+                                name
+                            ) && oldDocument[name].hasOwnProperty(
+                                fileName
+                            ) && newDocument[name][
+                                fileName
+                            ].data === oldDocument[name][fileName].data)) {
+                                result[name][fileName] = {
+                                    content_type: newDocument[name][
+                                        fileName
+                                    ].content_type,
+                                    data: newDocument[name][fileName].data
+                                }
+                                empty = false
+                            } else
+                                untouchedAttachments.push(fileName)
+                    if (empty)
+                        delete result[name]
+                } else
+                    result[name] = newDocument[name]
+        // Handle attachment removes or replacements.
+        if (oldDocument && oldDocument.hasOwnProperty('_attachments'))
+            for (const type:string in oldDocument._attachments)
+                if (oldDocument._attachments.hasOwnProperty(type) && ![
+                    undefined, null
+                ].includes(oldDocument._attachments[type].value)) {
+                    if (result._attachments) {
+                        if (result._attachments.hasOwnProperty(
+                            oldDocument._attachments[type].value.name
+                        ))
+                            continue
+                    } else if (!untouchedAttachments.includes(
+                        oldDocument._attachments[type].value.name
+                    )) {
+                        result._attachments = {
+                            [oldDocument._attachments[type].value.name]: {
+                                data: null}}
+                        continue
+                    }
+                    if (typeReplacement)
+                        for (const fileName:string in result._attachments)
+                            if (result._attachments.hasOwnProperty(
+                                fileName
+                            ) && (new RegExp(type)).test(fileName))
+                                result._attachments[oldDocument._attachments[
+                                    type
+                                ].value.name] = {data: null}
+                }
+        return result
+    }
+}
+@Pipe({name: 'genericGetFilenameByPrefix'})
+export class GenericGetFilenameByPrefixPipe implements PipeTransform {
+    transform(attachments:PlainObject, prefix:string):?string {
+        for (const name:string in attachments)
+            if (attachments.hasOwnProperty(name) && name.startsWith(prefix))
+                return name
+        return null
+    }
+}
+/**
+ * Returns given object with where each item was processed through given
+ * filter.
+*/
+@Pipe({name: 'genericMap'})
+export class GenericMapPipe implements PipeTransform {
+    injector:Injector
+    constructor(injector:Injector):void {
+        this.injector = injector
+    }
+    transform(
+        object:any, filterName:string, ...additionalArguments:Array<any>
+    ):any {
+        if (Array.isArray(object)) {
+            const result:Array<any> = []
+            for (const item:any of object)
+                result.push(this.injector.get(filterName).transform(
+                    item, ...additionalArguments))
+            return result
+        }
+        const result:Object = {}
+        for (const key:string in object)
+            if (object.hasOwnProperty(key))
+                result[key] = this.injector.get(filterName).transform(
+                    value, ...additionalArguments)
+        return result
+    }
+}
+/**
+ * Returns type of given object.
+ */
+@Pipe({name: 'genericType'})
+export class GenericTypePipe implements PipeTransform {
+    transform(object:any):string {
+        return typeof object
+    }
+}
+/**
+ * Checks if given reference is defined.
+ */
+@Pipe({name: 'genericIsDefined'})
+export class GenericIsDefinedPipe implements PipeTransform {
+    transform(object:any, nullIsUndefined:boolean = false):boolean {
+        return !(object === undefined || nullIsUndefined && indicator === null)
+    }
+}
+// / endregion
+// region string
+@Pipe({name: 'genericStringReplace'})
+export class GenericStringReplacePipe implements PipeTransform {
+    transform(
+        string:string, search:string|RegExp, replacement:string = '',
+        modifier:string = 'g'
+    ):string {
+        return string.replace(new RegExp(search, modifier), replacement)
+    }
+}
+/**
+ * Returns given string if it matches given pattern.
+ */
+@Pipe({name: 'genericStringShowIfPatternMatches'})
+export class GenericStringShowIfPatternMatechsPipe implements PipeTransform {
+    transform(
+        string:string, pattern:string, invert:boolean = false,
+        modifier:string = 'g'
+    ):string {
+        indicator = new $window.RegExp(pattern, modifier).test(string)
+        if (invert)
+            indicator = !indicator
+        return indicator ? string : ''
+    }
+}
+/**
+ * Replaces a string with given replacement.
+ */
+@Pipe({name: 'genericStringStartsWith'})
+export class GenericStringStartsWithPipe implements PipeTransform {
+    transform(string:?string, needle:?string):boolean {
+        return string && typeof needle === 'string' && string.startsWith(
+            needle)
+    }
+}
+/**
+ * Replaces a string with given replacement.
+ */
+@Pipe({name: 'genericStringEndsWith'})
+export class GenericStringEndsWith implements PipeTransform {
+    transform(string:?string, needle:?string):boolean {
+        return string && typeof needle === 'string' && string.endsWith(needle)
+    }
+}
+/**
+ * Tests if given pattern matches against given subject.
+ */
+@Pipe({name: 'genericStringMatch'})
+export class GenericStringMatchPipe implements PipeTransform {
+    transform(pattern:string, subject:string, modifier:string = ''):boolean {
+        return (new $window.RegExp(pattern, modifier)).test(subject)
+    }
+}
+/**
+ * Returns a matched part of given subject with given pattern. Default is the
+ * whole (zero) matched part.
+ */
+@Pipe({name: 'genericStringSliceMatch'})
+export class GenericStringSliceMatchPipe implements PipeTransform {
+    transform(
+        subject:?subject, pattern:string, index:number = 0,
+        modifier:string = ''
+    ):string {
+        return subject ? subject.match(new RegExp(
+            pattern, modifier
+        ))[index] : ''
+    }
+}
+/**
+ * Determines if given string has a time indicating suffix.
+ */
+@Pipe({name: 'genericStringHasTimeSuffix'})
+export class GenericStringHasTimeSuffix implements PipeTransform {
+    transform(string:?string):boolean {
+        if (typeof string !== 'string')
+            return false
+        return string.endsWith('DateTime') || string.endsWith(
+            'Date'
+        ) || string.endsWith('Time') || string === 'timestamp'
+    }
+}
+// / endregion
+// / region number
+/**
+ * Returns part in percent of all.
+ */
+@Pipe({name: 'genericNumberPercent'})
+export class GenericNumberPercent implements PipeTransform {
+    transform(part:number, all:number):number {
+        return (part / all) * 100
+    }
+}
+// / endregion
+// endregion
+const GenericArrayMakeRangePipe = module.exports.GenericArrayMakeRangePipe
+const GenericExtendObjectPipe = module.exports.GenericExtendObjectPipe
+const GenericRepresentObjectPipe = module.exports.GenericRepresentObjectPipe
+const GenericStringFormatPipe = module.exports.GenericStringFormatPipe
+// region services
 @Injectable()
 export class GenericCanDeactivateRouteLeaveGuard implements
 CanDeactivate<Object> {
@@ -388,309 +687,6 @@ export class GenericDataScopeService {
         return result
     }
 }
-// endregion
-// region pipes
-// / region forwarded methods
-const reference:Object = {}
-for (const name:string of Object.getOwnPropertyNames(Tools))
-    if (!['caller', 'arguments'].includes(name))
-        reference[name] = Tools[name]
-for (const configuration:PlainObject of [
-    {
-        invert: ['array'],
-        methodGroups: {
-            string: ['encodeURIComponent'],
-            number: ['pow']
-        },
-        reference: window
-    }, {
-        invert: ['array'],
-        methodGroups: {
-            '': [
-                'convertCircularObjectToJSON', 'equals', 'extendObject',
-                'representObject', 'sort'
-            ],
-            array: '*',
-            number: '*',
-            string: '*'
-        },
-        reference: reference
-    }
-])
-    for (const methodTypePrefix:string in configuration.methodGroups)
-        if (configuration.methodGroups.hasOwnProperty(methodTypePrefix)) {
-            let methodNames:Array<string> = []
-            if (configuration.methodGroups[methodTypePrefix] === '*') {
-                for (const name:string in configuration.reference)
-                    if (configuration.reference.hasOwnProperty(
-                        name
-                    ) && configuration.reference.hasOwnProperty(name) && (
-                        new RegExp(`^${methodTypePrefix}[A-Z0-9]`)
-                    ).test(name))
-                        methodNames.push(name)
-            } else
-                methodNames = configuration.methodGroups[methodTypePrefix]
-            for (const methodName:string of methodNames) {
-                const pipeName:string = Tools.stringCapitalize(methodName)
-                module.exports[`Generic${pipeName}Pipe`] = class {
-                    tools:Tools
-                    constructor():void {
-                        const injector:ReflectiveInjector =
-                            ReflectiveInjector.resolveAndCreate(
-                                [GenericToolsService])
-                        this.tools = injector.get(GenericToolsService).tools
-                    }
-                    transform(...parameter:Array<any>):any {
-                        return this.tools[methodName](...parameter)
-                    }
-                }
-                Pipe({name: `generic${pipeName}`})(
-                    module.exports[`Generic${pipeName}Pipe`])
-                if (configuration.invert.includes(methodTypePrefix)) {
-                    module.exports[`generic${pipeName}InvertedPipe`] = class {
-                        tools:Tools
-                        constructor():void {
-                            const injector:ReflectiveInjector =
-                                ReflectiveInjector.resolveAndCreate(
-                                    [GenericToolsService])
-                            this.tools = injector.get(
-                                GenericToolsService
-                            ).tools
-                        }
-                        transform(...parameter:Array<any>):any {
-                            return this.tools.invertArrayFilter(
-                                this.tools[methodName]
-                            )(...parameter)
-                        }
-                    }
-                    Pipe({name: `generic${pipeName}Inverted`})(
-                        module.exports[`generic${pipeName}InvertedPipe`])
-                }
-            }
-        }
-// / endregion
-// / region object
-@Pipe({name: 'genericExtractRawData'})
-export class GenericExtractRawDataPipe implements PipeTransform {
-    transform(
-        newDocument:PlainObject, oldDocument:?PlainObject,
-        typeReplacement:boolean = true
-    ):PlainObject {
-        const result:PlainObject = {}
-        const untouchedAttachments:Array<string> = []
-        for (const name:string in newDocument)
-            if (newDocument.hasOwnProperty(name) && ![
-                undefined, null, ''
-            ].includes(newDocument[name]) && name !== '_revisions')
-                if (name === '_attachments') {
-                    result[name] = {}
-                    let empty:boolean = true
-                    for (const fileName:string in newDocument[name])
-                        if (newDocument[name].hasOwnProperty(
-                            fileName
-                        ))
-                            if (newDocument[name][fileName].hasOwnProperty(
-                                'data'
-                            ) && !(oldDocument.hasOwnProperty(
-                                name
-                            ) && oldDocument[name].hasOwnProperty(
-                                fileName
-                            ) && newDocument[name][
-                                fileName
-                            ].data === oldDocument[name][fileName].data)) {
-                                result[name][fileName] = {
-                                    content_type: newDocument[name][
-                                        fileName
-                                    ].content_type,
-                                    data: newDocument[name][fileName].data
-                                }
-                                empty = false
-                            } else
-                                untouchedAttachments.push(fileName)
-                    if (empty)
-                        delete result[name]
-                } else
-                    result[name] = newDocument[name]
-        // Handle attachment removes or replacements.
-        if (oldDocument && oldDocument.hasOwnProperty('_attachments'))
-            for (const type:string in oldDocument._attachments)
-                if (oldDocument._attachments.hasOwnProperty(type) && ![
-                    undefined, null
-                ].includes(oldDocument._attachments[type].value)) {
-                    if (result._attachments) {
-                        if (result._attachments.hasOwnProperty(
-                            oldDocument._attachments[type].value.name
-                        ))
-                            continue
-                    } else if (!untouchedAttachments.includes(
-                        oldDocument._attachments[type].value.name
-                    )) {
-                        result._attachments = {
-                            [oldDocument._attachments[type].value.name]: {
-                                data: null}}
-                        continue
-                    }
-                    if (typeReplacement)
-                        for (const fileName:string in result._attachments)
-                            if (result._attachments.hasOwnProperty(
-                                fileName
-                            ) && (new RegExp(type)).test(fileName))
-                                result._attachments[oldDocument._attachments[
-                                    type
-                                ].value.name] = {data: null}
-                }
-        return result
-    }
-}
-@Pipe({name: 'genericGetFilenameByPrefix'})
-export class GenericGetFilenameByPrefixPipe implements PipeTransform {
-    transform(attachments:PlainObject, prefix:string):?string {
-        for (const name:string in attachments)
-            if (attachments.hasOwnProperty(name) && name.startsWith(prefix))
-                return name
-        return null
-    }
-}
-/**
- * Returns given object with where each item was processed through given
- * filter.
-*/
-@Pipe({name: 'genericMap'})
-export class GenericMapPipe implements PipeTransform {
-    injector:Injector
-    constructor(injector:Injector):void {
-        this.injector = injector
-    }
-    transform(
-        object:any, filterName:string, ...additionalArguments:Array<any>
-    ):any {
-        if (Array.isArray(object)) {
-            const result:Array<any> = []
-            for (const item:any of object)
-                result.push(this.injector.get(filterName).transform(
-                    item, ...additionalArguments))
-            return result
-        }
-        const result:Object = {}
-        for (const key:string in object)
-            if (object.hasOwnProperty(key))
-                result[key] = this.injector.get(filterName).transform(
-                    value, ...additionalArguments)
-        return result
-    }
-}
-/**
- * Returns type of given object.
- */
-@Pipe({name: 'genericType'})
-export class GenericTypePipe implements PipeTransform {
-    transform(object:any):string {
-        return typeof object
-    }
-}
-/**
- * Checks if given reference is defined.
- */
-@Pipe({name: 'genericIsDefined'})
-export class GenericIsDefinedPipe implements PipeTransform {
-    transform(object:any, nullIsUndefined:boolean = false):boolean {
-        return !(object === undefined || nullIsUndefined && indicator === null)
-    }
-}
-// / endregion
-// region string
-@Pipe({name: 'genericStringReplace'})
-export class GenericStringReplacePipe implements PipeTransform {
-    transform(
-        string:string, search:string|RegExp, replacement:string = '',
-        modifier:string = 'g'
-    ):string {
-        return string.replace(new RegExp(search, modifier), replacement)
-    }
-}
-/**
- * Returns given string if it matches given pattern.
- */
-@Pipe({name: 'genericStringShowIfPatternMatches'})
-export class GenericStringShowIfPatternMatechsPipe implements PipeTransform {
-    transform(
-        string:string, pattern:string, invert:boolean = false,
-        modifier:string = 'g'
-    ):string {
-        indicator = new $window.RegExp(pattern, modifier).test(string)
-        if (invert)
-            indicator = !indicator
-        return indicator ? string : ''
-    }
-}
-/**
- * Replaces a string with given replacement.
- */
-@Pipe({name: 'genericStringStartsWith'})
-export class GenericStringStartsWithPipe implements PipeTransform {
-    transform(string:?string, needle:?string):boolean {
-        return string && typeof needle === 'string' && string.startsWith(
-            needle)
-    }
-}
-/**
- * Replaces a string with given replacement.
- */
-@Pipe({name: 'genericStringEndsWith'})
-export class GenericStringEndsWith implements PipeTransform {
-    transform(string:?string, needle:?string):boolean {
-        return string && typeof needle === 'string' && string.endsWith(needle)
-    }
-}
-/**
- * Tests if given pattern matches against given subject.
- */
-@Pipe({name: 'genericStringMatch'})
-export class GenericStringMatchPipe implements PipeTransform {
-    transform(pattern:string, subject:string, modifier:string = ''):boolean {
-        return (new $window.RegExp(pattern, modifier)).test(subject)
-    }
-}
-/**
- * Returns a matched part of given subject with given pattern. Default is the
- * whole (zero) matched part.
- */
-@Pipe({name: 'genericStringSliceMatch'})
-export class GenericStringSliceMatchPipe implements PipeTransform {
-    transform(
-        subject:?subject, pattern:string, index:number = 0,
-        modifier:string = ''
-    ):string {
-        return subject ? subject.match(new RegExp(
-            pattern, modifier
-        ))[index] : ''
-    }
-}
-/**
- * Determines if given string has a time indicating suffix.
- */
-@Pipe({name: 'genericStringHasTimeSuffix'})
-export class GenericStringHasTimeSuffix implements PipeTransform {
-    transform(string:?string):boolean {
-        if (typeof string !== 'string')
-            return false
-        return string.endsWith('DateTime') || string.endsWith(
-            'Date'
-        ) || string.endsWith('Time') || string === 'timestamp'
-    }
-}
-// / endregion
-// / region number
-/**
- * Returns part in percent of all.
- */
-@Pipe({name: 'genericNumberPercent'})
-export class GenericNumberPercent implements PipeTransform {
-    transform(part:number, all:number):number {
-        return (part / all) * 100
-    }
-}
-// / endregion
 // endregion
 // region components
 // // region text
