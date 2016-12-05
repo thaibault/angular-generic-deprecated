@@ -447,9 +447,9 @@ export class GenericDataService {
     async get(
         selector:PlainObject, options:PlainObject = {}
     ):Promise<Array<PlainObject>> {
-        return (await this.connection.find(this.extendObject(
-            true, {selector}, options
-        ))).docs
+        return (await this.connection.find(
+            this.extendObject(true, {selector}, options)
+        )).docs
     }
     put(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.put(...parameter)
@@ -1081,49 +1081,66 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
 @Component({
     selector: 'generic-pagination',
     template: `
-        <ul *ngIf="getTotalPages() > 1">
-            <li *ngIf="page !== 1">
-                <a (click)="change(getPrevPage())">«</a>
+        <ul *ngIf="getLastPage() > 1">
+            <li *ngIf="page > 2">
+                <a href="" (click)="change($event, 1)">--</a>
+            </li>
+            <li *ngIf="page > 1">
+                <a href="" (click)="change($event, getPrevPage())">-</a>
             </li>
             <li *ngFor="let p of getPagesRange()">
-                <a (click)="change(p)">{{p}}</a>
+                <a href="" (click)="change($event, p)">{{p}}</a>
             </li>
-            <li *ngIf="getTotalPages() > page">
-                <a (click)="change(getNextPage())">»</a>
+            <li *ngIf="getLastPage() > page">
+                <a href="" (click)="change($event, getNextPage())">+</a>
+            </li>
+            <li *ngIf="getLastPage() > page + 1">
+                <a href="" (click)="change($event, getLastPage())">++</a>
             </li>
         </ul>
     `
 })
-export class PaginationComponent {
-    totalPage:number = 0
-    @Input() total:number = 0
+export class GenericPaginationComponent {
+    @Input() itemsPerPage:number = 20
     @Input() page:number = 1
-    @Input() itemsPerPage:number = 10
+    @Output() pageChange:EventEmitter = new EventEmitter()
+    @Input() total:number = 0
+    @Input() pageRangeLimit:number = 4
     _roter:Router
     _makeRange:Function
-    constructor(router:Router, mMakeRange:GenericArrayMakeRangePipe):void {
+    constructor(router:Router, makeRange:GenericArrayMakeRangePipe):void {
         this._router = router
         this._makeRange = makeRange.transform
     }
-    getTotalPages():number {
+    getLastPage():number {
         return Math.ceil(this.total / this.itemsPerPage)
     }
-    getRangeStart():number {
-        return Math.floor(this.page / this.itemsPerPage) * this.itemsPerPage + 1
-    }
     getPagesRange():number {
-        return this._makeRange([this.getRangeStart(), Math.min(
-            this.getRangeStart() + this.itemsPerPage, this.getTotalPages() + 1
-        )])
+        if (this.page - this.pageRangeLimit < 1) {
+            const start:number = 1
+            const startRest:number = this.pageRangeLimit - (this.page - start)
+            const end:number = Math.min(
+                this.getLastPage(), this.page + this.pageRangeLimit + startRest
+            )
+            return this._makeRange([start, end])
+        }
+        const end:number = Math.min(
+            this.getLastPage(), this.page + this.pageRangeLimit)
+        const endRest:number = this.pageRangeLimit - (end - this.page)
+        const start:number = Math.max(
+            1, this.page - this.pageRangeLimit - endRest)
+        return this._makeRange([start, end])
     }
     getPrevPage():number {
-        return Math.max(this.getRangeStart(), this.page - 1)
+        return Math.max(1, this.page - 1)
     }
     getNextPage():number {
-        return Math.min(this.page + 1, this.getTotalPages())
+        return Math.min(this.page + 1, this.getLastPage())
     }
-    change():void {
-        this._router
+    change(event:Object, newPage:number):void {
+        event.preventDefault()
+        this.page = newPage
+        this.pageChange.emit(this.page)
     }
 }
 // endregion
