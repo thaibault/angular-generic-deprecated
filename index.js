@@ -530,22 +530,22 @@ export class GenericDataScopeService {
                         result[name][type].name = type
                         result[name][type].value = null
                         if (Object.keys(data).length === 0)
-                            for (const constraintType:string of [
+                            for (const hookType:string of [
                                 'onCreateExpression', 'onCreateExecution'
                             ])
                                 if (result[name][type].hasOwnProperty(
-                                    constraintType
-                                ))
+                                    hookType
+                                ) && result[name][type][hookType])
                                     result[name][type].value = (new Function(
                                         'newDocument', 'oldDocument',
                                         'userContext', 'securitySettings',
                                         'name', 'models', 'modelConfiguration',
                                         'serialize', 'modelName', 'model',
                                         'propertySpecification', (
-                                            constraintType.endsWith(
+                                            hookType.endsWith(
                                                 'Expression'
                                             ) ? 'return ' : ''
-                                        ) + result[name][type][constraintType]
+                                        ) + result[name][type][hookType]
                                     ))(
                                         data, null, {}, {}, type,
                                         this.configuration.modelConfiguration
@@ -586,7 +586,9 @@ export class GenericDataScopeService {
                     for (const type:string of [
                         'onCreateExpression', 'onCreateExecution'
                     ])
-                        if (result[name].hasOwnProperty(type))
+                        if (result[name].hasOwnProperty(type) && result[name][
+                            type
+                        ])
                             result[name].value = (new Function(
                                 'newDocument', 'oldDocument', 'userContext',
                                 'securitySettings', 'name', 'models',
