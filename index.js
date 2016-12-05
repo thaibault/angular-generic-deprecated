@@ -485,7 +485,7 @@ export class GenericDataScopeService {
     tools:Tools
     constructor(
         data:GenericDataService, initialData:GenericInitialDataService,
-        extendObjec:GenericExtendObjectPipe, tools:GenericToolsService
+        extendObject:GenericExtendObjectPipe, tools:GenericToolsService
     ):void {
         this.configuration = initialData.configuration
         this.data = data
@@ -779,8 +779,8 @@ export class GenericTextareaComponent {
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
-    _extendObjec:Function
-    constructor(extendObjec:GenericExtendObjectPipe):void {
+    _extendObject:Function
+    constructor(extendObject:GenericExtendObjectPipe):void {
         this._extendObject = extendObject.transform
     }
     ngOnInit():void {
