@@ -203,10 +203,16 @@ export class GenericExtractRawDataPipe implements PipeTransform {
 }
 @Pipe({name: 'genericGetFilenameByPrefix'})
 export class GenericGetFilenameByPrefixPipe implements PipeTransform {
-    transform(attachments:PlainObject, prefix:string):?string {
-        for (const name:string in attachments)
-            if (attachments.hasOwnProperty(name) && name.startsWith(prefix))
-                return name
+    transform(attachments:PlainObject, prefix:?string):?string {
+        if (prefix) {
+            for (const name:string in attachments)
+                if (attachments.hasOwnProperty(name) && name.startsWith(prefix))
+                    return name
+        } else {
+            const keys:Array<string> = Object.keys(attachments)
+            if (keys.length)
+                return keys[0]
+        }
         return null
     }
 }
@@ -351,10 +357,12 @@ export class GenericNumberPercent implements PipeTransform {
 }
 // / endregion
 // endregion
-const GenericArrayMakeRangePipe = module.exports.GenericArrayMakeRangePipe
-const GenericExtendObjectPipe = module.exports.GenericExtendObjectPipe
-const GenericRepresentObjectPipe = module.exports.GenericRepresentObjectPipe
-const GenericStringFormatPipe = module.exports.GenericStringFormatPipe
+const GenericArrayMakeRangePipe:Object =
+    module.exports.GenericArrayMakeRangePipe
+const GenericExtendObjectPipe:Object = module.exports.GenericExtendObjectPipe
+const GenericRepresentObjectPipe:Object =
+    module.exports.GenericRepresentObjectPipe
+const GenericStringFormatPipe:Object = module.exports.GenericStringFormatPipe
 // region services
 @Injectable()
 export class GenericCanDeactivateRouteLeaveGuard implements
@@ -735,11 +743,6 @@ export class AbstractItems {
             ])
         }).subscribe()
     }
-    deleteSelectedItems():void {
-        for (const item:PlainObject of this.selectedItems)
-            console.log('TODO: remove item ' + item._id)
-        this.selectedItems = new Set()
-    }
     goToItem(itemID:string):void {
         this._router.navigate([this._itemPath, itemID])
     }
@@ -990,7 +993,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
     ngOnInit():void {
         const name:string = this._getFilenameByPrefix(
             this.model._attachments, this.name)
-        if (name !== this.name)
+        if (this.name && name !== this.name)
             this._prefixMatch = true
         this.internalName = name
         this.file = this.model._attachments[this.internalName].value
