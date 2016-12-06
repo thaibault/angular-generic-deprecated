@@ -27,11 +27,12 @@ import {
 } from '@angular/core'
 import {FormsModule} from '@angular/forms'
 import {MaterialModule} from '@angular/material'
-import {CanDeactivate, Router} from '@angular/router'
+import {ActivatedRoute, CanDeactivate, Router} from '@angular/router'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
+import {Subject} from 'rxjs'
 import {Observable} from 'rxjs/Observable'
 // endregion
 // region basic services
@@ -691,6 +692,72 @@ export class GenericDataScopeService {
 }
 // endregion
 // region components
+// / region abstract
+export class AbstractItems {
+    items:Observable<Array<PlainObject>>
+    limit:number
+    page:number
+    regularExpression:boolean = false
+    searchTerm:string = ''
+    selectedItems:Set<PlainObject> = new Set()
+    searchTermStream:Subject<string> = new Subject()
+    _router:Router
+    _itemsPath:string = 'admin/items'
+    _itemPath:string = 'admin/item'
+    constructor(route:ActivatedRoute, router:Router):void {
+        this._router = router
+        route.params.subscribe((data:PlainObject):void => {
+            for (const prefix:string of ['exact-', 'regex-'])
+                if (data.searchTerm.startsWith(prefix)) {
+                    this.searchTerm = decodeURIComponent(
+                        data.searchTerm.substring(prefix.length))
+                    break
+                }
+            this.page = parseInt(data.page)
+            this.limit = parseInt(data.limit)
+        })
+        route.data.subscribe((data:PlainObject):void => {
+            const total:number = data.items.length + (
+                this.page - 1
+            ) * this.limit
+            if (data.items.length > this.limit)
+                data.items.splice(this.limit, data.items.length - this.limit)
+            this.items = data.items
+            this.items.total = total
+        })
+        this.searchTermStream.debounceTime(200).distinctUntilChanged().map((
+        ):boolean => {
+            this.page = 1
+            return this._router.navigate([
+                this._itemsPath, this.page, this.limit,
+                `${this.regularExpression ? 'regex' : 'exact'}-` +
+                encodeURIComponent(this.searchTerm)
+            ])
+        }).subscribe()
+    }
+    deleteSelectedItems():void {
+        for (const item:PlainObject of this.selectedItems)
+            console.log('TODO: remove item ' + item._id)
+        this.selectedItems = new Set()
+    }
+    goToItem(itemID:string):void {
+        this._router.navigate([this._itemPath, itemID])
+    }
+    updateSearchResults():void {
+        this.searchTermStream.next(this.searchTerm)
+    }
+    updateResults():void {
+        this.page = Math.max(1, Math.min(
+            this.page, Math.ceil(this.items.total / this.limit)))
+        this.limit = Math.max(1, this.limit || 1)
+        this._router.navigate([
+            this._itemsPath, this.page, this.limit,
+            `${this.regularExpression ? 'regex' : 'exact'}-` +
+            encodeURIComponent(this.searchTerm.trim())
+        ])
+    }
+}
+// / endregion
 // // region text
 const propertyInputContent:string = `
     [disabled]="model.disabled || model.mutable === false || model.writable === false"
