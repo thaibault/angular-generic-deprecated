@@ -980,6 +980,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
     // Indicates weather changed file selections should be immediately attached
     // to given document.
     @Input() synchronizeImmediately:boolean = false
+    @Input() mapNameToField:?string = null
     constructor(
         data:GenericDataService, domSanitizer:DomSanitizer,
         getFilenameByPrefix:GenericGetFilenameByPrefixPipe,
@@ -1061,7 +1062,6 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 const newData:PlainObject = {
                     '-type': this.model['-type'],
                     _id: this.model._id,
-                    _rev: this.model._rev,
                     _attachments: {
                         [this.file.name]: {
                             content_type: this.file.content_type,
@@ -1072,6 +1072,10 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 // NOTE: We want to replace old medium.
                 if (oldFileName && oldFileName !== this.file.name)
                     newData._attachments[oldFileName] = {data: null}
+                if (![undefined, null].includes(this.model._rev))
+                    newData._rev = this.model._rev
+                if (this.mapNameToField)
+                    newData[this.mapNameToField] = this.file.name
                 try {
                     result = await this._data.put(newData)
                 } catch (error) {
@@ -1095,6 +1099,8 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                     this.file.source =
                         this._domSanitizer.bypassSecurityTrustResourceUrl(
                             event.target.result)
+                    if (this.mapNameToField)
+                        this.model[this.mapNameToField] = this.file.name
                     this.fileChange.emit(this.file)
                     this.modelChange.emit(this.model)
                 }
