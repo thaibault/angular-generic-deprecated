@@ -1074,8 +1074,10 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                     newData._attachments[oldFileName] = {data: null}
                 if (![undefined, null].includes(this.model._rev))
                     newData._rev = this.model._rev
-                if (this.mapNameToField)
-                    newData[this.mapNameToField] = this.file.name
+                if (this.mapNameToField) {
+                    newData[this.mapNameToField] = this.file.name,
+                    this.model[this.mapNameToField] = this.file.name
+                }
                 try {
                     result = await this._data.put(newData)
                 } catch (error) {
