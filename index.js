@@ -743,6 +743,19 @@ export class AbstractItems {
             ])
         }).subscribe()
     }
+    delete(event) {
+        let index:number = 0
+        for (const item:PlainObject of this.items) {
+            if (item._id === event.id) {
+                this.items.splice(index, 1)
+                break
+            }
+            index += 1
+        }
+    }
+    deleteSelectedItems():void {
+        this.selectedItems = new Set()
+    }
     goToItem(itemID:string):void {
         this._router.navigate([this._itemPath, itemID])
     }
@@ -812,11 +825,13 @@ const mdInputContent:string = `
 `
 @Component({
     selector: 'generic-input',
-    template: `<md-input
+    template: `
+    <md-input
         [max]="model.type === 'number' ? model.maximum : null"
         [min]="model.type === 'number' ? model.minimum : null"
         [type]="model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
-        ${propertyInputContent}>${mdInputContent}</md-input>
+        ${propertyInputContent}
+    >${mdInputContent}</md-input>
     `
 })
 export class GenericInputComponent {
@@ -963,6 +978,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
     _getFilenameByPrefix:Function
     _representObject:Function
     _prefixMatch:boolean = false
+    @Output() delete:EventEmitter = new EventEmitter()
     // Holds the current selected file object if present.
     file:?PlainObject = null
     @Output() fileChange:EventEmitter = new EventEmitter()
@@ -1075,7 +1091,20 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 if (![undefined, null].includes(this.model._rev))
                     newData._rev = this.model._rev
                 if (this.mapNameToField) {
-                    newData[this.mapNameToField] = this.file.name,
+                    if (this.model._id && this.mapNameToField === '_id') {
+                        newData._deleted = true
+                        try {
+                            result = await this._data.put(newData)
+                        } catch (error) {
+                            this.model._attachments[
+                                this.internalName
+                            ].state.errors = {database: this._representObject(
+                                error)}
+                            return
+                        }
+                        delete newData._deleted
+                    }
+                    newData[this.mapNameToField] = this.file.name
                     this.model[this.mapNameToField] = this.file.name
                 }
                 try {
@@ -1113,17 +1142,24 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
     async remove() {
         if (this.synchronizeImmediately && this.file) {
             let result:PlainObject
+            const update:PlainObject = {
+                '-type': this.model['-type'],
+                _id: this.model._id,
+                _rev: this.model._rev,
+                _attachments: {[this.file.name]: {data: null}}
+            }
+            if (this.mapNameToField === '_id')
+                update._deleted = true
             try {
-                result = await this._data.put({
-                    '-type': this.model['-type'],
-                    _id: this.model._id,
-                    _rev: this.model._rev,
-                    _attachments: {[this.file.name]: {data: null}}
-                })
+                result = await this._data.put(update)
             } catch (error) {
                 this.model._attachments[this.internalName].state.errors = {
                     database: this._representObject(error)
                 }
+                return
+            }
+            if (this.mapNameToField === '_id') {
+                this.delete.emit(result)
                 return
             }
             this.model._rev = result.rev
