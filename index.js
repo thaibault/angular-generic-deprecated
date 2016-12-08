@@ -709,12 +709,14 @@ export class AbstractItems {
     searchTerm:string = ''
     selectedItems:Set<PlainObject> = new Set()
     searchTermStream:Subject<string> = new Subject()
+    _route:ActivatedRoute
     _router:Router
     _itemsPath:string = 'admin/items'
     _itemPath:string = 'admin/item'
     constructor(route:ActivatedRoute, router:Router):void {
+        this._route = route
         this._router = router
-        route.params.subscribe((data:PlainObject):void => {
+        this._route.params.subscribe((data:PlainObject):void => {
             for (const prefix:string of ['exact-', 'regex-'])
                 if (data.searchTerm.startsWith(prefix)) {
                     this.searchTerm = decodeURIComponent(
@@ -724,7 +726,7 @@ export class AbstractItems {
             this.page = parseInt(data.page)
             this.limit = parseInt(data.limit)
         })
-        route.data.subscribe((data:PlainObject):void => {
+        this._route.data.subscribe((data:PlainObject):void => {
             this.limit = Math.max(1, this.limit || 1)
             this.page = Math.max(1, this.page || 1)
             const total:number = data.items.length + (
