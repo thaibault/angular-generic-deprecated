@@ -725,6 +725,8 @@ export class AbstractItems {
             this.limit = parseInt(data.limit)
         })
         route.data.subscribe((data:PlainObject):void => {
+            this.limit = Math.max(1, this.limit || 1)
+            this.page = Math.max(1, this.page || 1)
             const total:number = data.items.length + (
                 this.page - 1
             ) * this.limit
@@ -732,6 +734,8 @@ export class AbstractItems {
                 data.items.splice(this.limit, data.items.length - this.limit)
             this.items = data.items
             this.items.total = total
+            if (this.applyPageConstraints())
+                setTimeout(() => this.update(), 0)
         })
         this.searchTermStream.debounceTime(200).distinctUntilChanged().map((
         ):boolean => {
@@ -759,18 +763,24 @@ export class AbstractItems {
     goToItem(itemID:string):void {
         this._router.navigate([this._itemPath, itemID])
     }
-    updateSearchResults():void {
-        this.searchTermStream.next(this.searchTerm)
-    }
-    updateResults():void {
-        this.page = Math.max(1, Math.min(
-            this.page, Math.ceil(this.items.total / this.limit)))
+    applyPageConstraints():boolean {
+        const oldPage:number = this.page
+        const oldLimit:number = this.limit
         this.limit = Math.max(1, this.limit || 1)
+        this.page = Math.max(1, Math.min(this.page, Math.ceil(
+            this.items.total / this.limit)))
+        return this.page !== oldPage || this.limit !== oldLimit
+    }
+    update():void {
+        this.applyPageConstraints()
         this._router.navigate([
             this._itemsPath, this.page, this.limit,
             `${this.regularExpression ? 'regex' : 'exact'}-` +
             encodeURIComponent(this.searchTerm.trim())
         ])
+    }
+    updateSearch():void {
+        this.searchTermStream.next(this.searchTerm)
     }
 }
 // / endregion
@@ -1103,6 +1113,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                             return
                         }
                         delete newData._deleted
+                        delete newData._rev
                     }
                     newData[this.mapNameToField] = this.file.name
                     this.model[this.mapNameToField] = this.file.name
@@ -1158,11 +1169,10 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 }
                 return
             }
-            if (this.mapNameToField === '_id') {
+            if (this.mapNameToField === '_id')
                 this.delete.emit(result)
-                return
-            }
-            this.model._rev = result.rev
+            else
+                this.model._rev = result.rev
         }
         this.model._attachments[this.internalName].state.errors =
             this.model._attachments[this.internalName].value =
