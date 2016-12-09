@@ -722,8 +722,14 @@ export class AbstractResolver implements Resolve<PlainObject> {
         if (searchTerm.startsWith('exact-'))
             searchTerm = this.escapeRegularExpressions(searchTerm.substring(
                 'exact-'.length))
-        else if (searchTerm.startsWith('regex-'))
+        else if (searchTerm.startsWith('regex-')) {
             searchTerm = searchTerm.substring('regex-'.length)
+            try {
+                new RegExp(searchTerm)
+            } catch (error) {
+                searchTerm = ''
+            }
+        }
         const sort:Array<PlainObject> = route.params.sort.split(',').map((
             name:string
         ):PlainObject => {
