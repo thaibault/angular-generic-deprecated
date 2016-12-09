@@ -1106,6 +1106,8 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         this._representObject = representObject.transform
     }
     ngOnInit():void {
+        if (this.mapNameToField && !Array.isArray(this.mapNameToField))
+            this.mapNameToField = [this.mapNameToField]
         const name:string = this._getFilenameByPrefix(
             this.model._attachments, this.name)
         if (this.name && name !== this.name)
@@ -1129,8 +1131,6 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         this.fileChange.emit(this.file)
     }
     ngAfterViewInit():void {
-        if (this.mapNameToField && !Array.isArray(this.mapNameToField))
-            this.mapNameToField = [this.mapNameToField]
         this.input.nativeElement.addEventListener('change', async (
         ):Promise<void> => {
             if (this.input.nativeElement.files.length < 1)
@@ -1200,8 +1200,10 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                         } catch (error) {
                             this.model._attachments[
                                 this.internalName
-                            ].state.errors = {database: this._representObject(
-                                error)}
+                            ].state.errors = {
+                                database: 'message' in error ? error.message :
+                                    this._representObject(error)
+                            }
                             return
                         }
                         delete newData._deleted
@@ -1216,7 +1218,9 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                     result = await this._data.put(newData)
                 } catch (error) {
                     this.model._attachments[this.internalName].state.errors = {
-                        database: this._representObject(error)}
+                        database: 'message' in error ? error.message :
+                            this._representObject(error)
+                    }
                     return
                 }
                 this.file.revision = this.model._rev = result.rev
