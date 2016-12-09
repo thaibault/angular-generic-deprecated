@@ -705,19 +705,15 @@ export class AbstractResolver implements Resolve<PlainObject> {
     _type:string = 'Item'
     data:PlainObject
     escapeRegularExpressions:Function
+    models:PlainObject
+    relevantKeys:?Array<string> = null
     constructor(
         data:GenericDataService, initialData:GenericInitialDataService,
         escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe
     ) {
         this.data = data
         this.escapeRegularExpressions = escapeRegularExpressions.transform
-        this.relevantKeys = Object.keys(
-            initialData.configuration.modelConfiguration.models[this._type]
-        ).filter((name:string):boolean => !name.startsWith('_') && [
-            undefined, 'string'
-        ].includes(initialData.configuration.modelConfiguration.models[
-            this._type
-        ][name].type))
+        this.models = initialData.configuration.modelConfiguration.models
     }
     resolve(
         route:ActivatedRouteSnapshot, state:RouterStateSnapshot
@@ -728,7 +724,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 'exact-'.length))
         else if (searchTerm.startsWith('regex-'))
             searchTerm = searchTerm.substring('regex-'.length)
-        return this.list(route.params.sortKeyNames, parseInt(
+        return this.list(route.params.sortKeyNames.split(','), parseInt(
             route.params.page
         ), parseInt(route.params.limit), searchTerm)
     }
@@ -736,6 +732,12 @@ export class AbstractResolver implements Resolve<PlainObject> {
         sortKeyNames:Array<string> = ['_id'], page:number = 1,
         limit:number = 10, searchTerm:string = ''
     ):Observable<Array<PlainObject>> {
+        if (!this.relevantKeys)
+            this.relevantKeys = Object.keys(this.models[this._type]).filter((
+                name:string
+            ):boolean => !name.startsWith('_') && [
+                undefined, 'string'
+            ].includes(this.models[this._type][name].type))
         const selector:PlainObject = {'-type': this._type}
         if (searchTerm) {
             selector.$or = []
