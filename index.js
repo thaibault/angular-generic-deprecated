@@ -27,7 +27,7 @@ import {
 } from '@angular/core'
 import {FormsModule} from '@angular/forms'
 import {MaterialModule} from '@angular/material'
-import {ActivatedRoute, CanDeactivate, Router} from '@angular/router'
+import {ActivatedRoute, CanDeactivate, Resolve, Router} from '@angular/router'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -359,6 +359,8 @@ export class GenericNumberPercent implements PipeTransform {
 // endregion
 const GenericArrayMakeRangePipe:Object =
     module.exports.GenericArrayMakeRangePipe
+const GenericStringEscapeRegularExpressionsPipe:Object =
+    module.exports.GenericStringEscapeRegularExpressionsPipe
 const GenericExtendObjectPipe:Object = module.exports.GenericExtendObjectPipe
 const GenericRepresentObjectPipe:Object =
     module.exports.GenericRepresentObjectPipe
@@ -698,6 +700,58 @@ export class GenericDataScopeService {
         return result
     }
 }
+// / region abstract
+export class AbstractResolver implements Resolve<PlainObject> {
+    _type:string = 'Item'
+    data:PlainObject
+    escapeRegularExpressions:Function
+    constructor(
+        data:GenericDataService, initialData:GenericInitialDataService,
+        escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe
+    ) {
+        this.data = data
+        this.escapeRegularExpressions = escapeRegularExpressions.transform
+        this.relevantKeys = Object.keys(
+            initialData.configuration.modelConfiguration.models[this._type]
+        ).filter((name:string):boolean => !name.startsWith('_') && [
+            undefined, 'string'
+        ].includes(initialData.configuration.modelConfiguration.models[
+            this._type
+        ][name].type))
+    }
+    resolve(
+        route:ActivatedRouteSnapshot, state:RouterStateSnapshot
+    ):Observable<Array<PlainObject>> {
+        let searchTerm:string = decodeURIComponent(route.params.searchTerm)
+        if (searchTerm.startsWith('exact-'))
+            searchTerm = this.escapeRegularExpressions(searchTerm.substring(
+                'exact-'.length))
+        else if (searchTerm.startsWith('regex-'))
+            searchTerm = searchTerm.substring('regex-'.length)
+        return this.list(route.params.sortKeyNames, parseInt(
+            route.params.page
+        ), parseInt(route.params.limit), searchTerm)
+    }
+    list(
+        sortKeyNames:Array<string> = ['_id'], page:number = 1,
+        limit:number = 10, searchTerm:string = ''
+    ):Observable<Array<PlainObject>> {
+        const selector:PlainObject = {'-type': this._type}
+        if (searchTerm) {
+            selector.$or = []
+            for (const name:string of this.relevantKeys)
+                selector.$or.push({[name]: {$regex: searchTerm}})
+        }
+        /*
+            NOTE: We can't use "limit" here since we want to provide total data
+            set size for pagination.
+        */
+        return Observable.fromPromise(this.data.get(selector, {
+            skip: (page - 1) * limit, sort: sortKeyNames
+        }))
+    }
+}
+// / endregion
 // endregion
 // region components
 // / region abstract
@@ -728,9 +782,8 @@ export class AbstractItems {
         })
         this._route.data.subscribe((data:PlainObject):void => {
             this.limit = Math.max(1, this.limit || 1)
-            this.page = Math.max(1, this.page || 1)
             const total:number = data.items.length + (
-                this.page - 1
+                Math.max(1, this.page || 1) - 1
             ) * this.limit
             if (data.items.length > this.limit)
                 data.items.splice(this.limit, data.items.length - this.limit)
@@ -773,8 +826,14 @@ export class AbstractItems {
             this.items.total / this.limit)))
         return this.page !== oldPage || this.limit !== oldLimit
     }
-    update():void {
+    update(reload:boolean = false):void {
         this.applyPageConstraints()
+        if (reload)
+            /*
+                NOTE: Will be normalised to "1" after route reload (hack to
+                enforce route reloading).
+            */
+            this.page = 0
         this._router.navigate([
             this._itemsPath, this.page, this.limit,
             `${this.regularExpression ? 'regex' : 'exact'}-` +
@@ -985,30 +1044,31 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         '^video/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|' +
         '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
         '(?:application/(?:x-)?shockwave-flash)$')
+
     _data:GenericDataService
     _domSanitization:DomSanitizer
     _getFilenameByPrefix:Function
     _representObject:Function
     _prefixMatch:boolean = false
-    @Output() delete:EventEmitter = new EventEmitter()
+
     // Holds the current selected file object if present.
     file:?PlainObject = null
-    @Output() fileChange:EventEmitter = new EventEmitter()
-    @ViewChild('input') input:ElementRef
     // Technical regular expression style file type.
     internalName:?string = null
-    @Input() model:{
-        id:?string;
-        [key:string]:any;
-    } = {}
-    @Output() modelChange:EventEmitter = new EventEmitter()
+
+    @Input() model:{id:?string;[key:string]:any;} = {}
     // Asset name.
     @Input() name:?string = null
     @Input() showValidationErrorMessages:boolean = false
     // Indicates weather changed file selections should be immediately attached
     // to given document.
     @Input() synchronizeImmediately:boolean = false
-    @Input() mapNameToField:?string = null
+    @Input() mapNameToField:?string|?Array<string> = null
+    @Output() delete:EventEmitter = new EventEmitter()
+    @Output() fileChange:EventEmitter = new EventEmitter()
+    @Output() modelChange:EventEmitter = new EventEmitter()
+    @ViewChild('input') input:ElementRef
+
     constructor(
         data:GenericDataService, domSanitizer:DomSanitizer,
         getFilenameByPrefix:GenericGetFilenameByPrefixPipe,
@@ -1043,6 +1103,8 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         this.fileChange.emit(this.file)
     }
     ngAfterViewInit():void {
+        if (this.mapNameToField && !Array.isArray(this.mapNameToField))
+            this.mapNameToField = [this.mapNameToField]
         this.input.nativeElement.addEventListener('change', async (
         ):Promise<void> => {
             if (this.input.nativeElement.files.length < 1)
@@ -1103,7 +1165,9 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 if (![undefined, null].includes(this.model._rev))
                     newData._rev = this.model._rev
                 if (this.mapNameToField) {
-                    if (this.model._id && this.mapNameToField === '_id') {
+                    if (this.model._id && this.mapNameToField.includes(
+                        '_id'
+                    )) {
                         newData._deleted = true
                         try {
                             result = await this._data.put(newData)
@@ -1117,8 +1181,10 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                         delete newData._deleted
                         delete newData._rev
                     }
-                    newData[this.mapNameToField] = this.file.name
-                    this.model[this.mapNameToField] = this.file.name
+                    for (const name:string of this.mapNameToField) {
+                        newData[name] = this.file.name
+                        this.model[name] = this.file.name
+                    }
                 }
                 try {
                     result = await this._data.put(newData)
@@ -1144,7 +1210,8 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                         this._domSanitizer.bypassSecurityTrustResourceUrl(
                             event.target.result)
                     if (this.mapNameToField)
-                        this.model[this.mapNameToField] = this.file.name
+                        for (const name:string of this.mapNameToField)
+                            this.model[name] = this.file.name
                     this.fileChange.emit(this.file)
                     this.modelChange.emit(this.model)
                 }
@@ -1161,7 +1228,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 _rev: this.model._rev,
                 _attachments: {[this.file.name]: {data: null}}
             }
-            if (this.mapNameToField === '_id')
+            if (this.mapNameToField.includes('_id'))
                 update._deleted = true
             try {
                 result = await this._data.put(update)
@@ -1171,7 +1238,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 }
                 return
             }
-            if (this.mapNameToField === '_id')
+            if (this.mapNameToField.includes('_id'))
                 this.delete.emit(result)
             else
                 this.model._rev = result.rev
