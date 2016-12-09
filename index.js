@@ -724,12 +724,23 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 'exact-'.length))
         else if (searchTerm.startsWith('regex-'))
             searchTerm = searchTerm.substring('regex-'.length)
-        return this.list(route.params.sortKeyNames.split(','), parseInt(
-            route.params.page
-        ), parseInt(route.params.limit), searchTerm)
+        const sort:Array<PlainObject> = route.params.sort.split(',').map((
+            name:string
+        ):PlainObject => {
+            const lastIndex:number = name.lastIndexOf('-')
+            let type:string = 'asc'
+            if (lastIndex !== -1) {
+                name = name.substring(0, lastIndex)
+                type = name.substring(lastIndex + 1) || type
+            }
+            return {[name]: type}
+        })
+        return this.list(sort, parseInt(route.params.page), parseInt(
+            route.params.limit
+        ), searchTerm)
     }
     list(
-        sortKeyNames:Array<string> = ['_id'], page:number = 1,
+        sort:Array<PlainObject> = [{'_id': 'asc'}], page:number = 1,
         limit:number = 10, searchTerm:string = ''
     ):Observable<Array<PlainObject>> {
         if (!this.relevantKeys)
@@ -748,9 +759,10 @@ export class AbstractResolver implements Resolve<PlainObject> {
             NOTE: We can't use "limit" here since we want to provide total data
             set size for pagination.
         */
-        return Observable.fromPromise(this.data.get(selector, {
-            skip: (page - 1) * limit, sort: sortKeyNames
-        }))
+        const options:PlainObject = {skip: (page - 1) * limit, sort}
+        if (options.skip === 0)
+            delete options.skip
+        return Observable.fromPromise(this.data.get(selector, options))
     }
 }
 // / endregion
