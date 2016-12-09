@@ -750,6 +750,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 undefined, 'string'
             ].includes(this.models[this._type][name].type))
         }
+        sort.unshift({'-type': 'asc'})
         const selector:PlainObject = {'-type': this._type}
         if (searchTerm) {
             selector.$or = []
