@@ -735,20 +735,21 @@ export class AbstractResolver implements Resolve<PlainObject> {
             }
             return {[name]: type}
         })
-        return this.list(sort, parseInt(route.params.page), parseInt(
-            route.params.limit
-        ), searchTerm)
+        return Observable.fromPromise(this.list(sort, parseInt(
+            route.params.page
+        ), parseInt(route.params.limit), searchTerm))
     }
-    list(
+    async list(
         sort:Array<PlainObject> = [{'_id': 'asc'}], page:number = 1,
         limit:number = 10, searchTerm:string = ''
-    ):Observable<Array<PlainObject>> {
-        if (!this.relevantKeys)
+    ):Promise<Array<PlainObject>> {
+        if (!this.relevantKeys) {
             this.relevantKeys = Object.keys(this.models[this._type]).filter((
                 name:string
             ):boolean => !name.startsWith('_') && [
                 undefined, 'string'
             ].includes(this.models[this._type][name].type))
+        }
         const selector:PlainObject = {'-type': this._type}
         if (searchTerm) {
             selector.$or = []
@@ -762,7 +763,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
         const options:PlainObject = {skip: (page - 1) * limit, sort}
         if (options.skip === 0)
             delete options.skip
-        return Observable.fromPromise(this.data.get(selector, options))
+        return this.data.get(selector, options)
     }
 }
 // / endregion
