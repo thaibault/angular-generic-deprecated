@@ -750,9 +750,10 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 undefined, 'string'
             ].includes(this.models[this._type][name].type))
         }
-        sort.unshift({'-type': 'asc'})
         const selector:PlainObject = {'-type': this._type}
         if (searchTerm) {
+            if (sort.length)
+                selector[Object.keys(sort[0])[0]] = {$gt: null}
             selector.$or = []
             for (const name:string of this.relevantKeys)
                 selector.$or.push({[name]: {$regex: searchTerm}})
@@ -761,9 +762,11 @@ export class AbstractResolver implements Resolve<PlainObject> {
             NOTE: We can't use "limit" here since we want to provide total data
             set size for pagination.
         */
-        const options:PlainObject = {skip: (page - 1) * limit, sort}
+        const options:PlainObject = {skip: (page - 1) * limit}
         if (options.skip === 0)
             delete options.skip
+        if (sort.length)
+            options.sort = [{'-type': 'asc'}].concat(sort)
         return this.data.get(selector, options)
     }
 }
@@ -771,7 +774,11 @@ export class AbstractResolver implements Resolve<PlainObject> {
 // endregion
 // region components
 // / region abstract
-export class AbstractItems {
+export class AbstractItemsComponent {
+    _route:ActivatedRoute
+    _router:Router
+    _itemsPath:string = 'admin/items'
+    _itemPath:string = 'admin/item'
     items:Observable<Array<PlainObject>>
     limit:number
     page:number
@@ -779,10 +786,7 @@ export class AbstractItems {
     searchTerm:string = ''
     selectedItems:Set<PlainObject> = new Set()
     searchTermStream:Subject<string> = new Subject()
-    _route:ActivatedRoute
-    _router:Router
-    _itemsPath:string = 'admin/items'
-    _itemPath:string = 'admin/item'
+    sort:PlainObject = {'_id': 'asc'}
     constructor(route:ActivatedRoute, router:Router):void {
         this._route = route
         this._router = router
@@ -811,11 +815,7 @@ export class AbstractItems {
         this.searchTermStream.debounceTime(200).distinctUntilChanged().map((
         ):boolean => {
             this.page = 1
-            return this._router.navigate([
-                this._itemsPath, this.page, this.limit,
-                `${this.regularExpression ? 'regex' : 'exact'}-` +
-                encodeURIComponent(this.searchTerm)
-            ])
+            return this.update()
         }).subscribe()
     }
     delete(event) {
@@ -842,7 +842,7 @@ export class AbstractItems {
             this.items.total / this.limit)))
         return this.page !== oldPage || this.limit !== oldLimit
     }
-    update(reload:boolean = false):void {
+    update(reload:boolean = false):boolean {
         this.applyPageConstraints()
         if (reload)
             /*
@@ -850,10 +850,14 @@ export class AbstractItems {
                 enforce route reloading).
             */
             this.page = 0
-        this._router.navigate([
-            this._itemsPath, this.page, this.limit,
+        let sort = ''
+        for (const name:string in this.sort)
+            if (this.sort.hasOwnProperty(name))
+                sort += `${sort ? ',' : ''}${name}-${this.sort[name]}`
+        return this._router.navigate([
+            this._itemsPath, sort, this.page, this.limit,
             `${this.regularExpression ? 'regex' : 'exact'}-` +
-            encodeURIComponent(this.searchTerm.trim())
+            encodeURIComponent(this.searchTerm)
         ])
     }
     updateSearch():void {
@@ -1358,15 +1362,15 @@ export class GenericPaginationComponent {
 // region modules
 const declarations:Array<Object> = Object.keys(module.exports).filter((
     name:string
-):boolean => name.endsWith('Component') || name.endsWith('Pipe')).map((
-    name:string
-):Object => module.exports[name])
+):boolean => !name.startsWith('Abstract') && (
+    name.endsWith('Component') || name.endsWith('Pipe')
+)).map((name:string):Object => module.exports[name])
 const providers:Array<Object> = Object.keys(module.exports).filter((
     name:string
-):boolean =>
+):boolean => !name.startsWith('Abstract') && (
     name.endsWith('Resolver') || name.endsWith('Pipe') ||
     name.endsWith('Guard') || name.endsWith('Service')
-).map((name:string):Object => module.exports[name])
+)).map((name:string):Object => module.exports[name])
 const modules:Array<Object> = [
     BrowserModule,
     FormsModule,
