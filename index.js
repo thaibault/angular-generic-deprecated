@@ -785,6 +785,7 @@ export class AbstractItemsComponent {
     _router:Router
     _itemsPath:string = 'admin/items'
     _itemPath:string = 'admin/item'
+
     items:Observable<Array<PlainObject>>
     limit:number
     page:number
@@ -793,18 +794,19 @@ export class AbstractItemsComponent {
     selectedItems:Set<PlainObject> = new Set()
     searchTermStream:Subject<string> = new Subject()
     sort:PlainObject = {'_id': 'asc'}
+
     constructor(route:ActivatedRoute, router:Router):void {
         this._route = route
         this._router = router
         this._route.params.subscribe((data:PlainObject):void => {
-            for (const prefix:string of ['exact-', 'regex-'])
-                if (data.searchTerm.startsWith(prefix)) {
-                    this.searchTerm = decodeURIComponent(
-                        data.searchTerm.substring(prefix.length))
-                    break
-                }
             this.page = parseInt(data.page)
             this.limit = parseInt(data.limit)
+            const match:Array<string> = /(regex|exact)-(.*)/.exec(
+                data.searchTerm)
+            if (match) {
+                this.regularExpression = match[1] === 'regex'
+                this.searchTerm = match[2]
+            }
         })
         this._route.data.subscribe((data:PlainObject):void => {
             this.limit = Math.max(1, this.limit || 1)
