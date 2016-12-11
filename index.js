@@ -704,16 +704,20 @@ export class GenericDataScopeService {
 export class AbstractResolver implements Resolve<PlainObject> {
     _type:string = 'Item'
     data:PlainObject
+    extendObject:Function
     escapeRegularExpressions:Function
     models:PlainObject
     relevantKeys:?Array<string> = null
     constructor(
-        data:GenericDataService, initialData:GenericInitialDataService,
+        data:GenericDataService,
+        extendObject:GenericExtendObjectPipe,
+        initialData:GenericInitialDataService,
         escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe
     ) {
         this.data = data
-        this.escapeRegularExpressions = escapeRegularExpressions.transform
+        this.extendObject = extendObject.transform
         this.models = initialData.configuration.modelConfiguration.models
+        this.escapeRegularExpressions = escapeRegularExpressions.transform
     }
     resolve(
         route:ActivatedRouteSnapshot, state:RouterStateSnapshot
@@ -747,7 +751,8 @@ export class AbstractResolver implements Resolve<PlainObject> {
     }
     async list(
         sort:Array<PlainObject> = [{'_id': 'asc'}], page:number = 1,
-        limit:number = 10, searchTerm:string = ''
+        limit:number = 10, searchTerm:string = '',
+        additionalSelectors:PlainObject = {}
     ):Promise<Array<PlainObject>> {
         if (!this.relevantKeys) {
             this.relevantKeys = Object.keys(this.models[this._type]).filter((
@@ -757,7 +762,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
             ].includes(this.models[this._type][name].type))
         }
         const selector:PlainObject = {'-type': this._type}
-        if (searchTerm) {
+        if (searchTerm || Object.keys(additionalSelectors).length) {
             if (sort.length)
                 selector[Object.keys(sort[0])[0]] = {$gt: null}
             selector.$or = []
@@ -773,7 +778,9 @@ export class AbstractResolver implements Resolve<PlainObject> {
             delete options.skip
         if (sort.length)
             options.sort = [{'-type': 'asc'}].concat(sort)
-        return this.data.get(selector, options)
+        return this.data.get(this.extendObject(
+            true, selector, additionalSelectors
+        ), options)
     }
 }
 // / endregion
