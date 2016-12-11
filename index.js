@@ -719,6 +719,38 @@ export class AbstractResolver implements Resolve<PlainObject> {
         this.models = initialData.configuration.modelConfiguration.models
         this.escapeRegularExpressions = escapeRegularExpressions.transform
     }
+    async list(
+        sort:Array<PlainObject> = [{'_id': 'asc'}], page:number = 1,
+        limit:number = 10, searchTerm:string = '',
+        additionalSelectors:PlainObject = {}
+    ):Promise<Array<PlainObject>> {
+        if (!this.relevantKeys)
+            this.relevantKeys = Object.keys(this.models[this._type]).filter((
+                name:string
+            ):boolean => !name.startsWith('_') && [
+                undefined, 'string'
+            ].includes(this.models[this._type][name].type))
+        const selector:PlainObject = {'-type': this._type}
+        if (searchTerm || Object.keys(additionalSelectors).length) {
+            if (sort.length)
+                selector[Object.keys(sort[0])[0]] = {$gt: null}
+            selector.$or = []
+            for (const name:string of this.relevantKeys)
+                selector.$or.push({[name]: {$regex: searchTerm}})
+        }
+        /*
+            NOTE: We can't use "limit" here since we want to provide total data
+            set size for pagination.
+        */
+        const options:PlainObject = {skip: (page - 1) * limit}
+        if (options.skip === 0)
+            delete options.skip
+        if (sort.length)
+            options.sort = [{'-type': 'asc'}].concat(sort)
+        return this.data.get(this.extendObject(
+            true, selector, additionalSelectors
+        ), options)
+    }
     resolve(
         route:ActivatedRouteSnapshot, state:RouterStateSnapshot
     ):Observable<Array<PlainObject>> {
@@ -748,39 +780,6 @@ export class AbstractResolver implements Resolve<PlainObject> {
         return Observable.fromPromise(this.list(sort, parseInt(
             route.params.page
         ), parseInt(route.params.limit), searchTerm))
-    }
-    async list(
-        sort:Array<PlainObject> = [{'_id': 'asc'}], page:number = 1,
-        limit:number = 10, searchTerm:string = '',
-        additionalSelectors:PlainObject = {}
-    ):Promise<Array<PlainObject>> {
-        if (!this.relevantKeys) {
-            this.relevantKeys = Object.keys(this.models[this._type]).filter((
-                name:string
-            ):boolean => !name.startsWith('_') && [
-                undefined, 'string'
-            ].includes(this.models[this._type][name].type))
-        }
-        const selector:PlainObject = {'-type': this._type}
-        if (searchTerm || Object.keys(additionalSelectors).length) {
-            if (sort.length)
-                selector[Object.keys(sort[0])[0]] = {$gt: null}
-            selector.$or = []
-            for (const name:string of this.relevantKeys)
-                selector.$or.push({[name]: {$regex: searchTerm}})
-        }
-        /*
-            NOTE: We can't use "limit" here since we want to provide total data
-            set size for pagination.
-        */
-        const options:PlainObject = {skip: (page - 1) * limit}
-        if (options.skip === 0)
-            delete options.skip
-        if (sort.length)
-            options.sort = [{'-type': 'asc'}].concat(sort)
-        return this.data.get(this.extendObject(
-            true, selector, additionalSelectors
-        ), options)
     }
 }
 // / endregion
@@ -1082,6 +1081,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
 
     _data:GenericDataService
     _domSanitization:DomSanitizer
+    _extendObject:Function
     _getFilenameByPrefix:Function
     _representObject:Function
     _prefixMatch:boolean = false
@@ -1097,7 +1097,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
     @Input() showValidationErrorMessages:boolean = false
     // Indicates weather changed file selections should be immediately attached
     // to given document.
-    @Input() synchronizeImmediately:boolean = false
+    @Input() synchronizeImmediately:boolean|PlainObject = false
     @Input() mapNameToField:?string|?Array<string> = null
     @Output() delete:EventEmitter = new EventEmitter()
     @Output() fileChange:EventEmitter = new EventEmitter()
@@ -1106,11 +1106,13 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
 
     constructor(
         data:GenericDataService, domSanitizer:DomSanitizer,
+        extendObject:GenericExtendObjectPipe,
         getFilenameByPrefix:GenericGetFilenameByPrefixPipe,
         representObject:GenericRepresentObjectPipe
     ):void {
         this._data = data
         this._domSanitizer = domSanitizer
+        this._extendObject = extendObject.transform
         this._getFilenameByPrefix = getFilenameByPrefix.transform
         this._representObject = representObject.transform
     }
@@ -1194,6 +1196,9 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                         }
                     }
                 }
+                if (this.synchronizeImmediately !== true)
+                    this._extendObject(
+                        true, newData, this.synchronizeImmediately)
                 // NOTE: We want to replace old medium.
                 if (oldFileName && oldFileName !== this.file.name)
                     newData._attachments[oldFileName] = {data: null}
