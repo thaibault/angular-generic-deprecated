@@ -37,6 +37,14 @@ import {Observable} from 'rxjs/Observable'
 // endregion
 // region basic services
 @Injectable()
+/**
+ * Injectable angular service for the tools class.
+ * @property $ - Holds an instance of a generic dom abstraction layer like
+ * jquery.
+ * @property globalContext - Hold a reference to the environment specific
+ * global scope.
+ * @property tools - Holds a reference to the wrapped tools class.
+ */
 export class GenericToolsService {
     $:any = $
     globalContext:Object = globalContext
@@ -404,7 +412,7 @@ export class GenericDataService {
         for (const name:string in this.connection)
             if (typeof this.connection[name] === 'function') {
                 const method:Function = this.connection[name]
-                this.connection[name] = (...parameter):any => {
+                this.connection[name] = (...parameter:Array<any>):any => {
                     for (const methodName:string of [name, '_all'])
                         if (this.middlewares.pre.hasOwnProperty(methodName))
                             for (
@@ -713,14 +721,14 @@ export class AbstractResolver implements Resolve<PlainObject> {
         extendObject:GenericExtendObjectPipe,
         initialData:GenericInitialDataService,
         escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe
-    ) {
+    ):void {
         this.data = data
         this.extendObject = extendObject.transform
         this.models = initialData.configuration.modelConfiguration.models
         this.escapeRegularExpressions = escapeRegularExpressions.transform
     }
     async list(
-        sort:Array<PlainObject> = [{'_id': 'asc'}], page:number = 1,
+        sort:Array<PlainObject> = [{_id: 'asc'}], page:number = 1,
         limit:number = 10, searchTerm:string = '',
         additionalSelectors:PlainObject = {}
     ):Promise<Array<PlainObject>> {
@@ -751,9 +759,11 @@ export class AbstractResolver implements Resolve<PlainObject> {
             true, selector, additionalSelectors
         ), options)
     }
+    /* eslint-disable no-unused-vars */
     resolve(
         route:ActivatedRouteSnapshot, state:RouterStateSnapshot
     ):Observable<Array<PlainObject>> {
+    /* eslint-enable no-unused-vars */
         let searchTerm:string = decodeURIComponent(route.params.searchTerm)
         if (searchTerm.startsWith('exact-'))
             searchTerm = this.escapeRegularExpressions(searchTerm.substring(
@@ -799,7 +809,7 @@ export class AbstractItemsComponent {
     searchTerm:string = ''
     selectedItems:Set<PlainObject> = new Set()
     searchTermStream:Subject<string> = new Subject()
-    sort:PlainObject = {'_id': 'asc'}
+    sort:PlainObject = {_id: 'asc'}
 
     constructor(route:ActivatedRoute, router:Router):void {
         this._route = route
@@ -824,7 +834,7 @@ export class AbstractItemsComponent {
             this.items = data.items
             this.items.total = total
             if (this.applyPageConstraints())
-                setTimeout(() => this.update(), 0)
+                setTimeout(():boolean => this.update(), 0)
         })
         this.searchTermStream.debounceTime(200).distinctUntilChanged().map((
         ):boolean => {
@@ -832,7 +842,7 @@ export class AbstractItemsComponent {
             return this.update()
         }).subscribe()
     }
-    delete(event) {
+    delete(event:Object):void {
         let index:number = 0
         for (const item:PlainObject of this.items) {
             if (item._id === event.id) {
@@ -1263,7 +1273,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
             }
         })
     }
-    async remove() {
+    async remove():Promise<void> {
         if (this.synchronizeImmediately && this.file) {
             let result:PlainObject
             const update:PlainObject = {
@@ -1296,7 +1306,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         this.fileChange.emit(this.file)
         this.modelChange.emit(this.model)
     }
-    determinePresentationType() {
+    determinePresentationType():void {
         if (
             this.file && this.file.content_type &&
             this.constructor.textMimeTypeRegularExpression.test(
