@@ -224,11 +224,11 @@ export class GenericGetFilenameByPrefixPipe implements PipeTransform {
         return null
     }
 }
+@Pipe({name: 'genericMap'})
 /**
  * Returns given object with where each item was processed through given
  * filter.
 */
-@Pipe({name: 'genericMap'})
 export class GenericMapPipe implements PipeTransform {
     injector:Injector
     constructor(injector:Injector):void {
@@ -252,19 +252,19 @@ export class GenericMapPipe implements PipeTransform {
         return result
     }
 }
+@Pipe({name: 'genericType'})
 /**
  * Returns type of given object.
  */
-@Pipe({name: 'genericType'})
 export class GenericTypePipe implements PipeTransform {
     transform(object:any):string {
         return typeof object
     }
 }
+@Pipe({name: 'genericIsDefined'})
 /**
  * Checks if given reference is defined.
  */
-@Pipe({name: 'genericIsDefined'})
 export class GenericIsDefinedPipe implements PipeTransform {
     transform(object:any, nullIsUndefined:boolean = false):boolean {
         return !(object === undefined || nullIsUndefined && indicator === null)
@@ -281,10 +281,10 @@ export class GenericStringReplacePipe implements PipeTransform {
         return string.replace(new RegExp(search, modifier), replacement)
     }
 }
+@Pipe({name: 'genericStringShowIfPatternMatches'})
 /**
  * Returns given string if it matches given pattern.
  */
-@Pipe({name: 'genericStringShowIfPatternMatches'})
 export class GenericStringShowIfPatternMatechsPipe implements PipeTransform {
     transform(
         string:string, pattern:string, invert:boolean = false,
@@ -296,39 +296,39 @@ export class GenericStringShowIfPatternMatechsPipe implements PipeTransform {
         return indicator ? string : ''
     }
 }
+@Pipe({name: 'genericStringStartsWith'})
 /**
  * Replaces a string with given replacement.
  */
-@Pipe({name: 'genericStringStartsWith'})
 export class GenericStringStartsWithPipe implements PipeTransform {
     transform(string:?string, needle:?string):boolean {
         return string && typeof needle === 'string' && string.startsWith(
             needle)
     }
 }
+@Pipe({name: 'genericStringEndsWith'})
 /**
  * Replaces a string with given replacement.
  */
-@Pipe({name: 'genericStringEndsWith'})
 export class GenericStringEndsWith implements PipeTransform {
     transform(string:?string, needle:?string):boolean {
         return string && typeof needle === 'string' && string.endsWith(needle)
     }
 }
+@Pipe({name: 'genericStringMatch'})
 /**
  * Tests if given pattern matches against given subject.
  */
-@Pipe({name: 'genericStringMatch'})
 export class GenericStringMatchPipe implements PipeTransform {
     transform(pattern:string, subject:string, modifier:string = ''):boolean {
         return (new $window.RegExp(pattern, modifier)).test(subject)
     }
 }
+@Pipe({name: 'genericStringSliceMatch'})
 /**
  * Returns a matched part of given subject with given pattern. Default is the
  * whole (zero) matched part.
  */
-@Pipe({name: 'genericStringSliceMatch'})
 export class GenericStringSliceMatchPipe implements PipeTransform {
     transform(
         subject:?subject, pattern:string, index:number = 0,
@@ -339,10 +339,10 @@ export class GenericStringSliceMatchPipe implements PipeTransform {
         ))[index] : ''
     }
 }
+@Pipe({name: 'genericStringHasTimeSuffix'})
 /**
  * Determines if given string has a time indicating suffix.
  */
-@Pipe({name: 'genericStringHasTimeSuffix'})
 export class GenericStringHasTimeSuffix implements PipeTransform {
     transform(string:?string):boolean {
         if (typeof string !== 'string')
@@ -354,10 +354,10 @@ export class GenericStringHasTimeSuffix implements PipeTransform {
 }
 // / endregion
 // / region number
+@Pipe({name: 'genericNumberPercent'})
 /**
  * Returns part in percent of all.
  */
-@Pipe({name: 'genericNumberPercent'})
 export class GenericNumberPercent implements PipeTransform {
     transform(part:number, all:number):number {
         return (part / all) * 100
