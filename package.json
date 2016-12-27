@@ -27,7 +27,7 @@
     "clear": "webOptimizer clear",
     "document": "webOptimizer document",
     "export": "webOptimizer build '{development:{tool:false},module:{preprocessor:{javaScript:{configuration:{plugins:{__remove__:\"transform-runtime\"}}}}}}'",
-    "lint": "webOptimizer lint",
+    "lint": "webOptimizer typeCheck && webOptimizer lint",
     "prepublish": "npm run build",
     "serve": "webOptimizer serve",
     "start": "npm run serve",
@@ -39,10 +39,13 @@
     "watchDLL": "webOptimizer buildDLL --watch"
   },
   "devDependencies": {
+    "@angular/common": "latest",
+    "@angular/compiler": "latest",
     "@angular/core": "latest",
     "@angular/forms": "latest",
     "@angular/material": "latest",
     "@angular/platform-browser": "latest",
+    "@angular/platform-browser-dynamic": "latest",
     "@angular/router": "latest",
     "babel-plugin-angular2-annotations": "latest",
     "babel-plugin-transform-decorators-legacy": "latest",
@@ -54,10 +57,31 @@
     "jsdom": "latest",
     "qunitjs": "latest",
     "qunit-cli": "latest",
+    "reflect-metadata": "^0.1.8",
+    "rxjs": "5.0.0-beta.12",
     "source-map-support": "latest",
-    "weboptimizer": "latest"
+    "weboptimizer": "latest",
+    "zone.js": "^0.6.26"
   },
   "webOptimizer": {
+    "injection": {
+      "external": {
+        "implicit": {
+          "pattern": {
+            "exclude": {
+              "__append__": {
+                "__evaluate__": "/^clientnode\\/test(?:\\.compiled)?(?:\\.js)?$/"
+              }
+            }
+          }
+        }
+      },
+      "internal": {
+        "vendor": {
+          "__evaluate__": "self.debug && 2 < self.givenCommandLineArguments.length && ['buildDLL', 'serve', 'testInBrowser', 'watchDLL'].includes(self.givenCommandLineArguments[2]) ? ['babel-polyfill', 'clientnode'].concat(self.givenCommandLineArguments[2] === 'serve' ? [] : ['script!qunitjs', 'weboptimizer/browserAPI']) : []"
+        }
+      }
+    },
     "module": {
       "additional": [
         {
@@ -82,12 +106,6 @@
       "cascadingStyleSheet": {
         "exclude": "filePath.endsWith('.component.css')"
       },
-      "contextReplacements": [
-        [
-          "/angular(\\\\|\\/)core(\\\\|\\/)(esm(\\\\|\\/)src|src)(\\\\|\\/)linker/",
-          "__dirname"
-        ]
-      ],
       "preprocessor": {
         "html": {
           "exclude": "filePath.endsWith('.component.pug')"
@@ -104,8 +122,23 @@
           }
         }
       },
+      "replacements": {
+        "context": [
+          [
+            "/angular(\\\\|\\/)core(\\\\|\\/)(esm(\\\\|\\/)src|src)(\\\\|\\/)linker/",
+            "__dirname"
+          ]
+        ],
+        "normal": {
+          "^jquery$": "jquery/dist/jquery.min.js",
+          "^pouchdb(?:/.+)?$": "pouchdb/dist/pouchdb.min.js",
+          "^pouchdb-find(?:/.+)?$": "pouchdb-find/dist/pouchdb.find.min.js",
+          "^DOESNT WORK: rxjs(?:/.+)?$": "rxjs/bundles/Rx.min.js",
+          "^zone\\.js(?:/.+)?$": "zone.js/dist/zone.min.js"
+        }
+      },
       "skipParseRegularExpressions": {
-        "__evaluate__": "/\\/(?:(?:jquery\\/dist\\/jquery)|(?:module)|([^/]+\\.min))\\.js(?:\\?.+|$)/"
+        "__evaluate__": "/(?:^|\\/)(?:(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb)|(?:pouchdb\\.find\\/dist\\/pouchdb\\.find)|(?:rxjs\\/bundles\\/Rx)|(?:reflect-metadata\\/Reflect)|(?:zone\\.js\\/dist\\/zone)|([^/]+\\.min))\\.js(?:\\?.+|$)/"
       }
     }
   }
