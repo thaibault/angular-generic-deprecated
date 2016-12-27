@@ -27,10 +27,7 @@ import {
 } from '@angular/core'
 import {FormsModule} from '@angular/forms'
 import {MaterialModule} from '@angular/material'
-import {
-    ActivatedRoute, ActivatedRouteSnapshot, CanDeactivate, Resolve, Router,
-    RouterStateSnapshot
-} from '@angular/router'
+import {ActivatedRoute, CanDeactivate, Resolve, Router} from '@angular/router'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -51,7 +48,7 @@ import {Observable} from 'rxjs/Observable'
 export class GenericToolsService {
     $:any = $
     globalContext:Object = globalContext
-    tools:Tools = Tools
+    tools:typeof Tools = Tools
 }
 @Injectable()
 /**
@@ -326,8 +323,8 @@ export class GenericStringShowIfPatternMatechsPipe implements PipeTransform {
  */
 export class GenericStringStartsWithPipe implements PipeTransform {
     transform(string:?string, needle:?string):boolean {
-        return typeof string === 'string' && typeof needle === 'string' &&
-            string.startsWith(needle)
+        return string && typeof needle === 'string' && string.startsWith(
+            needle)
     }
 }
 @Pipe({name: 'genericStringEndsWith'})
@@ -336,8 +333,7 @@ export class GenericStringStartsWithPipe implements PipeTransform {
  */
 export class GenericStringEndsWith implements PipeTransform {
     transform(string:?string, needle:?string):boolean {
-        return typeof string === 'string' && typeof needle === 'string' &&
-            string.endsWith(needle)
+        return string && typeof needle === 'string' && string.endsWith(needle)
     }
 }
 @Pipe({name: 'genericStringMatch'})
@@ -346,8 +342,7 @@ export class GenericStringEndsWith implements PipeTransform {
  */
 export class GenericStringMatchPipe implements PipeTransform {
     transform(pattern:string, subject:string, modifier:string = ''):boolean {
-        // IgnoreTypeCheck
-        return (new RegExp(pattern, modifier)).test(subject)
+        return (new $window.RegExp(pattern, modifier)).test(subject)
     }
 }
 @Pipe({name: 'genericStringSliceMatch'})
@@ -357,16 +352,12 @@ export class GenericStringMatchPipe implements PipeTransform {
  */
 export class GenericStringSliceMatchPipe implements PipeTransform {
     transform(
-        subject:?string, pattern:string, index:number = 0, modifier:string = ''
+        subject:?subject, pattern:string, index:number = 0,
+        modifier:string = ''
     ):string {
-        if (typeof subject === 'string') {
-            const match:?Array<string> = subject.match(new RegExp(
-                // IgnoreTypeCheck
-                pattern, modifier))
-            if (match && typeof match[index] === 'string')
-                return match[index]
-        }
-        return ''
+        return subject ? subject.match(new RegExp(
+            pattern, modifier
+        ))[index] : ''
     }
 }
 @Pipe({name: 'genericStringHasTimeSuffix'})
@@ -1127,7 +1118,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         '(?:application/(?:x-)?shockwave-flash)$')
 
     _data:GenericDataService
-    _domSanitizer:DomSanitizer
+    _domSanitization:DomSanitizer
     _extendObject:Function
     _getFilenameByPrefix:Function
     _representObject:Function
@@ -1344,7 +1335,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 _rev: this.model._rev,
                 _attachments: {[this.file.name]: {data: null}}
             }
-            if (this.mapNameToField && this.mapNameToField.includes('_id'))
+            if (this.mapNameToField.includes('_id'))
                 update._deleted = true
             try {
                 result = await this._data.put(update)
@@ -1354,7 +1345,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 }
                 return
             }
-            if (this.mapNameToField && this.mapNameToField.includes('_id'))
+            if (this.mapNameToField.includes('_id'))
                 this.delete.emit(result)
             else
                 this.model._rev = result.rev

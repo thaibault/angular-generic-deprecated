@@ -20,7 +20,7 @@ import {platformBrowserDynamic} from '@angular/platform-browser-dynamic'
 
 import {default as GenericModule, GenericInitialDataService} from './index'
 // endregion
-registerTest(function(roundType:string):void {
+registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
     $('#qunit-fixture').append('<application></application>')
     platformBrowserDynamic().bootstrapModule(GenericModule)
     // region tests
