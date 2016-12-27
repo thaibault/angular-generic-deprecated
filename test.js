@@ -16,56 +16,18 @@
 */
 // region imports
 import registerTest from 'clientnode/test'
-import type {$DomNode} from 'clientnode'
-import type Incrementer from './index'
+import {platformBrowserDynamic} from '@angular/platform-browser-dynamic'
+
+import {default as GenericModule, GenericInitialDataService} from './index'
 // endregion
-registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
-    require('./index')
-    $('#qunit-fixture').append(
-        '<form action="#"><input name="test" value="10"></form>')
-    const $incrementerDomNode:$DomNode = $(
-        '#qunit-fixture form input'
-    ).Incrementer()
-    const incrementer:Incrementer = $incrementerDomNode.data('Incrementer')
+registerTest(function(roundType:string):void {
+    $('#qunit-fixture').append('<application></application>')
+    platformBrowserDynamic().bootstrapModule(GenericModule)
     // region tests
-    // / region public  methods
-    // //  region special
-    this.test('initialize', (assert:Object):void => {
-        assert.ok(incrementer)
-        assert.strictEqual($incrementerDomNode.parent().find(
-            'a.plus, a.minus'
-        ).length, 2)
+    this.test('GenericInitialDataService', (assert:Object):void => {
+        console.log('TODO')
+        assert.ok(true)
     })
-    // // endregion
-    // / endregion
-    // / region protected methods
-    // // region event
-    this.test('_preventOtherThanNumberInput', (assert:Object):void => {
-        assert.strictEqual(incrementer._preventOtherThanNumberInput({
-            keyCode: 49, preventDefault: ():void => {}
-        }), incrementer)
-        assert.strictEqual(incrementer._preventOtherThanNumberInput({
-            keyCode: 47, preventDefault: ():void => {}
-        }), incrementer)
-    })
-    this.test('_onClick', (assert:Object):void => assert.strictEqual(
-        incrementer._onClick({
-            preventDefault: ():void => {}, target: $('body')[0]
-        }), incrementer))
-    this.test('_onChangeInput', (assert:Object):void => assert.strictEqual(
-        incrementer._onChangeInput({
-            preventDefault: ():void => {}, target: $('body')[0]
-        }), incrementer))
-    this.test('_onTypeInvalidLetter', (assert:Object):void =>
-        assert.strictEqual(incrementer._onTypeInvalidLetter({
-            preventDefault: ():void => {}, keyCode: 49
-        }), incrementer))
-    this.test('_onInvalidNumber', (assert:Object):void => assert.strictEqual(
-        incrementer._onInvalidNumber({
-            preventDefault: ():void => {}, keyCode: 49
-        }), incrementer))
-    // // endregion
-    // / endregion
     // endregion
 }, ['withJQuery'])
 // region vim modline
