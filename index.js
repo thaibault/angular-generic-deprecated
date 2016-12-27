@@ -1138,7 +1138,9 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
     // Technical regular expression style file type.
     internalName:?string = null
 
-    @Input() model:{id:?string;[key:string]:any;} = {}
+    @Input() model:{id:?string;[key:string]:any;} = {
+        id: null
+    }
     // Asset name.
     @Input() name:?string = null
     @Input() showValidationErrorMessages:boolean = false
