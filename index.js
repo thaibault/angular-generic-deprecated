@@ -797,10 +797,11 @@ export class AbstractResolver implements Resolve<PlainObject> {
 // region components
 // / region abstract
 export class AbstractItemsComponent {
-    _route:ActivatedRoute
-    _router:Router
     _itemsPath:string = 'admin/items'
     _itemPath:string = 'admin/item'
+    _route:ActivatedRoute
+    _router:Router
+    _tools:Tools
 
     items:Observable<Array<PlainObject>>
     limit:number
@@ -811,7 +812,10 @@ export class AbstractItemsComponent {
     searchTermStream:Subject<string> = new Subject()
     sort:PlainObject = {_id: 'asc'}
 
-    constructor(route:ActivatedRoute, router:Router):void {
+    constructor(
+        tools:GenericToolsService, route:ActivatedRoute, router:Router
+    ):void {
+        this._tools = tools.tools
         this._route = route
         this._router = router
         this._route.params.subscribe((data:PlainObject):void => {
@@ -834,7 +838,7 @@ export class AbstractItemsComponent {
             this.items = data.items
             this.items.total = total
             if (this.applyPageConstraints())
-                setTimeout(():boolean => this.update(), 0)
+                this._tools.timeout(():boolean => this.update())
         })
         this.searchTermStream.debounceTime(200).distinctUntilChanged().map((
         ):boolean => {
