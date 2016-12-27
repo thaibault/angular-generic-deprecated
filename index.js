@@ -51,18 +51,22 @@ export class GenericToolsService {
     tools:Tools = Tools
 }
 @Injectable()
+/**
+ * Serves initial data provided via a global variable.
+ */
 export class GenericInitialDataService {
     configuration:PlainObject
+    /**
+     * Sets all properties of given initial data as properties to this
+     * initializing instance.
+     * @param tools - Saves the generic tools service.
+     * @returns Nothing.
+     */
     constructor(tools:GenericToolsService):void {
-        for (
-            const key:string in tools.globalContext.bpvWebNodePluginInitialData
-        )
-            if (tools.globalContext.bpvWebNodePluginInitialData.hasOwnProperty(
-                key
-            ))
+        for (const key:string in tools.globalContext.genericInitialData)
+            if (tools.globalContext.genericInitialData.hasOwnProperty(key))
                 // IgnoreTypeCheck
-                this[key] = tools.globalContext.bpvWebNodePluginInitialData[
-                    key]
+                this[key] = tools.globalContext.genericInitialData[key]
     }
 }
 // endregion
@@ -110,6 +114,12 @@ for (const configuration:PlainObject of [
             for (const methodName:string of methodNames) {
                 const pipeName:string = Tools.stringCapitalize(methodName)
                 module.exports[`Generic${pipeName}Pipe`] = class {
+                    /**
+                     * Performs the concrete conversion logic.
+                     * @param parameter - Saves all generic parameter to
+                     * forward it for triggering the underlying tools utility.
+                     * @returns Whatever the underlying tools function returns.
+                     */
                     transform(...parameter:Array<any>):any {
                         return ReflectiveInjector.resolveAndCreate([
                             GenericToolsService
@@ -1082,6 +1092,9 @@ export class GenericTextareaComponent {
         </md-card>
     `
 })
+/**
+ * TODO
+ */
 export class GenericFileInputComponent implements OnInit, AfterViewInit {
     static imageMimeTypeRegularExpression:RegExp = new RegExp(
         '^image/(?:p?jpe?g|png|svg(?:\\+xml)?|vnd\\.microsoft\\.icon|gif|' +
@@ -1109,15 +1122,27 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
     // Asset name.
     @Input() name:?string = null
     @Input() showValidationErrorMessages:boolean = false
-    // Indicates weather changed file selections should be immediately attached
-    // to given document.
+    /*
+        Indicates weather changed file selections should be immediately
+        attached to given document.
+    */
     @Input() synchronizeImmediately:boolean|PlainObject = false
     @Input() mapNameToField:?string|?Array<string> = null
     @Output() delete:EventEmitter = new EventEmitter()
     @Output() fileChange:EventEmitter = new EventEmitter()
     @Output() modelChange:EventEmitter = new EventEmitter()
     @ViewChild('input') input:ElementRef
-
+    /**
+     * Sets needed services as property values.
+     * @param data - Saves the data service instance.
+     * @param domSanitizer - Saves the dom sanitizer service instance.
+     * @param extendObject - Saves the object extender pipe instance.
+     * @param getFilenameByPrefix - Saves the file name by prefix retriever
+     * pipe instance.
+     * @param representObject - Saves the object to string representation pipe
+     * instance.
+     * @returns Nothing.
+     */
     constructor(
         data:GenericDataService, domSanitizer:DomSanitizer,
         extendObject:GenericExtendObjectPipe,
@@ -1130,6 +1155,10 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         this._getFilenameByPrefix = getFilenameByPrefix.transform
         this._representObject = representObject.transform
     }
+    /**
+     * Initializes file upload handler.
+     * @returns Nothing.
+     */
     ngOnInit():void {
         if (this.mapNameToField && !Array.isArray(this.mapNameToField))
             this.mapNameToField = [this.mapNameToField]
@@ -1155,6 +1184,10 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         this.determinePresentationType()
         this.fileChange.emit(this.file)
     }
+    /**
+     * Initializes current file input field. Adds needed event observer.
+     * @returns Nothing.
+     */
     ngAfterViewInit():void {
         this.input.nativeElement.addEventListener('change', async (
         ):Promise<void> => {
@@ -1277,6 +1310,11 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
             }
         })
     }
+    /**
+     * Removes current file.
+     * @returns A Promise which will be resolved after current file will be
+     * removed.
+     */
     async remove():Promise<void> {
         if (this.synchronizeImmediately && this.file) {
             let result:PlainObject
@@ -1310,6 +1348,10 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         this.fileChange.emit(this.file)
         this.modelChange.emit(this.model)
     }
+    /**
+     * Determines which type of file we have to present.
+     * @returns Nothing.
+     */
     determinePresentationType():void {
         if (
             this.file && this.file.content_type &&
@@ -1339,7 +1381,7 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
                 <a href="" (click)="change($event, 1)">--</a>
             </li>
             <li *ngIf="page > 1">
-                <a href="" (click)="change($event, getPrevPage())">-</a>
+                <a href="" (click)="change($event, getPreviousPage())">-</a>
             </li>
             <li *ngFor="let p of getPagesRange()">
                 <a href="" (click)="change($event, p)">{{p}}</a>
@@ -1353,22 +1395,46 @@ export class GenericFileInputComponent implements OnInit, AfterViewInit {
         </ul>
     `
 })
+/**
+ * Provides a generic pagination component.
+ * @property _makeRange - Saves the make range pipe transformation function.
+ * @property _router - Saves the router instance.
+ * @property itemsPerPage - Number of items to show per page as maximum.
+ * @property page - Contains currently selected page number.
+ * @property pageChange - Event emitter to fire on each page change event.
+ * @property total - Contains total number of pages.
+ * @property pageRangeLimit - Number of concrete page links to show.
+ */
 export class GenericPaginationComponent {
+    _makeRange:Function
+    _router:Router
     @Input() itemsPerPage:number = 20
     @Input() page:number = 1
     @Output() pageChange:EventEmitter = new EventEmitter()
     @Input() total:number = 0
     @Input() pageRangeLimit:number = 4
-    _roter:Router
-    _makeRange:Function
-    constructor(router:Router, makeRange:GenericArrayMakeRangePipe):void {
-        this._router = router
+    /**
+     * Sets needed services as property values.
+     * @param makeRange - Saves the make range pipe instance.
+     * @param router - Saves the router instance.
+     * @returns Nothing.
+     */
+    constructor(makeRange:GenericArrayMakeRangePipe, router:Router):void {
         this._makeRange = makeRange.transform
+        this._router = router
     }
+    /**
+     * Determines the highest page number.
+     * @returns The determines page number.
+     */
     getLastPage():number {
         return Math.ceil(this.total / this.itemsPerPage)
     }
-    getPagesRange():number {
+    /**
+     * Determines the number of pages to show.
+     * @returns A list of page numbers.
+     */
+    getPagesRange():Array<number> {
         if (this.page - this.pageRangeLimit < 1) {
             const start:number = 1
             const startRest:number = this.pageRangeLimit - (this.page - start)
@@ -1384,12 +1450,26 @@ export class GenericPaginationComponent {
             1, this.page - this.pageRangeLimit - endRest)
         return this._makeRange([start, end])
     }
-    getPrevPage():number {
+    /**
+     * Determines the previous or first (if first is current) page.
+     * @returns The previous determined page number.
+     */
+    getPreviousPage():number {
         return Math.max(1, this.page - 1)
     }
+    /**
+     * Retrieves the next or last (if last is current) page.
+     * @returns The new determined page number.
+     */
     getNextPage():number {
         return Math.min(this.page + 1, this.getLastPage())
     }
+    /**
+     * Is called whenever a page change should be performed.
+     * @param event - The responsible event.
+     * @param newPage - New page number to change to.
+     * @returns Nothing.
+     */
     change(event:Object, newPage:number):void {
         event.preventDefault()
         this.page = newPage
@@ -1420,6 +1500,9 @@ const modules:Array<Object> = [
     imports: modules,
     providers
 })
+/**
+ * Represents the importable angular module.
+ */
 export default class GenericModule {}
 // endregion
 // region vim modline
