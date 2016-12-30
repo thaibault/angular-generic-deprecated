@@ -16,13 +16,28 @@
 */
 // region imports
 import registerTest from 'clientnode/test'
+import {Component, enableProdMode, NgModule} from '@angular/core'
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic'
 
 import {default as GenericModule, GenericInitialDataService} from './index'
 // endregion
+declare var DEBUG:boolean
 registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
     $('#qunit-fixture').append('<application></application>')
-    platformBrowserDynamic().bootstrapModule(GenericModule)
+    @Component({
+        selector: 'application',
+        template: '<div>Application</div>'
+    })
+    class ApplicationComponent {}
+    @NgModule({
+        bootstrap: [ApplicationComponent],
+        declarations: [ApplicationComponent],
+        imports: [GenericModule]
+    })
+    class ApplicationModule {}
+    if (!DEBUG)
+        enableProdMode()
+    platformBrowserDynamic().bootstrapModule(ApplicationModule)
     // region tests
     this.test('GenericInitialDataService', (assert:Object):void => {
         console.log('TODO')
