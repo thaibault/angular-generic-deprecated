@@ -15,7 +15,6 @@
     endregion
 */
 // region imports
-import {globalContext} from 'clientnode'
 import registerTest from 'clientnode/test'
 import {Component, enableProdMode, NgModule} from '@angular/core'
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic'
@@ -52,7 +51,11 @@ import {
 declare var DEBUG:boolean
 registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
     const self:Object = this
-    globalContext.genericInitialData = {configuration: {test: true}}
+    $.global.genericInitialData = {configuration: {test: true}}
+
+    $.global.window = $.global
+    $.global.document = $.context
+
     @Component({
         selector: '#qunit-fixture',
         template: '<div>Application</div>'
@@ -179,11 +182,12 @@ registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
             // endregion
         }
     }
+    console.log('D', DEBUG)
     if (!DEBUG)
         enableProdMode()
     this.test('GenericModule', (assert:Object):void =>
         assert.ok(platformBrowserDynamic().bootstrapModule(ApplicationModule)))
-}, ['withJQuery'])
+}, ['full'])
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:
