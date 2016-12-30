@@ -308,7 +308,7 @@ export class GenericStringReplacePipe implements PipeTransform {
 /**
  * Returns given string if it matches given pattern.
  */
-export class GenericStringShowIfPatternMatechsPipe implements PipeTransform {
+export class GenericStringShowIfPatternMatchesPipe implements PipeTransform {
     transform(
         string:string, pattern:string, invert:boolean = false,
         modifier:string = 'g'
@@ -334,7 +334,7 @@ export class GenericStringStartsWithPipe implements PipeTransform {
 /**
  * Replaces a string with given replacement.
  */
-export class GenericStringEndsWith implements PipeTransform {
+export class GenericStringEndsWithPipe implements PipeTransform {
     transform(string:?string, needle:?string):boolean {
         return typeof string === 'string' && typeof needle === 'string' &&
             string.endsWith(needle)
@@ -373,7 +373,7 @@ export class GenericStringSliceMatchPipe implements PipeTransform {
 /**
  * Determines if given string has a time indicating suffix.
  */
-export class GenericStringHasTimeSuffix implements PipeTransform {
+export class GenericStringHasTimeSuffixPipe implements PipeTransform {
     transform(string:?string):boolean {
         if (typeof string !== 'string')
             return false
@@ -388,7 +388,7 @@ export class GenericStringHasTimeSuffix implements PipeTransform {
 /**
  * Returns part in percent of all.
  */
-export class GenericNumberPercent implements PipeTransform {
+export class GenericNumberPercentPipe implements PipeTransform {
     transform(part:number, all:number):number {
         return (part / all) * 100
     }
