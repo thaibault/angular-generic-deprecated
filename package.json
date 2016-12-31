@@ -140,7 +140,7 @@
           "^pouchdb(?:/.+)?$": "pouchdb/dist/pouchdb.min.js",
           "^pouchdb-find(?:/.+)?$": "pouchdb-find/dist/pouchdb.find.min.js",
           "^DOESNT WORK: rxjs(?:/.+)?$": "rxjs/bundles/Rx.min.js",
-          "^TODO zone\\.js(?:/.+)?$": "zone.js/dist/zone.min.js"
+          "^DOESNT WORK IN NODE: zone\\.js(?:/.+)?$": "zone.js/dist/zone.min.js"
         }
       },
       "skipParseRegularExpressions": {
