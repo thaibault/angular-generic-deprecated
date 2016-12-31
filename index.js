@@ -27,11 +27,11 @@ import {
 } from '@angular/core'
 import {FormsModule} from '@angular/forms'
 import {MaterialModule} from '@angular/material'
+import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {
     ActivatedRoute, ActivatedRouteSnapshot, CanDeactivate, Resolve, Router,
     RouterStateSnapshot
 } from '@angular/router'
-import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'

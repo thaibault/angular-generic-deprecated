@@ -38,7 +38,7 @@
     "watch": "webOptimizer build --watch",
     "watchDLL": "webOptimizer buildDLL --watch"
   },
-  "devDependencies": {
+  "dependencies": {
     "@angular/common": "latest",
     "@angular/compiler": "latest",
     "@angular/core": "latest",
@@ -48,23 +48,25 @@
     "@angular/platform-browser": "latest",
     "@angular/platform-browser-dynamic": "latest",
     "@angular/router": "latest",
-    "babel-plugin-angular2-annotations": "latest",
-    "babel-plugin-transform-decorators-legacy": "latest",
     "clientnode": "latest",
-    "documentation-website": "latest",
     "hammerjs": "latest",
     "pouchdb": "latest",
-    "pouchdb-adapter-memory": "latest",
     "pouchdb-find": "latest",
     "pouchdb-validation": "latest",
+    "reflect-metadata": "^0.1.8",
+    "rxjs": "5.0.0-beta.12",
+    "zone.js": "^0.6.26"
+  },
+  "devDependencies": {
+    "babel-plugin-angular2-annotations": "latest",
+    "babel-plugin-transform-decorators-legacy": "latest",
+    "documentation-website": "latest",
+    "pouchdb-adapter-memory": "latest",
     "jsdom": "latest",
     "qunitjs": "latest",
     "qunit-cli": "latest",
-    "reflect-metadata": "^0.1.8",
-    "rxjs": "5.0.0-beta.12",
     "source-map-support": "latest",
-    "weboptimizer": "latest",
-    "zone.js": "^0.6.26"
+    "weboptimizer": "latest"
   },
   "webOptimizer": {
     "injection": {
