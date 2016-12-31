@@ -17,48 +17,61 @@
 // region imports
 import registerTest from 'clientnode/test'
 // endregion
+// region declaration
 declare var DEBUG:boolean
+declare var TARGET_TECHNOLOGY:string
+// endregion
 registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
+    // region mocking angular environment
     const self:Object = this
     $.global.genericInitialData = {configuration: {test: true}}
-
-    $.global.window = $.global
-    $.global.document = $.context
-    global.document = $.context
-    global.Element = $.global.Element
+    /*
+        NOTE: A working polymorphic angular environment needs some assumptions
+        about the global scope, so mocking and initializing that environment
+        after a working browser environment is present.
+    */
+    if (TARGET_TECHNOLOGY === 'node') {
+        global.window = $.global
+        global.document = $.context
+        global.Element = $.global.Element
+        global.window.Reflect = global.Reflect
+        process.setMaxListeners(30)
+    }
+    const hammerjs:Object = require('hammerjs')
     const core:Object = require('@angular/core')
-    const Component = core.Component
-    const enableProdMode = core.enableProdMode
-    const NgModule = core.NgModule
-    const platformBrowserDynamic = require('@angular/platform-browser-dynamic').platformBrowserDynamic
+    const {Component, enableProdMode, NgModule} = core
+    const platformBrowserDynamic:Function = require(
+        '@angular/platform-browser-dynamic'
+    ).platformBrowserDynamic
     const index:Object = require('./index')
     const GenericModule = index.default
-    const GenericToolsService = index.GenericToolsService
-    const GenericInitialDataService = index.GenericInitialDataService
-    const GenericStringMD5Pipe = index.GenericStringMD5Pipe
-    const GenericExtractRawDataPipe = index.GenericExtractRawDataPipe
-    const GenericGetFilenameByPrefixPipe = index.GenericGetFilenameByPrefixPipe
-    const GenericMapPipe = index.GenericMapPipe
-    const GenericTypePipe = index.GenericTypePipe
-    const GenericIsDefinedPipe = index.GenericIsDefinedPipe
-    const GenericStringReplacePipe = index.GenericStringReplacePipe
-    const GenericStringShowIfPatternMatchesPipe = index.GenericStringShowIfPatternMatchesPipe
-    const GenericStringStartsWithPipe = index.GenericStringStartsWithPipe
-    const GenericStringEndsWithPipe = index.GenericStringEndsWithPipe
-    const GenericStringMatchPipe = index.GenericStringMatchPipe
-    const GenericStringSliceMatchPipe = index.GenericStringSliceMatchPipe
-    const GenericStringHasTimeSuffixPipe = index.GenericStringHasTimeSuffixPipe
-    const GenericNumberPercentPipe = index.GenericNumberPercentPipe
-    const GenericCanDeactivateRouteLeaveGuard = index.GenericCanDeactivateRouteLeaveGuard
-    const GenericDataService = index.GenericDataService
-    const GenericDataScopeService = index.GenericDataScopeService
-    const AbstractResolver = index.AbstractResolver
-    const AbstractItemsComponent = index.AbstractItemsComponent
-    const GenericInputComponent = index.GenericInputComponent
-    const GenericTextareaComponent = index.GenericTextareaComponent
-    const GenericFileInputComponent = index.GenericFileInputComponent
-    const GenericPaginationComponent = index.GenericPaginationComponent
-
+    const {
+        GenericToolsService,
+        GenericInitialDataService,
+        GenericStringMD5Pipe,
+        GenericExtractRawDataPipe,
+        GenericGetFilenameByPrefixPipe,
+        GenericMapPipe,
+        GenericTypePipe,
+        GenericIsDefinedPipe,
+        GenericStringReplacePipe,
+        GenericStringShowIfPatternMatchesPipe,
+        GenericStringStartsWithPipe,
+        GenericStringEndsWithPipe,
+        GenericStringMatchPipe,
+        GenericStringSliceMatchPipe,
+        GenericStringHasTimeSuffixPipe,
+        GenericNumberPercentPipe,
+        GenericCanDeactivateRouteLeaveGuard,
+        GenericDataService,
+        GenericDataScopeService,
+        AbstractResolver,
+        AbstractItemsComponent,
+        GenericInputComponent,
+        GenericTextareaComponent,
+        GenericFileInputComponent,
+        GenericPaginationComponent
+    } = index
     @Component({
         selector: '#qunit-fixture',
         template: '<div>Application</div>'
@@ -69,6 +82,7 @@ registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
         declarations: [ApplicationComponent],
         imports: [GenericModule]
     })
+    // endregion
     class ApplicationModule {
         constructor(
             tools:GenericToolsService,
