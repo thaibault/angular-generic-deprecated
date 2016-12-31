@@ -86,7 +86,7 @@
           "__evaluate__": "['babel-polyfill', 'reflect-metadata', 'zone.js'].concat(self.givenCommandLineArguments.length && ['buildDLL', 'serve', 'testInBrowser', 'watchDLL'].includes(self.givenCommandLineArguments[2]) ? [`webpack-dev-server/client?http${self.development.server.cert ? 's' : ''}://0.0.0.0:${self.development.server.port}`] : []).concat(self.givenCommandLineArguments.length && ['test', 'testInBrowser'].includes(self.givenCommandLineArguments[2]) ? './test' : './index')"
         },
         "vendor": {
-          "__evaluate__": "self.debug && 2 < self.givenCommandLineArguments.length && ['buildDLL', 'serve', 'testInBrowser', 'watchDLL'].includes(self.givenCommandLineArguments[2]) ? ['babel-polyfill', 'hammerjs', 'script!reflect-metadata', 'zone.js', 'rxjs', '@angular/common', 'imports?window.Reflect=>reflect-metadata!@angular/core', '@angular/http', '@angular/material', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router'].concat(self.givenCommandLineArguments[2] === 'serve' ? [] : ['script!qunitjs', 'weboptimizer/browserAPI']) : []"
+          "__evaluate__": "self.debug && 2 < self.givenCommandLineArguments.length && ['buildDLL', 'serve', 'testInBrowser', 'watchDLL'].includes(self.givenCommandLineArguments[2]) ? ['babel-polyfill', 'hammerjs', 'reflect-metadata', 'zone.js', 'rxjs', '@angular/common', 'imports?window.Reflect=>reflect-metadata!@angular/core', '@angular/http', '@angular/material', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router'].concat(self.givenCommandLineArguments[2] === 'serve' ? [] : ['script!qunitjs', 'weboptimizer/browserAPI']) : []"
         }
       }
     },
