@@ -16,37 +16,6 @@
 */
 // region imports
 import registerTest from 'clientnode/test'
-import {Component, enableProdMode, NgModule} from '@angular/core'
-import {platformBrowserDynamic} from '@angular/platform-browser-dynamic'
-
-import {
-    default as GenericModule,
-    GenericToolsService,
-    GenericInitialDataService,
-    GenericStringMD5Pipe,
-    GenericExtractRawDataPipe,
-    GenericGetFilenameByPrefixPipe,
-    GenericMapPipe,
-    GenericTypePipe,
-    GenericIsDefinedPipe,
-    GenericStringReplacePipe,
-    GenericStringShowIfPatternMatchesPipe,
-    GenericStringStartsWithPipe,
-    GenericStringEndsWithPipe,
-    GenericStringMatchPipe,
-    GenericStringSliceMatchPipe,
-    GenericStringHasTimeSuffixPipe,
-    GenericNumberPercentPipe,
-    GenericCanDeactivateRouteLeaveGuard,
-    GenericDataService,
-    GenericDataScopeService,
-    AbstractResolver,
-    AbstractItemsComponent,
-    GenericInputComponent,
-    GenericTextareaComponent,
-    GenericFileInputComponent,
-    GenericPaginationComponent
-} from './index'
 // endregion
 declare var DEBUG:boolean
 registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
@@ -55,6 +24,40 @@ registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
 
     $.global.window = $.global
     $.global.document = $.context
+    global.document = $.context
+    global.Element = $.global.Element
+    const core:Object = require('@angular/core')
+    const Component = core.Component
+    const enableProdMode = core.enableProdMode
+    const NgModule = core.NgModule
+    const platformBrowserDynamic = require('@angular/platform-browser-dynamic').platformBrowserDynamic
+    const index:Object = require('./index')
+    const GenericModule = index.default
+    const GenericToolsService = index.GenericToolsService
+    const GenericInitialDataService = index.GenericInitialDataService
+    const GenericStringMD5Pipe = index.GenericStringMD5Pipe
+    const GenericExtractRawDataPipe = index.GenericExtractRawDataPipe
+    const GenericGetFilenameByPrefixPipe = index.GenericGetFilenameByPrefixPipe
+    const GenericMapPipe = index.GenericMapPipe
+    const GenericTypePipe = index.GenericTypePipe
+    const GenericIsDefinedPipe = index.GenericIsDefinedPipe
+    const GenericStringReplacePipe = index.GenericStringReplacePipe
+    const GenericStringShowIfPatternMatchesPipe = index.GenericStringShowIfPatternMatchesPipe
+    const GenericStringStartsWithPipe = index.GenericStringStartsWithPipe
+    const GenericStringEndsWithPipe = index.GenericStringEndsWithPipe
+    const GenericStringMatchPipe = index.GenericStringMatchPipe
+    const GenericStringSliceMatchPipe = index.GenericStringSliceMatchPipe
+    const GenericStringHasTimeSuffixPipe = index.GenericStringHasTimeSuffixPipe
+    const GenericNumberPercentPipe = index.GenericNumberPercentPipe
+    const GenericCanDeactivateRouteLeaveGuard = index.GenericCanDeactivateRouteLeaveGuard
+    const GenericDataService = index.GenericDataService
+    const GenericDataScopeService = index.GenericDataScopeService
+    const AbstractResolver = index.AbstractResolver
+    const AbstractItemsComponent = index.AbstractItemsComponent
+    const GenericInputComponent = index.GenericInputComponent
+    const GenericTextareaComponent = index.GenericTextareaComponent
+    const GenericFileInputComponent = index.GenericFileInputComponent
+    const GenericPaginationComponent = index.GenericPaginationComponent
 
     @Component({
         selector: '#qunit-fixture',
@@ -182,7 +185,6 @@ registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
             // endregion
         }
     }
-    console.log('D', DEBUG)
     if (!DEBUG)
         enableProdMode()
     this.test('GenericModule', (assert:Object):void =>
