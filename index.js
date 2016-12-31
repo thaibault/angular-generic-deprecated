@@ -436,9 +436,16 @@ export class GenericDataService {
         this.extendObject = extendObject.transform
         this.database = PouchDB.plugin(PouchDBFindPlugin)
                                .plugin(PouchDBValidationPlugin)
+        for (
+            const plugin:Object of
+            initialData.configuration.database.plugins || []
+        )
+            this.database = this.database.plugin(plugin)
         this.connection = new this.database(this.stringFormat(
             initialData.configuration.database.url, ''
-        ) + `/${initialData.configuration.name}`, {skip_setup: true})
+        ) + `/${initialData.configuration.name}`, this.extendObject(true, {
+            skip_setup: true
+        }, initialData.configuration.database.options || {}))
         for (const name:string in this.connection)
             if (typeof this.connection[name] === 'function') {
                 const method:Function = this.connection[name]

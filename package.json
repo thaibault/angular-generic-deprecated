@@ -54,6 +54,7 @@
     "documentation-website": "latest",
     "hammerjs": "latest",
     "pouchdb": "latest",
+    "pouchdb-adapter-memory": "latest",
     "pouchdb-find": "latest",
     "pouchdb-validation": "latest",
     "jsdom": "latest",

@@ -16,6 +16,7 @@
 */
 // region imports
 import registerTest from 'clientnode/test'
+import PouchDBAdabterMemory from 'pouchdb-adapter-memory'
 // endregion
 // region declaration
 declare var DEBUG:boolean
@@ -24,7 +25,14 @@ declare var TARGET_TECHNOLOGY:string
 registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
     // region mocking angular environment
     const self:Object = this
-    $.global.genericInitialData = {configuration: {test: true}}
+    $.global.genericInitialData = {configuration: {
+        database: {
+            url: 'test',
+            options: {adapter: 'memory'},
+            plugins: [PouchDBAdabterMemory]
+        },
+        test: true
+    }}
     /*
         NOTE: A working polymorphic angular environment needs some assumptions
         about the global scope, so mocking and initializing that environment
@@ -87,6 +95,7 @@ registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
         constructor(
             tools:GenericToolsService,
             initialData:GenericInitialDataService,
+
             md5:GenericStringMD5Pipe,
             extractRawData:GenericExtractRawDataPipe,
             getFilenameByPrefix:GenericGetFilenameByPrefixPipe,
@@ -100,7 +109,11 @@ registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
             stringMatch:GenericStringMatchPipe,
             stringSliceMatch:GenericStringSliceMatchPipe,
             stringHasTimeSuffix:GenericStringHasTimeSuffixPipe,
-            numberPercent:GenericNumberPercentPipe
+            numberPercent:GenericNumberPercentPipe,
+
+            canDeactivateRouteLeave:GenericCanDeactivateRouteLeaveGuard,
+            data:GenericDataService,
+            dataScope:GenericDataScopeService
         ):void {
             // region tests
             // / region basic services
@@ -180,9 +193,13 @@ registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
             self.test('AbstractResolver', (assert:Object):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
+            // / endregion
+            // / region components
+            // // region abstract
             self.test('AbstractItemsComponent', (assert:Object):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
+            // // endregion
             self.test('GenericInputComponent', (assert:Object):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
@@ -201,8 +218,8 @@ registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
     }
     if (!DEBUG)
         enableProdMode()
-    this.test('GenericModule', (assert:Object):void =>
-        assert.ok(platformBrowserDynamic().bootstrapModule(ApplicationModule)))
+    this.test('GenericModule', (assert:Object):void => assert.ok(
+        platformBrowserDynamic().bootstrapModule(ApplicationModule)))
 }, ['full'])
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
