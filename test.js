@@ -22,7 +22,9 @@ import PouchDBAdabterMemory from 'pouchdb-adapter-memory'
 declare var DEBUG:boolean
 declare var TARGET_TECHNOLOGY:string
 // endregion
-registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
+registerTest(async function(
+    roundType:string, targetTechnology:?string, $:any
+):Promise<void> {
     // region mocking angular environment
     const self:Object = this
     $.global.genericInitialData = {configuration: {
@@ -46,13 +48,13 @@ registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
         process.setMaxListeners(30)
     }
     const hammerjs:Object = require('hammerjs')
-    const core:Object = require('@angular/core')
-    const {Component, enableProdMode, NgModule} = core
+    const {DebugElement, Component, enableProdMode, NgModule} = require(
+        '@angular/core')
     const platformBrowserDynamic:Function = require(
         '@angular/platform-browser-dynamic'
     ).platformBrowserDynamic
     const index:Object = require('./index')
-    const GenericModule = index.default
+    const GenericModule:Object = index.default
     const {
         GenericToolsService,
         GenericInitialDataService,
@@ -91,6 +93,7 @@ registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
         imports: [GenericModule]
     })
     // endregion
+    // region test services
     class ApplicationModule {
         constructor(
             tools:GenericToolsService,
@@ -115,111 +118,161 @@ registerTest(function(roundType:string, targetTechnology:?string, $:any):void {
             data:GenericDataService,
             dataScope:GenericDataScopeService
         ):void {
-            // region tests
-            // / region basic services
-            self.test('GenericToolsService', (assert:Object):void => {
+            // region basic services
+            self.test(`GenericToolsService (${roundType})`, (
+                assert:Object
+            ):void => {
                 assert.ok(tools.$)
                 assert.ok(tools.globalContext)
                 assert.strictEqual(tools.tools.stringMD5(
                     'test'
                 ), '098f6bcd4621d373cade4e832627b4f6')
             })
-            self.test('GenericInitialDataService', (assert:Object):void => {
-                assert.strictEqual(initialData.configuration.test, true)
-            })
-            // / endregion
-            // / region pipes
-            // // region forwarded
-            self.test('GenericStringMD5Pipe', (assert:Object):void => {
+            self.test(`GenericInitialDataService (${roundType})`, (
+                assert:Object
+            ):void => assert.strictEqual(initialData.configuration.test, true))
+            // endregion
+            // region pipes
+            // / region forwarded
+            self.test(`GenericStringMD5Pipe (${roundType})`, (
+                assert:Object
+            ):void => {
+                assert.strictEqual(md5.transform(
+                    ''
+                ), 'd41d8cd98f00b204e9800998ecf8427e')
                 assert.strictEqual(md5.transform(
                     'test'
                 ), '098f6bcd4621d373cade4e832627b4f6')
             })
-            // // endregion
-            self.test('GenericExtractRawDataPipe', (assert:Object):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
-            self.test('GenericGetFilenameByPrefixPipe', (assert:Object):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
-            self.test('GenericMapPipe', (assert:Object):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
-            self.test('GenericTypePipe', (assert:Object):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
-            self.test('GenericIsDefinedPipe', (assert:Object):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
-            self.test('GenericStringReplacePipe', (assert:Object):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
-            self.test('GenericStringShowIfPatternMatchesPipe', (
+            // / endregion
+            self.test(`GenericExtractRawDataPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
-            self.test('GenericStringStartsWithPipe', (assert:Object):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
-            self.test('GenericStringEndsWithPipe', (assert:Object):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
-            self.test('GericStringMatchPipe', (assert:Object):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
-            self.test('GenericStringSliceMatchPipe', (assert:Object):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
-            self.test('GenericStringHasTimeSuffixPipe', (assert:Object):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
-            self.test('GenericNumberPercentPipe', (assert:Object):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
-            // / endregion
-            // / region services
-            self.test('GenericCanDeactivateRouteLeaveGuard', (
+            self.test(`GenericGetFilenameByPrefixPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
-            self.test('GenericDataService', (assert:Object):void => {
+            self.test(`GenericMapPipe (${roundType})`, (
+                assert:Object
+            ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
-            self.test('GenericDataScopeService', (assert:Object):void => {
+            self.test(`GenericTypePipe (${roundType})`, (
+                assert:Object
+            ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
-            self.test('AbstractResolver', (assert:Object):void => {
+            self.test(`GenericIsDefinedPipe (${roundType})`, (
+                assert:Object
+            ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
-            // / endregion
-            // / region components
-            // // region abstract
-            self.test('AbstractItemsComponent', (assert:Object):void => {
+            self.test(`GenericStringReplacePipe (${roundType})`, (
+                assert:Object
+            ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
-            // // endregion
-            self.test('GenericInputComponent', (assert:Object):void => {
+            self.test(`GenericStringShowIfPatternMatchesPipe (${roundType})`, (
+                assert:Object
+            ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
-            self.test('GenericTextareaComponent', (assert:Object):void => {
+            self.test(`GenericStringStartsWithPipe (${roundType})`, (
+                assert:Object
+            ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
-            self.test('GenericFileInputComponent', (assert:Object):void => {
+            self.test(`GenericStringEndsWithPipe (${roundType})`, (
+                assert:Object
+            ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
-            self.test('GenericPaginationComponent', (assert:Object):void => {
+            self.test(`GericStringMatchPipe (${roundType})`, (
+                assert:Object
+            ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
-            // / endregion
+            self.test(`GenericStringSliceMatchPipe (${roundType})`, (
+                assert:Object
+            ):void => {
+                assert.strictEqual('TODO', 'TODO')
+            })
+            self.test(`GenericStringHasTimeSuffixPipe (${roundType})`, (
+                assert:Object
+            ):void => {
+                assert.strictEqual('TODO', 'TODO')
+            })
+            self.test(`GenericNumberPercentPipe (${roundType})`, (
+                assert:Object
+            ):void => {
+                assert.strictEqual('TODO', 'TODO')
+            })
+            // endregion
+            // region services
+            self.test(`GenericCanDeactivateRouteLeaveGuard (${roundType})`, (
+                assert:Object
+            ):void => {
+                assert.strictEqual('TODO', 'TODO')
+            })
+            self.test(`GenericDataService (${roundType})`, (
+                assert:Object
+            ):void => {
+                assert.strictEqual('TODO', 'TODO')
+            })
+            self.test(`GenericDataScopeService (${roundType})`, (
+                assert:Object
+            ):void => {
+                assert.strictEqual('TODO', 'TODO')
+            })
+            self.test(`AbstractResolver (${roundType})`, (
+                assert:Object
+            ):void => {
+                assert.strictEqual('TODO', 'TODO')
+            })
             // endregion
         }
     }
     if (!DEBUG)
         enableProdMode()
-    this.test('GenericModule', (assert:Object):void => assert.ok(
-        platformBrowserDynamic().bootstrapModule(ApplicationModule)))
+    this.module(`GenericModule.services (${roundType})`)
+    const module:Object = await platformBrowserDynamic().bootstrapModule(
+        ApplicationModule)
+    // endregion
+    // region test components
+    this.done(():void => {
+        module.destroy()
+        const {ComponentFixture, TestBed} = require('@angular/core/testing')
+        const {BrowserDynamicTestingModule, platformBrowserDynamicTesting} =
+            require('@angular/platform-browser-dynamic/testing')
+        const By:Object = require('@angular/platform-browser').By
+        this.module(`GenericModule.components (${roundType})`)
+        this.test('AbstractItemsComponent', (assert:Object):void => {
+            assert.strictEqual('TODO', 'TODO')
+        })
+        TestBed.initTestEnvironment(
+            BrowserDynamicTestingModule, platformBrowserDynamicTesting()
+        ).configureTestingModule({imports: [GenericModule]})
+        this.test('GenericInputComponent', (assert:Object):void => {
+            assert.strictEqual('TODO', 'TODO')
+            const fixture:ComponentFixture<GenericInputComponent> =
+                TestBed.createComponent(GenericInputComponent)
+            const component:GenericInputComponent = fixture.componentInstance
+            console.log('A', fixture.debugElement.nativeElement.innerHTML)
+        })
+        this.test('GenericTextareaComponent', (assert:Object):void => {
+            assert.strictEqual('TODO', 'TODO')
+        })
+        this.test('GenericFileInputComponent', (assert:Object):void => {
+            assert.strictEqual('TODO', 'TODO')
+        })
+        this.test('GenericPaginationComponent', (assert:Object):void => {
+            assert.strictEqual('TODO', 'TODO')
+        })
+    })
+    // endregion
 }, ['full'])
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

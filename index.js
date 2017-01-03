@@ -135,11 +135,19 @@ for (const configuration:PlainObject of [
                     module.exports[`Generic${pipeName}Pipe`])
                 if (configuration.invert.includes(methodTypePrefix)) {
                     module.exports[`generic${pipeName}InvertedPipe`] = class {
+                        /**
+                         * Performs the concrete conversion logic.
+                         * @param parameter - Saves all generic parameter to
+                         * forward it for triggering the underlying tools
+                         * utility.
+                         * @returns Whatever the underlying tools function
+                         * returns.
+                         */
                         transform(...parameter:Array<any>):any {
                             const tools:typeof Tools =
                                 ReflectiveInjector.resolveAndCreate([
                                     GenericToolsService
-                                ]).tools
+                                ]).get(GenericToolsService).tools
                             // IgnoreTypeCheck
                             return tools.invertArrayFilter(tools[methodName])(
                                 ...parameter)
