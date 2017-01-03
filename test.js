@@ -50,9 +50,13 @@ registerTest(async function(
     const hammerjs:Object = require('hammerjs')
     const {DebugElement, Component, enableProdMode, NgModule} = require(
         '@angular/core')
+    const {ComponentFixture, TestBed} = require('@angular/core/testing')
+    const By:Object = require('@angular/platform-browser').By
     const platformBrowserDynamic:Function = require(
         '@angular/platform-browser-dynamic'
     ).platformBrowserDynamic
+    const {BrowserDynamicTestingModule, platformBrowserDynamicTesting} =
+        require('@angular/platform-browser-dynamic/testing')
     const index:Object = require('./index')
     const GenericModule:Object = index.default
     const {
@@ -84,7 +88,7 @@ registerTest(async function(
     } = index
     @Component({
         selector: '#qunit-fixture',
-        template: '<div>Application</div>'
+        template: '<div></div>'
     })
     class ApplicationComponent {}
     @NgModule({
@@ -94,7 +98,7 @@ registerTest(async function(
     })
     // endregion
     // region test services
-    class ApplicationModule {
+    class Module {
         constructor(
             tools:GenericToolsService,
             initialData:GenericInitialDataService,
@@ -238,37 +242,64 @@ registerTest(async function(
     if (!DEBUG)
         enableProdMode()
     this.module(`GenericModule.services (${roundType})`)
-    const module:Object = await platformBrowserDynamic().bootstrapModule(
-        ApplicationModule)
+    let platform:Object
+    let module:Object
+    try {
+        platform = platformBrowserDynamic()
+        module = await platform.bootstrapModule(Module)
+    } catch (error) {
+        throw error
+    }
+    // NOTE: Simply doing "await new Promise(..." doesn't work yet.
+    const serviceTests:Promise<void> = new Promise((resolve:Function):void => {
+        let done:boolean = false
+        this.moduleDone(():void => {
+            if (done)
+                return
+            done = true
+            module.destroy()
+            platform.destroy()
+            resolve()
+        })
+    })
     // endregion
     // region test components
-    this.done(():void => {
-        module.destroy()
-        const {ComponentFixture, TestBed} = require('@angular/core/testing')
-        const {BrowserDynamicTestingModule, platformBrowserDynamicTesting} =
-            require('@angular/platform-browser-dynamic/testing')
-        const By:Object = require('@angular/platform-browser').By
+    serviceTests.then(():void => {
         this.module(`GenericModule.components (${roundType})`)
-        this.test('AbstractItemsComponent', (assert:Object):void => {
+        this.test(`AbstractItemsComponent (${roundType})`, (
+            assert:Object
+        ):void => {
             assert.strictEqual('TODO', 'TODO')
         })
         TestBed.initTestEnvironment(
             BrowserDynamicTestingModule, platformBrowserDynamicTesting()
-        ).configureTestingModule({imports: [GenericModule]})
-        this.test('GenericInputComponent', (assert:Object):void => {
-            assert.strictEqual('TODO', 'TODO')
-            const fixture:ComponentFixture<GenericInputComponent> =
-                TestBed.createComponent(GenericInputComponent)
-            const component:GenericInputComponent = fixture.componentInstance
-            console.log('A', fixture.debugElement.nativeElement.innerHTML)
+        ).configureTestingModule({imports: [Module]})
+        this.test(`GenericInputComponent (${roundType})`, async (
+            assert:Object
+        ):void => {
+            const done:Function = assert.async()
+            await TestBed.compileComponents(GenericInputComponent)
+            const fixture = TestBed.createComponent(GenericInputComponent)
+            fixture.componentInstance.model = {disabled: true}
+            fixture.componentInstance.ngOnInit()
+            assert.strictEqual(fixture.componentInstance.model.disabled, true)
+            assert.ok(
+                fixture.componentInstance.model.hasOwnProperty('type'), true)
+            done()
         })
-        this.test('GenericTextareaComponent', (assert:Object):void => {
+        this.test(`GenericTextareaComponent (${roundType})`, (
+            assert:Object
+        ):void => {
             assert.strictEqual('TODO', 'TODO')
         })
-        this.test('GenericFileInputComponent', (assert:Object):void => {
+        this.test(`GenericFileInputComponent (${roundType})`, (
+            assert:Object
+        ):void => {
             assert.strictEqual('TODO', 'TODO')
         })
-        this.test('GenericPaginationComponent', (assert:Object):void => {
+        this.test(`GenericPaginationComponent (${roundType})`, (
+            assert:Object
+        ):void => {
             assert.strictEqual('TODO', 'TODO')
         })
     })

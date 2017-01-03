@@ -1017,6 +1017,7 @@ export class GenericInputComponent {
         }, this.model))
     }
     onChange(state:Object):void {
+        console.log('C')
         this.model.state = state
         this.modelChange.emit(this.model)
     }
