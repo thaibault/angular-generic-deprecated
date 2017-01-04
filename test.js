@@ -267,7 +267,7 @@ registerTest(async function(
     })
     // endregion
     // region test components
-    serviceTests.then(():void => {
+    serviceTests.then(async ():Promise<void> => {
         this.module(`GenericModule.components (${roundType})`)
         this.test(`AbstractItemsComponent (${roundType})`, (
             assert:Object
@@ -277,18 +277,17 @@ registerTest(async function(
         TestBed.initTestEnvironment(
             BrowserDynamicTestingModule, platformBrowserDynamicTesting()
         ).configureTestingModule({imports: [Module]})
-        this.test(`GenericInputComponent (${roundType})`, async (
+        await TestBed.compileComponents()
+        this.test(`GenericInputComponent (${roundType})`, (
             assert:Object
-        ):Promise<void> => {
-            const done:Function = assert.async()
-            await TestBed.compileComponents(GenericInputComponent)
-            const fixture = TestBed.createComponent(GenericInputComponent)
-            fixture.componentInstance.model = {disabled: true}
-            fixture.componentInstance.ngOnInit()
-            assert.strictEqual(fixture.componentInstance.model.disabled, true)
-            assert.ok(
-                fixture.componentInstance.model.hasOwnProperty('type'), true)
-            done()
+        ):void => {
+            const componentInstance = TestBed.createComponent(
+                GenericInputComponent
+            ).componentInstance
+            componentInstance.model = {disabled: true}
+            componentInstance.ngOnInit()
+            assert.strictEqual(componentInstance.model.disabled, true)
+            assert.ok(componentInstance.model.hasOwnProperty('type'), true)
         })
         this.test(`GenericTextareaComponent (${roundType})`, (
             assert:Object
@@ -307,7 +306,7 @@ registerTest(async function(
         })
     })
     // endregion
-}, ['full'])
+}, ['document'])
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:
