@@ -62,9 +62,6 @@
     "babel-plugin-transform-decorators-legacy": "latest",
     "documentation-website": "latest",
     "pouchdb-adapter-memory": "latest",
-    "jsdom": "latest",
-    "qunitjs": "latest",
-    "qunit-cli": "latest",
     "source-map-support": "latest",
     "weboptimizer": "latest"
   },

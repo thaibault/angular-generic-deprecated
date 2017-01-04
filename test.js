@@ -17,6 +17,10 @@
 // region imports
 import registerTest from 'clientnode/test'
 import PouchDBAdabterMemory from 'pouchdb-adapter-memory'
+// NOTE: Only needed for debugging this file.
+try {
+    module.require('source-map-support/register')
+} catch (error) {}
 // endregion
 // region declaration
 declare var DEBUG:boolean

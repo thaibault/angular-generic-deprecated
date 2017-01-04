@@ -37,6 +37,10 @@ import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
 import {Subject} from 'rxjs'
 import {Observable} from 'rxjs/Observable'
+// NOTE: Only needed for debugging this file.
+try {
+    module.require('source-map-support/register')
+} catch (error) {}
 // endregion
 // region basic services
 @Injectable()
