@@ -51,7 +51,7 @@ registerTest(async function(
         global.window.Reflect = global.Reflect
         process.setMaxListeners(30)
     }
-    const hammerjs:Object = require('hammerjs')
+    require('hammerjs')
     const {DebugElement, Component, enableProdMode, NgModule} = require(
         '@angular/core')
     const {ComponentFixture, TestBed} = require('@angular/core/testing')
@@ -280,7 +280,7 @@ registerTest(async function(
         ).configureTestingModule({imports: [Module]})
         this.test(`GenericInputComponent (${roundType})`, async (
             assert:Object
-        ):void => {
+        ):Promise<void> => {
             const done:Function = assert.async()
             await TestBed.compileComponents(GenericInputComponent)
             const fixture = TestBed.createComponent(GenericInputComponent)
