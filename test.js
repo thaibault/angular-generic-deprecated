@@ -52,9 +52,8 @@ registerTest(async function(
         process.setMaxListeners(30)
     }
     require('hammerjs')
-    const {DebugElement, Component, enableProdMode, NgModule} = require(
-        '@angular/core')
-    const {ComponentFixture, TestBed} = require('@angular/core/testing')
+    const {Component, enableProdMode, NgModule} = require('@angular/core')
+    const {TestBed} = require('@angular/core/testing')
     const By:Object = require('@angular/platform-browser').By
     const platformBrowserDynamic:Function = require(
         '@angular/platform-browser-dynamic'
