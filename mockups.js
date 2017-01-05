@@ -1,48 +1,64 @@
- // export for convenience.
-import {Component, Directive, Injectable, Input} from '@angular/core'
-export {
-    ActivatedRoute, NavigationExtras, Router, RouterLink, RouterOutlet
-} from '@angular/router'
+// @flow
+// #!/usr/bin/env node
+// -*- coding: utf-8 -*-
+/** @module angularGeneric */
+'use strict'
+/* !
+    region header
+    [Project page](http://torben.website/angularGeneric)
 
+    Copyright Torben Sickert (info["~at~"]torben.website) 16.12.2012
+
+    License
+    -------
+
+    This library written by Torben Sickert stand under a creative commons
+    naming 3.0 unported license.
+    See http://creativecommons.org/licenses/by/3.0/deed.de
+    endregion
+*/
+// region imports
+import {Component, Directive, Injectable, Input} from '@angular/core'
+import {BehaviorSubject} from 'rxjs/BehaviorSubject'
+// endregion
+// region services
+@Injectable()
+export class RouterStub {
+    navigate(commands:Array<any>, extras:?NavigationExtras) {}
+}
+@Injectable()
+export class ActivatedRouteStub {
+    subject:BehaviorSubject = new BehaviorSubject(this.testParams)
+    parameter:Object = this.subject.asObservable()
+    _testParameter:PlainObject = {}
+
+    set testParameter(parameter:PlainObject = {}) {
+        this._testParameters = parameter
+        this.subject.next(parameter)
+    }
+    get snapshot() {
+        return {params: this._testParameter}
+    }
+}
+// endregion
+// region directives
 @Directive({
     selector: '[routerLink]',
     host: {'(click)': 'onClick()'}
 })
 export class RouterLinkStubDirective {
-    @Input('routerLink') linkParams:any
-    navigatedTo:any = null
+    @Input('routerLink') linkParameter:Array<string>
+    navigatedTo:?Array<string> = null
     onClick() {
-        this.navigatedTo = this.linkParams
+        this.navigatedTo = this.linkParameter
     }
 }
-
+// endregion
+// region components
 @Component({selector: 'router-outlet', template: ''})
 export class RouterOutletStubComponent {}
-
-@Injectable()
-export class RouterStub {
-    navigate(commands:Array<any>, extras:?NavigationExtras) {}
-}
-
-// Only implements params and part of snapshot.params
-import {BehaviorSubject} from 'rxjs/BehaviorSubject'
-
-@Injectable()
-export class ActivatedRouteStub {
-    // ActivatedRoute.params is Observable
-    subject = new BehaviorSubject(this.testParams)
-    params = this.subject.asObservable()
-    _testParams = {}
-
-    get testParams() {
-        return this._testParams
-    }
-    set testParams(params = {}) {
-        this._testParams = params
-        this.subject.next(params)
-    }
-    // ActivatedRoute.snapshot.params
-    get snapshot() {
-        return {params: this.testParams}
-    }
-}
+// endregion
+// region vim modline
+// vim: set tabstop=4 shiftwidth=4 expandtab:
+// vim: foldmethod=marker foldmarker=region,endregion:
+// endregion

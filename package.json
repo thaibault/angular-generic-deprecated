@@ -14,7 +14,9 @@
     "tools"
   ],
   "files": [
-    "index.js"
+    "index.js",
+    "mockup.js",
+    "mockup.compiled.js"
   ],
   "main": "index.compiled.js",
   "repository": {
