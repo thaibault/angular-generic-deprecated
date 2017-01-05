@@ -60,7 +60,7 @@ export default function registerAngularTest(
         // IgnoreTypeCheck
         @Component({
             selector: '#qunit-fixture',
-            template: '<router-outlet></router-outlet>'
+            template: '<div></div>'
         })
         class ApplicationComponent {}
         // endregion
@@ -77,11 +77,10 @@ export default function registerAngularTest(
         let module:Object
         try {
             platform = platformBrowserDynamic()
-            module = await platform.bootstrapModule(...result.slice(1))
+            module = await platform.bootstrapModule(result[0])
         } catch (error) {
             throw error
         }
-        return
         this.load()
         await new Promise((resolve:Function):void => {
             let done:boolean = false
@@ -101,7 +100,7 @@ export default function registerAngularTest(
             return
         TestBed.initTestEnvironment(
             BrowserDynamicTestingModule, platformBrowserDynamicTesting()
-        ).configureTestingModule(result.slice(1))
+        ).configureTestingModule(...result.slice(1))
         await TestBed.compileComponents()
         await callback.component.call(
             this, TestBed, roundType, targetTechnology, $, ...parameter)
@@ -122,6 +121,7 @@ registerAngularTest({
                 options: {adapter: 'memory'},
                 plugins: [PouchDBAdabterMemory]
             },
+            modelConfiguration: {models: {Test: {}}},
             test: true
         }}
         const {Injectable, NgModule} = require('@angular/core')
@@ -129,6 +129,7 @@ registerAngularTest({
         const GenericModule:Object = index.default
         const {
             GenericToolsService,
+            GenericExtendObjectPipe,
             GenericInitialDataService,
             GenericStringMD5Pipe,
             GenericExtractRawDataPipe,
@@ -136,6 +137,7 @@ registerAngularTest({
             GenericMapPipe,
             GenericTypePipe,
             GenericIsDefinedPipe,
+            GenericStringEscapeRegularExpressionsPipe,
             GenericStringReplacePipe,
             GenericStringShowIfPatternMatchesPipe,
             GenericStringStartsWithPipe,
@@ -151,13 +153,24 @@ registerAngularTest({
         } = index
         // IgnoreTypeCheck
         @Injectable()
-        class Resolver extends AbstractResolver {}
+        class Resolver extends AbstractResolver {
+            _type:string = 'Test'
+            constructor(
+                data:GenericDataService,
+                extendObject:GenericExtendObjectPipe,
+                initialData:GenericInitialDataService,
+                escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe
+            ):void {
+                super(data, extendObject, initialData, escapeRegularExpressions)
+            }
+        }
         const self:Object = this
         // IgnoreTypeCheck
         @NgModule({
             bootstrap: [ApplicationComponent],
             declarations: [ApplicationComponent],
-            imports: [GenericModule]
+            imports: [GenericModule],
+            providers: [Resolver]
         })
         // endregion
         // region test services
@@ -173,7 +186,7 @@ registerAngularTest({
                 type:GenericTypePipe,
                 isDefined:GenericIsDefinedPipe,
                 stringReplace:GenericStringReplacePipe,
-                stringShowIfPatternMatch:GenericStringShowIfPatternMatchesPipe,
+                stringShowIfPatternMatches:GenericStringShowIfPatternMatchesPipe,
                 stringStartsWith:GenericStringStartsWithPipe,
                 stringEndsWith:GenericStringEndsWithPipe,
                 stringMatch:GenericStringMatchPipe,
