@@ -38,9 +38,9 @@ export default function registerAngularTest(
         // region mocking angular environment
         $('head').append('<base href="/">')
         /*
-            NOTE: A working polymorphic angular environment needs some assumptions
-            about the global scope, so mocking and initializing that environment
-            after a working browser environment is present.
+            NOTE: A working polymorphic angular environment needs some
+            assumptions about the global scope, so mocking and initializing
+            that environment after a working browser environment is present.
         */
         if (TARGET_TECHNOLOGY === 'node') {
             global.window = $.global
@@ -50,7 +50,7 @@ export default function registerAngularTest(
             process.setMaxListeners(30)
         }
         require('hammerjs')
-        const {Component, enableProdMode, NgModule} = require('@angular/core')
+        const {Component, enableProdMode} = require('@angular/core')
         const {TestBed} = require('@angular/core/testing')
         const {platformBrowserDynamic} = require(
             '@angular/platform-browser-dynamic')
@@ -124,8 +124,7 @@ registerAngularTest({
             },
             test: true
         }}
-        const {NgModule} = require('@angular/core')
-        const {TestBed} = require('@angular/core/testing')
+        const {Injectable, NgModule} = require('@angular/core')
         const index:Object = require('./index')
         const GenericModule:Object = index.default
         const {
@@ -150,6 +149,8 @@ registerAngularTest({
             GenericDataScopeService,
             AbstractResolver
         } = index
+        @Injectable()
+        class Resolver extends AbstractResolver {}
         const self:Object = this
         // IgnoreTypeCheck
         @NgModule({
@@ -181,7 +182,9 @@ registerAngularTest({
 
                 canDeactivateRouteLeave:GenericCanDeactivateRouteLeaveGuard,
                 data:GenericDataService,
-                dataScope:GenericDataScopeService
+                dataScope:GenericDataScopeService,
+
+                resolver:Resolver
             ):void {
                 // region basic services
                 self.test(`GenericToolsService (${roundType})`, (

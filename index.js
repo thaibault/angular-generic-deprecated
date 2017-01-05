@@ -21,16 +21,16 @@
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
-    AfterViewInit, Component, ElementRef, EventEmitter, Injectable, Injector,
-    Input, NgModule, OnInit, Output, Pipe, PipeTransform, ReflectiveInjector,
-    ViewChild
+    /* AfterViewInit,*/ Component, ElementRef, EventEmitter, Injectable,
+    Injector, Input, NgModule, /* OnInit,*/ Output, Pipe, PipeTransform,
+    ReflectiveInjector, ViewChild
 } from '@angular/core'
 import {FormsModule} from '@angular/forms'
 import {MaterialModule} from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {
-    ActivatedRoute, ActivatedRouteSnapshot, CanDeactivate, Resolve, Router,
-    RouterStateSnapshot
+    ActivatedRoute, ActivatedRouteSnapshot, /* CanDeactivate, Resolve,*/
+    Router, RouterStateSnapshot
 } from '@angular/router'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -168,7 +168,7 @@ for (const configuration:PlainObject of [
 // / region object
 // IgnoreTypeCheck
 @Pipe({name: 'genericExtractRawData'})
-export class GenericExtractRawDataPipe /*implements PipeTransform*/ {
+export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
     transform(
         newDocument:PlainObject, oldDocument:?PlainObject,
         typeReplacement:boolean = true
@@ -248,7 +248,7 @@ export class GenericExtractRawDataPipe /*implements PipeTransform*/ {
 }
 // IgnoreTypeCheck
 @Pipe({name: 'genericGetFilenameByPrefix'})
-export class GenericGetFilenameByPrefixPipe /*implements PipeTransform*/ {
+export class GenericGetFilenameByPrefixPipe/* implements PipeTransform*/ {
     transform(attachments:PlainObject, prefix:?string):?string {
         if (prefix) {
             for (const name:string in attachments)
@@ -297,7 +297,7 @@ export class GenericMapPipe implements PipeTransform {
 /**
  * Returns type of given object.
  */
-export class GenericTypePipe /*implements PipeTransform*/ {
+export class GenericTypePipe/* implements PipeTransform*/ {
     transform(object:any):string {
         return typeof object
     }
@@ -307,7 +307,7 @@ export class GenericTypePipe /*implements PipeTransform*/ {
 /**
  * Checks if given reference is defined.
  */
-export class GenericIsDefinedPipe /*implements PipeTransform*/ {
+export class GenericIsDefinedPipe/* implements PipeTransform*/ {
     transform(object:any, nullIsUndefined:boolean = false):boolean {
         return !(object === undefined || nullIsUndefined && object === null)
     }
@@ -316,7 +316,7 @@ export class GenericIsDefinedPipe /*implements PipeTransform*/ {
 // region string
 // IgnoreTypeCheck
 @Pipe({name: 'genericStringReplace'})
-export class GenericStringReplacePipe /*implements PipeTransform*/ {
+export class GenericStringReplacePipe/* implements PipeTransform*/ {
     transform(
         string:string, search:string|RegExp, replacement:string = '',
         modifier:string = 'g'
@@ -330,7 +330,8 @@ export class GenericStringReplacePipe /*implements PipeTransform*/ {
 /**
  * Returns given string if it matches given pattern.
  */
-export class GenericStringShowIfPatternMatchesPipe /*implements PipeTransform*/ {
+export class GenericStringShowIfPatternMatchesPipe
+/* implements PipeTransform*/ {
     transform(
         string:string, pattern:string, invert:boolean = false,
         modifier:string = 'g'
@@ -347,7 +348,7 @@ export class GenericStringShowIfPatternMatchesPipe /*implements PipeTransform*/ 
 /**
  * Replaces a string with given replacement.
  */
-export class GenericStringStartsWithPipe /*implements PipeTransform*/ {
+export class GenericStringStartsWithPipe/* implements PipeTransform*/ {
     transform(string:?string, needle:?string):boolean {
         return typeof string === 'string' && typeof needle === 'string' &&
             string.startsWith(needle)
@@ -358,7 +359,7 @@ export class GenericStringStartsWithPipe /*implements PipeTransform*/ {
 /**
  * Replaces a string with given replacement.
  */
-export class GenericStringEndsWithPipe /*implements PipeTransform*/ {
+export class GenericStringEndsWithPipe/* implements PipeTransform*/ {
     transform(string:?string, needle:?string):boolean {
         return typeof string === 'string' && typeof needle === 'string' &&
             string.endsWith(needle)
@@ -369,7 +370,7 @@ export class GenericStringEndsWithPipe /*implements PipeTransform*/ {
 /**
  * Tests if given pattern matches against given subject.
  */
-export class GenericStringMatchPipe /*implements PipeTransform*/ {
+export class GenericStringMatchPipe/* implements PipeTransform*/ {
     transform(pattern:string, subject:string, modifier:string = ''):boolean {
         // IgnoreTypeCheck
         return (new RegExp(pattern, modifier)).test(subject)
@@ -381,7 +382,7 @@ export class GenericStringMatchPipe /*implements PipeTransform*/ {
  * Returns a matched part of given subject with given pattern. Default is the
  * whole (zero) matched part.
  */
-export class GenericStringSliceMatchPipe /*implements PipeTransform*/ {
+export class GenericStringSliceMatchPipe/* implements PipeTransform*/ {
     transform(
         subject:?string, pattern:string, index:number = 0, modifier:string = ''
     ):string {
@@ -400,7 +401,7 @@ export class GenericStringSliceMatchPipe /*implements PipeTransform*/ {
 /**
  * Determines if given string has a time indicating suffix.
  */
-export class GenericStringHasTimeSuffixPipe /*implements PipeTransform*/ {
+export class GenericStringHasTimeSuffixPipe/* implements PipeTransform*/ {
     transform(string:?string):boolean {
         if (typeof string !== 'string')
             return false
@@ -416,7 +417,7 @@ export class GenericStringHasTimeSuffixPipe /*implements PipeTransform*/ {
 /**
  * Returns part in percent of all.
  */
-export class GenericNumberPercentPipe /*implements PipeTransform*/ {
+export class GenericNumberPercentPipe/* implements PipeTransform*/ {
     transform(part:number, all:number):number {
         return (part / all) * 100
     }
@@ -435,7 +436,7 @@ const GenericStringFormatPipe:Object = module.exports.GenericStringFormatPipe
 // IgnoreTypeCheck
 @Injectable()
 export class GenericCanDeactivateRouteLeaveGuard
-/*implements CanDeactivate<Object>*/ {
+/* implements CanDeactivate<Object>*/ {
     canDeactivate(
         component:Object
     ):Observable<boolean>|Promise<boolean>|boolean {
@@ -777,7 +778,7 @@ export class GenericDataScopeService {
     }
 }
 // / region abstract
-export class AbstractResolver /*implements Resolve<PlainObject>*/ {
+export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     _type:string = 'Item'
     data:PlainObject
     extendObject:Function
@@ -1157,7 +1158,7 @@ export class GenericTextareaComponent {
 /**
  * TODO
  */
-export class GenericFileInputComponent /*implements OnInit, AfterViewInit*/ {
+export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     static imageMimeTypeRegularExpression:RegExp = new RegExp(
         '^image/(?:p?jpe?g|png|svg(?:\\+xml)?|vnd\\.microsoft\\.icon|gif|' +
         'tiff|webp|vnd\\.wap\\.wbmp|x-(?:icon|jng|ms-bmp))$')

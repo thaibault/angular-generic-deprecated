@@ -18,13 +18,16 @@
     endregion
 */
 // region imports
+import type {PlainObject} from 'clientnode'
 import {Component, Directive, Injectable, Input} from '@angular/core'
 import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 // endregion
 // region services
 @Injectable()
 export class RouterStub {
-    navigate(commands:Array<any>, extras:?NavigationExtras) {}
+    /* eslint-disable no-unused-vars */
+    navigate(commands:Array<any>, extras:?NavigationExtras):void {}
+    /* eslint-enable no-unused-vars */
 }
 @Injectable()
 export class ActivatedRouteStub {
@@ -32,11 +35,11 @@ export class ActivatedRouteStub {
     parameter:Object = this.subject.asObservable()
     _testParameter:PlainObject = {}
 
-    set testParameter(parameter:PlainObject = {}) {
+    set testParameter(parameter:PlainObject = {}):void {
         this._testParameters = parameter
         this.subject.next(parameter)
     }
-    get snapshot() {
+    get snapshot():PlainObject {
         return {params: this._testParameter}
     }
 }
@@ -49,7 +52,7 @@ export class ActivatedRouteStub {
 export class RouterLinkStubDirective {
     @Input('routerLink') linkParameter:Array<string>
     navigatedTo:?Array<string> = null
-    onClick() {
+    onClick():void {
         this.navigatedTo = this.linkParameter
     }
 }
