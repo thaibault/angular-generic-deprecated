@@ -1024,10 +1024,10 @@ const mdInputContent:string = `
     `
 })
 export class GenericInputComponent {
+    _extendObject:Function
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
-    _extendObject:Function
     constructor(extendObject:GenericExtendObjectPipe):void {
         this._extendObject = extendObject.transform
     }
@@ -1042,7 +1042,6 @@ export class GenericInputComponent {
         }, this.model))
     }
     onChange(state:Object):void {
-        console.log('C')
         this.model.state = state
         this.modelChange.emit(this.model)
     }
@@ -1054,10 +1053,10 @@ export class GenericInputComponent {
         <md-textarea ${propertyInputContent}>${mdInputContent}</md-textarea>`
 })
 export class GenericTextareaComponent {
+    _extendObject:Function
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
-    _extendObject:Function
     constructor(extendObject:GenericExtendObjectPipe):void {
         this._extendObject = extendObject.transform
     }

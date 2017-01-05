@@ -261,6 +261,13 @@ registerAngularTest({bootstrap: function(
         componentInstance.ngOnInit()
         assert.strictEqual(componentInstance.model.disabled, true)
         assert.ok(componentInstance.model.hasOwnProperty('type'), true)
+        let eventGivenModel:PlainObject
+        componentInstance.modelChange.subscribe((model:PlainObject):void => {
+            eventGivenModel = model
+        })
+        componentInstance.onChange(4)
+        assert.strictEqual(componentInstance.model.state, 4)
+        assert.deepEqual(eventGivenModel, componentInstance.model)
     })
     this.test(`GenericTextareaComponent (${roundType})`, (
         assert:Object
