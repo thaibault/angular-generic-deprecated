@@ -108,8 +108,8 @@ export default function(
 // endregion
 // region tests
 module.exports.default({bootstrap: function(
-    ApplicationComponent:Object, roundType:string,
-    targetTechnology:?string, $:any
+    ApplicationComponent:Object, roundType:string, targetTechnology:?string,
+    $:any
 ):Array<Object> {
     // region prepare services
     $.global.genericInitialData = {configuration: {
