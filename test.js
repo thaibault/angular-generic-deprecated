@@ -252,7 +252,7 @@ registerTest(async function(
     } catch (error) {
         throw error
     }
-    // NOTE: Simply doing "await new Promise(..." doesn't work yet.
+    this.load()
     await new Promise((resolve:Function):void => {
         let done:boolean = false
         this.moduleDone(():void => {
@@ -276,9 +276,7 @@ registerTest(async function(
         BrowserDynamicTestingModule, platformBrowserDynamicTesting()
     ).configureTestingModule({imports: [Module]})
     await TestBed.compileComponents()
-    this.test(`GenericInputComponent (${roundType})`, (
-        assert:Object
-    ):void => {
+    this.test(`GenericInputComponent (${roundType})`, (assert:Object):void => {
         const {componentInstance} = TestBed.createComponent(
             GenericInputComponent)
         componentInstance.model = {disabled: true}
