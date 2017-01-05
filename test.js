@@ -54,10 +54,9 @@ registerTest(async function(
     require('hammerjs')
     const {Component, enableProdMode, NgModule} = require('@angular/core')
     const {TestBed} = require('@angular/core/testing')
-    const By:Object = require('@angular/platform-browser').By
-    const platformBrowserDynamic:Function = require(
-        '@angular/platform-browser-dynamic'
-    ).platformBrowserDynamic
+    const {By} = require('@angular/platform-browser')
+    const {platformBrowserDynamic} = require(
+        '@angular/platform-browser-dynamic')
     const {BrowserDynamicTestingModule, platformBrowserDynamicTesting} =
         require('@angular/platform-browser-dynamic/testing')
     const index:Object = require('./index')
@@ -281,9 +280,8 @@ registerTest(async function(
         this.test(`GenericInputComponent (${roundType})`, (
             assert:Object
         ):void => {
-            const componentInstance = TestBed.createComponent(
-                GenericInputComponent
-            ).componentInstance
+            const {componentInstance} = TestBed.createComponent(
+                GenericInputComponent)
             componentInstance.model = {disabled: true}
             componentInstance.ngOnInit()
             assert.strictEqual(componentInstance.model.disabled, true)
