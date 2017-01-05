@@ -17,8 +17,8 @@
     "index.js",
     "mockup.js",
     "mockup.compiled.js",
-    "test.js",
-    "test.compiled.js"
+    "testRunner.js",
+    "testRunner.compiled.js"
   ],
   "main": "index.compiled.js",
   "repository": {
@@ -26,7 +26,7 @@
     "url": "https://github.com/thaibault/angularGeneric"
   },
   "scripts": {
-    "buildTest": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types --presets modern-browsers,es2017,stage-0 --source-maps inline --out-file test.compiled.js test.js",
+    "buildTest": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types --presets modern-browsers,es2017,stage-0 --source-maps inline --out-file testRunner.compiled.js testRunner.js",
     "build": "webOptimizer build && npm run buildTest",
     "buildDLL": "webOptimizer buildDLL",
     "clear": "webOptimizer clear",
