@@ -253,7 +253,7 @@ registerTest(async function(
         throw error
     }
     // NOTE: Simply doing "await new Promise(..." doesn't work yet.
-    const serviceTests:Promise<void> = new Promise((resolve:Function):void => {
+    await new Promise((resolve:Function):void => {
         let done:boolean = false
         this.moduleDone(():void => {
             if (done)
@@ -266,42 +266,40 @@ registerTest(async function(
     })
     // endregion
     // region test components
-    serviceTests.then(async ():Promise<void> => {
-        this.module(`GenericModule.components (${roundType})`)
-        this.test(`AbstractItemsComponent (${roundType})`, (
-            assert:Object
-        ):void => {
-            assert.strictEqual('TODO', 'TODO')
-        })
-        TestBed.initTestEnvironment(
-            BrowserDynamicTestingModule, platformBrowserDynamicTesting()
-        ).configureTestingModule({imports: [Module]})
-        await TestBed.compileComponents()
-        this.test(`GenericInputComponent (${roundType})`, (
-            assert:Object
-        ):void => {
-            const {componentInstance} = TestBed.createComponent(
-                GenericInputComponent)
-            componentInstance.model = {disabled: true}
-            componentInstance.ngOnInit()
-            assert.strictEqual(componentInstance.model.disabled, true)
-            assert.ok(componentInstance.model.hasOwnProperty('type'), true)
-        })
-        this.test(`GenericTextareaComponent (${roundType})`, (
-            assert:Object
-        ):void => {
-            assert.strictEqual('TODO', 'TODO')
-        })
-        this.test(`GenericFileInputComponent (${roundType})`, (
-            assert:Object
-        ):void => {
-            assert.strictEqual('TODO', 'TODO')
-        })
-        this.test(`GenericPaginationComponent (${roundType})`, (
-            assert:Object
-        ):void => {
-            assert.strictEqual('TODO', 'TODO')
-        })
+    this.module(`GenericModule.components (${roundType})`)
+    this.test(`AbstractItemsComponent (${roundType})`, (
+        assert:Object
+    ):void => {
+        assert.strictEqual('TODO', 'TODO')
+    })
+    TestBed.initTestEnvironment(
+        BrowserDynamicTestingModule, platformBrowserDynamicTesting()
+    ).configureTestingModule({imports: [Module]})
+    await TestBed.compileComponents()
+    this.test(`GenericInputComponent (${roundType})`, (
+        assert:Object
+    ):void => {
+        const {componentInstance} = TestBed.createComponent(
+            GenericInputComponent)
+        componentInstance.model = {disabled: true}
+        componentInstance.ngOnInit()
+        assert.strictEqual(componentInstance.model.disabled, true)
+        assert.ok(componentInstance.model.hasOwnProperty('type'), true)
+    })
+    this.test(`GenericTextareaComponent (${roundType})`, (
+        assert:Object
+    ):void => {
+        assert.strictEqual('TODO', 'TODO')
+    })
+    this.test(`GenericFileInputComponent (${roundType})`, (
+        assert:Object
+    ):void => {
+        assert.strictEqual('TODO', 'TODO')
+    })
+    this.test(`GenericPaginationComponent (${roundType})`, (
+        assert:Object
+    ):void => {
+        assert.strictEqual('TODO', 'TODO')
     })
     // endregion
 }, ['document'])
