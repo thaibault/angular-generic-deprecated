@@ -569,7 +569,7 @@ export class GenericDataScopeService {
     configuration:PlainObject
     data:GenericDataService
     extendObject:Function
-    tools:Tools
+    tools:typeof Tools
     constructor(
         data:GenericDataService, initialData:GenericInitialDataService,
         extendObject:GenericExtendObjectPipe, tools:GenericToolsService
@@ -869,7 +869,7 @@ export class AbstractItemsComponent {
     _itemPath:string = 'admin/item'
     _route:ActivatedRoute
     _router:Router
-    _tools:Tools
+    _tools:typeof Tools
 
     items:Observable<Array<PlainObject>>
     limit:number

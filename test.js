@@ -29,7 +29,7 @@ declare var TARGET_TECHNOLOGY:string
 // region test runner
 export default function registerAngularTest(
     callback:{bootstrap:Function, component:Function},
-    roundTypes:Array<string> = ['document'], ...additionalParameter:Array<any>
+    roundTypes:Array<string> = ['document'], ..gadditionalParameterArray<any>
 ):any {
     return registerTest(async (...parameter:Array<any>):Promise<void> => {
         // region mocking angular environment
