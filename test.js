@@ -29,8 +29,9 @@ declare var TARGET_TECHNOLOGY:string
 // endregion
 // region test runner
 export default function registerAngularTest(
-    callback:{bootstrap:Function, component:Function},
-    roundTypes:Array<string> = ['document'], ...additionalParameter:Array<any>
+    callback:{bootstrap:Function;component:Function},
+    template:string = '<div></div>', roundTypes:Array<string> = ['document'],
+    ...additionalParameter:Array<any>
 ):any {
     return registerTest(async function(
         roundType:string, targetTechnology:?string, $:any,
@@ -58,10 +59,7 @@ export default function registerAngularTest(
         const {BrowserDynamicTestingModule, platformBrowserDynamicTesting} =
             require('@angular/platform-browser-dynamic/testing')
         // IgnoreTypeCheck
-        @Component({
-            selector: '#qunit-fixture',
-            template: '<div></div>'
-        })
+        @Component({selector: '#qunit-fixture', template})
         class ApplicationComponent {}
         // endregion
         // region test services
