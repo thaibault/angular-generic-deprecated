@@ -29,9 +29,12 @@ declare var TARGET_TECHNOLOGY:string
 // region test runner
 export default function registerAngularTest(
     callback:{bootstrap:Function, component:Function},
-    roundTypes:Array<string> = ['document'], ..gadditionalParameterArray<any>
+    roundTypes:Array<string> = ['document'], ...additionalParameter:Array<any>
 ):any {
-    return registerTest(async (...parameter:Array<any>):Promise<void> => {
+    return registerTest(async (
+        roundType:string, targetTechnology:?string, $:any,
+         ...parameter:Array<any>
+    ):Promise<void> => {
         // region mocking angular environment
         $('head').append('<base href="/">')
         /*
@@ -53,6 +56,7 @@ export default function registerAngularTest(
             '@angular/platform-browser-dynamic')
         const {BrowserDynamicTestingModule, platformBrowserDynamicTesting} =
             require('@angular/platform-browser-dynamic/testing')
+        // IgnoreTypeCheck
         @Component({
             selector: '#qunit-fixture',
             template: '<router-outlet></router-outlet>'
@@ -60,8 +64,9 @@ export default function registerAngularTest(
         class ApplicationComponent {}
         // endregion
         // region test services
-        let result:any = callback.bootstrap.call(
-            this, ApplicationComponent, ...parameter)
+        let result:any = await callback.bootstrap.call(
+            this, ApplicationComponent, roundType, targetTechnology, $,
+            ...parameter)
         if (!Array.isArray(result))
             result = [result]
         // / region bootstrap test application
@@ -75,9 +80,11 @@ export default function registerAngularTest(
         } catch (error) {
             throw error
         }
+        // IgnoreTypeCheck
         this.load()
         await new Promise((resolve:Function):void => {
             let done:boolean = false
+            // IgnoreTypeCheck
             this.moduleDone(():void => {
                 if (done)
                     return
@@ -96,14 +103,18 @@ export default function registerAngularTest(
             BrowserDynamicTestingModule, platformBrowserDynamicTesting()
         ).configureTestingModule(result.slice(1))
         await TestBed.compileComponents()
-        callback.component.call(this, ...parameter)
+        await callback.component.call(
+            this, TestBed, roundType, targetTechnology, $, ...parameter)
         // endregion
     }, roundTypes, ...additionalParameter)
 }
 // endregion
 // region tests
 registerAngularTest({
-    bootstrap: function(ApplicationComponent:Object, roundType:string):void {
+    bootstrap: function(
+        ApplicationComponent:Object, roundType:string,
+        targetTechnology:?string, $:any
+    ):Array<Object> {
         // region prepare services
         $.global.genericInitialData = {configuration: {
             database: {
@@ -137,14 +148,10 @@ registerAngularTest({
             GenericCanDeactivateRouteLeaveGuard,
             GenericDataService,
             GenericDataScopeService,
-            AbstractResolver,
-            AbstractItemsComponent,
-            GenericInputComponent,
-            GenericTextareaComponent,
-            GenericFileInputComponent,
-            GenericPaginationComponent
+            AbstractResolver
         } = index
         const self:Object = this
+        // IgnoreTypeCheck
         @NgModule({
             bootstrap: [ApplicationComponent],
             declarations: [ApplicationComponent],
@@ -297,7 +304,16 @@ registerAngularTest({
         return [Module, {imports: [Module]}]
         // endregion
     },
-    component: function(roundType:string):void {
+    component: function(TestBed:Object, roundType:string):void {
+        // region prepare components
+        const {
+            AbstractItemsComponent,
+            GenericInputComponent,
+            GenericTextareaComponent,
+            GenericFileInputComponent,
+            GenericPaginationComponent
+        } = require('./index')
+        // endregion
         // region test components
         this.module(`GenericModule.components (${roundType})`)
         this.test(`AbstractItemsComponent (${roundType})`, (
@@ -305,7 +321,9 @@ registerAngularTest({
         ):void => {
             assert.strictEqual('TODO', 'TODO')
         })
-        this.test(`GenericInputComponent (${roundType})`, (assert:Object):void => {
+        this.test(`GenericInputComponent (${roundType})`, (
+            assert:Object
+        ):void => {
             const {componentInstance} = TestBed.createComponent(
                 GenericInputComponent)
             componentInstance.model = {disabled: true}
