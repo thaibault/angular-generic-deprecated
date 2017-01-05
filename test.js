@@ -15,6 +15,7 @@
     endregion
 */
 // region imports
+import type {PlainObject} from 'clientnode'
 import registerTest from 'clientnode/test'
 import PouchDBAdabterMemory from 'pouchdb-adapter-memory'
 // NOTE: Only needed for debugging this file.
@@ -31,10 +32,10 @@ export default function registerAngularTest(
     callback:{bootstrap:Function, component:Function},
     roundTypes:Array<string> = ['document'], ...additionalParameter:Array<any>
 ):any {
-    return registerTest(async (
+    return registerTest(async function(
         roundType:string, targetTechnology:?string, $:any,
-         ...parameter:Array<any>
-    ):Promise<void> => {
+        ...parameter:Array<any>
+    ):Promise<void> {
         // region mocking angular environment
         $('head').append('<base href="/">')
         /*
@@ -80,11 +81,10 @@ export default function registerAngularTest(
         } catch (error) {
             throw error
         }
-        // IgnoreTypeCheck
+        return
         this.load()
         await new Promise((resolve:Function):void => {
             let done:boolean = false
-            // IgnoreTypeCheck
             this.moduleDone(():void => {
                 if (done)
                     return
@@ -149,6 +149,7 @@ registerAngularTest({
             GenericDataScopeService,
             AbstractResolver
         } = index
+        // IgnoreTypeCheck
         @Injectable()
         class Resolver extends AbstractResolver {}
         const self:Object = this
@@ -172,7 +173,7 @@ registerAngularTest({
                 type:GenericTypePipe,
                 isDefined:GenericIsDefinedPipe,
                 stringReplace:GenericStringReplacePipe,
-                stringShowIfPatternMatches:GenericStringShowIfPatternMatchesPipe,
+                stringShowIfPatternMatch:GenericStringShowIfPatternMatchesPipe,
                 stringStartsWith:GenericStringStartsWithPipe,
                 stringEndsWith:GenericStringEndsWithPipe,
                 stringMatch:GenericStringMatchPipe,
@@ -198,7 +199,8 @@ registerAngularTest({
                 })
                 self.test(`GenericInitialDataService (${roundType})`, (
                     assert:Object
-                ):void => assert.strictEqual(initialData.configuration.test, true))
+                ):void => assert.strictEqual(
+                    initialData.configuration.test, true))
                 // endregion
                 // region pipes
                 // / region forwarded
@@ -243,11 +245,12 @@ registerAngularTest({
                 ):void => {
                     assert.strictEqual('TODO', 'TODO')
                 })
-                self.test(`GenericStringShowIfPatternMatchesPipe (${roundType})`, (
-                    assert:Object
-                ):void => {
-                    assert.strictEqual('TODO', 'TODO')
-                })
+                self.test(
+                    `GenericStringShowIfPatternMatchesPipe (${roundType})`, (
+                        assert:Object
+                    ):void => {
+                        assert.strictEqual('TODO', 'TODO')
+                    })
                 self.test(`GenericStringStartsWithPipe (${roundType})`, (
                     assert:Object
                 ):void => {
@@ -280,11 +283,12 @@ registerAngularTest({
                 })
                 // endregion
                 // region services
-                self.test(`GenericCanDeactivateRouteLeaveGuard (${roundType})`, (
-                    assert:Object
-                ):void => {
-                    assert.strictEqual('TODO', 'TODO')
-                })
+                self.test(
+                    `GenericCanDeactivateRouteLeaveGuard (${roundType})`, (
+                        assert:Object
+                    ):void => {
+                        assert.strictEqual('TODO', 'TODO')
+                    })
                 self.test(`GenericDataService (${roundType})`, (
                     assert:Object
                 ):void => {
