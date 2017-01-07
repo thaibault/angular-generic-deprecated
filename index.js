@@ -889,8 +889,8 @@ export class AbstractInputComponent {
     }
 }
 export class AbstractItemsComponent {
-    _itemsPath:string = 'admin/items'
     _itemPath:string = 'admin/item'
+    _itemsPath:string = 'admin/items'
     _route:ActivatedRoute
     _router:Router
     _tools:typeof Tools
@@ -900,8 +900,8 @@ export class AbstractItemsComponent {
     page:number
     regularExpression:boolean = false
     searchTerm:string = ''
-    selectedItems:Set<PlainObject> = new Set()
     searchTermStream:Subject<string> = new Subject()
+    selectedItems:Set<PlainObject> = new Set()
     sort:PlainObject = {_id: 'asc'}
 
     constructor(

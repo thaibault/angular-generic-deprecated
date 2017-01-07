@@ -25,8 +25,14 @@ import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 // region services
 @Injectable()
 export class RouterStub {
+    url:string
     /* eslint-disable no-unused-vars */
-    navigate(commands:Array<any>, extras:?NavigationExtras):void {}
+    navigate(commands:Array<any>, extras:?NavigationExtras):void {
+        this.url = commands[0]
+    }
+    navigateByUrl(url:string):void {
+        this.url = url
+    }
     /* eslint-enable no-unused-vars */
 }
 @Injectable()
