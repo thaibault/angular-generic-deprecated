@@ -865,6 +865,29 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
 // endregion
 // region components
 // / region abstract
+export class AbstractInputComponent {
+    _extendObject:Function
+    @Input() model:PlainObject = {}
+    @Output() modelChange:EventEmitter = new EventEmitter()
+    @Input() showValidationErrorMessages:boolean = false
+    constructor(extendObject:GenericExtendObjectPipe):void {
+        this._extendObject = extendObject.transform
+    }
+    ngOnInit():void {
+        this._extendObject(this.model, this._extendObject({
+            disabled: false,
+            maximum: Infinity,
+            minimum: (this.model.type === 'string') ? 0 : -Infinity,
+            nullable: true,
+            regularExpressionPattern: '.*',
+            type: 'string'
+        }, this.model))
+    }
+    onChange(state:Object):void {
+        this.model.state = state
+        this.modelChange.emit(this.model)
+    }
+}
 export class AbstractItemsComponent {
     _itemsPath:string = 'admin/items'
     _itemPath:string = 'admin/item'
@@ -1023,27 +1046,9 @@ const mdInputContent:string = `
     >${mdInputContent}</md-input>
     `
 })
-export class GenericInputComponent {
-    _extendObject:Function
-    @Input() model:PlainObject = {}
-    @Output() modelChange:EventEmitter = new EventEmitter()
-    @Input() showValidationErrorMessages:boolean = false
+export class GenericInputComponent extends AbstractInputComponent {
     constructor(extendObject:GenericExtendObjectPipe):void {
-        this._extendObject = extendObject.transform
-    }
-    ngOnInit():void {
-        this._extendObject(this.model, this._extendObject({
-            disabled: false,
-            maximum: Infinity,
-            minimum: (this.model.type === 'string') ? 0 : -Infinity,
-            nullable: true,
-            regularExpressionPattern: '.*',
-            type: 'string'
-        }, this.model))
-    }
-    onChange(state:Object):void {
-        this.model.state = state
-        this.modelChange.emit(this.model)
+        super(extendObject)
     }
 }
 // IgnoreTypeCheck
@@ -1052,27 +1057,9 @@ export class GenericInputComponent {
     template: `
         <md-textarea ${propertyInputContent}>${mdInputContent}</md-textarea>`
 })
-export class GenericTextareaComponent {
-    _extendObject:Function
-    @Input() model:PlainObject = {}
-    @Output() modelChange:EventEmitter = new EventEmitter()
-    @Input() showValidationErrorMessages:boolean = false
+export class GenericTextareaComponent extends AbstractInputComponent {
     constructor(extendObject:GenericExtendObjectPipe):void {
-        this._extendObject = extendObject.transform
-    }
-    ngOnInit():void {
-        this._extendObject(this.model, this._extendObject({
-            disabled: false,
-            maximum: Infinity,
-            minimum: (this.model.type === 'string') ? 0 : -Infinity,
-            nullable: true,
-            regularExpressionPattern: '.*',
-            type: 'string'
-        }, this.model))
-    }
-    onChange(state:Object):void {
-        this.model.state = state
-        this.modelChange.emit(this.model)
+        super(extendObject)
     }
 }
 // // endregion
