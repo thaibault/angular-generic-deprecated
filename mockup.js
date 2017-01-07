@@ -22,6 +22,15 @@ import type {PlainObject} from 'clientnode'
 import {Component, Directive, Injectable, Input} from '@angular/core'
 import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 // endregion
+// region native
+export function newEvent(
+    name:string, bubbles:boolean = false, cancelable:boolean = false
+):Object {
+    const event:Object = document.createEvent('CustomEvent')
+    event.initCustomEvent(name, bubbles, cancelable, null)
+    return event
+}
+// endregion
 // region services
 @Injectable()
 export class RouterStub {
