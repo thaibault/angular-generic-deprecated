@@ -1,4 +1,8 @@
 {
+  "angularCompilerOptions": {
+   "genDir": "aot",
+   "skipMetadataEmit" : true
+  },
   "compilerOptions": {
     "target": "es5",
     "module": "es2015",
@@ -9,11 +13,14 @@
     "noImplicitAny": true,
     "suppressImplicitAnyIndexErrors": true
   },
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts"
+  ],
   "files": [
     "index.compiled.ts"
   ],
-  "angularCompilerOptions": {
-   "genDir": "aot",
-   "skipMetadataEmit" : true
- }
+  "include": [
+    "**/*"
+  ]
 }

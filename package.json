@@ -26,9 +26,9 @@
     "url": "https://github.com/thaibault/angularGeneric"
   },
   "scripts": {
-    "aot": "ngc --allowJs --newLine LF --skipLibCheck --project aheadOfTimeCompilation.json",
+    "buildAOT": "npm run build && mv index.compiled.js index.compiled.ts && ngc --allowJs --newLine LF --skipLibCheck --project aheadOfTimeCompilation.json",
     "buildTest": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types --presets modern-browsers,es2017,stage-0 --source-maps inline --out-file testRunner.compiled.js testRunner.js",
-    "build": "webOptimizer build && npm run buildTest && npm run aot",
+    "build": "webOptimizer build && npm run buildTest",
     "buildDLL": "webOptimizer buildDLL",
     "clear": "webOptimizer clear",
     "document": "webOptimizer document",
