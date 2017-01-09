@@ -15,6 +15,7 @@
     endregion
 */
 // region imports
+import type {PlainObject} from 'clientnode'
 import registerAngularTest from './testRunner'
 import PouchDBAdabterMemory from 'pouchdb-adapter-memory'
 // NOTE: Only needed for debugging this file.
