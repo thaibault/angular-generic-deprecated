@@ -15,7 +15,7 @@
     endregion
 */
 // region imports
-import type {PlainObject} from 'clientnode'
+import type {DomNode, PlainObject} from 'clientnode'
 import registerAngularTest from './testRunner'
 import PouchDBAdabterMemory from 'pouchdb-adapter-memory'
 // NOTE: Only needed for debugging this file.
@@ -32,10 +32,10 @@ registerAngularTest(function(
     component:Function;
 } {
     // region imports
-    const {By} = require('@angular/platform-browser')
+    const {getNativeEvent} = require('./mockup')
+    const {DebugElement, Injectable, NgModule} = require('@angular/core')
     const {ComponentFixture} = require('@angular/core/testing')
-    const {Injectable, NgModule} = require('@angular/core')
-    const {NgModel} = require('@angular/forms')
+    const {By} = require('@angular/platform-browser')
     const index:Object = require('./index')
     // endregion
     return {
@@ -249,55 +249,93 @@ registerAngularTest(function(
         component: function(TestBed:Object, roundType:string):void {
             // region prepare components
             const {
+                AbstractInputComponent,
                 AbstractItemsComponent,
+                GenericExtendObjectPipe,
                 GenericInputComponent,
                 GenericTextareaComponent,
                 GenericFileInputComponent,
                 GenericPaginationComponent
-            } = require('./index')
+            } = index
             // endregion
             // region test components
             this.module(`GenericModule.components (${roundType})`)
+            this.test(`AbstractInputComponent (${roundType})`, (
+                assert:Object
+            ):void => {
+                const instance:AbstractInputComponent =
+                    new AbstractInputComponent(new GenericExtendObjectPipe())
+                instance.model = {name: 'test'}
+                instance.ngOnInit()
+                assert.strictEqual(instance.model.name, 'test')
+                assert.ok(instance.model.hasOwnProperty('type'))
+            })
             this.test(`AbstractItemsComponent (${roundType})`, (
                 assert:Object
             ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
-            this.test(`GenericInputComponent (${roundType})`, async (
-                assert:Object
-            ):Promise<void> => {
-                const done:Function = assert.async()
-                const fixture:ComponentFixture<GenericInputComponent> =
-                    TestBed.createComponent(GenericInputComponent)
-                fixture.componentInstance.model = {
-                    disabled: true, name: 'test'
-                }
-                fixture.componentInstance.ngOnInit()
-                assert.strictEqual(
-                    fixture.componentInstance.model.disabled, true)
-                assert.ok(
-                    fixture.componentInstance.model.hasOwnProperty('type'),
-                    true)
-                let eventGivenModel:PlainObject
-                fixture.componentInstance.modelChange.subscribe((
-                    model:PlainObject
-                ):void => {
-                    eventGivenModel = model
+            for (const component:AbstractInputComponent of [
+                GenericInputComponent, GenericTextareaComponent
+            ])
+                this.test(`${component.name} (${roundType})`, async (
+                    assert:Object
+                ):Promise<void> => {
+                    const done:Function = assert.async()
+                    const fixture:ComponentFixture<AbstractInputComponent> =
+                        TestBed.createComponent(component)
+                    fixture.componentInstance.model = {
+                        disabled: true, name: 'test'
+                    }
+                    fixture.componentInstance.ngOnInit()
+                    assert.strictEqual(
+                        fixture.componentInstance.model.disabled, true)
+                    assert.ok(
+                        fixture.componentInstance.model.hasOwnProperty('type'),
+                        true)
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.strictEqual(fixture.debugElement.query(By.css(
+                        'label'
+                    )).nativeElement.textContent.trim(), 'test')
+                    const inputDomNode:DomNode = fixture.debugElement.query(
+                        By.css(component.name.replace(
+                            /^Generic(.+)Component$/, '$1'
+                        ).toLowerCase())
+                    ).nativeElement
+                    inputDomNode.value = 'aa'
+                    inputDomNode.dispatchEvent(getNativeEvent('input'))
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.strictEqual(
+                        fixture.componentInstance.model.value, 'aa')
+                    fixture.componentInstance.model.maximum = 2
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.strictEqual(
+                        inputDomNode.attributes.maxlength.value, '2')
+                    let eventGivenModel:PlainObject
+                    fixture.componentInstance.modelChange.subscribe((
+                        model:PlainObject
+                    ):void => {
+                        eventGivenModel = model
+                    })
+                    const state:PlainObject = {errors: {required: true}}
+                    fixture.componentInstance.onChange(state)
+                    assert.deepEqual(
+                        fixture.componentInstance.model.state, state)
+                    assert.deepEqual(
+                        eventGivenModel, fixture.componentInstance.model)
+                    fixture.componentInstance.showValidationErrorMessages =
+                        true
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.strictEqual(fixture.debugElement.query(By.css(
+                        'md-hint span'
+                    )).nativeElement.textContent.trim().replace(/\s+/g, ' '),
+                    'Bitte füllen Sie das Feld "test" aus.')
+                    done()
                 })
-                fixture.componentInstance.onChange(4)
-                assert.strictEqual(fixture.componentInstance.model.state, 4)
-                assert.deepEqual(
-                    eventGivenModel, fixture.componentInstance.model)
-                fixture.detectChanges()
-                await fixture.whenStable()
-                console.log(fixture.debugElement.query(By.css('label')).nativeElement.innerHTML)
-                done()
-            })
-            this.test(`GenericTextareaComponent (${roundType})`, (
-                assert:Object
-            ):void => {
-                assert.strictEqual('TODO', 'TODO')
-            })
             this.test(`GenericFileInputComponent (${roundType})`, (
                 assert:Object
             ):void => {

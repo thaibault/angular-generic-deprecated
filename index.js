@@ -1005,24 +1005,25 @@ const mdInputContent:string = `
     >[i]</span>
     <md-hint align="start">
         <span *ngIf="showValidationErrorMessages">
-            <span *ngIf="state.errors?.required">
-                Bitte füllen Sie das Feld "{{model.description}}" aus.
+            <span *ngIf="model.state.errors?.required">
+                Bitte füllen Sie das Feld "{{model.description || model.name}}"
+                aus.
             </span>
-            <span *ngIf="state.errors?.maxlength">
+            <span *ngIf="model.state.errors?.maxlength">
                 Bitte geben Sie maximal {{model.maximum}} Zeichen ein.
             </span>
-            <span *ngIf="state.errors?.minlength">
+            <span *ngIf="model.state.errors?.minlength">
                 Bitte geben Sie mindestens {{model.minimum}} Zeichen ein.
             </span>
-            <span *ngIf="state.errors?.max">
+            <span *ngIf="model.state.errors?.max">
                 Bitte geben Sie eine Zahl kleiner oder gleich {{model.maximum}}
                 ein.
             </span>
-            <span *ngIf="state.errors?.min">
+            <span *ngIf="model.state.errors?.min">
                 Bitte geben Sie eine Zahl großer oder gleich {{model.minimum}}
                 ein.
             </span>
-            <span *ngIf="state.errors?.pattern">
+            <span *ngIf="model.state.errors?.pattern">
                 Bitte geben Sie eine Zeinefolge ein die dem regulären Ausdruck
                 "{{model.regularExpressionPattern}}" entspricht.
             </span>
@@ -1038,13 +1039,12 @@ const mdInputContent:string = `
 @Component({
     selector: 'generic-input',
     template: `
-    <md-input
-        [max]="model.type === 'number' ? model.maximum : null"
-        [min]="model.type === 'number' ? model.minimum : null"
-        [type]="model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
-        ${propertyInputContent}
-    >${mdInputContent}</md-input>
-    `
+        <md-input
+            [max]="model.type === 'number' ? model.maximum : null"
+            [min]="model.type === 'number' ? model.minimum : null"
+            [type]="model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+            ${propertyInputContent}
+        >${mdInputContent}</md-input>`
 })
 export class GenericInputComponent extends AbstractInputComponent {
     constructor(extendObject:GenericExtendObjectPipe):void {
