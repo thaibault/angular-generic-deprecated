@@ -26,6 +26,16 @@ declare var DEBUG:boolean
 declare var TARGET_TECHNOLOGY:string
 // endregion
 // region test runner
+/**
+ * Provides a generic test runner interface.
+ * @param callback - A callback to run if test environment is ready.
+ * @param template - Template to use as root application component to
+ * bootstrap.
+ * @param roundTypes - Test types to run.
+ * @param additionalParameter - All additional parameter will be forwarded to
+ * the underlying clientnode test environment.
+ * @returns Whatever the underlying clientnode test runner returns.
+ */
 export default function(
     callback:Function|{bootstrap:Function;component:Function},
     template:string = '<div></div>', roundTypes:Array<string> = ['document'],
@@ -59,6 +69,9 @@ export default function(
             require('@angular/platform-browser-dynamic/testing')
         // IgnoreTypeCheck
         @Component({selector: '#qunit-fixture', template})
+        /**
+         * Dummy application root component to test bootstrapping.
+         */
         class ApplicationComponent {}
         // endregion
         // region test services

@@ -1163,9 +1163,9 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     _prefixMatch:boolean = false
 
     // Holds the current selected file object if present.
-    file:?PlainObject = null
+    file:any = null
     // Technical regular expression style file type.
-    internalName:?string = null
+    internalName:string
 
     @Input() model:{id:?string;[key:string]:any;} = {
         id: null
@@ -1226,11 +1226,11 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
             this.model._attachments[this.internalName].state.errors = {
                 required: true}
         if (this.file) {
-            this.file.hash = `#${this.file.digest}`
             this.file.source =
                 this._domSanitizer.bypassSecurityTrustResourceUrl(
                     'http://127.0.0.1:5984/bpvWebNodePlugin/' +
                     this.model._id + '/' + this.file.name + this.file.hash)
+            this.file.hash = `#${this.file.digest}`
         }
         this.determinePresentationType()
         this.fileChange.emit(this.file)
@@ -1260,8 +1260,11 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                     this.file.name = this.name + this.file.name.substring(
                         lastIndex)
             }
+            // IgnoreTypeCheck
             this.file.data = this.input.nativeElement.files[0]
+            // IgnoreTypeCheck
             this.file.content_type = this.file.data.type || 'text/plain'
+            // IgnoreTypeCheck
             this.file.length = this.file.data.size
             this.model._attachments[this.internalName].value = this.file
             if (!(new RegExp(this.internalName)).test(this.file.name))
@@ -1391,8 +1394,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                 this.model._rev = result.rev
         }
         this.model._attachments[this.internalName].state.errors =
-            this.model._attachments[this.internalName].value =
-            this.file = null
+            this.model._attachments[this.internalName].value = this.file = null
         if (!this.model._attachments[this.internalName].nullable)
             this.model._attachments[this.internalName].state.errors = {
                 required: true}

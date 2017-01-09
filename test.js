@@ -77,15 +77,29 @@ registerAngularTest(function(
             } = index
             // IgnoreTypeCheck
             @Injectable()
+            /**
+             * Dummy resolver to test the abstract resolver class.
+             */
             class Resolver extends AbstractResolver {
                 _type:string = 'Test'
+                /**
+                 * Initializes the abstract resolver class.
+                 * @param data - Injected data service instance.
+                 * @param extendObject - Injected extend object pipe instance.
+                 * @param initialData - Injected initial data service instance.
+                 * @param escapeRegularExpressions - Injected regular
+                 * expression escape pipe instance.
+                 * @returns Nothing.
+                 */
                 constructor(
                     data:GenericDataService,
                     extendObject:GenericExtendObjectPipe,
                     initialData:GenericInitialDataService,
-                    escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe
+            escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe
                 ):void {
-                    super(data, extendObject, initialData, escapeRegularExpressions)
+                    super(
+                        data, extendObject, initialData,
+                        escapeRegularExpressions)
                 }
             }
             const self:Object = this
@@ -98,7 +112,46 @@ registerAngularTest(function(
             })
             // endregion
             // region test services
+            /**
+             * Dummy module to inject services to test and test if
+             * bootstrapping works.
+             */
             class Module {
+                /**
+                 * Dummy constructor to inject needed service instances and
+                 * perform various tests.
+                 * @param tools - Injected tools service instance.
+                 * @param initialData - Injected initial data service instance.
+                 * @param md5 - Injected md5 pipe instance.
+                 * @param extractRawData - Injected extract raw data pipe
+                 * instance.
+                 * @param getFilenameByPrefix - Injected filename getter pipe
+                 * instance.
+                 * @param map - Injected map pipe instance.
+                 * @param type - Injected type pipe instance.
+                 * @param isDefined - Injected is defined pipe instance.
+                 * @param stringReplace - Injected string replace pipe
+                 * instance.
+                 * @param stringShowIfPatternMatches - Injected string show
+                 * pipe instance.
+                 * @param stringStartsWith - Injected start starts with pipe
+                 * instance.
+                 * @param stringEndsWith - Injected string ends with pipe
+                 * instance.
+                 * @param stringMatch - Injected string match pipe instance.
+                 * @param stringSliceMatch - Injected string slice match pipe
+                 * instance.
+                 * @param stringHasTimeSuffix - Injected string has time suffix
+                 * instance.
+                 * @param numberPercent - Injected number percent pipe
+                 * instance.
+                 * @param canDeactivateRouteLeave - Injected can deactivate
+                 * route leave guard instance.
+                 * @param data - Injected data service instance.
+                 * @param dataScope - Injected data scope service instance.
+                 * @param resolver - Injected resolver service instance.
+                 * @returns Nothing.
+                 */
                 constructor(
                     tools:GenericToolsService,
                     initialData:GenericInitialDataService,
@@ -110,7 +163,7 @@ registerAngularTest(function(
                     type:GenericTypePipe,
                     isDefined:GenericIsDefinedPipe,
                     stringReplace:GenericStringReplacePipe,
-                    stringShowIfPatternMatches:GenericStringShowIfPatternMatchesPipe,
+            stringShowIfPatternMatches:GenericStringShowIfPatternMatchesPipe,
                     stringStartsWith:GenericStringStartsWithPipe,
                     stringEndsWith:GenericStringEndsWithPipe,
                     stringMatch:GenericStringMatchPipe,
