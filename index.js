@@ -22,7 +22,7 @@ import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
     /* AfterViewInit,*/ Component, ElementRef, EventEmitter, Injectable,
-    Injector, Input, NgModule, /* OnInit,*/ Output, Pipe, PipeTransform,
+    Injector, Input, NgModule, /* OnInit,*/ Output, Pipe, /* PipeTransform,*/
     ReflectiveInjector, ViewChild
 } from '@angular/core'
 import {FormsModule} from '@angular/forms'
@@ -277,7 +277,18 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
 }
 // IgnoreTypeCheck
 @Pipe({name: 'genericGetFilenameByPrefix'})
+/**
+ * Retrieves a matching filename by given filename prefix.
+ */
 export class GenericGetFilenameByPrefixPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual transformations process.
+     * @param attachments - Documents attachments object to determine file with
+     * matching file name prefix.
+     * @param prefix - Prefix or nothing to search for. If nothing given first
+     * file name will be returned.
+     * @returns Matching file name or null if no file matches.
+     */
     transform(attachments:PlainObject, prefix:?string):?string {
         if (prefix) {
             for (const name:string in attachments)
@@ -296,27 +307,42 @@ export class GenericGetFilenameByPrefixPipe/* implements PipeTransform*/ {
 /**
  * Returns a copy of given object where each item was processed through given
  * function.
+ * @property injector - Pipe specific injector to determine pipe dynamically at
+ * runtime.
  */
-// IgnoreTypeCheck
-export class GenericMapPipe implements PipeTransform {
+export class GenericMapPipe/* implements PipeTransform*/ {
     injector:Injector
+    /**
+     * Injects the injector and saves as instance property.
+     * @param injector - Pipe injector service instance.
+     * @returns Nothing.
+     */
     constructor(injector:Injector):void {
         this.injector = injector
     }
+    /**
+     * Performs the actual transformation.
+     * @param object - Iterable item where given pipe should be applied to each
+     * value.
+     * @param pipeName - Pipe to apply to each value.
+     * @param additionalArguments - All additional arguments will be forwarded
+     * to given pipe (after the actual value).
+     * @returns Given transform copied object.
+     */
     transform(
-        object:any, filterName:string, ...additionalArguments:Array<any>
+        object:any, pipeName:string, ...additionalArguments:Array<any>
     ):any {
         if (Array.isArray(object)) {
             const result:Array<any> = []
             for (const item:any of object)
-                result.push(this.injector.get(filterName).transform(
+                result.push(this.injector.get(pipeName).transform(
                     item, ...additionalArguments))
             return result
         }
         const result:Object = {}
         for (const key:string in object)
             if (object.hasOwnProperty(key))
-                result[key] = this.injector.get(filterName).transform(
+                result[key] = this.injector.get(pipeName).transform(
                     object[key], key, ...additionalArguments)
         return result
     }
@@ -324,9 +350,14 @@ export class GenericMapPipe implements PipeTransform {
 // IgnoreTypeCheck
 @Pipe({name: 'genericType'})
 /**
- * Returns type of given object.
+ * Determines type of given object.
  */
 export class GenericTypePipe/* implements PipeTransform*/ {
+    /**
+     * Returns type of given object.
+     * @param object - Object to determine type of.
+     * @returns Type name.
+     */
     transform(object:any):string {
         return typeof object
     }
