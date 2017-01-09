@@ -71,24 +71,26 @@ export default function(
             enableProdMode()
         let platform:Object
         let module:Object
-        try {
-            platform = platformBrowserDynamic()
-            module = await platform.bootstrapModule(result[0])
-        } catch (error) {
-            throw error
-        }
-        this.load()
-        await new Promise((resolve:Function):void => {
-            let done:boolean = false
-            this.moduleDone(():void => {
-                if (done)
-                    return
-                done = true
-                module.destroy()
-                platform.destroy()
-                resolve()
+        if (result[0]) {
+            try {
+                platform = platformBrowserDynamic()
+                module = await platform.bootstrapModule(result[0])
+            } catch (error) {
+                throw error
+            }
+            this.load()
+            await new Promise((resolve:Function):void => {
+                let done:boolean = false
+                this.moduleDone(():void => {
+                    if (done)
+                        return
+                    done = true
+                    module.destroy()
+                    platform.destroy()
+                    resolve()
+                })
             })
-        })
+        }
         // / endregion
         // endregion
         // region test components
