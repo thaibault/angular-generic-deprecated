@@ -44,10 +44,10 @@ export default function(
         */
         if (TARGET_TECHNOLOGY === 'node') {
             global.document = $.context
-            global.Element = $.global.Element
-            global.Node = $.global.window.Node
             global.window = $.global
             global.window.Reflect = global.Reflect
+            for (const name:string of ['Element', 'HTMLElement', 'Node'])
+                global[name] = $.global[name]
             process.setMaxListeners(30)
         }
         require('hammerjs')

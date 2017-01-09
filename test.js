@@ -266,9 +266,12 @@ registerAngularTest(function(
             this.test(`GenericInputComponent (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
+                const done:Function = assert.async()
                 const fixture:ComponentFixture<GenericInputComponent> =
                     TestBed.createComponent(GenericInputComponent)
-                fixture.componentInstance.model = {disabled: true}
+                fixture.componentInstance.model = {
+                    disabled: true, name: 'test'
+                }
                 fixture.componentInstance.ngOnInit()
                 assert.strictEqual(
                     fixture.componentInstance.model.disabled, true)
@@ -285,6 +288,10 @@ registerAngularTest(function(
                 assert.strictEqual(fixture.componentInstance.model.state, 4)
                 assert.deepEqual(
                     eventGivenModel, fixture.componentInstance.model)
+                fixture.detectChanges()
+                await fixture.whenStable()
+                console.log(fixture.debugElement.query(By.css('label')).nativeElement.innerHTML)
+                done()
             })
             this.test(`GenericTextareaComponent (${roundType})`, (
                 assert:Object
