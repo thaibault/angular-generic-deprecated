@@ -27,7 +27,7 @@ declare var TARGET_TECHNOLOGY:string
 // endregion
 // region test runner
 export default function(
-    callback:{bootstrap:Function;component:Function},
+    callback:Function|{bootstrap:Function;component:Function},
     template:string = '<div></div>', roundTypes:Array<string> = ['document'],
     ...additionalParameter:Array<any>
 ):any {
@@ -62,7 +62,11 @@ export default function(
         class ApplicationComponent {}
         // endregion
         // region test services
-        let result:any = await callback.bootstrap.call(
+        if (typeof callback === 'function')
+            callback = callback.call(
+                this, ApplicationComponent, roundType, targetTechnology, $,
+                ...parameter)
+        let result:any = callback.bootstrap.call(
             this, ApplicationComponent, roundType, targetTechnology, $,
             ...parameter)
         if (!Array.isArray(result))
