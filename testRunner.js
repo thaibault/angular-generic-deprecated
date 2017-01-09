@@ -43,9 +43,10 @@ export default function(
             that environment after a working browser environment is present.
         */
         if (TARGET_TECHNOLOGY === 'node') {
-            global.window = $.global
             global.document = $.context
             global.Element = $.global.Element
+            global.Node = $.global.window.Node
+            global.window = $.global
             global.window.Reflect = global.Reflect
             process.setMaxListeners(30)
         }
