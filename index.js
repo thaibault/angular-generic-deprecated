@@ -631,7 +631,6 @@ export class GenericDataService {
         this.extendObject = extendObject.transform.bind(extendObject)
         this.database = PouchDB.plugin(PouchDBFindPlugin)
                                .plugin(PouchDBValidationPlugin)
-        console.log(initialData.configuration.database.plugins)
         for (
             const plugin:Object of
             initialData.configuration.database.plugins || []
