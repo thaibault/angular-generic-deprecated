@@ -272,6 +272,23 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
     }
 }
 // IgnoreTypeCheck
+@Pipe({name: 'genericIsDefined'})
+/**
+ * Checks if given reference is defined.
+ */
+export class GenericIsDefinedPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual comparison.
+     * @param object - Object to compare against "undefined" or "null".
+     * @param nullIsUndefined - Indicates weather "null" should be handles as
+     * "undefined".
+     * @returns The comparison result.
+     */
+    transform(object:any, nullIsUndefined:boolean = false):boolean {
+        return !(object === undefined || nullIsUndefined && object === null)
+    }
+}
+// IgnoreTypeCheck
 @Pipe({name: 'genericGetFilenameByPrefix'})
 /**
  * Retrieves a matching filename by given filename prefix.
@@ -358,25 +375,63 @@ export class GenericTypePipe/* implements PipeTransform*/ {
         return typeof object
     }
 }
-// IgnoreTypeCheck
-@Pipe({name: 'genericIsDefined'})
-/**
- * Checks if given reference is defined.
- */
-export class GenericIsDefinedPipe/* implements PipeTransform*/ {
-    /**
-     * Performs the actual comparison.
-     * @param object - Object to compare against "undefined" or "null".
-     * @param nullIsUndefined - Indicates weather "null" should be handles as
-     * "undefined".
-     * @returns The comparison result.
-     */
-    transform(object:any, nullIsUndefined:boolean = false):boolean {
-        return !(object === undefined || nullIsUndefined && object === null)
-    }
-}
 // / endregion
 // region string
+// IgnoreTypeCheck
+@Pipe({name: 'genericStringEndsWith'})
+/**
+ * Forwards javascript's native "stringEndsWith" method.
+ */
+export class GenericStringEndsWithPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual indicator method.
+     * @param string - To check.
+     * @param needle - Suffix to search for.
+     * @returns The boolean result.
+     */
+    transform(string:?string, needle:?string):boolean {
+        return typeof string === 'string' && typeof needle === 'string' &&
+            string.endsWith(needle)
+    }
+}
+// IgnoreTypeCheck
+@Pipe({name: 'genericStringHasTimeSuffix'})
+/**
+ * Determines if given string has a time indicating suffix.
+ */
+export class GenericStringHasTimeSuffixPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual string suffix check.
+     * @param string - To search in.
+     * @returns The boolean result.
+     */
+    transform(string:?string):boolean {
+        if (typeof string !== 'string')
+            return false
+        return string.endsWith('DateTime') || string.endsWith(
+            'Date'
+        ) || string.endsWith('Time') || string === 'timestamp'
+    }
+}
+// IgnoreTypeCheck
+@Pipe({name: 'genericStringMatch'})
+/**
+ * Tests if given pattern matches against given subject.
+ */
+export class GenericStringMatchPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual matching.
+     * @param pattern - String or regular expression to search for.
+     * @param subject - String to search in.
+     * @param modifier - Regular expression modifier (second argument to the
+     * "RegExp" constructor).
+     * @returns Boolean test result.
+     */
+    transform(pattern:string, subject:string, modifier:string = ''):boolean {
+        // IgnoreTypeCheck
+        return (new RegExp(pattern, modifier)).test(subject)
+    }
+}
 // IgnoreTypeCheck
 @Pipe({name: 'genericStringReplace'})
 /**
@@ -447,42 +502,6 @@ export class GenericStringStartsWithPipe/* implements PipeTransform*/ {
     }
 }
 // IgnoreTypeCheck
-@Pipe({name: 'genericStringEndsWith'})
-/**
- * Forwards javascript's native "stringEndsWith" method.
- */
-export class GenericStringEndsWithPipe/* implements PipeTransform*/ {
-    /**
-     * Performs the actual indicator method.
-     * @param string - To check.
-     * @param needle - Suffix to search for.
-     * @returns The boolean result.
-     */
-    transform(string:?string, needle:?string):boolean {
-        return typeof string === 'string' && typeof needle === 'string' &&
-            string.endsWith(needle)
-    }
-}
-// IgnoreTypeCheck
-@Pipe({name: 'genericStringMatch'})
-/**
- * Tests if given pattern matches against given subject.
- */
-export class GenericStringMatchPipe/* implements PipeTransform*/ {
-    /**
-     * Performs the actual matching.
-     * @param pattern - String or regular expression to search for.
-     * @param subject - String to search in.
-     * @param modifier - Regular expression modifier (second argument to the
-     * "RegExp" constructor).
-     * @returns Boolean test result.
-     */
-    transform(pattern:string, subject:string, modifier:string = ''):boolean {
-        // IgnoreTypeCheck
-        return (new RegExp(pattern, modifier)).test(subject)
-    }
-}
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringSliceMatch'})
 /**
  * Returns a matched part of given subject with given pattern. Default is the
@@ -509,25 +528,6 @@ export class GenericStringSliceMatchPipe/* implements PipeTransform*/ {
                 return match[index]
         }
         return ''
-    }
-}
-// IgnoreTypeCheck
-@Pipe({name: 'genericStringHasTimeSuffix'})
-/**
- * Determines if given string has a time indicating suffix.
- */
-export class GenericStringHasTimeSuffixPipe/* implements PipeTransform*/ {
-    /**
-     * Performs the actual string suffix check.
-     * @param string - To search in.
-     * @returns The boolean result.
-     */
-    transform(string:?string):boolean {
-        if (typeof string !== 'string')
-            return false
-        return string.endsWith('DateTime') || string.endsWith(
-            'Date'
-        ) || string.endsWith('Time') || string === 'timestamp'
     }
 }
 // / endregion
@@ -564,10 +564,17 @@ const GenericStringFormatPipe:PipeTransform =
 // IgnoreTypeCheck
 @Injectable()
 /**
- * TODO
+ * A generic guard which prevents from switching to route if its component's
+ * "canDeactivate()" method returns "false", a promise or observable wrapping
+ * a boolean.
  */
 export class GenericCanDeactivateRouteLeaveGuard
 /* implements CanDeactivate<Object>*/ {
+    /**
+     * Calls the component specific "canDeactivate()" method.
+     * @param component - Component instance of currently selected route.
+     * @returns A boolean, promise or observable which wraps the indicator.
+     */
     canDeactivate(
         component:Object
     ):Observable<boolean>|Promise<boolean>|boolean {
@@ -576,11 +583,22 @@ export class GenericCanDeactivateRouteLeaveGuard
 }
 // IgnoreTypeCheck
 @Injectable()
+/**
+ * A generic database connector.
+ * @property connection - The current database connection instance.
+ * @property database - The entire database constructor.
+ * @property extendObject - Holds the extend object's pipe transformation
+ * method.
+ * @property middlewares - Mapping of post and pre callback arrays to trigger
+ * before or after each database transaction.
+ * @property synchronisation - This synchronisation instance represents the
+ * active synchronisation process if a local offline database is in use.
+ * @property stringFormat - Holds the string format's pipe transformation
+ * method.
+ */
 export class GenericDataService {
-    database:PouchDB
     connection:PouchDB
-    synchronisation:Object
-    stringFormat:Function
+    database:PouchDB
     extendObject:Function
     middlewares:{
         pre:{[key:string]:Array<Function>};
@@ -589,10 +607,20 @@ export class GenericDataService {
         post: {},
         pre: {}
     }
+    stringFormat:Function
+    synchronisation:Object
+    /**
+     * Creates the database constructor applies all plugins instantiates
+     * the connection instance and registers all middlewares.
+     * @param extendObject - Injected extend object pipe instance.
+     * @param initialData - Injected initial data service instance.
+     * @param stringFormat - Injected string format pipe instance.
+     * @returns Nothing.
+     */
     constructor(
-        stringFormat:GenericStringFormatPipe,
+        extendObject:GenericExtendObjectPipe,
         initialData:GenericInitialDataService,
-        extendObject:GenericExtendObjectPipe
+        stringFormat:GenericStringFormatPipe
     ):void {
         this.stringFormat = stringFormat.transform
         this.extendObject = extendObject.transform
@@ -1196,6 +1224,7 @@ export class GenericTextareaComponent extends AbstractInputComponent {
     }
 }
 // // endregion
+// / region file input
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
@@ -1561,6 +1590,8 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
             this.file.type = 'video'
     }
 }
+// / endregion
+// / region pagination
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
@@ -1667,6 +1698,7 @@ export class GenericPaginationComponent {
         this.pageChange.emit(this.page)
     }
 }
+// / endregion
 // endregion
 // region modules
 const declarations:Array<Object> = Object.keys(module.exports).filter((
