@@ -1182,13 +1182,32 @@ export class AbstractInputComponent {
         this.modelChange.emit(this.model)
     }
 }
+/**
+ * A generic abstract component to edit, search, navigate and filter a list of
+ * entities.
+ * @property _itemPath - Routing path to a specific item.
+ * @property _itemsPath - Routing path to the items overview.
+ * @property _route - Current route configuration.
+ * @property _router - Router service instance.
+ * @property _tools - Tools service instance property.
+ * @property items - Current list of visible items.
+ * @property limit - Maximal number of visible items.
+ * @property page - Current page number of each item list part.
+ * @property regularExpression - Indicator weather searching via regular
+ * expressions should be used.
+ * @property searchTerm - Search string to filter visible item list.
+ * @property searchTermStream - Search term stream which debounces and caches
+ * search results.
+ * @property selectedItems - List of currently selected items for group editing
+ * purposes.
+ * @property sort - Sorting informations.
+ */
 export class AbstractItemsComponent {
     _itemPath:string = 'admin/item'
     _itemsPath:string = 'admin/items'
     _route:ActivatedRoute
     _router:Router
     _tools:typeof Tools
-
     items:Observable<Array<PlainObject>>
     limit:number
     page:number
@@ -1197,7 +1216,13 @@ export class AbstractItemsComponent {
     searchTermStream:Subject<string> = new Subject()
     selectedItems:Set<PlainObject> = new Set()
     sort:PlainObject = {_id: 'asc'}
-
+    /**
+     * Saves injected service instances as instance properties.
+     * @param route - Current route configuration.
+     * @param router - Injected router service instance.
+     * @param tools - Injected tools service instance.
+     * @returns Nothing.
+     */
     constructor(
         route:ActivatedRoute, router:Router, tools:GenericToolsService
     ):void {
@@ -1232,6 +1257,12 @@ export class AbstractItemsComponent {
             return this.update()
         }).subscribe()
     }
+    /**
+     * Deletes item which has same id provided by the id property through given
+     * event object.
+     * @param event - Event object which triggers action.
+     * @returns Nothing.
+     */
     delete(event:Object):void {
         let index:number = 0
         for (const item:PlainObject of this.items) {
@@ -1242,12 +1273,26 @@ export class AbstractItemsComponent {
             index += 1
         }
     }
+    /**
+     * Removes all items currently selected and clear current selection.
+     * @returns Nothing.
+     */
     deleteSelectedItems():void {
         this.selectedItems = new Set()
     }
+    /**
+     * Switches section to item which has given id.
+     * @param itemID - ID of item to switch to.
+     * @returns Nothing.
+     */
     goToItem(itemID:string):void {
         this._router.navigate([this._itemPath, itemID])
     }
+    /**
+     * Updates constraints between limit, page number and number of total
+     * available items.
+     * @returns Nothing.
+     */
     applyPageConstraints():boolean {
         const oldPage:number = this.page
         const oldLimit:number = this.limit
@@ -1256,6 +1301,12 @@ export class AbstractItemsComponent {
             this.items.total / this.limit)))
         return this.page !== oldPage || this.limit !== oldLimit
     }
+    /**
+     * Applies current filter criteria to current visible item set.
+     * @param reload - Indicates weather a simple reload should be made because
+     * a changed list of available items is expected for example.
+     * @returns A boolean indicating weather route change was successful.
+     */
     update(reload:boolean = false):boolean {
         this.applyPageConstraints()
         if (reload)
@@ -1274,6 +1325,10 @@ export class AbstractItemsComponent {
             encodeURIComponent(this.searchTerm)
         ])
     }
+    /**
+     * Applies current search term to the search term stream.
+     * @returns Nothing.
+     */
     updateSearch():void {
         this.searchTermStream.next(this.searchTerm)
     }
@@ -1342,7 +1397,17 @@ const mdInputContent:string = `
         >${mdInputContent}</md-input>`
 })
 /* eslint-enable max-len */
+/**
+ * A generic form input component with validation, labeling and info
+ * description support.
+ */
 export class GenericInputComponent extends AbstractInputComponent {
+    /**
+     * Forwards injected service instances to the abstract input component's
+     * constructor.
+     * @param extendObject - Injected extend object pipe instance.
+     * @returns Nothing.
+     */
     constructor(extendObject:GenericExtendObjectPipe):void {
         super(extendObject)
     }
@@ -1353,7 +1418,17 @@ export class GenericInputComponent extends AbstractInputComponent {
     template: `
         <md-textarea ${propertyInputContent}>${mdInputContent}</md-textarea>`
 })
+/**
+ * A generic form textarea component with validation, labeling and info
+ * description support.
+ */
 export class GenericTextareaComponent extends AbstractInputComponent {
+    /**
+     * Forwards injected service instances to the abstract input component's
+     * constructor.
+     * @param extendObject - Injected extend object pipe instance.
+     * @returns Nothing.
+     */
     constructor(extendObject:GenericExtendObjectPipe):void {
         super(extendObject)
     }
