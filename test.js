@@ -292,12 +292,15 @@ registerAngularTest(function(
                         assert.strictEqual('TODO', 'TODO')
                     })
                     // / region abstract
-                    self.test(`AbstractResolver (${roundType})`, (
+                    self.test(`AbstractResolver (${roundType})`, async (
                         assert:Object
-                    ):void => {
+                    ):Promise<void> => {
+                        const done:Function = assert.async()
                         // TODO
-                        resolver.list()
+                        console.log('A', await resolver.list())
                         assert.ok(true)
+                        await data.destroy()
+                        done()
                     })
                     // / endregion
                     // endregion

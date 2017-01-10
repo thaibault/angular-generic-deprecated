@@ -693,6 +693,15 @@ export class GenericDataService {
             .on('error', (error:Object):void => console.log('error', error))
     }
     /**
+     * Removes current active database.
+     * @param parameter - All parameter will be forwarded to the underlining
+     * pouchdb's "destroy()" method.
+     * @returns Whatever pouchdb's "destroy()" method return.
+     */
+    destroy(...parameter:Array<any>):Promise<PlainObject> {
+        return this.connection.destroy(...parameter)
+    }
+    /**
      * Retrieves a database resource determined by given selector.
      * @param selector - Selector object in mango.
      * @param options - Options to use during selecting items.
