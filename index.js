@@ -691,7 +691,10 @@ export class GenericDataService {
         */
     }
     /**
-     * TODO
+     * Retrieves a database resource determined by given selector.
+     * @param selector - Selector object in mango.
+     * @param options - Options to use during selecting items.
+     * @returns A promise with resulting array of retrieved resources.
      */
     async get(
         selector:PlainObject, options:PlainObject = {}
@@ -700,12 +703,33 @@ export class GenericDataService {
             this.extendObject(true, {selector}, options)
         )).docs
     }
+    /**
+     * Creates or updates given data.
+     * @param parameter - All parameter will be forwarded to the underlining
+     * pouchdb's "put()" method.
+     * @returns Whatever pouchdb's "put()" method return.
+     */
     put(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.put(...parameter)
     }
+    /**
+     * Removes specified entities in database.
+     * @param parameter - All parameter will be forwarded to the underlining
+     * pouchdb's "remove()" method.
+     * @returns Whatever pouchdb's "remove()" method return.
+     */
     remove(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.remove(...parameter)
     }
+    /**
+     * Registers a new middleware.
+     * @param names - Event names to intercept.
+     * @param callback - Callback function to trigger when specified event
+     * happens.
+     * @param type - Specifies weather callback should be triggered before or
+     * after specified event has happened.
+     * @returns A cancel function which will deregister given middleware.
+     */
     register(
         names:string|Array<string>, callback:Function, type:string = 'post'
     ):Function {
@@ -980,6 +1004,14 @@ export class GenericDataScopeService {
     }
 }
 // / region abstract
+/**
+ * Helper class to extend from to have some basic methods to deal with database
+ * entities.
+ * @property _type - Model name to handle /should be overwritten in concrete
+ * implementations.
+ * @property data - Holds currently retrieved data.
+ * @property TODO
+ */
 export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     _type:string = 'Item'
     data:PlainObject
@@ -989,15 +1021,15 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     relevantKeys:?Array<string> = null
     constructor(
         data:GenericDataService,
+        escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe,
         extendObject:GenericExtendObjectPipe,
-        initialData:GenericInitialDataService,
-        escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe
+        initialData:GenericInitialDataService
     ):void {
         this.data = data
-        this.extendObject = extendObject.transform.bind(extendObject)
-        this.models = initialData.configuration.modelConfiguration.models
         this.escapeRegularExpressions =
             escapeRegularExpressions.transform.bind(escapeRegularExpressions)
+        this.extendObject = extendObject.transform.bind(extendObject)
+        this.models = initialData.configuration.modelConfiguration.models
     }
     async list(
         sort:Array<PlainObject> = [{_id: 'asc'}], page:number = 1,
