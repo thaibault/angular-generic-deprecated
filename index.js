@@ -368,6 +368,13 @@ export class GenericTypePipe/* implements PipeTransform*/ {
  * Checks if given reference is defined.
  */
 export class GenericIsDefinedPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual comparison.
+     * @param object - Object to compare against "undefined" or "null".
+     * @param nullIsUndefined - Indicates weather "null" should be handles as
+     * "undefined".
+     * @returns The comparison result.
+     */
     transform(object:any, nullIsUndefined:boolean = false):boolean {
         return !(object === undefined || nullIsUndefined && object === null)
     }
@@ -376,7 +383,20 @@ export class GenericIsDefinedPipe/* implements PipeTransform*/ {
 // region string
 // IgnoreTypeCheck
 @Pipe({name: 'genericStringReplace'})
+/**
+ * Provides javascript's native string replacement method as pipe.
+ */
 export class GenericStringReplacePipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual replacement.
+     * @param string - String to replace content.
+     * @param search - String or regular expression to us as matcher.
+     * @param replacement - String to replace with matching parts in given
+     * "string".
+     * @param modifier - Regular expression modifier (second argument to the
+     * "RegExp" constructor).
+     * @returns A new string with replacements done.
+     */
     transform(
         string:string, search:string|RegExp, replacement:string = '',
         modifier:string = 'g'
@@ -392,8 +412,18 @@ export class GenericStringReplacePipe/* implements PipeTransform*/ {
  */
 export class GenericStringShowIfPatternMatchesPipe
 /* implements PipeTransform*/ {
+    /**
+     * Performs the actual matching.
+     * @param string - String to replace content.
+     * @param pattern - String or regular expression to us as matcher.
+     * @param invert - Indicates weather given string should be shown if given
+     * pattern matches or not.
+     * @param modifier - Regular expression modifier (second argument to the
+     * "RegExp" constructor).
+     * @returns Given string if matching indicator was successful.
+     */
     transform(
-        string:string, pattern:string, invert:boolean = false,
+        string:string, pattern:string|RegExp, invert:boolean = false,
         modifier:string = 'g'
     ):string {
         // IgnoreTypeCheck
@@ -406,9 +436,15 @@ export class GenericStringShowIfPatternMatchesPipe
 // IgnoreTypeCheck
 @Pipe({name: 'genericStringStartsWith'})
 /**
- * Replaces a string with given replacement.
+ * Forwards javascript's native "stringStartsWith" method.
  */
 export class GenericStringStartsWithPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual indicator method.
+     * @param string - To check.
+     * @param needle - Prefix to search for.
+     * @returns The boolean result.
+     */
     transform(string:?string, needle:?string):boolean {
         return typeof string === 'string' && typeof needle === 'string' &&
             string.startsWith(needle)
@@ -417,9 +453,15 @@ export class GenericStringStartsWithPipe/* implements PipeTransform*/ {
 // IgnoreTypeCheck
 @Pipe({name: 'genericStringEndsWith'})
 /**
- * Replaces a string with given replacement.
+ * Forwards javascript's native "stringEndsWith" method.
  */
 export class GenericStringEndsWithPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual indicator method.
+     * @param string - To check.
+     * @param needle - Suffix to search for.
+     * @returns The boolean result.
+     */
     transform(string:?string, needle:?string):boolean {
         return typeof string === 'string' && typeof needle === 'string' &&
             string.endsWith(needle)
@@ -431,6 +473,14 @@ export class GenericStringEndsWithPipe/* implements PipeTransform*/ {
  * Tests if given pattern matches against given subject.
  */
 export class GenericStringMatchPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual matching.
+     * @param pattern - String or regular expression to search for.
+     * @param subject - String to search in.
+     * @param modifier - Regular expression modifier (second argument to the
+     * "RegExp" constructor).
+     * @returns Boolean test result.
+     */
     transform(pattern:string, subject:string, modifier:string = ''):boolean {
         // IgnoreTypeCheck
         return (new RegExp(pattern, modifier)).test(subject)
@@ -443,6 +493,15 @@ export class GenericStringMatchPipe/* implements PipeTransform*/ {
  * whole (zero) matched part.
  */
 export class GenericStringSliceMatchPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual matching.
+     * @param subject - String to search in.
+     * @param pattern - String or regular expression to search for.
+     * @param index - Match group to extract.
+     * @param modifier - Regular expression modifier (second argument to the
+     * "RegExp" constructor).
+     * @returns Matching group.
+     */
     transform(
         subject:?string, pattern:string, index:number = 0, modifier:string = ''
     ):string {
@@ -462,6 +521,11 @@ export class GenericStringSliceMatchPipe/* implements PipeTransform*/ {
  * Determines if given string has a time indicating suffix.
  */
 export class GenericStringHasTimeSuffixPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual string suffix check.
+     * @param string - To search in.
+     * @returns The boolean result.
+     */
     transform(string:?string):boolean {
         if (typeof string !== 'string')
             return false
