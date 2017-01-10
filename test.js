@@ -32,11 +32,13 @@ registerAngularTest(function(
     component:Function;
 } {
     // region imports
-    const {getNativeEvent} = require('./mockup')
     const {DebugElement, Injectable, NgModule} = require('@angular/core')
     const {ComponentFixture} = require('@angular/core/testing')
     const {By} = require('@angular/platform-browser')
+    const {Router} = require('@angular/router')
     const index:Object = require('./index')
+    const {getNativeEvent, RouterOutletStubComponent, RouterStub} = require(
+        './mockup')
     // endregion
     return {
         bootstrap: ():Array<Object> => {
@@ -296,7 +298,11 @@ registerAngularTest(function(
                 }
             }
             this.module(`GenericModule.services (${roundType})`)
-            return [Module, {imports: [Module]}]
+            return [Module, {
+                declarations: [RouterOutletStubComponent],
+                imports: [GenericModule],
+                providers: [{provide: Router, useClass: RouterStub}]
+            }]
             // endregion
         },
         component: function(TestBed:Object, roundType:string):void {
@@ -394,10 +400,18 @@ registerAngularTest(function(
             ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
-            this.test(`GenericPaginationComponent (${roundType})`, (
+            this.test(`GenericPaginationComponent (${roundType})`, async (
                 assert:Object
-            ):void => {
-                assert.strictEqual('TODO', 'TODO')
+            ):Promise<void> => {
+                const done:Function = assert.async()
+                const fixture:ComponentFixture<GenericPaginationComponent> =
+                    TestBed.createComponent(GenericPaginationComponent)
+                fixture.componentInstance.total = 10
+                fixture.detectChanges()
+                await fixture.whenStable()
+                console.log(fixture.debugElement.nativeElement.innerHTML)
+                assert.ok(true)
+                done()
             })
             // endregion
         }

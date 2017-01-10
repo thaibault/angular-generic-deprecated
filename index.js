@@ -1587,7 +1587,6 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
 /**
  * Provides a generic pagination component.
  * @property _makeRange - Saves the make range pipe transformation function.
- * @property _router - Saves the router instance.
  * @property itemsPerPage - Number of items to show per page as maximum.
  * @property page - Contains currently selected page number.
  * @property pageChange - Event emitter to fire on each page change event.
@@ -1596,7 +1595,6 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
  */
 export class GenericPaginationComponent {
     _makeRange:Function
-    _router:Router
     @Input() itemsPerPage:number = 20
     @Input() page:number = 1
     @Output() pageChange:EventEmitter = new EventEmitter()
@@ -1605,12 +1603,10 @@ export class GenericPaginationComponent {
     /**
      * Sets needed services as property values.
      * @param makeRange - Saves the make range pipe instance.
-     * @param router - Saves the router instance.
      * @returns Nothing.
      */
-    constructor(makeRange:GenericArrayMakeRangePipe, router:Router):void {
+    constructor(makeRange:GenericArrayMakeRangePipe):void {
         this._makeRange = makeRange.transform
-        this._router = router
     }
     /**
      * Determines the highest page number.
