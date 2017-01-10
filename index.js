@@ -1157,6 +1157,10 @@ export class AbstractInputComponent {
     constructor(extendObject:GenericExtendObjectPipe):void {
         this._extendObject = extendObject.transform.bind(extendObject)
     }
+    /**
+     * Triggers after input values have been resolved.
+     * @returns Nothing.
+     */
     ngOnInit():void {
         this._extendObject(this.model, this._extendObject({
             disabled: false,
@@ -1167,6 +1171,12 @@ export class AbstractInputComponent {
             type: 'string'
         }, this.model))
     }
+    /**
+     * Triggers when ever a change to current model happens inside this
+     * component.
+     * @param state - Saves the current model state.
+     * @returns Nothing.
+     */
     onChange(state:Object):void {
         this.model.state = state
         this.modelChange.emit(this.model)
