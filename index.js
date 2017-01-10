@@ -1104,11 +1104,11 @@ export class AbstractItemsComponent {
     sort:PlainObject = {_id: 'asc'}
 
     constructor(
-        tools:GenericToolsService, route:ActivatedRoute, router:Router
+        route:ActivatedRoute, router:Router, tools:GenericToolsService
     ):void {
-        this._tools = tools.tools
         this._route = route
         this._router = router
+        this._tools = tools.tools
         this._route.params.subscribe((data:PlainObject):void => {
             this.page = parseInt(data.page)
             this.limit = parseInt(data.limit)
