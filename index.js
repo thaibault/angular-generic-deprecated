@@ -622,8 +622,8 @@ export class GenericDataService {
         initialData:GenericInitialDataService,
         stringFormat:GenericStringFormatPipe
     ):void {
-        this.stringFormat = stringFormat.transform
-        this.extendObject = extendObject.transform
+        this.stringFormat = stringFormat.transform.bind(stringFormat)
+        this.extendObject = extendObject.transform.bind(extendObject)
         this.database = PouchDB.plugin(PouchDBFindPlugin)
                                .plugin(PouchDBValidationPlugin)
         for (
@@ -755,7 +755,7 @@ export class GenericDataScopeService {
     ):void {
         this.configuration = initialData.configuration
         this.data = data
-        this.extendObject = extendObject.transform
+        this.extendObject = extendObject.transform.bind(extendObject)
         this.tools = tools.tools
     }
     /**
@@ -994,9 +994,10 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe
     ):void {
         this.data = data
-        this.extendObject = extendObject.transform
+        this.extendObject = extendObject.transform.bind(extendObject)
         this.models = initialData.configuration.modelConfiguration.models
-        this.escapeRegularExpressions = escapeRegularExpressions.transform
+        this.escapeRegularExpressions =
+            escapeRegularExpressions.transform.bind(escapeRegularExpressions)
     }
     async list(
         sort:Array<PlainObject> = [{_id: 'asc'}], page:number = 1,
@@ -1073,7 +1074,7 @@ export class AbstractInputComponent {
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
     constructor(extendObject:GenericExtendObjectPipe):void {
-        this._extendObject = extendObject.transform
+        this._extendObject = extendObject.transform.bind(extendObject)
     }
     ngOnInit():void {
         this._extendObject(this.model, this._extendObject({
@@ -1409,9 +1410,10 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     ):void {
         this._data = data
         this._domSanitizer = domSanitizer
-        this._extendObject = extendObject.transform
-        this._getFilenameByPrefix = getFilenameByPrefix.transform
-        this._representObject = representObject.transform
+        this._extendObject = extendObject.transform.bind(extendObject)
+        this._getFilenameByPrefix = getFilenameByPrefix.transform.bind(
+            getFilenameByPrefix)
+        this._representObject = representObject.transform.bind(representObject)
     }
     /**
      * Initializes file upload handler.
@@ -1686,7 +1688,7 @@ export class GenericPaginationComponent {
      * @returns Nothing.
      */
     constructor(makeRange:GenericArrayMakeRangePipe):void {
-        this._makeRange = makeRange.transform
+        this._makeRange = makeRange.transform.bind(makeRange)
     }
     /**
      * Determines the highest page number.
