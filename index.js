@@ -768,14 +768,14 @@ export class GenericDataScopeService {
     /**
      * Saves alle needed services as property values.
      * @param data - Injected data service instance.
-     * @param initialData - Injected initial data service instance.
      * @param extendObject - Injected extend object pipe instance.
+     * @param initialData - Injected initial data service instance.
      * @param tools - Injected tools service instance.
      * @returns Nothing.
      */
     constructor(
-        data:GenericDataService, initialData:GenericInitialDataService,
-        extendObject:GenericExtendObjectPipe, tools:GenericToolsService
+        data:GenericDataService, extendObject:GenericExtendObjectPipe,
+        initialData:GenericInitialDataService, tools:GenericToolsService
     ):void {
         this.configuration = initialData.configuration
         this.data = data
@@ -1010,15 +1010,31 @@ export class GenericDataScopeService {
  * @property _type - Model name to handle /should be overwritten in concrete
  * implementations.
  * @property data - Holds currently retrieved data.
- * @property TODO
+ * @property escapeRegularExpressions - Holds the escape regular expressions's
+ * pipe transformation method.
+ * @property extendObject - Holds the extend object's pipe transformation
+ * method.
+ * @property models - Saves a mapping from all available model names to their
+ * specification.
+ * @property relevantKeys - Saves a list of relevant key names to take into
+ * account during resolving.
  */
 export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     _type:string = 'Item'
     data:PlainObject
-    extendObject:Function
     escapeRegularExpressions:Function
+    extendObject:Function
     models:PlainObject
     relevantKeys:?Array<string> = null
+    /**
+     * Sets all needed injected services as instance properties.
+     * @param data - Injected data service instance.
+     * @param escapeRegularExpressions - Injected escape regular expression
+     * pipe instance.
+     * @param extendObject - Injected extend object pipe instance.
+     * @param initialData - Injected initial data service instance.
+     * @returns Nothing.
+     */
     constructor(
         data:GenericDataService,
         escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe,
@@ -1031,7 +1047,16 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         this.extendObject = extendObject.transform.bind(extendObject)
         this.models = initialData.configuration.modelConfiguration.models
     }
-    async list(
+    /**
+     * List items which matches given filter criteria.
+     * @param sort - List of items.
+     * @param page - Page to show.
+     * @param limit - Maximal number of entities to retrieve.
+     * @param searchTerm - String query to search for.
+     * @param additionalSelectors - Custom filter criteria.
+     * @returns A promise wrapping retrieved data.
+     */
+    list(
         sort:Array<PlainObject> = [{_id: 'asc'}], page:number = 1,
         limit:number = 10, searchTerm:string = '',
         additionalSelectors:PlainObject = {}
@@ -1064,6 +1089,14 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         ), options)
     }
     /* eslint-disable no-unused-vars */
+    /**
+     * Implements the resolver method which converts route informations into
+     * "list()" method parameter and forward their result as result in an
+     * observable.
+     * @param route - Current route informations.
+     * @param state - Current state informations.
+     * @returns Observable with data filtered by current route informations.
+     */
     resolve(
         route:ActivatedRouteSnapshot, state:RouterStateSnapshot
     ):Observable<Array<PlainObject>> {
@@ -1100,11 +1133,27 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
 // endregion
 // region components
 // / region abstract
+/**
+ * Generic input component.
+ * @property extendObject - Holds the extend object's pipe transformation
+ * @property model - Holds model informations including actual value and
+ * metadata.
+ * @property modelChange - Model event emitter emitting events on each model
+ * change.
+ * @property showValidationErrorMessages - Indicates weather validation errors
+ * should be suppressed or be shown automatically. Useful to prevent error
+ * component from showing error messages before the user has submit the form.
+ */
 export class AbstractInputComponent {
     _extendObject:Function
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() showValidationErrorMessages:boolean = false
+    /**
+     * Sets needed services as property values.
+     * @param extendObject - Injected extend object pipe instance.
+     * @returns Nothing.
+     */
     constructor(extendObject:GenericExtendObjectPipe):void {
         this._extendObject = extendObject.transform.bind(extendObject)
     }
@@ -1425,9 +1474,9 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     @ViewChild('input') input:ElementRef
     /**
      * Sets needed services as property values.
-     * @param data - Saves the data service instance.
-     * @param domSanitizer - Saves the dom sanitizer service instance.
-     * @param extendObject - Saves the object extender pipe instance.
+     * @param data - Injected data service instance.
+     * @param domSanitizer - Injected dom sanitizer service instance.
+     * @param extendObject - Injected extend object pipe instance.
      * @param getFilenameByPrefix - Saves the file name by prefix retriever
      * pipe instance.
      * @param representObject - Saves the object to string representation pipe
