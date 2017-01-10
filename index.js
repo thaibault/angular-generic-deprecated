@@ -725,11 +725,27 @@ export class GenericDataService {
 }
 // IgnoreTypeCheck
 @Injectable()
+/**
+ * Auto generates a components scope environment for a specified model.
+ * @property configuration - Holds the configuration service instance.
+ * @property data - Holds the data exchange service instance.
+ * @property extendObject - Holds the extend object's pipe transformation
+ * method.
+ * @property tools - Holds the tools class from the tools service.
+ */
 export class GenericDataScopeService {
     configuration:PlainObject
     data:GenericDataService
     extendObject:Function
     tools:typeof Tools
+    /**
+     * Saves alle needed services as property values.
+     * @param data - Injected data service instance.
+     * @param initialData - Injected initial data service instance.
+     * @param extendObject - Injected extend object pipe instance.
+     * @param tools - Injected tools service instance.
+     * @returns Nothing.
+     */
     constructor(
         data:GenericDataService, initialData:GenericInitialDataService,
         extendObject:GenericExtendObjectPipe, tools:GenericToolsService
@@ -739,6 +755,16 @@ export class GenericDataScopeService {
         this.extendObject = extendObject.transform
         this.tools = tools.tools
     }
+    /**
+     * Generates a scope object for given model with given property names and
+     * property value mapping data.
+     * @param modelName - Name of model to generate scope for.
+     * @param propertyNames - List of property names to generate meta data in
+     * scope for. If "null" is given all properties in given model will be
+     * taken into account.
+     * @param data - Data to use for given properties.
+     * @returns The generated scope object.
+     */
     generate(
         modelName:string, propertyNames:?Array<string> = null,
         data:PlainObject = {}
@@ -879,6 +905,15 @@ export class GenericDataScopeService {
         result._metaData = {submitted: false}
         return result
     }
+    /**
+     * Useful to sets route specific data in a resolver.
+     * @param modelName - Name of model to retrieve data from.
+     * @param scope - Scope to extend or set values in.
+     * @param id - ID of an entity to retrieve data from.
+     * @param propertyNames - List of property names to retrieve data from.
+     * @param options - To use for retrieving needed data from data service.
+     * @returns A promise wrapping requested data.
+     */
     async set(
         modelName:string, scope:?Array<Object>|?Object = null,
         id:?string = null, propertyNames:?Array<string> = null,
@@ -906,6 +941,11 @@ export class GenericDataScopeService {
         }
         return result
     }
+    /**
+     * Retrieves needed data for given scope.
+     * @param scope - Scope to use to determine which data is needed.
+     * @returns Resolved data.
+     */
     get(scope:Object):PlainObject {
         const result:PlainObject = {}
         for (const key:string in scope)
