@@ -40,6 +40,7 @@ export function getNativeEvent(
     event.initCustomEvent(name, bubbles, cancelable, null)
     return event
 }
+export const dummyEvent = {preventDefault: ():void => {}}
 // endregion
 // region services
 // IgnoreTypeCheck

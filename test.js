@@ -37,8 +37,9 @@ registerAngularTest(function(
     const {By} = require('@angular/platform-browser')
     const {Router} = require('@angular/router')
     const index:Object = require('./index')
-    const {getNativeEvent, RouterOutletStubComponent, RouterStub} = require(
-        './mockup')
+    const {
+        dummyEvent, getNativeEvent, RouterOutletStubComponent, RouterStub
+    } = require('./mockup')
     // endregion
     return {
         bootstrap: ():Array<Object> => {
@@ -409,8 +410,52 @@ registerAngularTest(function(
                 fixture.componentInstance.total = 10
                 fixture.detectChanges()
                 await fixture.whenStable()
-                console.log(fixture.debugElement.nativeElement.innerHTML)
-                assert.ok(true)
+                assert.strictEqual(
+                    fixture.debugElement.query(By.css('*')), null)
+                fixture.componentInstance.itemsPerPage = 2
+                fixture.detectChanges()
+                await fixture.whenStable()
+                assert.strictEqual(
+                    fixture.debugElement.queryAll(By.css('ul li a')).length, 7)
+                assert.strictEqual(fixture.componentInstance.lastPage, 5)
+                assert.deepEqual(
+                    fixture.componentInstance.pagesRange, [1, 2, 3, 4, 5])
+                assert.strictEqual(fixture.componentInstance.previousPage, 1)
+                assert.strictEqual(fixture.componentInstance.nextPage, 2)
+                assert.deepEqual(fixture.debugElement.query(By.css(
+                    '.current'
+                )).nativeElement.className.split(' ').sort(),
+                ['current', 'even', 'page-1', 'previous'])
+                fixture.componentInstance.change(dummyEvent, 3)
+                assert.strictEqual(fixture.componentInstance.previousPage, 2)
+                assert.strictEqual(fixture.componentInstance.nextPage, 4)
+                fixture.detectChanges()
+                await fixture.whenStable()
+                assert.deepEqual(fixture.debugElement.query(By.css(
+                    '.current'
+                )).nativeElement.className.split(' ').sort(),
+                ['current', 'even', 'page-3'])
+                assert.deepEqual(fixture.debugElement.query(By.css(
+                    '.previous'
+                )).nativeElement.className.split(' ').sort(),
+                ['even-page', 'page-2', 'previous'])
+                assert.deepEqual(fixture.debugElement.query(By.css(
+                    '.next'
+                )).nativeElement.className.split(' ').sort(),
+                ['even-page', 'next', 'page-4'])
+                assert.deepEqual(fixture.debugElement.query(By.css(
+                    '.last'
+                )).nativeElement.className.split(' ').sort(),
+                ['even', 'last', 'page-5'])
+                fixture.debugElement.query(By.css(
+                    '.next'
+                )).triggerEventHandler('click', dummyEvent)
+                fixture.detectChanges()
+                await fixture.whenStable()
+                assert.deepEqual(fixture.debugElement.query(By.css(
+                    '.current'
+                )).nativeElement.className.split(' ').sort(),
+                ['current', 'even-page', 'page-4'])
                 done()
             })
             // endregion

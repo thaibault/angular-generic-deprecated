@@ -1565,21 +1565,25 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
 @Component({
     selector: 'generic-pagination',
     template: `
-        <ul *ngIf="getLastPage() > 1">
+        <ul *ngIf="lastPage > 1">
             <li *ngIf="page > 2">
                 <a href="" (click)="change($event, 1)">--</a>
             </li>
             <li *ngIf="page > 1">
-                <a href="" (click)="change($event, getPreviousPage())">-</a>
+                <a href="" (click)="change($event, previousPage)">-</a>
             </li>
-            <li *ngFor="let p of getPagesRange()">
-                <a href="" (click)="change($event, p)">{{p}}</a>
+            <li *ngFor="let currentPage of pagesRange;let even = even">
+                <a
+                    href="" class="page-{{currentPage}}"
+                    [ngClass]="{current: currentPage === page, previous: currentPage === previousPage, next: currentPage === nextPage, even: even, 'even-page': currentPage % 2 === 0, first: currentPage === firstPage, last: currentPage === lastPage}"
+                    (click)="change($event, currentPage)"
+                >{{currentPage}}</a>
             </li>
-            <li *ngIf="getLastPage() > page">
-                <a href="" (click)="change($event, getNextPage())">+</a>
+            <li *ngIf="lastPage > page">
+                <a href="" (click)="change($event, nextPage)">+</a>
             </li>
-            <li *ngIf="getLastPage() > page + 1">
-                <a href="" (click)="change($event, getLastPage())">++</a>
+            <li *ngIf="lastPage > page + 1">
+                <a href="" (click)="change($event, lastPage)">++</a>
             </li>
         </ul>
     `
@@ -1612,24 +1616,24 @@ export class GenericPaginationComponent {
      * Determines the highest page number.
      * @returns The determines page number.
      */
-    getLastPage():number {
+    get lastPage():number {
         return Math.ceil(this.total / this.itemsPerPage)
     }
     /**
      * Determines the number of pages to show.
      * @returns A list of page numbers.
      */
-    getPagesRange():Array<number> {
+    get pagesRange():Array<number> {
         if (this.page - this.pageRangeLimit < 1) {
             const start:number = 1
             const startRest:number = this.pageRangeLimit - (this.page - start)
             const end:number = Math.min(
-                this.getLastPage(), this.page + this.pageRangeLimit + startRest
+                this.lastPage, this.page + this.pageRangeLimit + startRest
             )
             return this._makeRange([start, end])
         }
         const end:number = Math.min(
-            this.getLastPage(), this.page + this.pageRangeLimit)
+            this.lastPage, this.page + this.pageRangeLimit)
         const endRest:number = this.pageRangeLimit - (end - this.page)
         const start:number = Math.max(
             1, this.page - this.pageRangeLimit - endRest)
@@ -1639,15 +1643,15 @@ export class GenericPaginationComponent {
      * Determines the previous or first (if first is current) page.
      * @returns The previous determined page number.
      */
-    getPreviousPage():number {
+    get previousPage():number {
         return Math.max(1, this.page - 1)
     }
     /**
      * Retrieves the next or last (if last is current) page.
      * @returns The new determined page number.
      */
-    getNextPage():number {
-        return Math.min(this.page + 1, this.getLastPage())
+    get nextPage():number {
+        return Math.min(this.page + 1, this.lastPage)
     }
     /**
      * Is called whenever a page change should be performed.
