@@ -295,8 +295,7 @@ registerAngularTest(function(
                     self.test(`AbstractResolver (${roundType})`, (
                         assert:Object
                     ):void => {
-                        console.log(data)
-                        //resolver.list()
+                        resolver.list()
                         assert.ok(true)
                     })
                     // / endregion

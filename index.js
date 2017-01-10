@@ -597,6 +597,11 @@ export class GenericCanDeactivateRouteLeaveGuard
  * method.
  */
 export class GenericDataService {
+    static wrappableMethodNames:Array<string> = [
+        'allDocs', 'bulkDocs', 'bulkGet', 'changes', 'close', 'compact',
+        'compactDocument', 'createIndex', 'deleteIndexs', 'destroy', 'find',
+        'get', 'getAttachment', 'getIndexes', 'info', 'post', 'put',
+        'putAttachment', 'query', 'remove', 'removeAttachment', 'sync']
     connection:PouchDB
     database:PouchDB
     extendObject:Function
@@ -625,19 +630,26 @@ export class GenericDataService {
         this.stringFormat = stringFormat.transform.bind(stringFormat)
         this.extendObject = extendObject.transform.bind(extendObject)
         this.database = PouchDB.plugin(PouchDBFindPlugin)
-                               .plugin(PouchDBValidationPlugin)
+                               //.plugin(PouchDBValidationPlugin)
         for (
             const plugin:Object of
             initialData.configuration.database.plugins || []
         )
             this.database = this.database.plugin(plugin)
-        this.connection = new this.database(this.stringFormat(
-            initialData.configuration.database.url, ''
-        ) + `/${initialData.configuration.name}`, this.extendObject(true, {
+        const type:string = (
+            initialData.configuration.database.local
+        ) ? 'local' : initialData.configuration.database.url
+        this.connection = new this.database(this.stringFormat(type, '') + (
+            /^[a-z]+:\/\/.+$/g.test(
+                type
+            ) ? `/${initialData.configuration.name || 'generic'}` : ''
+        ), this.extendObject(true, {
             skip_setup: true
         }, initialData.configuration.database.options || {}))
         for (const name:string in this.connection)
-            if (typeof this.connection[name] === 'function') {
+            if (this.constructor.wrappableMethodNames.includes(
+                name
+            ) && typeof this.connection[name] === 'function') {
                 const method:Function = this.connection[name]
                 this.connection[name] = (...parameter:Array<any>):any => {
                     for (const methodName:string of [name, '_all'])
@@ -649,12 +661,9 @@ export class GenericDataService {
                                 parameter = interceptor.apply(
                                     this.connection, parameter.concat(
                                         methodName === '_all' ? name : []))
-                    let result:any = method.apply(
-                        this.connection, parameter)
+                    let result:any = method.apply(this.connection, parameter)
                     for (const methodName:string of [name, '_all'])
-                        if (this.middlewares.post.hasOwnProperty(
-                            methodName
-                        ))
+                        if (this.middlewares.post.hasOwnProperty(methodName))
                             for (
                                 const interceptor:Function of
                                 this.middlewares.post[methodName]
@@ -666,15 +675,8 @@ export class GenericDataService {
                     return result
                 }
             }
-        /*
-            For local database:
-
-            this.connection = new this.database('local')
-        */
         this.connection.installValidationMethods()
-        /*
-            For local database:
-
+        if (initialData.configuration.database.local)
             this.synchronisation = PouchDB.sync(this.stringFormat(
                 initialData.configuration.database.url,
                 `${initialData.configuration.database.user.name}:` +
@@ -688,7 +690,6 @@ export class GenericDataService {
             .on('complete', (info:Object):void =>
                 console.log('complete', info))
             .on('error', (error:Object):void => console.log('error', error))
-        */
     }
     /**
      * Retrieves a database resource determined by given selector.
@@ -699,9 +700,9 @@ export class GenericDataService {
     async get(
         selector:PlainObject, options:PlainObject = {}
     ):Promise<Array<PlainObject>> {
-        return (await this.connection.find(
-            this.extendObject(true, {selector}, options)
-        )).docs
+        return (await this.connection.find(this.extendObject(true, {
+            selector
+        }, options))).docs
     }
     /**
      * Creates or updates given data.
