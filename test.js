@@ -335,6 +335,7 @@ registerAngularTest(function(
             ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
+            // / region input/textarea
             for (const component:AbstractInputComponent of [
                 GenericInputComponent, GenericTextareaComponent
             ])
@@ -396,11 +397,13 @@ registerAngularTest(function(
                     'Bitte füllen Sie das Feld "test" aus.')
                     done()
                 })
+            // endregion
             this.test(`GenericFileInputComponent (${roundType})`, (
                 assert:Object
             ):void => {
                 assert.strictEqual('TODO', 'TODO')
             })
+            // / region pagination
             this.test(`GenericPaginationComponent (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
@@ -458,6 +461,7 @@ registerAngularTest(function(
                 ['current', 'even-page', 'page-4'])
                 done()
             })
+            // / endregion
             // endregion
         }
     }
