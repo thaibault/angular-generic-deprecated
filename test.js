@@ -96,13 +96,13 @@ registerAngularTest(function(
                  */
                 constructor(
                     data:GenericDataService,
+            escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe,
                     extendObject:GenericExtendObjectPipe,
-                    initialData:GenericInitialDataService,
-            escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe
+                    initialData:GenericInitialDataService
                 ):void {
                     super(
-                        data, extendObject, initialData,
-                        escapeRegularExpressions)
+                        data, escapeRegularExpressions, extendObject,
+                        initialData)
                 }
             }
             const self:Object = this
