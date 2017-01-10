@@ -22,7 +22,7 @@ import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
     /* AfterViewInit,*/ Component, ElementRef, EventEmitter, Injectable,
-    Injector, Input, NgModule, /* OnInit,*/ Output, Pipe, /* PipeTransform,*/
+    Injector, Input, NgModule, /* OnInit,*/ Output, Pipe, PipeTransform,
     ReflectiveInjector, ViewChild
 } from '@angular/core'
 import {FormsModule} from '@angular/forms'
@@ -550,14 +550,16 @@ export class GenericNumberPercentPipe/* implements PipeTransform*/ {
 }
 // / endregion
 // endregion
-const GenericArrayMakeRangePipe:Object =
+const GenericArrayMakeRangePipe:PipeTransform =
     module.exports.GenericArrayMakeRangePipe
-const GenericStringEscapeRegularExpressionsPipe:Object =
+const GenericStringEscapeRegularExpressionsPipe:PipeTransform =
     module.exports.GenericStringEscapeRegularExpressionsPipe
-const GenericExtendObjectPipe:Object = module.exports.GenericExtendObjectPipe
-const GenericRepresentObjectPipe:Object =
+const GenericExtendObjectPipe:PipeTransform =
+    module.exports.GenericExtendObjectPipe
+const GenericRepresentObjectPipe:PipeTransform =
     module.exports.GenericRepresentObjectPipe
-const GenericStringFormatPipe:Object = module.exports.GenericStringFormatPipe
+const GenericStringFormatPipe:PipeTransform =
+    module.exports.GenericStringFormatPipe
 // region services
 // IgnoreTypeCheck
 @Injectable()
