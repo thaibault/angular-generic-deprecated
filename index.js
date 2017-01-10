@@ -630,7 +630,7 @@ export class GenericDataService {
         this.stringFormat = stringFormat.transform.bind(stringFormat)
         this.extendObject = extendObject.transform.bind(extendObject)
         this.database = PouchDB.plugin(PouchDBFindPlugin)
-                               //.plugin(PouchDBValidationPlugin)
+                               .plugin(PouchDBValidationPlugin)
         for (
             const plugin:Object of
             initialData.configuration.database.plugins || []
@@ -683,7 +683,8 @@ export class GenericDataService {
                 `${initialData.configuration.database.user.password}@`
             ) + `/${initialData.configuration.name}`, 'local', {
                 live: true, retry: true
-            }).on('change', (info:Object):void => console.info('change', info))
+            })
+            .on('change', (info:Object):void => console.info('change', info))
             .on('paused', (error:Object):void => console.info('paused', error))
             .on('active', ():void => console.info('active'))
             .on('denied', (error:Object):void => console.info('denied', error))
