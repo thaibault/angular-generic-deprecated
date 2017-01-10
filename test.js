@@ -156,29 +156,26 @@ registerAngularTest(function(
                  * @returns Nothing.
                  */
                 constructor(
-                    tools:GenericToolsService,
-                    initialData:GenericInitialDataService,
-
-                    md5:GenericStringMD5Pipe,
-                    extractRawData:GenericExtractRawDataPipe,
-                    getFilenameByPrefix:GenericGetFilenameByPrefixPipe,
-                    map:GenericMapPipe,
-                    type:GenericTypePipe,
-                    isDefined:GenericIsDefinedPipe,
-                    stringReplace:GenericStringReplacePipe,
-            stringShowIfPatternMatches:GenericStringShowIfPatternMatchesPipe,
-                    stringStartsWith:GenericStringStartsWithPipe,
-                    stringEndsWith:GenericStringEndsWithPipe,
-                    stringMatch:GenericStringMatchPipe,
-                    stringSliceMatch:GenericStringSliceMatchPipe,
-                    stringHasTimeSuffix:GenericStringHasTimeSuffixPipe,
-                    numberPercent:GenericNumberPercentPipe,
-
                 canDeactivateRouteLeave:GenericCanDeactivateRouteLeaveGuard,
                     data:GenericDataService,
                     dataScope:GenericDataScopeService,
-
-                    resolver:Resolver
+                    extractRawData:GenericExtractRawDataPipe,
+                    getFilenameByPrefix:GenericGetFilenameByPrefixPipe,
+                    initialData:GenericInitialDataService,
+                    isDefined:GenericIsDefinedPipe,
+                    map:GenericMapPipe,
+                    md5:GenericStringMD5Pipe,
+                    numberPercent:GenericNumberPercentPipe,
+                    resolver:Resolver,
+                    stringEndsWith:GenericStringEndsWithPipe,
+                    stringHasTimeSuffix:GenericStringHasTimeSuffixPipe,
+                    stringMatch:GenericStringMatchPipe,
+                    stringReplace:GenericStringReplacePipe,
+            stringShowIfPatternMatches:GenericStringShowIfPatternMatchesPipe,
+                    stringSliceMatch:GenericStringSliceMatchPipe,
+                    stringStartsWith:GenericStringStartsWithPipe,
+                    tools:GenericToolsService,
+                    type:GenericTypePipe
                 ):void {
                     // region basic services
                     self.test(`GenericToolsService (${roundType})`, (
@@ -208,7 +205,13 @@ registerAngularTest(function(
                         ), '098f6bcd4621d373cade4e832627b4f6')
                     })
                     // / endregion
+                    // / region object
                     self.test(`GenericExtractRawDataPipe (${roundType})`, (
+                        assert:Object
+                    ):void => {
+                        assert.strictEqual('TODO', 'TODO')
+                    })
+                    self.test(`GenericIsDefinedPipe (${roundType})`, (
                         assert:Object
                     ):void => {
                         assert.strictEqual('TODO', 'TODO')
@@ -228,7 +231,19 @@ registerAngularTest(function(
                     ):void => {
                         assert.strictEqual('TODO', 'TODO')
                     })
-                    self.test(`GenericIsDefinedPipe (${roundType})`, (
+                    // / endregion
+                    // / region string
+                    self.test(`GenericStringEndsWithPipe (${roundType})`, (
+                        assert:Object
+                    ):void => {
+                        assert.strictEqual('TODO', 'TODO')
+                    })
+                    self.test(
+                        `GenericStringHasTimeSuffixPipe (${roundType})`,
+                        (assert:Object):void => {
+                            assert.strictEqual('TODO', 'TODO')
+                        })
+                    self.test(`GericStringMatchPipe (${roundType})`, (
                         assert:Object
                     ):void => {
                         assert.strictEqual('TODO', 'TODO')
@@ -248,26 +263,12 @@ registerAngularTest(function(
                     ):void => {
                         assert.strictEqual('TODO', 'TODO')
                     })
-                    self.test(`GenericStringEndsWithPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        assert.strictEqual('TODO', 'TODO')
-                    })
-                    self.test(`GericStringMatchPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        assert.strictEqual('TODO', 'TODO')
-                    })
                     self.test(`GenericStringSliceMatchPipe (${roundType})`, (
                         assert:Object
                     ):void => {
                         assert.strictEqual('TODO', 'TODO')
                     })
-                    self.test(
-                        `GenericStringHasTimeSuffixPipe (${roundType})`,
-                        (assert:Object):void => {
-                            assert.strictEqual('TODO', 'TODO')
-                        })
+                    // / endregion
                     self.test(`GenericNumberPercentPipe (${roundType})`, (
                         assert:Object
                     ):void => {
@@ -290,12 +291,15 @@ registerAngularTest(function(
                     ):void => {
                         assert.strictEqual('TODO', 'TODO')
                     })
+                    // / region abstract
                     self.test(`AbstractResolver (${roundType})`, (
                         assert:Object
                     ):void => {
+                        console.log(data)
                         //resolver.list()
                         assert.ok(true)
                     })
+                    // / endregion
                     // endregion
                 }
             }
@@ -411,7 +415,6 @@ registerAngularTest(function(
                 const done:Function = assert.async()
                 const fixture:ComponentFixture<GenericPaginationComponent> =
                     TestBed.createComponent(GenericPaginationComponent)
-                console.log('A', fixture.debugElement)
                 fixture.componentInstance.total = 10
                 fixture.detectChanges()
                 await fixture.whenStable()
