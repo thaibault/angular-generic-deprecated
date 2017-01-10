@@ -175,35 +175,31 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
     /**
      * Implements attachment changes or removes.
      * @param newDocument - Document to slice meta data from.
-     * @param oldDocument - Optionally existing old document to take into
-     * account.
+     * @param oldAttachments - Old document to take into account.
      * @param fileTypeReplacement - Indicates weather file type replacements
      * and removes should be taken into account.
+     * @param untouchedAttachments - List of file names which doesn't exist in
+     * given new document.
      * @returns The sliced attachment version of given document.
      */
     _handleAttachmentsChanges(
-        newDocument:PlainObject, oldDocument:?PlainObject,
-        fileTypeReplacement:boolean = true
+        newDocument:PlainObject, oldAttachments:PlainObject,
+        fileTypeReplacement:boolean, untouchedAttachments:Array<string>
     ):PlainObject {
-        for (const type:string in oldDocument._attachments)
-            if (oldDocument._attachments.hasOwnProperty(type) && ![
+        for (const type:string in oldAttachments)
+            if (oldAttachments.hasOwnProperty(type) && ![
                 undefined, null
-            // IgnoreTypeCheck
-            ].includes(oldDocument._attachments[type].value)) {
+            ].includes(oldAttachments[type].value)) {
                 if (newDocument._attachments) {
                     if (newDocument._attachments.hasOwnProperty(
-                        // IgnoreTypeCheck
-                        oldDocument._attachments[type].value.name
+                        oldAttachments[type].value.name
                     ))
                         continue
                 } else if (!untouchedAttachments.includes(
-                    // IgnoreTypeCheck
-                    oldDocument._attachments[type].value.name
+                    oldAttachments[type].value.name
                 )) {
                     newDocument._attachments = {
-                        // IgnoreTypeCheck
-                        [oldDocument._attachments[type].value.name]: {
-                            data: null}}
+                        [oldAttachments[type].value.name]: {data: null}}
                     continue
                 }
                 if (fileTypeReplacement)
@@ -211,8 +207,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                         if (newDocument._attachments.hasOwnProperty(
                             fileName
                         ) && (new RegExp(type)).test(fileName))
-                            // IgnoreTypeCheck
-                            newDocument._attachments[oldDocument._attachments[
+                            newDocument._attachments[oldAttachments[
                                 type
                             ].value.name] = {data: null}
             }
@@ -271,7 +266,8 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
             '_attachments'
         ) && oldDocument._attachments)
             this._handleAttachmentsChanges(
-                result, oldDocument, fileTypeReplacement)
+                result, oldDocument._attachments, fileTypeReplacement,
+                untouchedAttachments)
         return result
     }
 }
@@ -1198,8 +1194,8 @@ export class GenericTextareaComponent extends AbstractInputComponent {
     }
 }
 // // endregion
-// IgnoreTypeCheck
 /* eslint-disable max-len */
+// IgnoreTypeCheck
 @Component({
     selector: 'generic-file-input',
     template: `

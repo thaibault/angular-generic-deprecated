@@ -18,8 +18,9 @@
     endregion
 */
 // region imports
-import type {PlainObject} from 'clientnode'
 import {Component, Directive, Injectable, Input} from '@angular/core'
+import {NavigationExtras} from '@angular/router'
+import type {PlainObject} from 'clientnode'
 import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 // endregion
 // region native
@@ -41,6 +42,7 @@ export function getNativeEvent(
 }
 // endregion
 // region services
+// IgnoreTypeCheck
 @Injectable()
 /**
  * Mocks the router.
@@ -67,6 +69,7 @@ export class RouterStub {
     }
     /* eslint-enable no-unused-vars */
 }
+// IgnoreTypeCheck
 @Injectable()
 /**
  * Mocks the current route data instance.
@@ -74,14 +77,14 @@ export class RouterStub {
 export class ActivatedRouteStub {
     _testParameter:PlainObject = {}
     parameter:Object = this.subject.asObservable()
-    subject:BehaviorSubject = new BehaviorSubject(this.testParams)
+    subject:BehaviorSubject = new BehaviorSubject(this._testParameter)
     /**
      * Setter for test parameter property value.
      * @param parameter - Sets parameter of current route.
      * @returns Nothing.
      */
-    set testParameter(parameter:PlainObject = {}):void {
-        this._testParameters = parameter
+    set testParameter(parameter:PlainObject):void {
+        this._testParameter = parameter
         this.subject.next(parameter)
     }
     /**
@@ -94,6 +97,7 @@ export class ActivatedRouteStub {
 }
 // endregion
 // region directives
+// IgnoreTypeCheck
 @Directive({
     selector: '[routerLink]',
     host: {'(click)': 'onClick()'}
@@ -114,6 +118,7 @@ export class RouterLinkStubDirective {
 }
 // endregion
 // region components
+// IgnoreTypeCheck
 @Component({selector: 'router-outlet', template: ''})
 /**
  * Mocks the router outlet component.
