@@ -713,15 +713,6 @@ export class GenericDataService {
         return this.connection.put(...parameter)
     }
     /**
-     * Removes specified entities in database.
-     * @param parameter - All parameter will be forwarded to the underlining
-     * pouchdb's "remove()" method.
-     * @returns Whatever pouchdb's "remove()" method return.
-     */
-    remove(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.remove(...parameter)
-    }
-    /**
      * Registers a new middleware.
      * @param names - Event names to intercept.
      * @param callback - Callback function to trigger when specified event
@@ -748,6 +739,15 @@ export class GenericDataService {
                     this.middlewares[type][name].splice(index, 1)
             }
         }
+    }
+    /**
+     * Removes specified entities in database.
+     * @param parameter - All parameter will be forwarded to the underlining
+     * pouchdb's "remove()" method.
+     * @returns Whatever pouchdb's "remove()" method return.
+     */
+    remove(...parameter:Array<any>):Promise<PlainObject> {
+        return this.connection.remove(...parameter)
     }
 }
 // IgnoreTypeCheck
@@ -1258,6 +1258,19 @@ export class AbstractItemsComponent {
         }).subscribe()
     }
     /**
+     * Updates constraints between limit, page number and number of total
+     * available items.
+     * @returns Nothing.
+     */
+    applyPageConstraints():boolean {
+        const oldPage:number = this.page
+        const oldLimit:number = this.limit
+        this.limit = Math.max(1, this.limit || 1)
+        this.page = Math.max(1, Math.min(this.page, Math.ceil(
+            this.items.total / this.limit)))
+        return this.page !== oldPage || this.limit !== oldLimit
+    }
+    /**
      * Deletes item which has same id provided by the id property through given
      * event object.
      * @param event - Event object which triggers action.
@@ -1287,19 +1300,6 @@ export class AbstractItemsComponent {
      */
     goToItem(itemID:string):void {
         this._router.navigate([this._itemPath, itemID])
-    }
-    /**
-     * Updates constraints between limit, page number and number of total
-     * available items.
-     * @returns Nothing.
-     */
-    applyPageConstraints():boolean {
-        const oldPage:number = this.page
-        const oldLimit:number = this.limit
-        this.limit = Math.max(1, this.limit || 1)
-        this.page = Math.max(1, Math.min(this.page, Math.ceil(
-            this.items.total / this.limit)))
-        return this.page !== oldPage || this.limit !== oldLimit
     }
     /**
      * Applies current filter criteria to current visible item set.
@@ -1516,7 +1516,41 @@ export class GenericTextareaComponent extends AbstractInputComponent {
 })
 /* eslint-enable max-len */
 /**
- * TODO
+ * A file type independent file uploader with file content preview (if
+ * supported).
+ * @property static:imageMimeTypeRegularExpression - Regular expression which
+ * should match to each known image mime type.
+ * @property static:textMimeTypeRegularExpression - Regular expression which
+ * should match to each known text mime type.
+ * @property static:videoMimeTypeRegularExpression - Regular expression which
+ * should match to each known video mime type.
+ * @property _data - Holds the data service instance.
+ * @property _domSanitizer - Holds the dom sanitizer service instance.
+ * @property _extendObject - Holds the extend object pipe instance's transform
+ * method.
+ * @property _getFilenameByPrefix - Holds the file name by prefix getter pipe
+ * instance's transform method.
+ * @property _representObject - Holds the represent object pipe instance's
+ * transform method.
+ * @property _prefixMatch - Holds the prefix match pipe instance's transform
+ * method.
+ * @property delete - Event emitter which triggers its handler when current
+ * file should be removed.
+ * @property file - Holds the current selected file object if present.
+ * @property fileChange - Event emitter emitting when file changes happen.
+ * @property input - Virtual file input dom node.
+ * @property internalName - Technical regular expression style file type.
+ * @property mapNameToField - Indicates weather current file name should be
+ * mapped to a specific model property.
+ * @property model - File property specification.
+ * @property modelChange -
+ * @property name - Name of currently active file.
+ * @property showValidationErrorMessages - Indicates weather validation errors
+ * should be displayed. Useful to hide error messages until user tries to
+ * submit a form.
+ * @property synchronizeImmediately - Indicates weather file upload should be
+ * done immediately after a file was selected (or synchronously with other
+ * model data).
  */
 export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     static imageMimeTypeRegularExpression:RegExp = new RegExp(
@@ -1528,35 +1562,25 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         '^video/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|' +
         '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
         '(?:application/(?:x-)?shockwave-flash)$')
-
     _data:GenericDataService
     _domSanitizer:DomSanitizer
     _extendObject:Function
     _getFilenameByPrefix:Function
     _representObject:Function
     _prefixMatch:boolean = false
-
-    // Holds the current selected file object if present.
+    @Output() delete:EventEmitter = new EventEmitter()
     file:any = null
-    // Technical regular expression style file type.
+    @Output() fileChange:EventEmitter = new EventEmitter()
+    @ViewChild('input') input:ElementRef
     internalName:string
-
+    @Input() mapNameToField:?string|?Array<string> = null
     @Input() model:{id:?string;[key:string]:any;} = {
         id: null
     }
-    // Asset name.
+    @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() name:?string = null
     @Input() showValidationErrorMessages:boolean = false
-    /*
-        Indicates weather changed file selections should be immediately
-        attached to given document.
-    */
     @Input() synchronizeImmediately:boolean|PlainObject = false
-    @Input() mapNameToField:?string|?Array<string> = null
-    @Output() delete:EventEmitter = new EventEmitter()
-    @Output() fileChange:EventEmitter = new EventEmitter()
-    @Output() modelChange:EventEmitter = new EventEmitter()
-    @ViewChild('input') input:ElementRef
     /**
      * Sets needed services as property values.
      * @param data - Injected data service instance.
@@ -1740,6 +1764,30 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         })
     }
     /**
+     * Determines which type of file we have to present.
+     * @returns Nothing.
+     */
+    determinePresentationType():void {
+        if (
+            this.file && this.file.content_type &&
+            this.constructor.textMimeTypeRegularExpression.test(
+                this.file.content_type)
+        )
+            this.file.type = 'text'
+        else if (
+            this.file && this.file.content_type &&
+            this.constructor.imageMimeTypeRegularExpression.test(
+                this.file.content_type)
+        )
+            this.file.type = 'image'
+        else if (
+            this.file && this.file.content_type &&
+            this.constructor.videoMimeTypeRegularExpression.test(
+                this.file.content_type)
+        )
+            this.file.type = 'video'
+    }
+    /**
      * Removes current file.
      * @returns A Promise which will be resolved after current file will be
      * removed.
@@ -1775,30 +1823,6 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                 required: true}
         this.fileChange.emit(this.file)
         this.modelChange.emit(this.model)
-    }
-    /**
-     * Determines which type of file we have to present.
-     * @returns Nothing.
-     */
-    determinePresentationType():void {
-        if (
-            this.file && this.file.content_type &&
-            this.constructor.textMimeTypeRegularExpression.test(
-                this.file.content_type)
-        )
-            this.file.type = 'text'
-        else if (
-            this.file && this.file.content_type &&
-            this.constructor.imageMimeTypeRegularExpression.test(
-                this.file.content_type)
-        )
-            this.file.type = 'image'
-        else if (
-            this.file && this.file.content_type &&
-            this.constructor.videoMimeTypeRegularExpression.test(
-                this.file.content_type)
-        )
-            this.file.type = 'video'
     }
 }
 // / endregion
@@ -1838,16 +1862,16 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
  * @property itemsPerPage - Number of items to show per page as maximum.
  * @property page - Contains currently selected page number.
  * @property pageChange - Event emitter to fire on each page change event.
- * @property total - Contains total number of pages.
  * @property pageRangeLimit - Number of concrete page links to show.
+ * @property total - Contains total number of pages.
  */
 export class GenericPaginationComponent {
     _makeRange:Function
     @Input() itemsPerPage:number = 20
     @Input() page:number = 1
     @Output() pageChange:EventEmitter = new EventEmitter()
-    @Input() total:number = 0
     @Input() pageRangeLimit:number = 4
+    @Input() total:number = 0
     /**
      * Sets needed services as property values.
      * @param makeRange - Saves the make range pipe instance.
@@ -1857,11 +1881,29 @@ export class GenericPaginationComponent {
         this._makeRange = makeRange.transform.bind(makeRange)
     }
     /**
+     * Is called whenever a page change should be performed.
+     * @param event - The responsible event.
+     * @param newPage - New page number to change to.
+     * @returns Nothing.
+     */
+    change(event:Object, newPage:number):void {
+        event.preventDefault()
+        this.page = newPage
+        this.pageChange.emit(this.page)
+    }
+    /**
      * Determines the highest page number.
      * @returns The determines page number.
      */
     get lastPage():number {
         return Math.ceil(this.total / this.itemsPerPage)
+    }
+    /**
+     * Retrieves the next or last (if last is current) page.
+     * @returns The new determined page number.
+     */
+    get nextPage():number {
+        return Math.min(this.page + 1, this.lastPage)
     }
     /**
      * Determines the number of pages to show.
@@ -1889,24 +1931,6 @@ export class GenericPaginationComponent {
      */
     get previousPage():number {
         return Math.max(1, this.page - 1)
-    }
-    /**
-     * Retrieves the next or last (if last is current) page.
-     * @returns The new determined page number.
-     */
-    get nextPage():number {
-        return Math.min(this.page + 1, this.lastPage)
-    }
-    /**
-     * Is called whenever a page change should be performed.
-     * @param event - The responsible event.
-     * @param newPage - New page number to change to.
-     * @returns Nothing.
-     */
-    change(event:Object, newPage:number):void {
-        event.preventDefault()
-        this.page = newPage
-        this.pageChange.emit(this.page)
     }
 }
 // / endregion
