@@ -1561,6 +1561,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
             this.file.type = 'video'
     }
 }
+/* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
     selector: 'generic-pagination',
@@ -1588,6 +1589,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         </ul>
     `
 })
+/* eslint-enable max-len */
 /**
  * Provides a generic pagination component.
  * @property _makeRange - Saves the make range pipe transformation function.
