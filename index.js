@@ -542,6 +542,12 @@ export class GenericStringHasTimeSuffixPipe/* implements PipeTransform*/ {
  * Returns part in percent of all.
  */
 export class GenericNumberPercentPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual calculation.
+     * @param part - Part to divide "all" through.
+     * @param all - Reference value to calculate part of.
+     * @returns The calculated part.
+     */
     transform(part:number, all:number):number {
         return (part / all) * 100
     }
