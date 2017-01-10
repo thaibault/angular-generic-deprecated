@@ -174,7 +174,7 @@ registerAngularTest(function(
                     stringHasTimeSuffix:GenericStringHasTimeSuffixPipe,
                     numberPercent:GenericNumberPercentPipe,
 
-                    canDeactivateRouteLeave:GenericCanDeactivateRouteLeaveGuard,
+                canDeactivateRouteLeave:GenericCanDeactivateRouteLeaveGuard,
                     data:GenericDataService,
                     dataScope:GenericDataScopeService,
 
@@ -293,7 +293,8 @@ registerAngularTest(function(
                     self.test(`AbstractResolver (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                        //resolver.list()
+                        assert.ok(true)
                     })
                     // endregion
                 }
@@ -410,6 +411,7 @@ registerAngularTest(function(
                 const done:Function = assert.async()
                 const fixture:ComponentFixture<GenericPaginationComponent> =
                     TestBed.createComponent(GenericPaginationComponent)
+                console.log('A', fixture.debugElement)
                 fixture.componentInstance.total = 10
                 fixture.detectChanges()
                 await fixture.whenStable()
