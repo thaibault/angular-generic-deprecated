@@ -182,7 +182,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
      * given new document.
      * @returns The sliced attachment version of given document.
      */
-    _handleAttachmentsChanges(
+    _handleAttachmentChanges(
         newDocument:PlainObject, oldAttachments:PlainObject,
         fileTypeReplacement:boolean, untouchedAttachments:Array<string>
     ):PlainObject {
@@ -265,7 +265,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
         if (oldDocument && oldDocument.hasOwnProperty(
             '_attachments'
         ) && oldDocument._attachments)
-            this._handleAttachmentsChanges(
+            this._handleAttachmentChanges(
                 result, oldDocument._attachments, fileTypeReplacement,
                 untouchedAttachments)
         return result
@@ -690,6 +690,9 @@ export class GenericDataService {
             .on('error', (error:Object):void => console.log('error', error))
         */
     }
+    /**
+     * TODO
+     */
     async get(
         selector:PlainObject, options:PlainObject = {}
     ):Promise<Array<PlainObject>> {
