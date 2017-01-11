@@ -296,10 +296,27 @@ registerAngularTest(function(
                         assert:Object
                     ):Promise<void> => {
                         const done:Function = assert.async()
-                        // TODO
-                        console.log('A', await resolver.list())
+                        try {
+                            const a = new (require('pouchdb')
+                            .plugin(require('pouchdb-find'))
+                            .plugin(require('pouchdb-validation'))
+                            .plugin(PouchDBAdapterMemory))
+                            ('testa', {adapter: 'memory'})
+                            //a.installValidationMethods()
+                            await a.put({_id: 'a'})
+                            console.log('F', a.find)
+                            console.log('L', await a.find({selector: {_id: 'a'}}))
+                            assert.ok(true)
+                            done()
+                            return
+                            await data.put({_id: 'a'})
+                            console.log('L2', await data.get({'_id': 'a'}))
+                            // console.log('A', await resolver.list())
+                            // await data.connection.destroy()
+                        } catch (error) {
+                            console.error(error)
+                        }
                         assert.ok(true)
-                        await data.destroy()
                         done()
                     })
                     // / endregion

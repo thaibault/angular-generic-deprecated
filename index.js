@@ -675,7 +675,7 @@ export class GenericDataService {
                     return result
                 }
             }
-        this.connection.installValidationMethods()
+        //this.connection.installValidationMethods()
         if (initialData.configuration.database.local)
             this.synchronisation = PouchDB.sync(this.stringFormat(
                 initialData.configuration.database.url,
@@ -699,7 +699,7 @@ export class GenericDataService {
      * @returns Whatever pouchdb's "destroy()" method return.
      */
     destroy(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.destroy(...parameter)
+        return this.connection.destroy.apply(this.connection, parameter)
     }
     /**
      * Retrieves a database resource determined by given selector.
@@ -710,9 +710,9 @@ export class GenericDataService {
     async get(
         selector:PlainObject, options:PlainObject = {}
     ):Promise<Array<PlainObject>> {
-        return (await this.connection.find(this.extendObject(true, {
-            selector
-        }, options))).docs
+        return (await this.connection.find.call(
+            this.connection, this.extendObject(true, {selector}, options)
+        )).docs
     }
     /**
      * Creates or updates given data.
@@ -721,7 +721,7 @@ export class GenericDataService {
      * @returns Whatever pouchdb's "put()" method return.
      */
     put(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.put(...parameter)
+        return this.connection.put.apply(this.connection, parameter)
     }
     /**
      * Registers a new middleware.
@@ -758,7 +758,7 @@ export class GenericDataService {
      * @returns Whatever pouchdb's "remove()" method return.
      */
     remove(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.remove(...parameter)
+        return this.connection.remove.apply(this.connection, parameter)
     }
 }
 // IgnoreTypeCheck
