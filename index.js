@@ -709,7 +709,7 @@ export class GenericDataService {
      * @returns Whatever pouchdb-find's "createIndex()" method returns.
      */
     createIndex(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.createIndex.call(this.connection, ...parameter)
+        return this.connection.createIndex(...parameter)
     }
     /**
      * Removes current active database.
@@ -720,7 +720,10 @@ export class GenericDataService {
     destroy(...parameter:Array<any>):Promise<PlainObject> {
         if (this.synchronisation)
             this.synchronisation.cancel()
-        return this.connection.destroy.call(this.connection, ...parameter)
+        const result:Promise<PlainObject> = this.connection.destroy(
+            ...parameter)
+        this.middlewares = {post: {}, pre: {}}
+        return result
     }
     /**
      * Retrieves a database resource determined by given selector.
@@ -731,9 +734,9 @@ export class GenericDataService {
     async find(
         selector:PlainObject, options:PlainObject = {}
     ):Promise<Array<PlainObject>> {
-        return (await this.connection.find.call(
-            this.connection, this.extendObject(true, {selector}, options)
-        )).docs
+        return (await this.connection.find(this.extendObject(true, {
+            selector
+        }, options))).docs
     }
     /**
      * Retrieves a resource by id.
@@ -742,7 +745,7 @@ export class GenericDataService {
      * @returns Whatever pouchdb's "get()" method returns.
      */
     get(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.get.call(this.connection, ...parameter)
+        return this.connection.get(...parameter)
     }
     /**
      * Creates or updates given data.
@@ -751,7 +754,7 @@ export class GenericDataService {
      * @returns Whatever pouchdb's "put()" method returns.
      */
     put(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.put.call(this.connection, ...parameter)
+        return this.connection.put(...parameter)
     }
     /**
      * Registers a new middleware.
@@ -778,6 +781,8 @@ export class GenericDataService {
                     callback)
                 if (index !== -1)
                     this.middlewares[type][name].splice(index, 1)
+                if (this.middlewares[type][name].length === 0)
+                    delete this.middlewares[type][name]
             }
         }
     }
@@ -788,7 +793,7 @@ export class GenericDataService {
      * @returns Whatever pouchdb's "remove()" method return.
      */
     remove(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.remove.call(this.connection, ...parameter)
+        return this.connection.remove(...parameter)
     }
 }
 // IgnoreTypeCheck
@@ -1142,32 +1147,37 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         route:ActivatedRouteSnapshot, state:RouterStateSnapshot
     ):Observable<Array<PlainObject>> {
     /* eslint-enable no-unused-vars */
-        let searchTerm:string = decodeURIComponent(route.params.searchTerm)
-        if (searchTerm.startsWith('exact-'))
-            searchTerm = this.escapeRegularExpressions(searchTerm.substring(
-                'exact-'.length))
-        else if (searchTerm.startsWith('regex-')) {
-            searchTerm = searchTerm.substring('regex-'.length)
-            try {
-                new RegExp(searchTerm)
-            } catch (error) {
-                searchTerm = ''
+        let searchTerm:string = ''
+        if ('searchTerm' in route.params) {
+            const term:string = decodeURIComponent(route.params.searchTerm)
+            if (term.startsWith('exact-'))
+                searchTerm = this.escapeRegularExpressions(term.substring(
+                    'exact-'.length))
+            else if (term.startsWith('regex-')) {
+                searchTerm = term.substring('regex-'.length)
+                try {
+                    new RegExp(searchTerm)
+                } catch (error) {
+                    searchTerm = ''
+                }
             }
         }
-        const sort:Array<PlainObject> = route.params.sort.split(',').map((
-            name:string
-        ):PlainObject => {
-            const lastIndex:number = name.lastIndexOf('-')
-            let type:string = 'asc'
-            if (lastIndex !== -1) {
-                name = name.substring(0, lastIndex)
-                type = name.substring(lastIndex + 1) || type
-            }
-            return {[name]: type}
-        })
+        let sort:Array<PlainObject> = []
+        if ('sort' in route.params)
+            sort = route.params.sort.split(',').map((
+                name:string
+            ):PlainObject => {
+                const lastIndex:number = name.lastIndexOf('-')
+                let type:string = 'asc'
+                if (lastIndex !== -1) {
+                    name = name.substring(0, lastIndex)
+                    type = name.substring(lastIndex + 1) || type
+                }
+                return {[name]: type}
+            })
         return Observable.fromPromise(this.list(sort, parseInt(
-            route.params.page
-        ), parseInt(route.params.limit), searchTerm))
+            route.params.page || 1
+        ), parseInt(route.params.limit || 10), searchTerm))
     }
 }
 // / endregion

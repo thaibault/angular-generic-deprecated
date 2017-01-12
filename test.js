@@ -292,6 +292,22 @@ registerAngularTest(function(
                                 _id: 'a', '-type': 'Test', a: 'test'}
                             item._rev = (await data.put(item)).rev
                             assert.deepEqual(await data.get('a'), item)
+                            let test:boolean = false
+                            const deregister:Function = data.register(
+                                'get', async (
+                                    result:Promise<PlainObject>
+                                ):Promise<PlainObject> => {
+                                    test = true
+                                    const data:PlainObject = await result
+                                    data.test = 2
+                                    return data
+                                })
+                            assert.ok('get' in data.middlewares.post)
+                            assert.strictEqual((await data.get('a')).test, 2)
+                            assert.ok(test)
+                            deregister()
+                            assert.notOk('get' in data.middlewares.post)
+                            assert.notOk((await data.get('a')).test)
                             await data.destroy()
                             await data.initialize()
                         } catch (error) {
@@ -320,9 +336,61 @@ registerAngularTest(function(
                             const item:PlainObject = {
                                 _id: 'a', '-type': 'Test', a: 'test'}
                             item._rev = (await data.put(item)).rev
+                            // region list
                             assert.deepEqual(
                                 (await resolver.list([{a: 'asc'}]))[0], item)
                             assert.deepEqual((await resolver.list())[0], item)
+                            assert.deepEqual(
+                                (await resolver.list([]))[0], item)
+                            assert.deepEqual((await resolver.list(
+                                [{_id: 'asc'}], 1, 1, 'es'
+                            ))[0], item)
+                            assert.strictEqual((await resolver.list(
+                                [{_id: 'asc'}], 2
+                            )).length, 0)
+                            assert.strictEqual((await resolver.list(
+                                [{_id: 'asc'}], 1, 1, 'a'
+                            )).length, 0)
+                            // endregion
+                            // region resolve
+                            for (const test:PlainObject of [
+                                {},
+                                {searchTerm: 'exact-es'},
+                                {page: 1},
+                                {searchTerm: 'exact-test', page: 1},
+                                {searchTerm: 'exact-test', page: 1, limit: 2},
+                                {
+                                    searchTerm: 'regex-t[ea]+st', page: 1,
+                                    limit: 2
+                                },
+                                {
+                                    searchTerm: 'exact-test', page: 1,
+                                    limit: 2, sort: 'a-desc'
+                                }
+                            ])
+                                await new Promise((resolve:Function):void =>
+                                    resolver.resolve({params: test}).subscribe(
+                                        (data:Array<PlainObject>):void => {
+                                            assert.deepEqual(data[0], item)
+                                            resolve()
+                                        }))
+                            for (const test:PlainObject of [
+                                {searchTerm: 'exact-a'},
+                                {page: 2},
+                                {searchTerm: 'exact-testa', page: 1},
+                                {searchTerm: 'regex-aa', page: 1, limit: 2},
+                                {
+                                    searchTerm: 'exact-test', page: 2,
+                                    limit: 1, sort: 'a-asc'
+                                }
+                            ])
+                                await new Promise((resolve:Function):void =>
+                                    resolver.resolve({params: test}).subscribe(
+                                        (data:Array<PlainObject>):void => {
+                                            assert.strictEqual(data.length, 0)
+                                            resolve()
+                                        }))
+                            // endregion
                             await data.destroy()
                             await data.initialize()
                         } catch (error) {
