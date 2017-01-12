@@ -707,12 +707,21 @@ export class GenericDataService {
      * @param options - Options to use during selecting items.
      * @returns A promise with resulting array of retrieved resources.
      */
-    async get(
+    async find(
         selector:PlainObject, options:PlainObject = {}
     ):Promise<Array<PlainObject>> {
         return (await this.connection.find.call(
             this.connection, this.extendObject(true, {selector}, options)
         )).docs
+    }
+    /**
+     * Retrieves a resource by id.
+     * @param parameter - All parameter will be forwarded to the underlining
+     * pouchdb's "get()" method.
+     * @returns Whatever pouchdb's "get()" method return.
+     */
+    get(...parameter:Array<any>):Promise<PlainObject> {
+        return this.connection.get.apply(this.connection, parameter)
     }
     /**
      * Creates or updates given data.
@@ -961,7 +970,7 @@ export class GenericDataScopeService {
             options.fields = propertyNames
         let data:PlainObject = {}
         if (id) {
-            const result:Array<PlainObject> = await this.data.get(
+            const result:Array<PlainObject> = await this.data.find(
                 {'-type': modelName, _id: id}, options)
             if (result.length === 0)
                 throw new Error(
@@ -1095,7 +1104,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
             delete options.skip
         if (sort.length)
             options.sort = [{'-type': 'asc'}].concat(sort)
-        return this.data.get(this.extendObject(
+        return this.data.find(this.extendObject(
             true, selector, additionalSelectors
         ), options)
     }

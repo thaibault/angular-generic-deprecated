@@ -62,7 +62,7 @@
     "reflect-metadata": "^0.1.8",
     "rxjs": "5.0.0-beta.12",
     "typescript": "latest",
-    "zone.js": "^0.6.26"
+    "zone.js": "^0.7.4"
   },
   "devDependencies": {
     "@angular/compiler-cli": "latest",
@@ -153,9 +153,11 @@
           ]
         ],
         "normal": {
+          "^babel-polyfill$": "babel-polyfill/dist/polyfill.min.js",
+          "^hammerjs$": "hammerjs/hammer.min.js",
           "^jquery$": "jquery/dist/jquery.min.js",
           "^pouchdb(?:/.+)?$": "pouchdb/dist/pouchdb.min.js",
-          "^pouchdb-find(?:/.+)?$": "pouchdb-find/dist/pouchdb.find.min.js",
+          "^TODO pouchdb-find(?:/.+)?$": "pouchdb-find/dist/pouchdb.find.min.js",
           "^DOESNT WORK: rxjs(?:/.+)?$": "rxjs/bundles/Rx.min.js",
           "^DOESNT WORK IN NODE: zone\\.js(?:/.+)?$": "zone.js/dist/zone.min.js"
         }
