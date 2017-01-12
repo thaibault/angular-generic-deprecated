@@ -605,6 +605,7 @@ export class GenericDataService {
     connection:PouchDB
     database:PouchDB
     extendObject:Function
+    initialData:GenericInitialDataService
     middlewares:{
         pre:{[key:string]:Array<Function>};
         post:{[key:string]:Array<Function>};
@@ -613,7 +614,7 @@ export class GenericDataService {
         pre: {}
     }
     stringFormat:Function
-    synchronisation:Object
+    synchronisation:?Object
     /**
      * Creates the database constructor applies all plugins instantiates
      * the connection instance and registers all middlewares.
@@ -627,25 +628,34 @@ export class GenericDataService {
         initialData:GenericInitialDataService,
         stringFormat:GenericStringFormatPipe
     ):void {
-        this.stringFormat = stringFormat.transform.bind(stringFormat)
-        this.extendObject = extendObject.transform.bind(extendObject)
         this.database = PouchDB.plugin(PouchDBFindPlugin)
                                .plugin(PouchDBValidationPlugin)
+        this.extendObject = extendObject.transform.bind(extendObject)
+        this.initialData = initialData
+        this.stringFormat = stringFormat.transform.bind(stringFormat)
         for (
             const plugin:Object of
             initialData.configuration.database.plugins || []
         )
             this.database = this.database.plugin(plugin)
+        this.initialize()
+    }
+    /**
+     * Initializes database connection and synchronisation if needed.
+     * @returns Nothing.
+     */
+    initialize():void {
         const type:string = (
-            initialData.configuration.database.local
-        ) ? 'local' : initialData.configuration.database.url
-        this.connection = new this.database(this.stringFormat(type, '') + (
-            /^[a-z]+:\/\/.+$/g.test(
-                type
-            ) ? `/${initialData.configuration.name || 'generic'}` : ''
-        ), this.extendObject(true, {
+            this.initialData.configuration.database.local
+        ) ? 'local' : this.initialData.configuration.database.url
+        this.connection = new this.database(this.stringFormat(
+            type, ''
+        ) + (/^[a-z]+:\/\/.+$/g.test(
+            type
+        ) ? `/${this.initialData.configuration.name || 'generic'}` : ''),
+        this.extendObject(true, {
             skip_setup: true
-        }, initialData.configuration.database.options || {}))
+        }, this.initialData.configuration.database.options || {}))
         for (const name:string in this.connection)
             if (this.constructor.wrappableMethodNames.includes(
                 name
@@ -675,22 +685,22 @@ export class GenericDataService {
                     return result
                 }
             }
-        //this.connection.installValidationMethods()
-        if (initialData.configuration.database.local)
+        this.connection.installValidationMethods()
+        if (this.initialData.configuration.database.local)
             this.synchronisation = PouchDB.sync(this.stringFormat(
-                initialData.configuration.database.url,
-                `${initialData.configuration.database.user.name}:` +
-                `${initialData.configuration.database.user.password}@`
-            ) + `/${initialData.configuration.name}`, 'local', {
+                this.initialData.configuration.database.url,
+                `${this.initialData.configuration.database.user.name}:` +
+                `${this.initialData.configuration.database.user.password}@`
+            ) + `/${this.initialData.configuration.name}`, 'local', {
                 live: true, retry: true
             })
             .on('change', (info:Object):void => console.info('change', info))
             .on('paused', (error:Object):void => console.info('paused', error))
             .on('active', ():void => console.info('active'))
-            .on('denied', (error:Object):void => console.info('denied', error))
-            .on('complete', (info:Object):void =>
-                console.log('complete', info))
-            .on('error', (error:Object):void => console.log('error', error))
+            .on('denied', (error:Object):void => console.warn('denied', error))
+            .on('complete', (info:Object):void => console.info(
+                'complete', info))
+            .on('error', (error:Object):void => console.error('error', error))
     }
     /**
      * Removes current active database.
@@ -699,7 +709,9 @@ export class GenericDataService {
      * @returns Whatever pouchdb's "destroy()" method return.
      */
     destroy(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.destroy.apply(this.connection, parameter)
+        if (this.synchronisation)
+            this.synchronisation.cancel()
+        return this.connection.destroy.call(this.connection, ...parameter)
     }
     /**
      * Retrieves a database resource determined by given selector.
@@ -721,7 +733,7 @@ export class GenericDataService {
      * @returns Whatever pouchdb's "get()" method return.
      */
     get(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.get.apply(this.connection, parameter)
+        return this.connection.get.call(this.connection, ...parameter)
     }
     /**
      * Creates or updates given data.
@@ -730,7 +742,7 @@ export class GenericDataService {
      * @returns Whatever pouchdb's "put()" method return.
      */
     put(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.put.apply(this.connection, parameter)
+        return this.connection.put.call(this.connection, ...parameter)
     }
     /**
      * Registers a new middleware.
@@ -767,7 +779,7 @@ export class GenericDataService {
      * @returns Whatever pouchdb's "remove()" method return.
      */
     remove(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.remove.apply(this.connection, parameter)
+        return this.connection.remove.call(this.connection, ...parameter)
     }
 }
 // IgnoreTypeCheck

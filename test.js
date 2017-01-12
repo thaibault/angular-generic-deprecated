@@ -50,7 +50,9 @@ registerAngularTest(function(
                     options: {adapter: 'memory'},
                     plugins: [PouchDBAdapterMemory]
                 },
-                modelConfiguration: {models: {Test: {}}},
+                modelConfiguration: {models: {Test: {
+                    _id: {mutable: false}, _rev: {mutable: false}, a: {}
+                }}},
                 test: true
             }}
             const GenericModule:Object = index.default
@@ -297,10 +299,19 @@ registerAngularTest(function(
                     ):Promise<void> => {
                         const done:Function = assert.async()
                         try {
-                            await data.put({_id: 'a', '-type': 'Test'})
-                            console.log('F', await data.find({'_id': 'a'}))
-                            console.log('A', await resolver.list())
-                            // await data.connection.destroy()
+                            for (const name:string of ['_id', 'a'])
+                                await data.connection.createIndex({index: {
+                                    ddoc: `Test-${name}-GenericIndex`,
+                                    fields: ['-type', name],
+                                    name: `Test-${name}-GenericIndex`
+                                }})
+                            const item:PlainObject = {
+                                _id: 'a', '-type': 'Test', a: 'test'}
+                            item._rev = (await data.put(item)).rev
+                            assert.deepEqual(
+                                (await resolver.list([{a: 'asc'}]))[0], item)
+                            assert.deepEqual((await resolver.list())[0], item)
+                            await data.connection.destroy()
                         } catch (error) {
                             console.error(error)
                         }
