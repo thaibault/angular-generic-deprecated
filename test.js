@@ -283,10 +283,22 @@ registerAngularTest(function(
                         (assert:Object):void => {
                             assert.strictEqual('TODO', 'TODO')
                         })
-                    self.test(`GenericDataService (${roundType})`, (
+                    self.test(`GenericDataService (${roundType})`, async (
                         assert:Object
-                    ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                    ):Promise<void> => {
+                        const done:Function = assert.async()
+                        try {
+                            const item:PlainObject = {
+                                _id: 'a', '-type': 'Test', a: 'test'}
+                            item._rev = (await data.put(item)).rev
+                            assert.deepEqual(await data.get('a'), item)
+                            await data.destroy()
+                            await data.initialize()
+                        } catch (error) {
+                            console.error(error)
+                        }
+                        assert.ok(true)
+                        done()
                     })
                     self.test(`GenericDataScopeService (${roundType})`, (
                         assert:Object
@@ -300,7 +312,7 @@ registerAngularTest(function(
                         const done:Function = assert.async()
                         try {
                             for (const name:string of ['_id', 'a'])
-                                await data.connection.createIndex({index: {
+                                await data.createIndex({index: {
                                     ddoc: `Test-${name}-GenericIndex`,
                                     fields: ['-type', name],
                                     name: `Test-${name}-GenericIndex`
@@ -311,7 +323,8 @@ registerAngularTest(function(
                             assert.deepEqual(
                                 (await resolver.list([{a: 'asc'}]))[0], item)
                             assert.deepEqual((await resolver.list())[0], item)
-                            await data.connection.destroy()
+                            await data.destroy()
+                            await data.initialize()
                         } catch (error) {
                             console.error(error)
                         }

@@ -703,10 +703,19 @@ export class GenericDataService {
             .on('error', (error:Object):void => console.error('error', error))
     }
     /**
+     * Creates a database index.
+     * @param parameter - All parameter will be forwarded to the underlining
+     * pouchdb-find's "createIndex()" method.
+     * @returns Whatever pouchdb-find's "createIndex()" method returns.
+     */
+    createIndex(...parameter:Array<any>):Promise<PlainObject> {
+        return this.connection.createIndex.call(this.connection, ...parameter)
+    }
+    /**
      * Removes current active database.
      * @param parameter - All parameter will be forwarded to the underlining
      * pouchdb's "destroy()" method.
-     * @returns Whatever pouchdb's "destroy()" method return.
+     * @returns Whatever pouchdb's "destroy()" method returns.
      */
     destroy(...parameter:Array<any>):Promise<PlainObject> {
         if (this.synchronisation)
@@ -730,7 +739,7 @@ export class GenericDataService {
      * Retrieves a resource by id.
      * @param parameter - All parameter will be forwarded to the underlining
      * pouchdb's "get()" method.
-     * @returns Whatever pouchdb's "get()" method return.
+     * @returns Whatever pouchdb's "get()" method returns.
      */
     get(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.get.call(this.connection, ...parameter)
@@ -739,7 +748,7 @@ export class GenericDataService {
      * Creates or updates given data.
      * @param parameter - All parameter will be forwarded to the underlining
      * pouchdb's "put()" method.
-     * @returns Whatever pouchdb's "put()" method return.
+     * @returns Whatever pouchdb's "put()" method returns.
      */
     put(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.put.call(this.connection, ...parameter)
