@@ -55,7 +55,22 @@ registerAngularTest(function(
                     models: {Test: {
                         _attachments: {'.+\\.(?:jpe?g|png)': {
                             contentTypeRegularExpressionPattern: '^image/.+',
-                            maximum: 1
+                            maximum: 1,
+                            onCreateExecution: `
+                                if (Object.keys(
+                                    newDocument
+                                ).length && newDocument[Object.keys(
+                                    newDocument
+                                )[0]]) {
+                                    newDocument[Object.keys(
+                                        newDocument
+                                    )[0]].test = 5;
+                                    return newDocument[Object.keys(
+                                        newDocument
+                                    )[0]]
+                                }
+                                return null
+                            `.replace(/\n+/g, '').replace(/  +/g, ' ')
                         }},
                         _id: {mutable: false},
                         _rev: {mutable: false},
@@ -359,18 +374,68 @@ registerAngularTest(function(
                         for (const test:Array<PlainObject> of [
                             [['Test'], {
                                 _attachments: {
-                                    '.+\.(?:jpe?g|png)': {
+                                    '.+\\.(?:jpe?g|png)': {
                                         contentTypeRegularExpressionPattern:
                                             '^image/.+',
                                         maximum: 1,
                                         minimum: 0,
                                         name: '.+\\.(?:jpe?g|png)',
+                                        onCreateExecution:
+                                            initialData.configuration
+                                            .modelConfiguration.models.Test
+                                            ._attachments['.+\.(?:jpe?g|png)']
+                                            .onCreateExecution,
                                         value: null
                                     }
                                 },
                                 _id: {minimum: 0, mutable: false},
                                 _rev: {minimum: 0, mutable: false},
-                                a: {minimum: 0, name: 'a', value: null},
+                                _metaData: {submitted: false},
+                                '-type': 'Test',
+                                a: {minimum: 0, name: 'a', value: null}
+                            }],
+                            [['Test', ['a']], {
+                                _metaData: {submitted: false},
+                                '-type': 'Test',
+                                a: {minimum: 0, name: 'a', value: null}
+                            }],
+                            [['Test', ['_attachments']], {
+                                _attachments: {
+                                    '.+\\.(?:jpe?g|png)': {
+                                        contentTypeRegularExpressionPattern:
+                                            '^image/.+',
+                                        maximum: 1,
+                                        minimum: 0,
+                                        name: '.+\\.(?:jpe?g|png)',
+                                        onCreateExecution:
+                                            initialData.configuration
+                                            .modelConfiguration.models.Test
+                                            ._attachments['.+\.(?:jpe?g|png)']
+                                            .onCreateExecution,
+                                        value: null
+                                    }
+                                },
+                                _metaData: {submitted: false},
+                                '-type': 'Test'
+                            }],
+                            [['Test', ['_attachments'], {_attachments: {
+                                'a.jpg': {}
+                            }}], {
+                                _attachments: {
+                                    '.+\\.(?:jpe?g|png)': {
+                                        contentTypeRegularExpressionPattern:
+                                            '^image/.+',
+                                        maximum: 1,
+                                        minimum: 0,
+                                        name: '.+\\.(?:jpe?g|png)',
+                                        onCreateExecution:
+                                            initialData.configuration
+                                            .modelConfiguration.models.Test
+                                            ._attachments['.+\.(?:jpe?g|png)']
+                                            .onCreateExecution,
+                                        value: {name: 'a.jpg'}
+                                    }
+                                },
                                 _metaData: {submitted: false},
                                 '-type': 'Test'
                             }]

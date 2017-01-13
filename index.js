@@ -917,7 +917,7 @@ export class GenericDataScopeService {
                             ])
                                 if (result[name][type].hasOwnProperty(
                                     hookType
-                                ) && result[name][type][hookType])
+                                ) && result[name][type][hookType]) {
                                     result[name][type].value = (new Function(
                                         'newDocument', 'oldDocument',
                                         'userContext', 'securitySettings',
@@ -938,6 +938,12 @@ export class GenericDataScopeService {
                                             object, null, 4
                                         ), modelName, modelSpecification,
                                         result[name][type])
+                                    if (result[name][type].hasOwnProperty(
+                                        'value'
+                                    ) && result[name][type].value === undefined
+                                    )
+                                        delete result[name][type].value
+                                }
                         let fileFound:boolean = false
                         if (data.hasOwnProperty(name) && ![
                             undefined, null
