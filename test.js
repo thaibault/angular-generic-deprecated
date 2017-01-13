@@ -56,21 +56,7 @@ registerAngularTest(function(
                         _attachments: {'.+\\.(?:jpe?g|png)': {
                             contentTypeRegularExpressionPattern: '^image/.+',
                             maximum: 1,
-                            onCreateExecution: `
-                                if (Object.keys(
-                                    newDocument
-                                ).length && newDocument[Object.keys(
-                                    newDocument
-                                )[0]]) {
-                                    newDocument[Object.keys(
-                                        newDocument
-                                    )[0]].test = 5;
-                                    return newDocument[Object.keys(
-                                        newDocument
-                                    )[0]]
-                                }
-                                return null
-                            `.replace(/\n+/g, '').replace(/  +/g, ' ')
+                            onCreateExpression: "{name: 'a.jpg'}"
                         }},
                         _id: {mutable: false},
                         _rev: {mutable: false},
@@ -380,12 +366,12 @@ registerAngularTest(function(
                                         maximum: 1,
                                         minimum: 0,
                                         name: '.+\\.(?:jpe?g|png)',
-                                        onCreateExecution:
+                                        onCreateExpression:
                                             initialData.configuration
                                             .modelConfiguration.models.Test
-                                            ._attachments['.+\.(?:jpe?g|png)']
-                                            .onCreateExecution,
-                                        value: null
+                                            ._attachments['.+\\.(?:jpe?g|png)']
+                                            .onCreateExpression,
+                                        value: {name: 'a.jpg'}
                                     }
                                 },
                                 _id: {minimum: 0, mutable: false},
@@ -407,19 +393,19 @@ registerAngularTest(function(
                                         maximum: 1,
                                         minimum: 0,
                                         name: '.+\\.(?:jpe?g|png)',
-                                        onCreateExecution:
+                                        onCreateExpression:
                                             initialData.configuration
                                             .modelConfiguration.models.Test
-                                            ._attachments['.+\.(?:jpe?g|png)']
-                                            .onCreateExecution,
-                                        value: null
+                                            ._attachments['.+\\.(?:jpe?g|png)']
+                                            .onCreateExpression,
+                                        value: {name: 'a.jpg'}
                                     }
                                 },
                                 _metaData: {submitted: false},
                                 '-type': 'Test'
                             }],
                             [['Test', ['_attachments'], {_attachments: {
-                                'a.jpg': {}
+                                'b.jpg': {}
                             }}], {
                                 _attachments: {
                                     '.+\\.(?:jpe?g|png)': {
@@ -428,12 +414,51 @@ registerAngularTest(function(
                                         maximum: 1,
                                         minimum: 0,
                                         name: '.+\\.(?:jpe?g|png)',
-                                        onCreateExecution:
+                                        onCreateExpression:
                                             initialData.configuration
                                             .modelConfiguration.models.Test
-                                            ._attachments['.+\.(?:jpe?g|png)']
-                                            .onCreateExecution,
-                                        value: {name: 'a.jpg'}
+                                            ._attachments['.+\\.(?:jpe?g|png)']
+                                            .onCreateExpression,
+                                        value: {name: 'b.jpg'}
+                                    }
+                                },
+                                _metaData: {submitted: false},
+                                '-type': 'Test'
+                            }],
+                            [['Test', ['_attachments'], {_attachments: {}}], {
+                                _attachments: {
+                                    '.+\\.(?:jpe?g|png)': {
+                                        contentTypeRegularExpressionPattern:
+                                            '^image/.+',
+                                        maximum: 1,
+                                        minimum: 0,
+                                        name: '.+\\.(?:jpe?g|png)',
+                                        onCreateExpression:
+                                            initialData.configuration
+                                            .modelConfiguration.models.Test
+                                            ._attachments['.+\\.(?:jpe?g|png)']
+                                            .onCreateExpression,
+                                        value: null
+                                    }
+                                },
+                                _metaData: {submitted: false},
+                                '-type': 'Test'
+                            }],
+                            // TODO check... code after 946
+                            [['Test', ['_attachments'], {_attachments: {}}], {
+                                _attachments: {
+                                    '.+\\.(?:jpe?g|png)': {
+                                        contentTypeRegularExpressionPattern:
+                                            '^image/.+',
+                                        maximum: 1,
+                                        minimum: 0,
+                                        name: '.+\\.(?:jpe?g|png)',
+                                        onCreateExpression:
+                                            initialData.configuration
+                                            .modelConfiguration.models.Test
+                                            ._attachments['.+\\.(?:jpe?g|png)']
+                                            .onCreateExpression,
+                                        value: null
                                     }
                                 },
                                 _metaData: {submitted: false},
