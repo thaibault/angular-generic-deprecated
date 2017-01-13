@@ -360,10 +360,10 @@ registerAngularTest(function(
                             [['Test'], {
                                 _attachments: {
                                     '.+\.(?:jpe?g|png)': {
-                                        minimum: 0,
                                         contentTypeRegularExpressionPattern:
                                             '^image/.+',
                                         maximum: 1,
+                                        minimum: 0,
                                         name: '.+\\.(?:jpe?g|png)',
                                         value: null
                                     }
@@ -371,8 +371,8 @@ registerAngularTest(function(
                                 _id: {minimum: 0, mutable: false},
                                 _rev: {minimum: 0, mutable: false},
                                 a: {minimum: 0, name: 'a', value: null},
-                                '-type': 'Test',
-                                _metaData: {submitted: false}
+                                _metaData: {submitted: false},
+                                '-type': 'Test'
                             }]
                         ])
                             assert.deepEqual(
