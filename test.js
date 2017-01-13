@@ -50,9 +50,18 @@ registerAngularTest(function(
                     options: {adapter: 'memory'},
                     plugins: [PouchDBAdapterMemory]
                 },
-                modelConfiguration: {models: {Test: {
-                    _id: {mutable: false}, _rev: {mutable: false}, a: {}
-                }}},
+                modelConfiguration: {
+                    default: {propertySpecification: {minimum: 0}},
+                    models: {Test: {
+                        _attachments: {'.+\\.(?:jpe?g|png)': {
+                            contentTypeRegularExpressionPattern: '^image/.+',
+                            maximum: 1
+                        }},
+                        _id: {mutable: false},
+                        _rev: {mutable: false},
+                        a: {}
+                    }}
+                },
                 test: true
             }}
             const GenericModule:Object = index.default
@@ -319,7 +328,56 @@ registerAngularTest(function(
                     self.test(`GenericDataScopeService (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                        // region get
+                        for (const test:Array<PlainObject> of [
+                            [{}, {}],
+                            [{a: {value: 2}}, {a: 2}],
+                            [{a: {value: 2}, b: 3, _c: {value: 4}}, {a: 2}],
+                            [{a: {value: 2}, b: 3, _c: {value: 4},
+                                _attachments: null
+                            }, {a: 2}],
+                            [{
+                                a: {value: 2}, b: 3, _c: {value: 4},
+                                _attachments: 2
+                            }, {a: 2}],
+                            [{
+                                a: {value: 2}, b: 3, _c: {value: 4},
+                                _attachments: {}
+                            }, {a: 2}],
+                            [{
+                                a: {value: 2}, b: 3, _c: {value: 4},
+                                _attachments: {a: {value: {name: 'a'}}}
+                            }, {a: 2, _attachments: {a: {name: 'a'}}}],
+                            [{
+                                a: {value: 2}, b: 3, _c: {value: 4}, _id: 2,
+                                _attachments: {a: {value: {name: 'a'}}}
+                            }, {a: 2, _attachments: {a: {name: 'a'}}, _id: 2}]
+                        ])
+                            assert.deepEqual(dataScope.get(test[0]), test[1])
+                        // endregion
+                        // region generate
+                        for (const test:Array<PlainObject> of [
+                            [['Test'], {
+                                _attachments: {
+                                    '.+\.(?:jpe?g|png)': {
+                                        minimum: 0,
+                                        contentTypeRegularExpressionPattern:
+                                            '^image/.+',
+                                        maximum: 1,
+                                        name: '.+\\.(?:jpe?g|png)',
+                                        value: null
+                                    }
+                                },
+                                _id: {minimum: 0, mutable: false},
+                                _rev: {minimum: 0, mutable: false},
+                                a: {minimum: 0, name: 'a', value: null},
+                                '-type': 'Test',
+                                _metaData: {submitted: false}
+                            }]
+                        ])
+                            assert.deepEqual(
+                                dataScope.generate(...test[0]), test[1])
+                        // endregion
                     })
                     // / region abstract
                     self.test(`AbstractResolver (${roundType})`, async (

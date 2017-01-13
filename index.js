@@ -829,6 +829,42 @@ export class GenericDataScopeService {
         this.tools = tools.tools
     }
     /**
+     * Retrieves needed data for given scope.
+     * @param scope - Scope to use to determine which data is needed.
+     * @returns Resolved data.
+     */
+    get(scope:Object):PlainObject {
+        const result:PlainObject = {}
+        for (const key:string in scope)
+            if (
+                scope.hasOwnProperty(key) && !key.startsWith('_') &&
+                typeof scope[key] === 'object' && scope[key] !== null &&
+                'hasOwnProperty' in scope && scope[key].hasOwnProperty('value')
+            )
+                result[key] = scope[key].value
+        if (scope.hasOwnProperty('_attachments') && scope._attachments) {
+            for (const key:string in scope._attachments)
+                if (
+                    scope._attachments.hasOwnProperty(key) &&
+                    typeof scope._attachments[key] === 'object' &&
+                    scope._attachments[key] !== null &&
+                    'hasOwnProperty' in scope._attachments &&
+                    scope._attachments[key].hasOwnProperty('value') &&
+                    scope._attachments[key].value
+                ) {
+                    if (!result._attachments)
+                        result._attachments = {}
+                    result._attachments[scope._attachments[
+                        key
+                    ].value.name] = scope._attachments[key].value
+                }
+        }
+        for (const name:string of ['_id', '_rev', '-type'])
+            if (scope.hasOwnProperty(name))
+                result[name] = scope[name]
+        return result
+    }
+    /**
      * Generates a scope object for given model with given property names and
      * property value mapping data.
      * @param modelName - Name of model to generate scope for.
@@ -1012,40 +1048,6 @@ export class GenericDataScopeService {
                 this.extendObject(true, object, result)
             return result
         }
-        return result
-    }
-    /**
-     * Retrieves needed data for given scope.
-     * @param scope - Scope to use to determine which data is needed.
-     * @returns Resolved data.
-     */
-    get(scope:Object):PlainObject {
-        const result:PlainObject = {}
-        for (const key:string in scope)
-            if (
-                scope.hasOwnProperty(key) && !key.startsWith('_') &&
-                typeof scope[key] === 'object' && scope[key] !== null &&
-                'hasOwnProperty' in scope && scope[key].hasOwnProperty('value')
-            )
-                result[key] = scope[key].value
-        if (scope.hasOwnProperty('_attachments') && scope._attachments) {
-            result._attachments = {}
-            for (const key:string in scope._attachments)
-                if (
-                    scope._attachments.hasOwnProperty(key) &&
-                    typeof scope._attachments[key] === 'object' &&
-                    scope._attachments[key] !== null &&
-                    'hasOwnProperty' in scope._attachments &&
-                    scope._attachments[key].hasOwnProperty('value') &&
-                    scope._attachments[key].value
-                )
-                    result._attachments[scope._attachments[
-                        key
-                    ].value.name] = scope._attachments[key].value
-        }
-        for (const name:string of ['_id', '_rev', '-type'])
-            if (scope.hasOwnProperty(name))
-                result[name] = scope[name]
         return result
     }
 }
