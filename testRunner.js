@@ -38,7 +38,7 @@ declare var TARGET_TECHNOLOGY:string
  */
 export default function(
     callback:Function|{bootstrap:Function;component:Function},
-    template:string = '<div></div>', roundTypes:Array<string> = ['document'],
+    template:string = '<div></div>', roundTypes:Array<string> = ['full'],
     ...additionalParameter:Array<any>
 ):any {
     return registerTest(async function(
@@ -53,11 +53,7 @@ export default function(
             that environment after a working browser environment is present.
         */
         if (TARGET_TECHNOLOGY === 'node') {
-            global.document = $.context
-            global.window = $.global
             global.window.Reflect = global.Reflect
-            for (const name:string of ['Element', 'HTMLElement', 'Node'])
-                global[name] = $.global[name]
             process.setMaxListeners(30)
         }
         require('hammerjs')

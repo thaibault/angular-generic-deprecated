@@ -358,6 +358,7 @@ registerAngularTest(function(
                         // endregion
                         // region generate
                         for (const test:Array<PlainObject> of [
+                            /*
                             [['Test'], {
                                 _attachments: {
                                     '.+\\.(?:jpe?g|png)': {
@@ -444,8 +445,11 @@ registerAngularTest(function(
                                 _metaData: {submitted: false},
                                 '-type': 'Test'
                             }],
+                            */
                             // TODO check... code after 946
-                            [['Test', ['_attachments'], {_attachments: {}}], {
+                            [['Test', ['_attachments'], {_attachments: {
+                                'b.jpg': {}
+                            }}], {
                                 _attachments: {
                                     '.+\\.(?:jpe?g|png)': {
                                         contentTypeRegularExpressionPattern:
