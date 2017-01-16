@@ -1006,9 +1006,9 @@ export class GenericDataScopeService {
                     result[name].selection
                 ) && result[name].selection.length)
                     result[name].value = result[name].selection[0]
-                if (!(result[name].value instanceof Date) && name.endsWith(
+                if (!(result[name].value instanceof Date) && (name.endsWith(
                     'Time'
-                ))
+                ) || name.endsWith('Date')))
                     result[name].value = new Date(result[name].value)
             }
         }

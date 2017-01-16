@@ -370,6 +370,9 @@ registerAngularTest(function(
                             [['Test', ['a']], {a: {
                                 minimum: 0, name: 'a', value: null
                             }}],
+                            [['Test', ['a'], {a: 2}], {a: {
+                                minimum: 0, name: 'a', value: 2
+                            }}],
                             [['Test', ['_attachments']], {
                                 _attachments: {
                                     '.+\\.(?:jpe?g|png)': {
@@ -400,18 +403,19 @@ registerAngularTest(function(
                                     value: null
                                 }},
                                 a: {minimum: 0, name: 'a', value: null}
-                            }]/*,
-                            // TODO check... code after 946
-                            [['Test', ['_attachments'], {_attachments: {
-                                'b.jpg': {}
+                            }],
+                            [['Test', null, {_attachments: {
+                                'b.jpg': {test: 2}
                             }}], {
-                                _attachments: {
-                                    '.+\\.(?:jpe?g|png)': {
-                                        value: null
+                                _attachments: {'.+\\.(?:jpe?g|png)': {
+                                    name: '.+\\.(?:jpe?g|png)',
+                                    value: {
+                                        name: 'b.jpg',
+                                        test: 2
                                     }
-                                }
+                                }},
+                                a: {minimum: 0, name: 'a', value: null}
                             }]
-                            */
                         ])
                             assert.deepEqual(dataScope.generate(
                                 ...test[0]
@@ -423,6 +427,9 @@ registerAngularTest(function(
                                 initialData.configuration.modelConfiguration
                                     .models.Test : {}
                             ), test[1]))
+                        // endregion
+                        // region set
+
                         // endregion
                     })
                     // / region abstract
