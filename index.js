@@ -1023,7 +1023,8 @@ export class GenericDataScopeService {
     /**
      * Useful to sets route specific data in a resolver.
      * @param modelName - Name of model to retrieve data from.
-     * @param scope - Scope to extend or set values in.
+     * @param scope - Scope or array of scopes to extend and set retrieved
+     * values in.
      * @param id - ID of an entity to retrieve data from.
      * @param propertyNames - List of property names to retrieve data from.
      * @param options - To use for retrieving needed data from data service.

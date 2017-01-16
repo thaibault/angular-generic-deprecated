@@ -223,7 +223,33 @@ registerAngularTest(function(
                     self.test(`GenericExtractRawDataPipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                        // region _handleAttachmentChanges
+                        for (const test:Array<any> of [
+                            [{}, {}, true, [], {}],
+                            [
+                                {}, {a: {value: {name: 'a'}}}, true, [],
+                                {_attachments: {a: {data: null}}}
+                            ],
+                            [{}, {a: {value: {name: 'a'}}}, true, ['a'], {}],
+                            [
+                                {_attachments: {a: {}}},
+                                {'[ab]': {value: {name: 'b'}}}, true, [],
+                                {_attachments: {a: {}, b: {data: null}}}
+                            ],
+                            [
+                                {_attachments: {a: {}}},
+                                {'[ab]': {value: {name: 'b'}}}, false, [],
+                                {_attachments: {a: {}}}
+                            ]
+                        ])
+                            assert.deepEqual(
+                                extractRawData._handleAttachmentChanges(
+                                    test[0], test[1], test[2], test[3]
+                                ), test[4])
+                        // endregion
+                        // region transform
+                        // TODO
+                        // endregion
                     })
                     self.test(`GenericIsDefinedPipe (${roundType})`, (
                         assert:Object
@@ -293,7 +319,14 @@ registerAngularTest(function(
                     self.test(
                         `GenericCanDeactivateRouteLeaveGuard (${roundType})`,
                         (assert:Object):void => {
-                            assert.strictEqual('TODO', 'TODO')
+                            for (const test:Array<any> of [
+                                [{}, true],
+                                [{canDeactivate: ():false => false}, false]
+                            ])
+                                assert.strictEqual(
+                                    canDeactivateRouteLeave.canDeactivate(
+                                        test[0]
+                                    ), test[1])
                         })
                     self.test(`GenericDataService (${roundType})`, async (
                         assert:Object
@@ -328,9 +361,10 @@ registerAngularTest(function(
                         assert.ok(true)
                         done()
                     })
-                    self.test(`GenericDataScopeService (${roundType})`, (
+                    self.test(`GenericDataScopeService (${roundType})`, async (
                         assert:Object
-                    ):void => {
+                    ):Promise<void> => {
+                        const done:Function = assert.async()
                         // region get
                         for (const test:Array<PlainObject> of [
                             [{}, {}],
@@ -429,8 +463,20 @@ registerAngularTest(function(
                             ), test[1]))
                         // endregion
                         // region set
-                        // TODO
+                        assert.deepEqual(await dataScope.set(
+                            'Test'
+                        ), extendObject.transform(true, {
+                            _attachments: {'.+\\.(?:jpe?g|png)': {
+                                name: '.+\\.(?:jpe?g|png)',
+                                value: {name: 'a.jpg'}
+                            }},
+                            _metaData: {submitted: false},
+                            '-type': 'Test',
+                            a: {minimum: 0, name: 'a', value: null}
+                        }, initialData.configuration.modelConfiguration.models
+                            .Test))
                         // endregion
+                        done()
                     })
                     // / region abstract
                     self.test(`AbstractResolver (${roundType})`, async (
