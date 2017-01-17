@@ -308,7 +308,13 @@ registerAngularTest(function(
                     self.test(`GenericIsDefinedPipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                        for (const test:Array<any> of [
+                            2, true, {}, null, new Error('a'), Object, []
+                        ])
+                            assert.ok(isDefined.transform(test))
+                        assert.notOk(isDefined.transform(null, true))
+                        assert.notOk(isDefined.transform(undefined))
+                        assert.notOk(isDefined.transform(undefined, true))
                     })
                     self.test(
                         `GenericGetFilenameByPrefixPipe (${roundType})`,
