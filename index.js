@@ -1459,7 +1459,7 @@ const mdInputContent:string = `
         <md-input
             [max]="model.type === 'number' ? model.maximum : null"
             [min]="model.type === 'number' ? model.minimum : null"
-            [type]="model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+            [type]="type || model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
             ${propertyInputContent}
         >${mdInputContent}</md-input>`
 })
@@ -1467,8 +1467,10 @@ const mdInputContent:string = `
 /**
  * A generic form input component with validation, labeling and info
  * description support.
+ * @property type - Optionally defines an input type explicitly.
  */
 export class GenericInputComponent extends AbstractInputComponent {
+    @Input() type:?string
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
