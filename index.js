@@ -351,17 +351,17 @@ export class GenericMapPipe/* implements PipeTransform*/ {
     transform(
         object:any, pipeName:string, ...additionalArguments:Array<any>
     ):any {
+        const pipe:Object = this.injector.get(pipeName)
         if (Array.isArray(object)) {
             const result:Array<any> = []
             for (const item:any of object)
-                result.push(this.injector.get(pipeName).transform(
-                    item, ...additionalArguments))
+                result.push(pipe.transform(item, ...additionalArguments))
             return result
         }
         const result:Object = {}
         for (const key:string in object)
             if (object.hasOwnProperty(key))
-                result[key] = this.injector.get(pipeName).transform(
+                result[key] = pipe.transform.transform(
                     object[key], key, ...additionalArguments)
         return result
     }
@@ -386,7 +386,7 @@ export class GenericTypePipe/* implements PipeTransform*/ {
 // IgnoreTypeCheck
 @Pipe({name: 'genericStringEndsWith'})
 /**
- * Forwards javascript's native "stringEndsWith" method.
+ * Forwards javaScript's native "stringEndsWith" method.
  */
 export class GenericStringEndsWithPipe/* implements PipeTransform*/ {
     /**
@@ -414,9 +414,9 @@ export class GenericStringHasTimeSuffixPipe/* implements PipeTransform*/ {
     transform(string:?string):boolean {
         if (typeof string !== 'string')
             return false
-        return string.endsWith('DateTime') || string.endsWith(
-            'Date'
-        ) || string.endsWith('Time') || string === 'timestamp'
+        return string.endsWith('Date') || string.endsWith(
+            'Time'
+        ) || string === 'timestamp'
     }
 }
 // IgnoreTypeCheck

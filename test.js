@@ -332,7 +332,9 @@ registerAngularTest(function(
                     self.test(`GenericMapPipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                        assert.deepEqual(map.transform(
+                            ['a', 'b', 'ab'], GenericStringEndsWithPipe, 'b'
+                        ), [false, true, true])
                     })
                     self.test(`GenericTypePipe (${roundType})`, (
                         assert:Object
@@ -353,12 +355,22 @@ registerAngularTest(function(
                     self.test(`GenericStringEndsWithPipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                        assert.ok(stringEndsWith.transform('aab', 'b'))
+                        assert.notOk(stringEndsWith.transform('aab', 'a'))
                     })
                     self.test(
                         `GenericStringHasTimeSuffixPipe (${roundType})`,
                         (assert:Object):void => {
-                            assert.strictEqual('TODO', 'TODO')
+                            for (const test:string of [
+                                'aDate', 'aTime', 'aDateTime', 'timestamp'
+                            ])
+                                assert.ok(stringHasTimeSuffix.transform(test))
+                            for (const test:any of [
+                                'a', 'atime', 'aDatetime', 'timestamptime',
+                                false, null, {}
+                            ])
+                                assert.notOk(stringHasTimeSuffix.transform(
+                                    test))
                         })
                     self.test(`GericStringMatchPipe (${roundType})`, (
                         assert:Object
