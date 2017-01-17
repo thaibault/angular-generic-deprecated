@@ -337,7 +337,16 @@ registerAngularTest(function(
                     self.test(`GenericTypePipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                        for (const test:Array<any> of [
+                            [null, 'object'],
+                            [true, 'boolean'],
+                            [false, 'boolean'],
+                            [2, 'number'],
+                            [{}, 'object'],
+                            [[], 'object']
+                        ])
+                            assert.strictEqual(
+                                type.transform(test[0]), test[1])
                     })
                     // / endregion
                     // / region string
