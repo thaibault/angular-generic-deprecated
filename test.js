@@ -319,7 +319,15 @@ registerAngularTest(function(
                     self.test(
                         `GenericGetFilenameByPrefixPipe (${roundType})`,
                         (assert:Object):void => {
-                            assert.strictEqual('TODO', 'TODO')
+                            for (const test:Array<any> of [
+                                [[{}], null],
+                                [[{a: 2}], 'a'],
+                                [[{a: 2, b: 3}, 'b'], 'b'],
+                                [[{a: 2, b: 3}, 'c'], null]
+                            ])
+                                assert.strictEqual(
+                                    getFilenameByPrefix.transform(...test[0]),
+                                    test[1])
                         })
                     self.test(`GenericMapPipe (${roundType})`, (
                         assert:Object
