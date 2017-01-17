@@ -481,7 +481,7 @@ export class GenericStringShowIfPatternMatchesPipe
      */
     transform(
         string:string, pattern:string|RegExp, invert:boolean = false,
-        modifier:string = 'g'
+        modifier:string = ''
     ):string {
         // IgnoreTypeCheck
         let indicator:boolean = new RegExp(pattern, modifier).test(string)

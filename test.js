@@ -375,33 +375,84 @@ registerAngularTest(function(
                     self.test(`GericStringMatchPipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                        for (const test:Array<any> of [
+                            ['a', 'a'],
+                            ['[ab]', 'a'],
+                            ['^[ab]$', 'a', 'g'],
+                            [/^[ab]$/, 'a', 'g'],
+                            [/a/, 'A', 'i']
+                        ])
+                            assert.ok(stringMatch.transform(...test))
+                        for (const test:Array<any> of [
+                            ['a', 'b'],
+                            ['[ab]', 'c'],
+                            ['^[ab]$', 'aa', 'g'],
+                            [/^[ab]$/, 'aa', 'g'],
+                            [/^[ab]$/, 'AA', 'i']
+                        ])
+                            assert.notOk(stringMatch.transform(...test))
                     })
                     self.test(`GenericStringReplacePipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                        for (const test:Array<any> of [
+                            [['a', 'a'], ''],
+                            [['a', 'a', 'b'], 'b'],
+                            [['aa', 'a', 'b', ''], 'ba'],
+                            [['aa', 'a', 'b', 'g'], 'bb']
+                        ])
+                            assert.strictEqual(
+                                stringReplace.transform(...test[0]), test[1])
                     })
                     self.test(
                         `GenericStringShowIfPatternMatchesPipe (${roundType})`,
                         (assert:Object):void => {
-                            assert.strictEqual('TODO', 'TODO')
+                            for (const test:Array<any> of [
+                                [['a', 'a'], 'a'],
+                                [['a', 'b'], ''],
+                                [['aa', 'a'], 'aa'],
+                                [['aa', /a/], 'aa'],
+                                [['aa', 'a', true], ''],
+                                [['aa', 'A', false, 'i'], 'aa']
+                            ])
+                                assert.strictEqual(
+                                    stringShowIfPatternMatches.transform(
+                                        ...test[0]
+                                    ), test[1])
                         })
                     self.test(`GenericStringStartsWithPipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                        assert.ok(stringStartsWith.transform('baa', 'b'))
+                        assert.notOk(stringStartsWith.transform('baa', 'a'))
                     })
                     self.test(`GenericStringSliceMatchPipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                        for (const test:Array<any> of [
+                            [['a', 'a'], 'a'],
+                            [['a', 'a', 0], 'a'],
+                            [['a', 'A', 0, 'i'], 'a'],
+                            [['ab', '.(.)', 1, ''], 'b']
+                        ])
+                            assert.strictEqual(
+                                stringSliceMatch.transform(...test[0]), test[1]
+                            )
                     })
                     // / endregion
                     self.test(`GenericNumberPercentPipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual('TODO', 'TODO')
+                        for (const test:Array<number> of [
+                            [1, 1, 100],
+                            [1, 2, 50],
+                            [0, 3, 0],
+                            [.3, 1, 30],
+                            [9, 10, 90]
+                        ])
+                            assert.strictEqual(
+                                numberPercent.transform(test[0], test[1]),
+                                test[2])
                     })
                     // endregion
                     // region services
