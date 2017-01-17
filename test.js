@@ -248,7 +248,61 @@ registerAngularTest(function(
                                 ), test[4])
                         // endregion
                         // region transform
-                        // TODO
+                        for (const test:Array<any> of [
+                            [[{}], {}],
+                            [[{}, {}], {}],
+                            [[{}, {}, false], {}],
+                            [[{a: 2}, {}, false], {a: 2}],
+                            [[{a: undefined, b: null, c: ''}, {}, false], {}],
+                            [[{a: undefined, b: null, c: '', d: {}}], {d: {}}],
+                            [[{a: undefined, b: 3}], {b: 3}],
+                            [[{a: undefined, _revisions: 3}], {}],
+                            [[{_attachments: undefined}], {}],
+                            [[{_attachments: {a: {}}}], {}],
+                            [[{_attachments: {a: {data: 2}}}], {_attachments: {
+                                a: {
+                                    content_type: 'application/octet-stream',
+                                    data: 2
+                                }
+                            }}],
+                            [[{_attachments: {a: {
+                                content_type: 'a/b', data: 2
+                            }}}], {_attachments: {a: {
+                                content_type: 'a/b', data: 2
+                            }}}],
+                            [[{_attachments: {a: {data: 2}}}, {_attachments: {
+                                a: {data: 2}
+                            }}], {}],
+                            [[{_attachments: {a: {
+                                content_type: 'a/b', data: 2
+                            }}}, {_attachments: {a: {
+                                content_type: 'a/b',
+                                data: 2
+                            }}}], {}],
+                            [[{_attachments: {a: {data: 2}}}, {_attachments: {
+                                a: {
+                                    content_type: 'application/octet-stream',
+                                    data: 2
+                                }
+                            }}], {}],
+                            [[{_attachments: {a: {data: 2}}}, {_attachments: {
+                                a: {data: 3}
+                            }}], {_attachments: {a: {
+                                content_type: 'application/octet-stream',
+                                data: 2
+                            }}}],
+                            [[{_attachments: {a: {
+                                content_type: 'a/b',
+                                data: 2
+                            }}}, {_attachments: {a: {data: 2}}}], {
+                                _attachments: {a: {
+                                    content_type: 'a/b',
+                                    data: 2
+                                }}
+                            }]
+                        ])
+                            assert.deepEqual(
+                                extractRawData.transform(...test[0]), test[1])
                         // endregion
                     })
                     self.test(`GenericIsDefinedPipe (${roundType})`, (

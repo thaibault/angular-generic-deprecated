@@ -247,11 +247,17 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                                 fileName
                             ) && newDocument[name][
                                 fileName
-                            ].data === oldDocument[name][fileName].data)) {
+                            ].data === oldDocument[name][fileName].data && (
+                                oldDocument[name][fileName].content_type ||
+                                'application/octet-stream'
+                            ) === (newDocument[name][
+                                fileName
+                            ].content_type || 'application/octet-stream'))) {
                                 result[name][fileName] = {
                                     content_type: newDocument[name][
                                         fileName
-                                    ].content_type,
+                                    ].content_type ||
+                                    'application/octet-stream',
                                     data: newDocument[name][fileName].data
                                 }
                                 empty = false
