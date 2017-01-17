@@ -1234,6 +1234,7 @@ export class AbstractInputComponent {
             minimum: (this.model.type === 'string') ? 0 : -Infinity,
             nullable: true,
             regularExpressionPattern: '.*',
+            state: {},
             type: 'string'
         }, this.model))
     }
