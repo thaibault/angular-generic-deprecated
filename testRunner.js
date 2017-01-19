@@ -55,21 +55,19 @@ export default function(
         if (TARGET_TECHNOLOGY === 'node') {
             global.window.Reflect = global.Reflect
             if (!('matchMedia' in global.window))
-                global.window.matchMedia = (
-                    'matchMedia' in global
-                    ) ? global.matchMedia : (mediaQuery:string):{
-                        addListener:Function;
-                        matches:boolean;
-                        media:string;
-                        removeListener:Function;
-                    } => {
-                        return {
-                            addListener: ():void => {},
-                            matches: true,
-                            media: mediaQuery,
-                            removeListener: ():void => {}
-                        }
+                global.window.matchMedia = (mediaQuery:string):{
+                    addListener:Function;
+                    matches:boolean;
+                    media:string;
+                    removeListener:Function;
+                } => {
+                    return {
+                        addListener: ():void => {},
+                        matches: true,
+                        media: mediaQuery,
+                        removeListener: ():void => {}
                     }
+                }
             process.setMaxListeners(30)
         }
         require('hammerjs')
