@@ -66,7 +66,7 @@ export default function(
                         return {
                             addListener: ():void => {},
                             matches: true,
-                            media:mediaQuery,
+                            media: mediaQuery,
                             removeListener: ():void => {}
                         }
                     }

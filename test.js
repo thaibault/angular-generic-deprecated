@@ -56,7 +56,7 @@ registerAngularTest(function(
                         _attachments: {'.+\\.(?:jpe?g|png)': {
                             contentTypeRegularExpressionPattern: '^image/.+',
                             maximum: 1,
-                            onCreateExpression: "{name: 'a.jpg'}"
+                            onCreateExpression: `{name: 'a.jpg'}`
                         }},
                         _id: {mutable: false},
                         _rev: {mutable: false},
@@ -308,7 +308,7 @@ registerAngularTest(function(
                     self.test(`GenericIsDefinedPipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        for (const test:Array<any> of [
+                        for (const test:any of [
                             2, true, {}, null, new Error('a'), Object, []
                         ])
                             assert.ok(isDefined.transform(test))
@@ -533,7 +533,7 @@ registerAngularTest(function(
                             assert.deepEqual(dataScope.get(test[0]), test[1])
                         // endregion
                         // region generate
-                        for (const test:Array<PlainObject> of [
+                        for (const test:Array<any> of [
                             [['Test'], {
                                 _attachments: {'.+\\.(?:jpe?g|png)': {
                                     name: '.+\\.(?:jpe?g|png)',

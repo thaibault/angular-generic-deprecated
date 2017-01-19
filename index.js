@@ -848,7 +848,7 @@ export class GenericDataScopeService {
                 'hasOwnProperty' in scope && scope[key].hasOwnProperty('value')
             )
                 result[key] = scope[key].value
-        if (scope.hasOwnProperty('_attachments') && scope._attachments) {
+        if (scope.hasOwnProperty('_attachments') && scope._attachments)
             for (const key:string in scope._attachments)
                 if (
                     scope._attachments.hasOwnProperty(key) &&
@@ -864,7 +864,6 @@ export class GenericDataScopeService {
                         key
                     ].value.name] = scope._attachments[key].value
                 }
-        }
         for (const name:string of ['_id', '_rev', '-type'])
             if (scope.hasOwnProperty(name))
                 result[name] = scope[name]
