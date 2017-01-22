@@ -735,6 +735,9 @@ registerAngularTest(function(
             this.test(`AbstractItemsComponent (${roundType})`, (
                 assert:Object
             ):void => {
+                // TODO
+                const instance:AbstractItemsComponent =
+                    new AbstractItemsComponent()
                 assert.strictEqual('TODO', 'TODO')
             })
             // / region input/textarea
