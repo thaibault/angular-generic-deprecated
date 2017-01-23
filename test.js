@@ -855,7 +855,13 @@ registerAngularTest(function(
             this.test(`GenericFileInputComponent (${roundType})`, (
                 assert:Object
             ):void => {
+                const done:Function = assert.async()
+                const fixture:ComponentFixture<GenericFileInputComponent> =
+                    TestBed.createComponent(GenericFileInputComponent)
+                fixture.detectChanges()
+                await fixture.whenStable()
                 assert.strictEqual('TODO', 'TODO')
+                done()
             })
             // / region pagination
             this.test(`GenericPaginationComponent (${roundType})`, async (
