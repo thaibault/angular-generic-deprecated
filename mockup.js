@@ -77,8 +77,15 @@ export class RouterStub {
  */
 export class ActivatedRouteStub {
     _testParameter:PlainObject = {}
-    parameter:Object = this.subject.asObservable()
+    parameter:Object
     subject:BehaviorSubject = new BehaviorSubject(this._testParameter)
+    /**
+     * Sets the parameter property.
+     * @returns Nothing.
+     */
+    constructort():void {
+        this.parameter = this.subject.asObservable()
+    }
     /**
      * Setter for test parameter property value.
      * @param parameter - Sets parameter of current route.
