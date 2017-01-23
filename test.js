@@ -53,11 +53,15 @@ registerAngularTest(function(
         template: '<div></div>'
     })
     class ItemsComponent extends AbstractItemsComponent {
-        _itemsPath:string = 'admin/accounts'
-        _itemPath:string = 'admin/account'
         constructor(
             route:ActivatedRoute, router:Router, tools:GenericToolsService
         ):void {
+            route.testData = {items: []}
+            route.testParameter = {
+                limit: 10,
+                page: 1,
+                searchTerm: 'exact-'
+            }
             super(route, router, tools)
         }
     }
@@ -754,7 +758,32 @@ registerAngularTest(function(
                     TestBed.createComponent(ItemsComponent)
                 fixture.detectChanges()
                 await fixture.whenStable()
-                assert.strictEqual('TODO', 'TODO')
+                assert.deepEqual(fixture.componentInstance.items, [])
+                assert.strictEqual(fixture.componentInstance.items.length, 0)
+                assert.strictEqual(fixture.componentInstance.items.total, 0)
+                fixture.componentInstance._route.testData = {items: [{a: 2}]}
+                fixture.detectChanges()
+                await fixture.whenStable()
+                assert.deepEqual(fixture.componentInstance.items, [{a: 2}])
+                assert.strictEqual(fixture.componentInstance.items.length, 1)
+                assert.strictEqual(fixture.componentInstance.items.total, 1)
+                assert.strictEqual(fixture.componentInstance.page, 1)
+                assert.strictEqual(fixture.componentInstance.limit, 10)
+                assert.strictEqual(
+                    fixture.componentInstance.regularExpression, false)
+                assert.strictEqual(fixture.componentInstance.searchTerm, '')
+                fixture.componentInstance._route.testParameter = {
+                    limit: 2,
+                    page: 2,
+                    searchTerm: 'regex-test'
+                }
+                assert.strictEqual(fixture.componentInstance.page, 2)
+                assert.strictEqual(fixture.componentInstance.limit, 2)
+                assert.strictEqual(
+                    fixture.componentInstance.regularExpression, true)
+                assert.strictEqual(
+                    fixture.componentInstance.searchTerm, 'test')
+                fixture.componentInstance.applyPageConstraints()
                 done()
             })
             // / region input/textarea

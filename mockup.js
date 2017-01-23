@@ -76,15 +76,20 @@ export class RouterStub {
  * Mocks the current route data instance.
  */
 export class ActivatedRouteStub {
-    _testParameter:PlainObject = {}
-    parameter:Object
-    subject:BehaviorSubject = new BehaviorSubject(this._testParameter)
+    _data:PlainObject = {}
+    _parameter:PlainObject = {}
+    dataSubject:BehaviorSubject = new BehaviorSubject(this._data)
+    data:Object = this.dataSubject.asObservable()
+    parameterSubject:BehaviorSubject = new BehaviorSubject(this._parameter)
+    params:Object = this.parameterSubject.asObservable()
     /**
-     * Sets the parameter property.
+     * Setter for test data property value.
+     * @param data - Sets data of current route.
      * @returns Nothing.
      */
-    constructort():void {
-        this.parameter = this.subject.asObservable()
+    set testData(data:PlainObject):void {
+        this._data = data
+        this.dataSubject.next(data)
     }
     /**
      * Setter for test parameter property value.
@@ -92,15 +97,18 @@ export class ActivatedRouteStub {
      * @returns Nothing.
      */
     set testParameter(parameter:PlainObject):void {
-        this._testParameter = parameter
-        this.subject.next(parameter)
+        this._parameter = parameter
+        this.parameterSubject.next(this._parameter)
     }
     /**
      * Getter for route parameter property value.
      * @returns The current routing state.
      */
     get snapshot():PlainObject {
-        return {params: this._testParameter}
+        return {
+            data: this._data,
+            params: this._parameter
+        }
     }
 }
 // endregion
