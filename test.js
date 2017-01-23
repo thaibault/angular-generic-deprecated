@@ -125,6 +125,9 @@ registerAngularTest(function(
                 imports: [GenericModule],
                 providers: [Resolver]
             })
+
+                AbstractInputComponent,
+                AbstractItemsComponent,
             // endregion
             // region test services
             /**
@@ -702,7 +705,10 @@ registerAngularTest(function(
             }
             this.module(`GenericModule.services (${roundType})`)
             return [Module, {
-                declarations: [RouterOutletStubComponent],
+                declarations: [
+                    ItemsComponent,
+                    RouterOutletStubComponent
+                ],
                 imports: [GenericModule],
                 providers: [{provide: Router, useClass: RouterStub}]
             }]
@@ -711,8 +717,6 @@ registerAngularTest(function(
         component: function(TestBed:Object, roundType:string):void {
             // region prepare components
             const {
-                AbstractInputComponent,
-                AbstractItemsComponent,
                 GenericExtendObjectPipe,
                 GenericInputComponent,
                 GenericTextareaComponent,
@@ -722,23 +726,32 @@ registerAngularTest(function(
             // endregion
             // region test components
             this.module(`GenericModule.components (${roundType})`)
-            this.test(`AbstractInputComponent (${roundType})`, (
+            this.test(`AbstractInputComponent (${roundType})`, async (
                 assert:Object
-            ):void => {
-                const instance:AbstractInputComponent =
-                    new AbstractInputComponent(new GenericExtendObjectPipe())
-                instance.model = {name: 'test'}
-                instance.ngOnInit()
-                assert.strictEqual(instance.model.name, 'test')
-                assert.ok(instance.model.hasOwnProperty('type'))
+            ):Promise<void> => {
+                const done:Function = assert.async()
+                const fixture:ComponentFixture<InputComponent> =
+                    TestBed.createComponent(InputComponent)
+                fixture.detectChanges()
+                await fixture.whenStable()
+                fixture.componentInstance.model = {name: 'test'}
+                fixture.componentInstance.ngOnInit()
+                assert.strictEqual(
+                    fixture.componentInstance.model.name, 'test')
+                assert.ok(
+                    fixture.componentInstance.model.hasOwnProperty('type'))
+                done()
             })
-            this.test(`AbstractItemsComponent (${roundType})`, (
+            this.test(`AbstractItemsComponent (${roundType})`, async (
                 assert:Object
-            ):void => {
-                // TODO
-                const instance:AbstractItemsComponent =
-                    new AbstractItemsComponent()
+            ):Promise<void> => {
+                const done:Function = assert.async()
+                const fixture:ComponentFixture<ItemsComponent> =
+                    TestBed.createComponent(ItemsComponent)
+                fixture.detectChanges()
+                await fixture.whenStable()
                 assert.strictEqual('TODO', 'TODO')
+                done()
             })
             // / region input/textarea
             for (const component:AbstractInputComponent of [
