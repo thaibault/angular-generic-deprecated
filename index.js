@@ -311,7 +311,9 @@ export class GenericGetFilenameByPrefixPipe/* implements PipeTransform*/ {
     transform(attachments:PlainObject, prefix:?string):?string {
         if (prefix) {
             for (const name:string in attachments)
-                if (attachments.hasOwnProperty(name) && name.startsWith(prefix))
+                if (attachments.hasOwnProperty(name) && name.startsWith(
+                    prefix
+                ))
                     return name
         } else {
             const keys:Array<string> = Object.keys(attachments)
@@ -1636,8 +1638,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     internalName:string
     @Input() mapNameToField:?string|?Array<string> = null
     @Input() model:{id:?string;[key:string]:any;} = {
-        id: null
-    }
+        _attachments: [], id: null}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() name:?string = null
     @Input() showValidationErrorMessages:boolean = false

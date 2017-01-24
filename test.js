@@ -864,10 +864,17 @@ registerAngularTest(function(
                 const done:Function = assert.async()
                 const fixture:ComponentFixture<GenericFileInputComponent> =
                     TestBed.createComponent(GenericFileInputComponent)
-                /* TODO
+                fixture.componentInstance.mapNameToField = ['_id', 'name']
+                fixture.componentInstance.showValidationErrorMessages = true
+                fixture.componentInstance.model = {
+                    _id: 'id',
+                    _attachments: {
+                        value: {}
+                    },
+                    name: 'name'
+                }
                 fixture.detectChanges()
                 await fixture.whenStable()
-                */
                 assert.strictEqual('TODO', 'TODO')
                 done()
             })
