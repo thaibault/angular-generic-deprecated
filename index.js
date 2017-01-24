@@ -1343,21 +1343,14 @@ export class AbstractItemsComponent {
      * @returns Nothing.
      */
     delete(event:Object):void {
-        let index:number = 0
-        for (const item:PlainObject of this.items) {
-            if (item._id === event.id) {
-                this.items.splice(index, 1)
-                break
-            }
-            index += 1
-        }
+        this.update(true)
     }
     /**
      * Removes all items currently selected and clear current selection.
      * @returns Nothing.
      */
     deleteSelectedItems():void {
-        this.selectedItems = new Set()
+        this.update(true)
     }
     /**
      * Switches section to item which has given id.

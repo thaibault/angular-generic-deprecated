@@ -58,7 +58,7 @@ export class RouterStub {
      * @returns Nothing.
      */
     navigate(commands:Array<any>, extras:?NavigationExtras):void {
-        this.url = commands[0]
+        this.url = commands.join('/')
     }
     /**
      * Mocks the imperative router navigation method.

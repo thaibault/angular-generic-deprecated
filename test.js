@@ -761,10 +761,10 @@ registerAngularTest(function(
                 assert.deepEqual(fixture.componentInstance.items, [])
                 assert.strictEqual(fixture.componentInstance.items.length, 0)
                 assert.strictEqual(fixture.componentInstance.items.total, 0)
-                fixture.componentInstance._route.testData = {items: [{a: 2}]}
+                fixture.componentInstance._route.testData = {items: [{_id: 2}]}
                 fixture.detectChanges()
                 await fixture.whenStable()
-                assert.deepEqual(fixture.componentInstance.items, [{a: 2}])
+                assert.deepEqual(fixture.componentInstance.items, [{_id: 2}])
                 assert.strictEqual(fixture.componentInstance.items.length, 1)
                 assert.strictEqual(fixture.componentInstance.items.total, 1)
                 assert.strictEqual(fixture.componentInstance.page, 1)
@@ -784,6 +784,12 @@ registerAngularTest(function(
                 assert.strictEqual(
                     fixture.componentInstance.searchTerm, 'test')
                 fixture.componentInstance.applyPageConstraints()
+                fixture.componentInstance.delete({id: 2})
+                fixture.detectChanges()
+                await fixture.whenStable()
+                assert.strictEqual(
+                    fixture.componentInstance._router.url,
+                    'admin/items/_id-asc/0/2/regex-test')
                 done()
             })
             // / region input/textarea
