@@ -1705,7 +1705,6 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     ngAfterViewInit():void {
         this.input.nativeElement.addEventListener('change', async (
         ):Promise<void> => {
-            console.log('A')
             if (this.input.nativeElement.files.length < 1)
                 return
             this.model._attachments[this.internalName].state = {}
@@ -1867,7 +1866,10 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                 '-type': this.model['-type'],
                 _id: this.model._id,
                 _rev: this.model._rev,
-                _attachments: {[this.file.name]: {data: null}}
+                _attachments: {[this.file.name]: {
+                    content_type: 'text/plain',
+                    data: null
+                }}
             }
             if (this.mapNameToField && this.mapNameToField.includes('_id'))
                 update._deleted = true

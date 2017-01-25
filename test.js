@@ -869,6 +869,7 @@ registerAngularTest(function(
                 fixture.componentInstance.model = {
                     _id: 'id',
                     _attachments: {name: {
+                        nullable: true,
                         value: {
                             content_type: 'text/plain',
                             digest: 'hash',
@@ -887,11 +888,50 @@ registerAngularTest(function(
                 assert.deepEqual(
                     fixture.componentInstance.model._attachments.name.state,
                     {})
-                fixture.debugElement.nativeElement.dispatchEvent(
+                fixture.componentInstance.input.nativeElement.dispatchEvent(
                     getNativeEvent('change'))
                 fixture.detectChanges()
                 await fixture.whenStable()
-
+                fixture.componentInstance.file.content_type = 'image/png'
+                fixture.componentInstance.determinePresentationType()
+                assert.strictEqual(
+                    fixture.componentInstance.file.type, 'image')
+                await fixture.componentInstance.remove()
+                assert.deepEqual(
+                    fixture.componentInstance.model._attachments.name.value,
+                    null)
+                fixture.componentInstance.model._attachments.name.nullable =
+                    false
+                assert.strictEqual(
+                    fixture.componentInstance.model._attachments.name.state
+                        .errors,
+                    null)
+                await fixture.componentInstance.remove()
+                assert.strictEqual(
+                    fixture.componentInstance.model._attachments.name.state
+                        .errors.required,
+                    true)
+                fixture.componentInstance.synchronizeImmediately = true
+                fixture.componentInstance.model = {
+                    _id: 'id',
+                    _attachments: {name: {
+                        nullable: true,
+                        value: {
+                            content_type: 'text/plain',
+                            digest: 'hash',
+                            name: 'name'
+                        }
+                    }},
+                    _rev: '1-a',
+                    '-type': 'Test',
+                    name: 'name'
+                }
+                fixture.componentInstance.ngOnInit()
+                fixture.componentInstance.ngAfterViewInit()
+                await fixture.componentInstance.remove()
+                assert.ok(
+                    fixture.componentInstance.model._attachments.name.state
+                        .errors.database)
                 done()
             })
             // / region pagination
