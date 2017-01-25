@@ -868,13 +868,14 @@ registerAngularTest(function(
                 fixture.componentInstance.showValidationErrorMessages = true
                 fixture.componentInstance.model = {
                     _id: 'id',
-                    _attachments: {
-                        value: {}
-                    },
+                    _attachments: {name: {
+                        value: {digest: 'hash', name: 'name'}
+                    }},
                     name: 'name'
                 }
                 fixture.detectChanges()
                 await fixture.whenStable()
+                console.log(fixture.componentInstance.file)
                 assert.strictEqual('TODO', 'TODO')
                 done()
             })

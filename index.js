@@ -20,6 +20,7 @@
 // region imports
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
+    'databaseWebNodePlugin'
 import {
     /* AfterViewInit,*/ Component, ElementRef, EventEmitter, Injectable,
     Injector, Input, NgModule, /* OnInit,*/ Output, Pipe, PipeTransform,
@@ -1624,7 +1625,8 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     static videoMimeTypeRegularExpression:RegExp = new RegExp(
         '^video/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|' +
         '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
-        '(?:application/(?:x-)?shockwave-flash)$')
+    _configuration:PlainObject
+    _configuration:DatabaseConfiguration
     _data:GenericDataService
     _domSanitizer:DomSanitizer
     _extendObject:Function
@@ -1658,8 +1660,10 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         data:GenericDataService, domSanitizer:DomSanitizer,
         extendObject:GenericExtendObjectPipe,
         getFilenameByPrefix:GenericGetFilenameByPrefixPipe,
+        initialData:GenericInitialDataService,
         representObject:GenericRepresentObjectPipe
     ):void {
+        this._configuration = initialData.configuration
         this._data = data
         this._domSanitizer = domSanitizer
         this._extendObject = extendObject.transform.bind(extendObject)
@@ -1687,11 +1691,13 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
             this.model._attachments[this.internalName].state.errors = {
                 required: true}
         if (this.file) {
+            this.file.hash = `#${this.file.digest}`
             this.file.source =
                 this._domSanitizer.bypassSecurityTrustResourceUrl(
-                    'http://127.0.0.1:5984/bpvWebNodePlugin/' +
-                    this.model._id + '/' + this.file.name + this.file.hash)
-            this.file.hash = `#${this.file.digest}`
+                    `http://${this._configuration.database['httpd/host']}:` +
+                    this._configuration.database.port +
+                    `/${this._configuration.name}/${this.model._id}/` +
+                    `${this.file.name}${this.file.hash}`)
         }
         this.determinePresentationType()
         this.fileChange.emit(this.file)
