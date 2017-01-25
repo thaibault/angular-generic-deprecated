@@ -612,9 +612,9 @@ export class GenericDataService {
         'get', 'getAttachment', 'getIndexes', 'info', 'post', 'put',
         'putAttachment', 'query', 'remove', 'removeAttachment', 'sync']
     connection:PouchDB
+    configuration:PlainObject
     database:PouchDB
     extendObject:Function
-    initialData:GenericInitialDataService
     middlewares:{
         pre:{[key:string]:Array<Function>};
         post:{[key:string]:Array<Function>};
@@ -640,12 +640,9 @@ export class GenericDataService {
         this.database = PouchDB.plugin(PouchDBFindPlugin)
                                .plugin(PouchDBValidationPlugin)
         this.extendObject = extendObject.transform.bind(extendObject)
-        this.initialData = initialData
+        this.configuration = initialData.configuration
         this.stringFormat = stringFormat.transform.bind(stringFormat)
-        for (
-            const plugin:Object of
-            initialData.configuration.database.plugins || []
-        )
+        for (const plugin:Object of this.configuration.database.plugins || [])
             this.database = this.database.plugin(plugin)
         this.initialize()
     }
@@ -655,16 +652,16 @@ export class GenericDataService {
      */
     initialize():void {
         const type:string = (
-            this.initialData.configuration.database.local
-        ) ? 'local' : this.initialData.configuration.database.url
+            this.configuration.database.local
+        ) ? 'local' : this.configuration.database.url
         this.connection = new this.database(this.stringFormat(
             type, ''
         ) + (/^[a-z]+:\/\/.+$/g.test(
             type
-        ) ? `/${this.initialData.configuration.name || 'generic'}` : ''),
+        ) ? `/${this.configuration.name || 'generic'}` : ''),
         this.extendObject(true, {
             skip_setup: true
-        }, this.initialData.configuration.database.options || {}))
+        }, this.configuration.database.options || {}))
         for (const name:string in this.connection)
             if (this.constructor.wrappableMethodNames.includes(
                 name
@@ -695,12 +692,12 @@ export class GenericDataService {
                 }
             }
         this.connection.installValidationMethods()
-        if (this.initialData.configuration.database.local)
+        if (this.configuration.database.local)
             this.synchronisation = PouchDB.sync(this.stringFormat(
-                this.initialData.configuration.database.url,
-                `${this.initialData.configuration.database.user.name}:` +
-                `${this.initialData.configuration.database.user.password}@`
-            ) + `/${this.initialData.configuration.name}`, 'local', {
+                this.configuration.database.url,
+                `${this.configuration.database.user.name}:` +
+                `${this.configuration.database.user.password}@`
+            ) + `/${this.configuration.name}`, 'local', {
                 live: true, retry: true
             })
             .on('change', (info:Object):void => console.info('change', info))
@@ -1625,8 +1622,8 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     static videoMimeTypeRegularExpression:RegExp = new RegExp(
         '^video/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|' +
         '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
+        '(?:application/(?:x-)?shockwave-flash)$')
     _configuration:PlainObject
-    _configuration:DatabaseConfiguration
     _data:GenericDataService
     _domSanitizer:DomSanitizer
     _extendObject:Function
@@ -1694,10 +1691,9 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
             this.file.hash = `#${this.file.digest}`
             this.file.source =
                 this._domSanitizer.bypassSecurityTrustResourceUrl(
-                    `http://${this._configuration.database['httpd/host']}:` +
-                    this._configuration.database.port +
-                    `/${this._configuration.name}/${this.model._id}/` +
-                    `${this.file.name}${this.file.hash}`)
+                    this._configuration.database.url +
+                    `/${this._configuration.name || 'generic'}/` +
+                    `${this.model._id}/${this.file.name}${this.file.hash}`)
         }
         this.determinePresentationType()
         this.fileChange.emit(this.file)
@@ -1709,6 +1705,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     ngAfterViewInit():void {
         this.input.nativeElement.addEventListener('change', async (
         ):Promise<void> => {
+            console.log('A')
             if (this.input.nativeElement.files.length < 1)
                 return
             this.model._attachments[this.internalName].state = {}
@@ -1809,8 +1806,9 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                 this.file.hash = `#${result.rev}`
                 this.file.source =
                     this._domSanitizer.bypassSecurityTrustResourceUrl(
-                        'http://127.0.0.1:5984/bpvWebNodePlugin/' +
-                        this.model._id + '/' + this.file.name + this.file.hash)
+                        this._configuration.database.url +
+                        `/${this._configuration.name}/${this.model._id}/` +
+                        `${this.file.name}${this.file.hash}`)
                 this.determinePresentationType()
                 this.fileChange.emit(this.file)
                 this.modelChange.emit(this.model)
@@ -1854,6 +1852,8 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                 this.file.content_type)
         )
             this.file.type = 'video'
+        else
+            this.file.type = 'binary'
     }
     /**
      * Removes current file.

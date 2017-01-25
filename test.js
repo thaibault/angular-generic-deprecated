@@ -869,14 +869,29 @@ registerAngularTest(function(
                 fixture.componentInstance.model = {
                     _id: 'id',
                     _attachments: {name: {
-                        value: {digest: 'hash', name: 'name'}
+                        value: {
+                            content_type: 'text/plain',
+                            digest: 'hash',
+                            name: 'name'
+                        }
                     }},
                     name: 'name'
                 }
                 fixture.detectChanges()
                 await fixture.whenStable()
-                console.log(fixture.componentInstance.file)
-                assert.strictEqual('TODO', 'TODO')
+                assert.strictEqual(fixture.componentInstance.file.type, 'text')
+                assert.strictEqual(
+                    fixture.componentInstance.file.hash, '#hash')
+                assert.strictEqual(
+                    fixture.componentInstance.internalName, 'name')
+                assert.deepEqual(
+                    fixture.componentInstance.model._attachments.name.state,
+                    {})
+                fixture.debugElement.nativeElement.dispatchEvent(
+                    getNativeEvent('change'))
+                fixture.detectChanges()
+                await fixture.whenStable()
+
                 done()
             })
             // / region pagination
