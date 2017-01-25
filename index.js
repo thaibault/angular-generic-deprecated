@@ -20,7 +20,6 @@
 // region imports
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
-    'databaseWebNodePlugin'
 import {
     /* AfterViewInit,*/ Component, ElementRef, EventEmitter, Injectable,
     Injector, Input, NgModule, /* OnInit,*/ Output, Pipe, PipeTransform,
@@ -1336,6 +1335,7 @@ export class AbstractItemsComponent {
             this.items.total / this.limit)))
         return this.page !== oldPage || this.limit !== oldLimit
     }
+    /* eslint-disable no-unused-vars */
     /**
      * Deletes item which has same id provided by the id property through given
      * event object.
@@ -1345,6 +1345,7 @@ export class AbstractItemsComponent {
     delete(event:Object):void {
         this.update(true)
     }
+    /* eslint-enable no-unused-vars */
     /**
      * Removes all items currently selected and clear current selection.
      * @returns Nothing.
@@ -1649,6 +1650,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
      * @param extendObject - Injected extend object pipe instance.
      * @param getFilenameByPrefix - Saves the file name by prefix retriever
      * pipe instance.
+     * @param initialData - Injected initial data service instance.
      * @param representObject - Saves the object to string representation pipe
      * instance.
      * @returns Nothing.

@@ -32,8 +32,7 @@ registerAngularTest(function(
     component:Function;
 } {
     // region imports
-    const {Component, DebugElement, Injectable, NgModule} = require(
-        '@angular/core')
+    const {Component, Injectable, NgModule} = require('@angular/core')
     const {ComponentFixture} = require('@angular/core/testing')
     const {By} = require('@angular/platform-browser')
     const {ActivatedRoute, Router} = require('@angular/router')
@@ -48,11 +47,22 @@ registerAngularTest(function(
         AbstractItemsComponent,
         GenericToolsService
     } = index
+    // IgnoreTypeCheck
     @Component({
         selector: 'items',
         template: '<div></div>'
     })
+    /**
+     * Mockup component to test their abstract ancestor.
+     */
     class ItemsComponent extends AbstractItemsComponent {
+        /**
+         * Sets service instances as instance property values and test route
+         * parameter.
+         * @param route - Current route state.
+         * @param router - Application wide router instance.
+         * @param tools - Application wide tools service instance.
+         */
         constructor(
             route:ActivatedRoute, router:Router, tools:GenericToolsService
         ):void {
@@ -741,7 +751,7 @@ registerAngularTest(function(
         component: function(TestBed:Object, roundType:string):void {
             // region prepare components
             const {
-                GenericExtendObjectPipe,
+                AbstractInputComponent,
                 GenericInputComponent,
                 GenericTextareaComponent,
                 GenericFileInputComponent,
@@ -856,7 +866,7 @@ registerAngularTest(function(
                             /\s+/g, ' '
                         ), 'Bitte füllen Sie das Feld "test" aus.')
                         done()
-                })
+                    })
             // endregion
             this.test(`GenericFileInputComponent (${roundType})`, async (
                 assert:Object
@@ -956,10 +966,11 @@ registerAngularTest(function(
                     fixture.componentInstance.pagesRange, [1, 2, 3, 4, 5])
                 assert.strictEqual(fixture.componentInstance.previousPage, 1)
                 assert.strictEqual(fixture.componentInstance.nextPage, 2)
-                assert.deepEqual(fixture.debugElement.query(By.css(
-                    '.current'
-                )).nativeElement.className.split(' ').sort(),
-                ['current', 'even', 'page-1', 'previous'])
+                assert.deepEqual(
+                    fixture.debugElement.query(By.css(
+                        '.current'
+                    )).nativeElement.className.split(' ').sort(),
+                    ['current', 'even', 'page-1', 'previous'])
                 fixture.componentInstance.change(dummyEvent, 3)
                 assert.strictEqual(fixture.componentInstance.previousPage, 2)
                 assert.strictEqual(fixture.componentInstance.nextPage, 4)
