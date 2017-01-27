@@ -32,7 +32,7 @@
     "buildDLL": "webOptimizer buildDLL",
     "clear": "webOptimizer clear",
     "document": "webOptimizer document",
-    "export": "webOptimizer build '{development:{tool:false},module:{preprocessor:{javaScript:{configuration:{plugins:{__remove__:\"transform-runtime\"}}}}}}' && npm run buildTest",
+    "export": "webOptimizer build '{development:{tool:false},module:{preprocessor:{javaScript:{options:{plugins:{__remove__:\"transform-runtime\"}}}}}}' && npm run buildTest",
     "lint": "webOptimizer typeCheck; webOptimizer lint",
     "prepublish": "npm run build",
     "serve": "webOptimizer serve",
@@ -114,7 +114,7 @@
           "exclude": "filePath.endsWith('.component.pug')"
         },
         "javaScript": {
-          "configuration": {
+          "options": {
             "plugins": {
               "__prepend__": [
                 "angular2-annotations",
