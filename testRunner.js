@@ -32,6 +32,8 @@ declare var TARGET_TECHNOLOGY:string
  * @param template - Template to use as root application component to
  * bootstrap.
  * @param roundTypes - Test types to run.
+ * @param productionMode - Indicates weather amgular's production mode should
+ * be activated in none debug mode.
  * @param additionalParameter - All additional parameter will be forwarded to
  * the underlying clientnode test environment.
  * @returns Whatever the underlying clientnode test runner returns.
@@ -39,7 +41,7 @@ declare var TARGET_TECHNOLOGY:string
 export default function(
     callback:Function|{bootstrap:Function;component:Function},
     template:string = '<div></div>', roundTypes:Array<string> = ['full'],
-    ...additionalParameter:Array<any>
+    productionMode:boolean = false, ...additionalParameter:Array<any>
 ):any {
     return registerTest(async function(
         roundType:string, targetTechnology:?string, $:any,
@@ -95,7 +97,7 @@ export default function(
         if (!Array.isArray(result))
             result = [result]
         // / region bootstrap test application
-        if (!DEBUG)
+        if (!DEBUG && productionMode)
             enableProdMode()
         let platform:Object
         let module:Object
