@@ -652,10 +652,8 @@ export class GenericDataService {
     initialize():void {
         const type:string = (
             this.configuration.database.local
-        ) ? 'local' : this.configuration.database.url
-        this.connection = new this.database(this.stringFormat(
-            type, ''
-        ) + (/^[a-z]+:\/\/.+$/g.test(
+        ) ? 'local' : this.stringFormat(this.configuration.database.url, '')
+        this.connection = new this.database(type + (/^[a-z]+:\/\/.+$/g.test(
             type
         ) ? `/${this.configuration.name || 'generic'}` : ''),
         this.extendObject(true, {
@@ -693,9 +691,7 @@ export class GenericDataService {
         this.connection.installValidationMethods()
         if (this.configuration.database.local)
             this.synchronisation = PouchDB.sync(this.stringFormat(
-                this.configuration.database.url,
-                `${this.configuration.database.user.name}:` +
-                `${this.configuration.database.user.password}@`
+                this.configuration.database.url, ''
             ) + `/${this.configuration.name}`, 'local', {
                 live: true, retry: true
             })
@@ -1594,6 +1590,8 @@ export class GenericTextareaComponent extends AbstractInputComponent {
  * instance's transform method.
  * @property _representObject - Holds the represent object pipe instance's
  * transform method.
+ * @property _stringFormat - Saves the string formatting pips transformation
+ * function.
  * @property _prefixMatch - Holds the prefix match pipe instance's transform
  * method.
  * @property delete - Event emitter which triggers its handler when current
@@ -1653,6 +1651,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
      * @param initialData - Injected initial data service instance.
      * @param representObject - Saves the object to string representation pipe
      * instance.
+     * @param stringFormat - Saves the string formation pipe instance.
      * @returns Nothing.
      */
     constructor(
@@ -1660,7 +1659,8 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         extendObject:GenericExtendObjectPipe,
         getFilenameByPrefix:GenericGetFilenameByPrefixPipe,
         initialData:GenericInitialDataService,
-        representObject:GenericRepresentObjectPipe
+        representObject:GenericRepresentObjectPipe,
+        stringFormat:GenericStringFormatPipe
     ):void {
         this._configuration = initialData.configuration
         this._data = data
@@ -1669,6 +1669,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         this._getFilenameByPrefix = getFilenameByPrefix.transform.bind(
             getFilenameByPrefix)
         this._representObject = representObject.transform.bind(representObject)
+        this._stringFormat = stringFormat.transform.bind(stringFormat)
     }
     /**
      * Initializes file upload handler.
@@ -1693,7 +1694,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
             this.file.hash = `#${this.file.digest}`
             this.file.source =
                 this._domSanitizer.bypassSecurityTrustResourceUrl(
-                    this._configuration.database.url +
+                    this._stringFormat(this._configuration.database.url, '') +
                     `/${this._configuration.name || 'generic'}/` +
                     `${this.model._id}/${this.file.name}${this.file.hash}`)
         }
@@ -1807,8 +1808,9 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                 this.file.hash = `#${result.rev}`
                 this.file.source =
                     this._domSanitizer.bypassSecurityTrustResourceUrl(
-                        this._configuration.database.url +
-                        `/${this._configuration.name}/${this.model._id}/` +
+                        this._stringFormat(
+                            this._configuration.database.url, ''
+                        ) + `/${this._configuration.name}/${this.model._id}/` +
                         `${this.file.name}${this.file.hash}`)
                 this.determinePresentationType()
                 this.fileChange.emit(this.file)
