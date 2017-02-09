@@ -1835,26 +1835,21 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
      * @returns Nothing.
      */
     determinePresentationType():void {
-        if (
-            this.file && this.file.content_type &&
-            this.constructor.textMimeTypeRegularExpression.test(
-                this.file.content_type)
-        )
-            this.file.type = 'text'
-        else if (
-            this.file && this.file.content_type &&
-            this.constructor.imageMimeTypeRegularExpression.test(
-                this.file.content_type)
-        )
-            this.file.type = 'image'
-        else if (
-            this.file && this.file.content_type &&
-            this.constructor.videoMimeTypeRegularExpression.test(
-                this.file.content_type)
-        )
-            this.file.type = 'video'
-        else
-            this.file.type = 'binary'
+        if (this.file && this.file.content_type)
+            if (this.constructor.textMimeTypeRegularExpression.test(
+                this.file.content_type
+            ))
+                this.file.type = 'text'
+            else if (this.constructor.imageMimeTypeRegularExpression.test(
+                this.file.content_type
+            ))
+                this.file.type = 'image'
+            else if (this.constructor.videoMimeTypeRegularExpression.test(
+                this.file.content_type
+            ))
+                this.file.type = 'video'
+            else
+                this.file.type = 'binary'
     }
     /**
      * Removes current file.
