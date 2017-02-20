@@ -861,7 +861,7 @@ registerAngularTest(function(
                         fixture.detectChanges()
                         await fixture.whenStable()
                         assert.strictEqual(fixture.debugElement.query(By.css(
-                            '[mdHint] span'
+                            'md-hint span'
                         )).nativeElement.textContent.trim().replace(
                             /\s+/g, ' '
                         ), 'Bitte füllen Sie das Feld "test" aus.')
