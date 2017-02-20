@@ -1405,11 +1405,11 @@ const propertyInputContent:string = `
     (change)="onChange(state)"
 `
 const mdInputContent:string = `
-    <span
-        md-suffix (click)="showDeclaration = !showDeclaration" title="info"
-        *ngIf="model.declaration"
-    >[i]</span>
     <md-hint align="start">
+        <span
+            mdSuffix (click)="showDeclaration = !showDeclaration" title="info"
+            *ngIf="model.declaration"
+        >[i]</span>
         <span *ngIf="showValidationErrorMessages">
             <span *ngIf="model.state.errors?.required">
                 Bitte füllen Sie das Feld "{{model.description || model.name}}"
@@ -1445,12 +1445,16 @@ const mdInputContent:string = `
 @Component({
     selector: 'generic-input',
     template: `
-        <md-input
-            [max]="model.type === 'number' ? model.maximum : null"
-            [min]="model.type === 'number' ? model.minimum : null"
-            [type]="type || model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
-            ${propertyInputContent}
-        >${mdInputContent}</md-input>`
+        <md-input-container>
+            <input
+                mdInput [max]="model.type === 'number' ? model.maximum : null"
+                [min]="model.type === 'number' ? model.minimum : null"
+                [type]="type || model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+                ${propertyInputContent}
+            >
+            ${mdInputContent}
+        </md-input-container>
+    `
 })
 /* eslint-enable max-len */
 /**
@@ -1474,7 +1478,11 @@ export class GenericInputComponent extends AbstractInputComponent {
 @Component({
     selector: 'generic-textarea',
     template: `
-        <md-textarea ${propertyInputContent}>${mdInputContent}</md-textarea>`
+        <md-input-container>
+            <textarea mdInput ${propertyInputContent}></textarea>
+            ${mdInputContent}
+        </md-input-container>
+    `
 })
 /**
  * A generic form textarea component with validation, labeling and info
