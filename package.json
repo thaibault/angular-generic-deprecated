@@ -111,7 +111,7 @@
       },
       "preprocessor": {
         "html": {
-          "exclude": "filePath.endsWith('.component.pug')"
+          "exclude": "filePath.endsWith('.component.html.ejs')"
         },
         "javaScript": {
           "options": {
