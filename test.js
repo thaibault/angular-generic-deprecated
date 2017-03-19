@@ -804,7 +804,7 @@ registerAngularTest(function(
             })
             // / region input/textarea
             for (const component:AbstractInputComponent of [
-                GenericInputComponent//, GenericTextareaComponent
+                GenericInputComponent// TODO , GenericTextareaComponent
             ])
                 this.test(
                     `AbstractInputComponent/${component.name} (${roundType})`,
