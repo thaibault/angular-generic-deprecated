@@ -140,7 +140,7 @@
         }
       },
       "skipParseRegularExpressions": {
-        "__evaluate__": "/(?:^|\\/)(?:(?:babel-polyfill\\/dist\\/polyfill)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb)|(?:pouchdb\\.find\\/dist\\/pouchdb\\.find)|(?:reflect-metadata\\/Reflect)|(?:rxjs\\/bundles\\/Rx)|(?:webpack\\/buildin\\/global)|(?:webpack\\/buildin\\/module)|(?:zone\\.js\\/dist\\/zone))(?:\\.min)?\\.js(?:\\?.+|$)/"
+        "__evaluate__": "/(?:^|\\/)(?:(?:babel-polyfill\\/dist\\/polyfill)|(?:hammerjs\\/hammer)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb)|(?:pouchdb\\.find\\/dist\\/pouchdb\\.find)|(?:reflect-metadata\\/Reflect)|(?:rxjs\\/bundles\\/Rx)|(?:webpack\\/buildin\\/global)|(?:webpack\\/buildin\\/module)|(?:zone\\.js\\/dist\\/zone))(?:\\.min)?\\.js(?:\\?.+|$)/"
       }
     }
   }
