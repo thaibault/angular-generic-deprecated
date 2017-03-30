@@ -1449,7 +1449,7 @@ const mdInputContent:string = `
             <input
                 mdInput [max]="model.type === 'number' ? model.maximum : null"
                 [min]="model.type === 'number' ? model.minimum : null"
-                [type]="type || model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+                [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
                 ${propertyInputContent}
             >
             ${mdInputContent}
@@ -1479,7 +1479,7 @@ export class GenericInputComponent extends AbstractInputComponent {
     selector: 'generic-textarea',
     template: `
         <md-input-container>
-            <textarea mdInput ${propertyInputContent}></textarea>
+            <textarea mdInput [rows]="rows" ${propertyInputContent}></textarea>
             ${mdInputContent}
         </md-input-container>
     `
@@ -1489,6 +1489,7 @@ export class GenericInputComponent extends AbstractInputComponent {
  * description support.
  */
 export class GenericTextareaComponent extends AbstractInputComponent {
+    @Input() rows:?string
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.

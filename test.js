@@ -764,107 +764,135 @@ registerAngularTest(function(
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
-                const fixture:ComponentFixture<ItemsComponent> =
-                    TestBed.createComponent(ItemsComponent)
-                fixture.detectChanges()
-                await fixture.whenStable()
-                assert.deepEqual(fixture.componentInstance.items, [])
-                assert.strictEqual(fixture.componentInstance.items.length, 0)
-                assert.strictEqual(fixture.componentInstance.items.total, 0)
-                fixture.componentInstance._route.testData = {items: [{_id: 2}]}
-                fixture.detectChanges()
-                await fixture.whenStable()
-                assert.deepEqual(fixture.componentInstance.items, [{_id: 2}])
-                assert.strictEqual(fixture.componentInstance.items.length, 1)
-                assert.strictEqual(fixture.componentInstance.items.total, 1)
-                assert.strictEqual(fixture.componentInstance.page, 1)
-                assert.strictEqual(fixture.componentInstance.limit, 10)
-                assert.strictEqual(
-                    fixture.componentInstance.regularExpression, false)
-                assert.strictEqual(fixture.componentInstance.searchTerm, '')
-                fixture.componentInstance._route.testParameter = {
-                    limit: 2,
-                    page: 2,
-                    searchTerm: 'regex-test'
+                try {
+                    const fixture:ComponentFixture<ItemsComponent> =
+                        TestBed.createComponent(ItemsComponent)
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.deepEqual(fixture.componentInstance.items, [])
+                    assert.strictEqual(
+                        fixture.componentInstance.items.length, 0)
+                    assert.strictEqual(
+                        fixture.componentInstance.items.total, 0)
+                    fixture.componentInstance._route.testData = {items: [{
+                        _id: 2}]}
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.deepEqual(fixture.componentInstance.items, [{
+                        _id: 2}])
+                    assert.strictEqual(
+                        fixture.componentInstance.items.length, 1)
+                    assert.strictEqual(
+                        fixture.componentInstance.items.total, 1)
+                    assert.strictEqual(fixture.componentInstance.page, 1)
+                    assert.strictEqual(fixture.componentInstance.limit, 10)
+                    assert.strictEqual(
+                        fixture.componentInstance.regularExpression, false)
+                    assert.strictEqual(
+                        fixture.componentInstance.searchTerm, '')
+                    fixture.componentInstance._route.testParameter = {
+                        limit: 2,
+                        page: 2,
+                        searchTerm: 'regex-test'
+                    }
+                    assert.strictEqual(fixture.componentInstance.page, 2)
+                    assert.strictEqual(fixture.componentInstance.limit, 2)
+                    assert.strictEqual(
+                        fixture.componentInstance.regularExpression, true)
+                    assert.strictEqual(
+                        fixture.componentInstance.searchTerm, 'test')
+                    fixture.componentInstance.applyPageConstraints()
+                    fixture.componentInstance.delete({id: 2})
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.strictEqual(
+                        fixture.componentInstance._router.url,
+                        'admin/items/_id-asc/0/2/regex-test')
+                } catch (error) {
+                    console.error(error)
                 }
-                assert.strictEqual(fixture.componentInstance.page, 2)
-                assert.strictEqual(fixture.componentInstance.limit, 2)
-                assert.strictEqual(
-                    fixture.componentInstance.regularExpression, true)
-                assert.strictEqual(
-                    fixture.componentInstance.searchTerm, 'test')
-                fixture.componentInstance.applyPageConstraints()
-                fixture.componentInstance.delete({id: 2})
-                fixture.detectChanges()
-                await fixture.whenStable()
-                assert.strictEqual(
-                    fixture.componentInstance._router.url,
-                    'admin/items/_id-asc/0/2/regex-test')
                 done()
             })
             // / region input/textarea
             for (const component:AbstractInputComponent of [
-                GenericInputComponent// TODO , GenericTextareaComponent
+                GenericInputComponent, GenericTextareaComponent
             ])
                 this.test(
                     `AbstractInputComponent/${component.name} (${roundType})`,
                     async (assert:Object):Promise<void> => {
                         const done:Function = assert.async()
-                        const fixture:ComponentFixture<AbstractInputComponent> =
-                            TestBed.createComponent(component)
-                        fixture.componentInstance.model = {
-                            disabled: true, name: 'test'
+                        try {
+                            const fixture:
+                                ComponentFixture<AbstractInputComponent> =
+                                TestBed.createComponent(component)
+                            fixture.componentInstance.model = {
+                                disabled: true, name: 'test'
+                            }
+                            fixture.componentInstance.ngOnInit()
+                            assert.strictEqual(
+                                fixture.componentInstance.model.disabled, true)
+                            assert.ok(
+                                fixture.componentInstance.model.hasOwnProperty(
+                                    'type'
+                                ), true)
+                            fixture.detectChanges()
+                            await fixture.whenStable()
+                            assert.strictEqual(fixture.debugElement.query(
+                                By.css('label')
+                            ).nativeElement.textContent.trim(), 'test')
+                            const inputDomNode:DomNode =
+                                fixture.debugElement.query(By.css(
+                                    component.name.replace(
+                                        /^Generic(.+)Component$/, '$1'
+                                    ).toLowerCase()
+                                )).nativeElement
+                            inputDomNode.value = 'aa'
+                            inputDomNode.dispatchEvent(getNativeEvent('input'))
+                            fixture.detectChanges()
+                            await fixture.whenStable()
+                            assert.strictEqual(
+                                fixture.componentInstance.model.value, 'aa')
+                            fixture.componentInstance.model.maximum = 2
+                            fixture.detectChanges()
+                            await fixture.whenStable()
+                            assert.strictEqual(
+                                inputDomNode.attributes.maxlength.value, '2')
+                            let eventGivenModel:PlainObject
+                            fixture.componentInstance.modelChange.subscribe((
+                                model:PlainObject
+                            ):void => {
+                                eventGivenModel = model
+                            })
+                            const state:PlainObject = {errors: {
+                                required: true
+                            }}
+                            fixture.componentInstance.onChange(state)
+                            assert.deepEqual(
+                                fixture.componentInstance.model.state, state)
+                            assert.deepEqual(
+                                eventGivenModel,
+                                fixture.componentInstance.model)
+                            fixture.componentInstance
+                                .showValidationErrorMessages = true
+                            fixture.detectChanges()
+                            await fixture.whenStable()
+                            assert.strictEqual(fixture.debugElement.query(
+                                By.css('md-hint span')
+                            ).nativeElement.textContent.trim().replace(
+                                /\s+/g, ' '
+                            ), 'Bitte füllen Sie das Feld "test" aus.')
+                            if (component.name === 'GenericInputComponent') {
+                                fixture.componentInstance.type = 'password'
+                                fixture.detectChanges()
+                                await fixture.whenStable()
+                                assert.strictEqual(fixture.debugElement.query(
+                                    By.css('input')
+                                ).nativeElement.attributes.type.value,
+                                'password')
+                            }
+                        } catch (error) {
+                            console.error(error)
                         }
-                        fixture.componentInstance.ngOnInit()
-                        assert.strictEqual(
-                            fixture.componentInstance.model.disabled, true)
-                        assert.ok(
-                            fixture.componentInstance.model.hasOwnProperty(
-                                'type'
-                            ), true)
-                        fixture.detectChanges()
-                        await fixture.whenStable()
-                        assert.strictEqual(fixture.debugElement.query(By.css(
-                            'label'
-                        )).nativeElement.textContent.trim(), 'test')
-                        const inputDomNode:DomNode =
-                            fixture.debugElement.query(By.css(
-                                component.name.replace(
-                                    /^Generic(.+)Component$/, '$1'
-                                ).toLowerCase()
-                            )).nativeElement
-                        inputDomNode.value = 'aa'
-                        inputDomNode.dispatchEvent(getNativeEvent('input'))
-                        fixture.detectChanges()
-                        await fixture.whenStable()
-                        assert.strictEqual(
-                            fixture.componentInstance.model.value, 'aa')
-                        fixture.componentInstance.model.maximum = 2
-                        fixture.detectChanges()
-                        await fixture.whenStable()
-                        assert.strictEqual(
-                            inputDomNode.attributes.maxlength.value, '2')
-                        let eventGivenModel:PlainObject
-                        fixture.componentInstance.modelChange.subscribe((
-                            model:PlainObject
-                        ):void => {
-                            eventGivenModel = model
-                        })
-                        const state:PlainObject = {errors: {required: true}}
-                        fixture.componentInstance.onChange(state)
-                        assert.deepEqual(
-                            fixture.componentInstance.model.state, state)
-                        assert.deepEqual(
-                            eventGivenModel, fixture.componentInstance.model)
-                        fixture.componentInstance.showValidationErrorMessages =
-                            true
-                        fixture.detectChanges()
-                        await fixture.whenStable()
-                        assert.strictEqual(fixture.debugElement.query(By.css(
-                            'md-hint span'
-                        )).nativeElement.textContent.trim().replace(
-                            /\s+/g, ' '
-                        ), 'Bitte füllen Sie das Feld "test" aus.')
                         done()
                     })
             // endregion
@@ -872,135 +900,150 @@ registerAngularTest(function(
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
-                const fixture:ComponentFixture<GenericFileInputComponent> =
-                    TestBed.createComponent(GenericFileInputComponent)
-                fixture.componentInstance.mapNameToField = ['_id', 'name']
-                fixture.componentInstance.showValidationErrorMessages = true
-                fixture.componentInstance.model = {
-                    _id: 'id',
-                    _attachments: {name: {
-                        nullable: true,
-                        value: {
-                            content_type: 'text/plain',
-                            digest: 'hash',
-                            name: 'name'
-                        }
-                    }},
-                    name: 'name'
+                try {
+                    const fixture:ComponentFixture<GenericFileInputComponent> =
+                        TestBed.createComponent(GenericFileInputComponent)
+                    fixture.componentInstance.mapNameToField = ['_id', 'name']
+                    fixture.componentInstance.showValidationErrorMessages =
+                        true
+                    fixture.componentInstance.model = {
+                        _id: 'id',
+                        _attachments: {name: {
+                            nullable: true,
+                            value: {
+                                content_type: 'text/plain',
+                                digest: 'hash',
+                                name: 'name'
+                            }
+                        }},
+                        name: 'name'
+                    }
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.strictEqual(
+                        fixture.componentInstance.file.type, 'text')
+                    assert.strictEqual(
+                        fixture.componentInstance.file.hash, '#hash')
+                    assert.strictEqual(
+                        fixture.componentInstance.internalName, 'name')
+                    assert.deepEqual(
+                        fixture.componentInstance.model._attachments.name
+                            .state,
+                        {})
+                    fixture.componentInstance.input.nativeElement
+                        .dispatchEvent(getNativeEvent('change'))
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    fixture.componentInstance.file.content_type = 'image/png'
+                    fixture.componentInstance.determinePresentationType()
+                    assert.strictEqual(
+                        fixture.componentInstance.file.type, 'image')
+                    await fixture.componentInstance.remove()
+                    assert.deepEqual(
+                        fixture.componentInstance.model._attachments.name
+                            .value,
+                        null)
+                    fixture.componentInstance.model._attachments.name
+                        .nullable = false
+                    assert.strictEqual(
+                        fixture.componentInstance.model._attachments.name
+                            .state.errors,
+                        null)
+                    await fixture.componentInstance.remove()
+                    assert.strictEqual(
+                        fixture.componentInstance.model._attachments.name.state
+                            .errors.required,
+                        true)
+                    fixture.componentInstance.synchronizeImmediately = true
+                    fixture.componentInstance.model = {
+                        _id: 'id',
+                        _attachments: {name: {
+                            nullable: true,
+                            value: {
+                                content_type: 'text/plain',
+                                digest: 'hash',
+                                name: 'name'
+                            }
+                        }},
+                        _rev: '1-a',
+                        '-type': 'Test',
+                        name: 'name'
+                    }
+                    fixture.componentInstance.ngOnInit()
+                    fixture.componentInstance.ngAfterViewInit()
+                    await fixture.componentInstance.remove()
+                    assert.ok(
+                        fixture.componentInstance.model._attachments.name.state
+                            .errors.database)
+                } catch (error) {
+                    console.error(error)
                 }
-                fixture.detectChanges()
-                await fixture.whenStable()
-                assert.strictEqual(fixture.componentInstance.file.type, 'text')
-                assert.strictEqual(
-                    fixture.componentInstance.file.hash, '#hash')
-                assert.strictEqual(
-                    fixture.componentInstance.internalName, 'name')
-                assert.deepEqual(
-                    fixture.componentInstance.model._attachments.name.state,
-                    {})
-                fixture.componentInstance.input.nativeElement.dispatchEvent(
-                    getNativeEvent('change'))
-                fixture.detectChanges()
-                await fixture.whenStable()
-                fixture.componentInstance.file.content_type = 'image/png'
-                fixture.componentInstance.determinePresentationType()
-                assert.strictEqual(
-                    fixture.componentInstance.file.type, 'image')
-                await fixture.componentInstance.remove()
-                assert.deepEqual(
-                    fixture.componentInstance.model._attachments.name.value,
-                    null)
-                fixture.componentInstance.model._attachments.name.nullable =
-                    false
-                assert.strictEqual(
-                    fixture.componentInstance.model._attachments.name.state
-                        .errors,
-                    null)
-                await fixture.componentInstance.remove()
-                assert.strictEqual(
-                    fixture.componentInstance.model._attachments.name.state
-                        .errors.required,
-                    true)
-                fixture.componentInstance.synchronizeImmediately = true
-                fixture.componentInstance.model = {
-                    _id: 'id',
-                    _attachments: {name: {
-                        nullable: true,
-                        value: {
-                            content_type: 'text/plain',
-                            digest: 'hash',
-                            name: 'name'
-                        }
-                    }},
-                    _rev: '1-a',
-                    '-type': 'Test',
-                    name: 'name'
-                }
-                fixture.componentInstance.ngOnInit()
-                fixture.componentInstance.ngAfterViewInit()
-                await fixture.componentInstance.remove()
-                assert.ok(
-                    fixture.componentInstance.model._attachments.name.state
-                        .errors.database)
                 done()
             })
-            // / region pagination
+            // /  region pagination
             this.test(`GenericPaginationComponent (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
-                const fixture:ComponentFixture<GenericPaginationComponent> =
-                    TestBed.createComponent(GenericPaginationComponent)
-                fixture.componentInstance.total = 10
-                fixture.detectChanges()
-                await fixture.whenStable()
-                assert.strictEqual(
-                    fixture.debugElement.query(By.css('*')), null)
-                fixture.componentInstance.itemsPerPage = 2
-                fixture.detectChanges()
-                await fixture.whenStable()
-                assert.strictEqual(
-                    fixture.debugElement.queryAll(By.css('ul li a')).length, 7)
-                assert.strictEqual(fixture.componentInstance.lastPage, 5)
-                assert.deepEqual(
-                    fixture.componentInstance.pagesRange, [1, 2, 3, 4, 5])
-                assert.strictEqual(fixture.componentInstance.previousPage, 1)
-                assert.strictEqual(fixture.componentInstance.nextPage, 2)
-                assert.deepEqual(
-                    fixture.debugElement.query(By.css(
+                try {
+                    const fixture:ComponentFixture<GenericPaginationComponent> =
+                        TestBed.createComponent(GenericPaginationComponent)
+                    fixture.componentInstance.total = 10
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.strictEqual(
+                        fixture.debugElement.query(By.css('*')), null)
+                    fixture.componentInstance.itemsPerPage = 2
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.strictEqual(fixture.debugElement.queryAll(By.css(
+                        'ul li a'
+                    )).length, 7)
+                    assert.strictEqual(fixture.componentInstance.lastPage, 5)
+                    assert.deepEqual(
+                        fixture.componentInstance.pagesRange, [1, 2, 3, 4, 5])
+                    assert.strictEqual(
+                        fixture.componentInstance.previousPage, 1)
+                    assert.strictEqual(fixture.componentInstance.nextPage, 2)
+                    assert.deepEqual(
+                        fixture.debugElement.query(By.css(
+                            '.current'
+                        )).nativeElement.className.split(' ').sort(),
+                        ['current', 'even', 'page-1', 'previous'])
+                    fixture.componentInstance.change(dummyEvent, 3)
+                    assert.strictEqual(
+                        fixture.componentInstance.previousPage, 2)
+                    assert.strictEqual(fixture.componentInstance.nextPage, 4)
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.deepEqual(fixture.debugElement.query(By.css(
                         '.current'
                     )).nativeElement.className.split(' ').sort(),
-                    ['current', 'even', 'page-1', 'previous'])
-                fixture.componentInstance.change(dummyEvent, 3)
-                assert.strictEqual(fixture.componentInstance.previousPage, 2)
-                assert.strictEqual(fixture.componentInstance.nextPage, 4)
-                fixture.detectChanges()
-                await fixture.whenStable()
-                assert.deepEqual(fixture.debugElement.query(By.css(
-                    '.current'
-                )).nativeElement.className.split(' ').sort(),
-                ['current', 'even', 'page-3'])
-                assert.deepEqual(fixture.debugElement.query(By.css(
-                    '.previous'
-                )).nativeElement.className.split(' ').sort(),
-                ['even-page', 'page-2', 'previous'])
-                assert.deepEqual(fixture.debugElement.query(By.css(
-                    '.next'
-                )).nativeElement.className.split(' ').sort(),
-                ['even-page', 'next', 'page-4'])
-                assert.deepEqual(fixture.debugElement.query(By.css(
-                    '.last'
-                )).nativeElement.className.split(' ').sort(),
-                ['even', 'last', 'page-5'])
-                fixture.debugElement.query(By.css(
-                    '.next'
-                )).triggerEventHandler('click', dummyEvent)
-                fixture.detectChanges()
-                await fixture.whenStable()
-                assert.deepEqual(fixture.debugElement.query(By.css(
-                    '.current'
-                )).nativeElement.className.split(' ').sort(),
-                ['current', 'even-page', 'page-4'])
+                    ['current', 'even', 'page-3'])
+                    assert.deepEqual(fixture.debugElement.query(By.css(
+                        '.previous'
+                    )).nativeElement.className.split(' ').sort(),
+                    ['even-page', 'page-2', 'previous'])
+                    assert.deepEqual(fixture.debugElement.query(By.css(
+                        '.next'
+                    )).nativeElement.className.split(' ').sort(),
+                    ['even-page', 'next', 'page-4'])
+                    assert.deepEqual(fixture.debugElement.query(By.css(
+                        '.last'
+                    )).nativeElement.className.split(' ').sort(),
+                    ['even', 'last', 'page-5'])
+                    fixture.debugElement.query(By.css(
+                        '.next'
+                    )).triggerEventHandler('click', dummyEvent)
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.deepEqual(fixture.debugElement.query(By.css(
+                        '.current'
+                    )).nativeElement.className.split(' ').sort(),
+                    ['current', 'even-page', 'page-4'])
+                } catch (error) {
+                    console.error(error)
+                }
                 done()
             })
             // / endregion
