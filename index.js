@@ -466,6 +466,7 @@ export class GenericStringReplacePipe/* implements PipeTransform*/ {
 }
 // IgnoreTypeCheck
 @Pipe({name: 'genericStringShowIfPatternMatches'})
+/* eslint-disable brace-style */
 /**
  * Returns given string if it matches given pattern.
  */
@@ -492,6 +493,7 @@ export class GenericStringShowIfPatternMatchesPipe
         return indicator ? string : ''
     }
 }
+/* eslint-enable brace-style */
 // IgnoreTypeCheck
 @Pipe({name: 'genericStringStartsWith'})
 /**
@@ -571,6 +573,7 @@ const GenericStringFormatPipe:PipeTransform =
 // region services
 // IgnoreTypeCheck
 @Injectable()
+/* eslint-disable brace-style */
 /**
  * A generic guard which prevents from switching to route if its component's
  * "canDeactivate()" method returns "false", a promise or observable wrapping
@@ -589,6 +592,7 @@ export class GenericCanDeactivateRouteLeaveGuard
         return 'canDeactivate' in component ? component.canDeactivate() : true
     }
 }
+/* eslint-enable brace-style */
 // IgnoreTypeCheck
 @Injectable()
 /**
@@ -1637,6 +1641,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     _extendObject:Function
     _getFilenameByPrefix:Function
     _representObject:Function
+    _stringFormat:Function
     _prefixMatch:boolean = false
     @Output() delete:EventEmitter = new EventEmitter()
     file:any = null
