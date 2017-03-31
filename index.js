@@ -21,9 +21,9 @@
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
-    /* AfterViewInit,*/ Component, Directive, ElementRef, EventEmitter,
-    Injectable, Injector, Input, NgModule, /* OnInit,*/ Output, Pipe,
-    PipeTransform, ReflectiveInjector, Renderer, ViewChild
+    /* AfterViewInit,*/ Component, ElementRef, EventEmitter, Injectable,
+    Injector, Input, NgModule, /* OnInit,*/ Output, Pipe, PipeTransform,
+    ReflectiveInjector, ViewChild
 } from '@angular/core'
 import {FormsModule} from '@angular/forms'
 import {MaterialModule} from '@angular/material'
@@ -1195,31 +1195,6 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
 }
 // / endregion
 // endregion
-// region directives
-@Directive({selector: '[genericEventOccurs]'})
-class GenericEventOccursDirective/* implements AfterViewInit*/ {
-    _domNode:DomNode
-    @Output('genericEventOccurs') event:EventEmitter = new EventEmitter()
-    @Input('genericEventName') name:string = 'load'
-    @Input('genericEventTimes') times:number = 1
-    _renderer:Renderer
-    constructor(domNode:ElementRef, renderer:Renderer2):void {
-        this._domNode = domNode
-        this._renderer = renderer
-    }
-    ngAfterViewInit():void {
-        const removeListener:Function = this._renderer.listen(
-            this._domNode.nativeElement, this.name, (
-                ...parameter:Array<any>
-            ):void => {
-                this.event.emit(...parameter)
-                if (this.times === 0)
-                    removeListener()
-                this.times -= 1
-            })
-    }
-}
-// endregion
 // region components
 // / region abstract
 /**
@@ -2050,7 +2025,7 @@ const declarations:Array<Object> = Object.keys(module.exports).filter((
     'Component'
 ) || name.endsWith('Directive') || name.endsWith('Pipe'))).map((
     name:string
-):Object => module.exports[name])
+E:Object => module.exports[name])
 const providers:Array<Object> = Object.keys(module.exports).filter((
     name:string
 ):boolean => !name.startsWith('Abstract') && (
