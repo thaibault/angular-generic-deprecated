@@ -29,8 +29,8 @@ import {FormsModule} from '@angular/forms'
 import {MaterialModule} from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {
-    ActivatedRoute, ActivatedRouteSnapshot, /* CanDeactivate, Resolve,*/
-    Router, RouterStateSnapshot
+    ActivatedRoute, ActivatedRouteSnapshot, /* CanDeactivate,*/ NavigationEnd,
+    /*Resolve,*/ Router, RouterStateSnapshot
 } from '@angular/router'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
