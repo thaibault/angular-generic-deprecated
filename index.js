@@ -1335,10 +1335,10 @@ export class AbstractItemsComponent {
             this.items.total / this.limit)))
         return this.page !== oldPage || this.limit !== oldLimit
     }
-    changeItemWrapperFactory(callback:Function):Function {
-        return async (
-            update:boolean = true, ...parameter:Array<any>
-        ):Promise<any> => {
+    changeItemWrapperFactory(
+        callback:Function, update:boolean = true
+    ):Function {
+        return async (...parameter:Array<any>):Promise<any> => {
             const subscribing:Object = this._router.events.subscribe((
                 event:Object
             ):void => {
@@ -1352,27 +1352,6 @@ export class AbstractItemsComponent {
                 this.update(true)
             return result
         }
-    }
-    /**
-     * Updates current view list after an item removement.
-     * @param update - Indicates weather an item list update should be
-     * performed or not.
-     * @returns Nothing.
-     */
-    delete(update:boolean = true):void {
-        if (update)
-            this.update(true)
-    }
-    /**
-     * Removes all items currently selected and clear current selection.
-     * @returns Nothing.
-     */
-    async deleteSelectedItems():Promise<void> {
-        const promises:Array<Promise<void>> = []
-        for (const item:PlainObject of this.selectedItems)
-            promises.push(this.delete(false, item))
-        await Promise.all(promises)
-        this.update(true)
     }
     /**
      * TODO
