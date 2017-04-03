@@ -1294,16 +1294,6 @@ export class AbstractItemsComponent {
         this._route = route
         this._router = router
         this._tools = tools.tools
-        this._route.params.subscribe((data:PlainObject):void => {
-            this.page = parseInt(data.page)
-            this.limit = parseInt(data.limit)
-            const match:Array<string> = /(regex|exact)-(.*)/.exec(
-                data.searchTerm)
-            if (match) {
-                this.regularExpression = match[1] === 'regex'
-                this.searchTerm = match[2]
-            }
-        })
         this._route.data.subscribe((data:PlainObject):void => {
             this.limit = Math.max(1, this.limit || 1)
             const total:number = data.items.length + (
@@ -1315,6 +1305,16 @@ export class AbstractItemsComponent {
             this.items.total = total
             if (this.applyPageConstraints())
                 this._tools.timeout(():boolean => this.update())
+        })
+        this._route.params.subscribe((data:PlainObject):void => {
+            this.page = parseInt(data.page)
+            this.limit = parseInt(data.limit)
+            const match:Array<string> = /(regex|exact)-(.*)/.exec(
+                data.searchTerm)
+            if (match) {
+                this.regularExpression = match[1] === 'regex'
+                this.searchTerm = match[2]
+            }
         })
         this.searchTermStream.debounceTime(200).distinctUntilChanged().map((
         ):boolean => {
@@ -1335,22 +1335,41 @@ export class AbstractItemsComponent {
             this.items.total / this.limit)))
         return this.page !== oldPage || this.limit !== oldLimit
     }
-    /* eslint-disable no-unused-vars */
+    changeItemWrapperFactory(callback:Function):Function {
+        return async (
+            update:boolean = true, ...parameter:Array<any>
+        ):Promise<any> => {
+            const subscribing:Object = this._router.events.subscribe((
+                event:Object
+            ) => {
+                if (event instanceof NavigationEnd) {
+                    update = false
+                    subscribing.unsubscribe()
+                }
+            })
+            const result:any = await callback(...parameter)
+            if (update)
+                this.update(true)
+            return result
+        }
+    }
     /**
-     * Deletes item which has same id provided by the id property through given
-     * event object.
-     * @param event - Event object which triggers action.
+     * Updates current view list after an item removement.
      * @returns Nothing.
      */
-    delete(event:Object):void {
-        this.update(true)
+    delete(update:boolean = true):void {
+        if (update)
+            this.update(true)
     }
-    /* eslint-enable no-unused-vars */
     /**
      * Removes all items currently selected and clear current selection.
      * @returns Nothing.
      */
-    deleteSelectedItems():void {
+    async deleteSelectedItems():Promise<void> {
+        const promises:Array<Promise<void>> = []
+        for (const item:PlainObject of this.selectedItems)
+            promises.push(this.delete(false))
+        await Promise.all(promises)
         this.update(true)
     }
     /**

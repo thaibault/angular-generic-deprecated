@@ -946,8 +946,8 @@ registerAngularTest(function(
                     fixture.componentInstance.model._attachments.name
                         .nullable = false
                     assert.strictEqual(
-                        fixture.componentInstance.model._attachments.name
-                            .state.errors,
+                        fixture.componentInstance.model._attachments.name.state
+                            .errors,
                         null)
                     await fixture.componentInstance.remove()
                     assert.strictEqual(
