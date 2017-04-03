@@ -1341,7 +1341,7 @@ export class AbstractItemsComponent {
         ):Promise<any> => {
             const subscribing:Object = this._router.events.subscribe((
                 event:Object
-            ) => {
+            ):void => {
                 if (event instanceof NavigationEnd) {
                     update = false
                     subscribing.unsubscribe()
@@ -1355,6 +1355,8 @@ export class AbstractItemsComponent {
     }
     /**
      * Updates current view list after an item removement.
+     * @param update - Indicates weather an item list update should be
+     * performed or not.
      * @returns Nothing.
      */
     delete(update:boolean = true):void {
@@ -1368,7 +1370,7 @@ export class AbstractItemsComponent {
     async deleteSelectedItems():Promise<void> {
         const promises:Array<Promise<void>> = []
         for (const item:PlainObject of this.selectedItems)
-            promises.push(this.delete(false))
+            promises.push(this.delete(false, item))
         await Promise.all(promises)
         this.update(true)
     }
