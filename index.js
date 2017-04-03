@@ -2032,7 +2032,7 @@ const declarations:Array<Object> = Object.keys(module.exports).filter((
     'Component'
 ) || name.endsWith('Directive') || name.endsWith('Pipe'))).map((
     name:string
-E:Object => module.exports[name])
+):Object => module.exports[name])
 const providers:Array<Object> = Object.keys(module.exports).filter((
     name:string
 ):boolean => !name.startsWith('Abstract') && (
