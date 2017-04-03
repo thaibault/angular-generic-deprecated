@@ -176,7 +176,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
      * Implements attachment changes or removes.
      * @param newDocument - Document to slice meta data from.
      * @param oldAttachments - Old document to take into account.
-     * @param fileTypeReplacement - Indicates weather file type replacements
+     * @param fileTypeReplacement - Indicates whether file type replacements
      * and removes should be taken into account.
      * @param untouchedAttachments - List of file names which doesn't exist in
      * given new document.
@@ -218,7 +218,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
      * @param newDocument - Document to slice meta data from.
      * @param oldDocument - Optionally existing old document to take into
      * account.
-     * @param fileTypeReplacement - Indicates weather file type replacements
+     * @param fileTypeReplacement - Indicates whether file type replacements
      * and removes should be taken into account.
      * @returns The copies sliced version of given document.
      */
@@ -286,7 +286,7 @@ export class GenericIsDefinedPipe/* implements PipeTransform*/ {
     /**
      * Performs the actual comparison.
      * @param object - Object to compare against "undefined" or "null".
-     * @param nullIsUndefined - Indicates weather "null" should be handles as
+     * @param nullIsUndefined - Indicates whether "null" should be handles as
      * "undefined".
      * @returns The comparison result.
      */
@@ -476,7 +476,7 @@ export class GenericStringShowIfPatternMatchesPipe
      * Performs the actual matching.
      * @param string - String to replace content.
      * @param pattern - String or regular expression to us as matcher.
-     * @param invert - Indicates weather given string should be shown if given
+     * @param invert - Indicates whether given string should be shown if given
      * pattern matches or not.
      * @param modifier - Regular expression modifier (second argument to the
      * "RegExp" constructor).
@@ -766,7 +766,7 @@ export class GenericDataService {
      * @param names - Event names to intercept.
      * @param callback - Callback function to trigger when specified event
      * happens.
-     * @param type - Specifies weather callback should be triggered before or
+     * @param type - Specifies whether callback should be triggered before or
      * after specified event has happened.
      * @returns A cancel function which will deregister given middleware.
      */
@@ -1204,7 +1204,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * metadata.
  * @property modelChange - Model event emitter emitting events on each model
  * change.
- * @property showValidationErrorMessages - Indicates weather validation errors
+ * @property showValidationErrorMessages - Indicates whether validation errors
  * should be suppressed or be shown automatically. Useful to prevent error
  * component from showing error messages before the user has submit the form.
  */
@@ -1258,7 +1258,7 @@ export class AbstractInputComponent {
  * @property items - Current list of visible items.
  * @property limit - Maximal number of visible items.
  * @property page - Current page number of each item list part.
- * @property regularExpression - Indicator weather searching via regular
+ * @property regularExpression - Indicator whether searching via regular
  * expressions should be used.
  * @property searchTerm - Search string to filter visible item list.
  * @property searchTermStream - Search term stream which debounces and caches
@@ -1381,9 +1381,9 @@ export class AbstractItemsComponent {
     }
     /**
      * Applies current filter criteria to current visible item set.
-     * @param reload - Indicates weather a simple reload should be made because
+     * @param reload - Indicates whether a simple reload should be made because
      * a changed list of available items is expected for example.
-     * @returns A boolean indicating weather route change was successful.
+     * @returns A boolean indicating whether route change was successful.
      */
     update(reload:boolean = false):boolean {
         this.applyPageConstraints()
@@ -1631,15 +1631,15 @@ export class GenericTextareaComponent extends AbstractInputComponent {
  * @property fileChange - Event emitter emitting when file changes happen.
  * @property input - Virtual file input dom node.
  * @property internalName - Technical regular expression style file type.
- * @property mapNameToField - Indicates weather current file name should be
+ * @property mapNameToField - Indicates whether current file name should be
  * mapped to a specific model property.
  * @property model - File property specification.
  * @property modelChange -
  * @property name - Name of currently active file.
- * @property showValidationErrorMessages - Indicates weather validation errors
+ * @property showValidationErrorMessages - Indicates whether validation errors
  * should be displayed. Useful to hide error messages until user tries to
  * submit a form.
- * @property synchronizeImmediately - Indicates weather file upload should be
+ * @property synchronizeImmediately - Indicates whether file upload should be
  * done immediately after a file was selected (or synchronously with other
  * model data).
  */

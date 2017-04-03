@@ -32,7 +32,7 @@ declare var TARGET_TECHNOLOGY:string
  * @param template - Template to use as root application component to
  * bootstrap.
  * @param roundTypes - Test types to run.
- * @param productionMode - Indicates weather amgular's production mode should
+ * @param productionMode - Indicates whether angular's production mode should
  * be activated in none debug mode.
  * @param additionalParameter - All additional parameter will be forwarded to
  * the underlying clientnode test environment.
