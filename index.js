@@ -1354,6 +1354,13 @@ export class AbstractItemsComponent {
         this.update(true)
     }
     /**
+     * TODO
+     */
+    clearSelectedItems():void {
+        for (const item:PlainObject of this.selectedItems)
+            this.selectedItems.delete(item)
+    }
+    /**
      * Switches section to item which has given id.
      * @param itemID - ID of item to switch to.
      * @returns Nothing.
@@ -1375,7 +1382,7 @@ export class AbstractItemsComponent {
                 enforce route reloading).
             */
             this.page = 0
-        let sort = ''
+        let sort:string = ''
         for (const name:string in this.sort)
             if (this.sort.hasOwnProperty(name))
                 sort += `${sort ? ',' : ''}${name}-${this.sort[name]}`
