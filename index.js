@@ -1356,9 +1356,20 @@ export class AbstractItemsComponent {
     /**
      * TODO
      */
+    selectAllItems():void {
+        for (const item:PlainObject of this.items) {
+            this.selectedItems.add(item)
+            item.selected = true
+        }
+    }
+    /**
+     * TODO
+     */
     clearSelectedItems():void {
-        for (const item:PlainObject of this.selectedItems)
+        for (const item:PlainObject of this.items) {
             this.selectedItems.delete(item)
+            item.selected = false
+        }
     }
     /**
      * Switches section to item which has given id.
