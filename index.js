@@ -1268,8 +1268,8 @@ export class AbstractInputComponent {
  * @property sort - Sorting informations.
  */
 export class AbstractItemsComponent {
-    _itemPath:string = 'admin/item'
-    _itemsPath:string = 'admin/items'
+    _itemPath:string = 'item'
+    _itemsPath:string = 'items'
     _route:ActivatedRoute
     _router:Router
     _tools:typeof Tools
