@@ -1619,7 +1619,7 @@ export class GenericTextareaComponent extends AbstractInputComponent {
                     *ngIf="newButtonText" md-button (click)="input.click()"
                 >{{newButtonText}}</button>
                 <button
-                    *ngIf="deleteButtonText" md-button *ngIf="file"
+                    *ngIf="deleteButtonText && file" md-button
                     (click)="remove()"
                 >{{deleteButtonText}}</button>
                 <a
