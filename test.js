@@ -92,7 +92,8 @@ registerAngularTest(function(
                             _id: {mutable: false},
                             _rev: {mutable: false},
                             a: {}
-                        }}
+                        }},
+                        specialPropertyNames: {type: '-type'}
                     },
                     options: {adapter: 'memory'},
                     plugins: [PouchDBAdapterMemory],

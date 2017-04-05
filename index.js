@@ -1108,7 +1108,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         this.extendObject = extendObject.transform.bind(extendObject)
         this.models = initialData.configuration.database.modelConfiguration
             .models
-        this.typeName = initialDate.configuration.database.modelConfiguration
+        this.typeName = initialData.configuration.database.modelConfiguration
             .specialPropertyNames.type
     }
     /**
