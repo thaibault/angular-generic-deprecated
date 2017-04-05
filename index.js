@@ -883,7 +883,7 @@ export class GenericDataScopeService {
         data:PlainObject = {}
     ):PlainObject {
         const modelSpecification:PlainObject =
-            this.configuration.modelConfiguration.models[modelName]
+            this.configuration.database.modelConfiguration.models[modelName]
         for (const name:string in modelSpecification)
             if (modelSpecification.hasOwnProperty(name))
                 if (name === '_attachments') {
@@ -892,14 +892,15 @@ export class GenericDataScopeService {
                             modelSpecification[name][fileName] =
                                 this.extendObject(
                                     true, this.tools.copyLimitedRecursively(
-                                        this.configuration.modelConfiguration
-                                            .default.propertySpecification
+                                        this.configuration.database
+                                            .modelConfiguration.default
+                                            .propertySpecification
                                     ), modelSpecification[name][fileName])
                 } else
                     modelSpecification[name] = this.extendObject(
                         true, this.tools.copyLimitedRecursively(
-                            this.configuration.modelConfiguration.default
-                                .propertySpecification,
+                            this.configuration.database.modelConfiguration
+                                .default.propertySpecification,
                         ), modelSpecification[name])
         if (!propertyNames)
             propertyNames = Object.keys(modelSpecification)
@@ -934,8 +935,8 @@ export class GenericDataScopeService {
                                         ) + result[name][type][hookType]
                                     ))(
                                         data, null, {}, {}, type,
-                                        this.configuration.modelConfiguration
-                                            .models,
+                                        this.configuration.database
+                                            .modelConfiguration.models,
                                         modelSpecification, (
                                             object:Object
                                         ):string => JSON.stringify(
@@ -991,8 +992,9 @@ export class GenericDataScopeService {
                                 ) + result[name][type]
                             ))(
                                 data, null, {}, {}, name,
-                                this.configuration.modelConfiguration.models,
-                                this.configuration.modelConfiguration,
+                                this.configuration.database.modelConfiguration
+                                    .models,
+                                this.configuration.database.modelConfiguration,
                                 (object:Object):string => JSON.stringify(
                                     object, null, 4
                                 ), modelName, modelSpecification, result[name])
@@ -1104,7 +1106,10 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         this.escapeRegularExpressions =
             escapeRegularExpressions.transform.bind(escapeRegularExpressions)
         this.extendObject = extendObject.transform.bind(extendObject)
-        this.models = initialData.configuration.modelConfiguration.models
+        this.models = initialData.configuration.database.modelConfiguration
+            .models
+        this.typeName = initialDate.configuration.database.modelConfiguration
+            .specialPropertyNames.type
     }
     /**
      * List items which matches given filter criteria.
@@ -1126,7 +1131,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
             ):boolean => !name.startsWith('_') && [
                 undefined, 'string'
             ].includes(this.models[this._type][name].type))
-        const selector:PlainObject = {'-type': this._type}
+        const selector:PlainObject = {[this.typeName]: this._type}
         if (searchTerm || Object.keys(additionalSelectors).length) {
             if (sort.length)
                 selector[Object.keys(sort[0])[0]] = {$gt: null}
@@ -1356,15 +1361,6 @@ export class AbstractItemsComponent {
     /**
      * TODO
      */
-    selectAllItems():void {
-        for (const item:PlainObject of this.items) {
-            this.selectedItems.add(item)
-            item.selected = true
-        }
-    }
-    /**
-     * TODO
-     */
     clearSelectedItems():void {
         for (const item:PlainObject of this.items) {
             this.selectedItems.delete(item)
@@ -1378,6 +1374,15 @@ export class AbstractItemsComponent {
      */
     goToItem(itemID:string):void {
         this._router.navigate([this._itemPath, itemID])
+    }
+    /**
+     * TODO
+     */
+    selectAllItems():void {
+        for (const item:PlainObject of this.items) {
+            this.selectedItems.add(item)
+            item.selected = true
+        }
     }
     /**
      * Applies current filter criteria to current visible item set.
