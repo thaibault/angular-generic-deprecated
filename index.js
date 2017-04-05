@@ -1611,10 +1611,7 @@ export class GenericTextareaComponent extends AbstractInputComponent {
                 </span>
             </md-card-content>
             <md-card-actions>
-                <input
-                    #input *ngIf="newButtonText" type="file"
-                    style="display:none"
-                />
+                <input #input type="file" style="display:none" />
                 <button
                     *ngIf="newButtonText" md-button (click)="input.click()"
                 >{{newButtonText}}</button>
