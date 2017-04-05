@@ -1651,8 +1651,12 @@ export class GenericTextareaComponent extends AbstractInputComponent {
  * method.
  * @property delete - Event emitter which triggers its handler when current
  * file should be removed.
+ * @property deleteButtonText - Text for button to trigger file removing.
+ * @property downloadButtonText - Text for button to download current file.
  * @property file - Holds the current selected file object if present.
  * @property fileChange - Event emitter emitting when file changes happen.
+ * @property headerText - Header text to show instead of property description
+ * or name.
  * @property input - Virtual file input dom node.
  * @property internalName - Technical regular expression style file type.
  * @property mapNameToField - Indicates whether current file name should be
@@ -1660,6 +1664,7 @@ export class GenericTextareaComponent extends AbstractInputComponent {
  * @property model - File property specification.
  * @property modelChange -
  * @property name - Name of currently active file.
+ * @property newButtonText - Text for button to trigger new file upload.
  * @property showValidationErrorMessages - Indicates whether validation errors
  * should be displayed. Useful to hide error messages until user tries to
  * submit a form.
@@ -1686,18 +1691,18 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     _stringFormat:Function
     _prefixMatch:boolean = false
     @Output() delete:EventEmitter = new EventEmitter()
+    @Input() deleteButtonText:string = 'delete'
+    @Input() downloadButtonText:string = 'download'
     file:any = null
     @Output() fileChange:EventEmitter = new EventEmitter()
     @ViewChild('input') input:ElementRef
     internalName:string
+    @Input() headerText:string = ''
     @Input() mapNameToField:?string|?Array<string> = null
     @Input() model:{id:?string;[key:string]:any;} = {
         _attachments: [], id: null}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() name:?string = null
-    @Input() deleteButtonText:string = 'delete'
-    @Input() downloadButtonText:string = 'download'
-    @Input() headerText:string = ''
     @Input() newButtonText:string = 'new'
     @Input() showValidationErrorMessages:boolean = false
     @Input() synchronizeImmediately:boolean|PlainObject = false
