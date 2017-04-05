@@ -1552,7 +1552,7 @@ export class GenericTextareaComponent extends AbstractInputComponent {
         <md-card>
             <md-card-header>
                 <h3>
-                    {{model._attachments[internalName]?.description || name}}
+                    {{headerText || model._attachments[internalName]?.description || name}}
                     <span
                         md-suffix (click)="showDeclaration = !showDeclaration"
                         title="info"
@@ -1697,6 +1697,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     @Input() name:?string = null
     @Input() deleteButtonText:string = 'delete'
     @Input() downloadButtonText:string = 'download'
+    @Input() headerText:string = ''
     @Input() newButtonText:string = 'new'
     @Input() showValidationErrorMessages:boolean = false
     @Input() synchronizeImmediately:boolean|PlainObject = false
