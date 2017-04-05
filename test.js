@@ -95,7 +95,10 @@ registerAngularTest(function(
                         }},
                         property: {
                             defaultSpecification: {minimum: 0},
-                            name: {special: {type: '-type'}}
+                            name: {
+                                reserved: ['_id', '_rev'],
+                                special: {type: '-type'}
+                            }
                         }
                     },
                     options: {adapter: 'memory'},
@@ -134,7 +137,7 @@ registerAngularTest(function(
              * Dummy resolver to test the abstract resolver class.
              */
             class Resolver extends AbstractResolver {
-                _type:string = 'Test'
+                type:string = 'Test'
                 /**
                  * Initializes the abstract resolver class.
                  * @param data - Injected data service instance.
@@ -728,10 +731,11 @@ registerAngularTest(function(
                             // endregion
                             await data.destroy()
                             await data.initialize()
+                            assert.ok(true)
                         } catch (error) {
                             console.error(error)
+                            assert.ok(false)
                         }
-                        assert.ok(true)
                         done()
                     })
                     // / endregion

@@ -863,7 +863,10 @@ export class GenericDataScopeService {
                         key
                     ].value.name] = scope._attachments[key].value
                 }
-        for (const name:string of ['_id', '_rev', '-type'])
+        for (const name:string of this.configuration.database.model.property
+            .name.reserved.concat(
+                this.configuration.database.model.property.name.special.type)
+        )
             if (scope.hasOwnProperty(name))
                 result[name] = scope[name]
         return result
@@ -898,7 +901,7 @@ export class GenericDataScopeService {
                 } else
                     modelSpecification[name] = this.extendObject(
                         true, this.tools.copyLimitedRecursively(
-                            this.configuration.database.model
+                            this.configuration.database.model.property
                                 .defaultSpecification,
                         ), modelSpecification[name])
         if (!propertyNames)
@@ -1016,10 +1019,15 @@ export class GenericDataScopeService {
                     result[name].value = new Date(result[name].value)
             }
         }
-        for (const name:string of ['_id', '_rev', '-type'])
+        for (const name:string of this.configuration.database.model.property
+            .name.reserved.concat(
+                this.configuration.database.model.property.name.special.type)
+        )
             if (data.hasOwnProperty(name))
                 result[name] = data[name]
-            else if (name === '-type')
+            else if (name === this.configuration.database.model.property.name
+                .special.type
+            )
                 result[name] = modelName
         result._metaData = {submitted: false}
         return result
@@ -1043,8 +1051,9 @@ export class GenericDataScopeService {
             options.fields = propertyNames
         let data:PlainObject = {}
         if (id) {
-            const result:Array<PlainObject> = await this.data.find(
-                {'-type': modelName, _id: id}, options)
+            const result:Array<PlainObject> = await this.data.find({[
+                this.configuration.database.model.property.name.special.type
+            ]: modelName, _id: id}, options)
             if (result.length === 0)
                 throw new Error(
                     `Document with given id "${id}" isn't available.`)
@@ -1145,7 +1154,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         if (options.skip === 0)
             delete options.skip
         if (sort.length)
-            options.sort = [{'-type': 'asc'}].concat(sort)
+            options.sort = [{[this.typeName]: 'asc'}].concat(sort)
         return this.data.find(this.extendObject(
             true, selector, additionalSelectors
         ), options)
@@ -1459,7 +1468,7 @@ const mdInputContent:string = `
                 ein.
             </span>
             <span *ngIf="model.state.errors?.min">
-                Bitte geben Sie eine Zahl großer oder gleich {{model.minimum}}
+                Bitte geben Sie eine Zahl größer oder gleich {{model.minimum}}
                 ein.
             </span>
             <span *ngIf="model.state.errors?.pattern">
@@ -1797,7 +1806,13 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
             ].state.errors) {
                 let result:PlainObject
                 const newData:PlainObject = {
-                    '-type': this.model['-type'],
+                    [
+                        this._configuration.database.model.property.name
+                            .special.type
+                    ]: this.model[
+                        this._configuration.database.model.property.name
+                            .special.type
+                    ],
                     _id: this.model._id,
                     _attachments: {
                         [this.file.name]: {
@@ -1905,7 +1920,13 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         if (this.synchronizeImmediately && this.file) {
             let result:PlainObject
             const update:PlainObject = {
-                '-type': this.model['-type'],
+                [
+                    this._configuration.database.model.property.name.special
+                        .type
+                ]: this.model[
+                    this._configuration.database.model.property.name.special
+                        .type
+                ],
                 _id: this.model._id,
                 _rev: this.model._rev,
                 _attachments: {[this.file.name]: {
