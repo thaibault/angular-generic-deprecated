@@ -81,11 +81,11 @@ registerAngularTest(function(
             // region prepare services
             $.global.genericInitialData = {configuration: {
                 database: {
-                    modelConfiguration: {
-                        default: {propertySpecification: {minimum: 0}},
-                        models: {Test: {
+                    model: {
+                        entities: {Test: {
                             _attachments: {'.+\\.(?:jpe?g|png)': {
-                                contentTypeRegularExpressionPattern: '^image/.+',
+                                contentTypeRegularExpressionPattern:
+                                    '^image/.+',
                                 maximum: 1,
                                 onCreateExpression: `{name: 'a.jpg'}`
                             }},
@@ -93,7 +93,10 @@ registerAngularTest(function(
                             _rev: {mutable: false},
                             a: {}
                         }},
-                        specialPropertyNames: {type: '-type'}
+                        property: {
+                            defaultSpecification: {minimum: 0},
+                            name: {special: {type: '-type'}}
+                        }
                     },
                     options: {adapter: 'memory'},
                     plugins: [PouchDBAdapterMemory],
@@ -592,7 +595,7 @@ registerAngularTest(function(
                                         name: '.+\\.(?:jpe?g|png)',
                                         onCreateExpression:
                                             initialData.configuration.database
-                                            .modelConfiguration.models.Test
+                                            .model.entities.Test
                                             ._attachments['.+\\.(?:jpe?g|png)']
                                             .onCreateExpression,
                                         value: {name: 'a.jpg'}
@@ -633,8 +636,8 @@ registerAngularTest(function(
                                 '-type': 'Test'
                             }, (
                                 test[0].length < 2 || test[0][1] === null ?
-                                initialData.configuration.database
-                                    .modelConfiguration.models.Test : {}
+                                initialData.configuration.database.model
+                                    .entities.Test : {}
                             ), test[1]))
                         // endregion
                         // region set
@@ -648,8 +651,8 @@ registerAngularTest(function(
                             _metaData: {submitted: false},
                             '-type': 'Test',
                             a: {minimum: 0, name: 'a', value: null}
-                        }, initialData.configuration.database
-                            .modelConfiguration.models.Test))
+                        }, initialData.configuration.database.model.entities
+                            .Test))
                         // endregion
                         done()
                     })

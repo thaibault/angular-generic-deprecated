@@ -30,7 +30,7 @@ import {MaterialModule} from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {
     ActivatedRoute, ActivatedRouteSnapshot, /* CanDeactivate,*/ NavigationEnd,
-    /*Resolve,*/ Router, RouterStateSnapshot
+    /* Resolve,*/ Router, RouterStateSnapshot
 } from '@angular/router'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -883,7 +883,7 @@ export class GenericDataScopeService {
         data:PlainObject = {}
     ):PlainObject {
         const modelSpecification:PlainObject =
-            this.configuration.database.modelConfiguration.models[modelName]
+            this.configuration.database.model.entities[modelName]
         for (const name:string in modelSpecification)
             if (modelSpecification.hasOwnProperty(name))
                 if (name === '_attachments') {
@@ -892,15 +892,14 @@ export class GenericDataScopeService {
                             modelSpecification[name][fileName] =
                                 this.extendObject(
                                     true, this.tools.copyLimitedRecursively(
-                                        this.configuration.database
-                                            .modelConfiguration.default
-                                            .propertySpecification
+                                        this.configuration.database.model
+                                            .property.defaultSpecification
                                     ), modelSpecification[name][fileName])
                 } else
                     modelSpecification[name] = this.extendObject(
                         true, this.tools.copyLimitedRecursively(
-                            this.configuration.database.modelConfiguration
-                                .default.propertySpecification,
+                            this.configuration.database.model
+                                .defaultSpecification,
                         ), modelSpecification[name])
         if (!propertyNames)
             propertyNames = Object.keys(modelSpecification)
@@ -935,8 +934,8 @@ export class GenericDataScopeService {
                                         ) + result[name][type][hookType]
                                     ))(
                                         data, null, {}, {}, type,
-                                        this.configuration.database
-                                            .modelConfiguration.models,
+                                        this.configuration.database.model
+                                            .entities,
                                         modelSpecification, (
                                             object:Object
                                         ):string => JSON.stringify(
@@ -992,9 +991,8 @@ export class GenericDataScopeService {
                                 ) + result[name][type]
                             ))(
                                 data, null, {}, {}, name,
-                                this.configuration.database.modelConfiguration
-                                    .models,
-                                this.configuration.database.modelConfiguration,
+                                this.configuration.database.model.entities,
+                                this.configuration.database.model,
                                 (object:Object):string => JSON.stringify(
                                     object, null, 4
                                 ), modelName, modelSpecification, result[name])
@@ -1068,8 +1066,6 @@ export class GenericDataScopeService {
 /**
  * Helper class to extend from to have some basic methods to deal with database
  * entities.
- * @property _type - Model name to handle /should be overwritten in concrete
- * implementations.
  * @property data - Holds currently retrieved data.
  * @property escapeRegularExpressions - Holds the escape regular expressions's
  * pipe transformation method.
@@ -1079,14 +1075,17 @@ export class GenericDataScopeService {
  * specification.
  * @property relevantKeys - Saves a list of relevant key names to take into
  * account during resolving.
+ * @property type - Model name to handle. Should be overwritten in concrete
+ * implementations.
  */
 export class AbstractResolver/* implements Resolve<PlainObject>*/ {
-    _type:string = 'Item'
     data:PlainObject
     escapeRegularExpressions:Function
     extendObject:Function
     models:PlainObject
     relevantKeys:?Array<string> = null
+    type:string = 'Item'
+    typeName:string
     /**
      * Sets all needed injected services as instance properties.
      * @param data - Injected data service instance.
@@ -1106,10 +1105,9 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         this.escapeRegularExpressions =
             escapeRegularExpressions.transform.bind(escapeRegularExpressions)
         this.extendObject = extendObject.transform.bind(extendObject)
-        this.models = initialData.configuration.database.modelConfiguration
-            .models
-        this.typeName = initialData.configuration.database.modelConfiguration
-            .specialPropertyNames.type
+        this.models = initialData.configuration.database.model.entities
+        this.typeName = initialData.configuration.database.model.property.name
+            .special.type
     }
     /**
      * List items which matches given filter criteria.
@@ -1126,12 +1124,12 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         additionalSelectors:PlainObject = {}
     ):Promise<Array<PlainObject>> {
         if (!this.relevantKeys)
-            this.relevantKeys = Object.keys(this.models[this._type]).filter((
+            this.relevantKeys = Object.keys(this.models[this.type]).filter((
                 name:string
             ):boolean => !name.startsWith('_') && [
                 undefined, 'string'
-            ].includes(this.models[this._type][name].type))
-        const selector:PlainObject = {[this.typeName]: this._type}
+            ].includes(this.models[this.type][name].type))
+        const selector:PlainObject = {[this.typeName]: this.type}
         if (searchTerm || Object.keys(additionalSelectors).length) {
             if (sort.length)
                 selector[Object.keys(sort[0])[0]] = {$gt: null}
@@ -1273,6 +1271,7 @@ export class AbstractInputComponent {
  * @property sort - Sorting informations.
  */
 export class AbstractItemsComponent {
+    // TODO check tests
     _itemPath:string = 'item'
     _itemsPath:string = 'items'
     _route:ActivatedRoute
@@ -1340,10 +1339,15 @@ export class AbstractItemsComponent {
             this.items.total / this.limit)))
         return this.page !== oldPage || this.limit !== oldLimit
     }
-    changeItemWrapperFactory(
-        callback:Function, update:boolean = true
-    ):Function {
+    /**
+     * A function factory to generate functions which updates current view if
+     * no route change between an asynchronous process.
+     * @param callback - Function to wrap.
+     * @returns Given function wrapped.
+     */
+    changeItemWrapperFactory(callback:Function):Function {
         return async (...parameter:Array<any>):Promise<any> => {
+            let update:boolean = true
             const subscribing:Object = this._router.events.subscribe((
                 event:Object
             ):void => {
@@ -1359,7 +1363,8 @@ export class AbstractItemsComponent {
         }
     }
     /**
-     * TODO
+     * Clear all currently selected items.
+     * @returns Nothing.
      */
     clearSelectedItems():void {
         for (const item:PlainObject of this.items) {
@@ -1376,7 +1381,8 @@ export class AbstractItemsComponent {
         this._router.navigate([this._itemPath, itemID])
     }
     /**
-     * TODO
+     * Select all available items.
+     * @returns Nothing.
      */
     selectAllItems():void {
         for (const item:PlainObject of this.items) {
