@@ -1611,14 +1611,21 @@ export class GenericTextareaComponent extends AbstractInputComponent {
                 </span>
             </md-card-content>
             <md-card-actions>
-                <input #input type="file" style="display:none"/>
-                <button md-button (click)="input.click()">Neu</button>
-                <button md-button *ngIf="file" (click)="remove()">
-                    Löschen
-                </button>
-                <a *ngIf="file" [download]="file.name" [href]="file.source">
-                    <button md-button>Download</button>
-                </a>
+                <input
+                    #input *ngIf="newButtonText" type="file"
+                    style="display:none"
+                />
+                <button
+                    *ngIf="newButtonText" md-button (click)="input.click()"
+                >{{newButtonText}}</button>
+                <button
+                    *ngIf="deleteButtonText" md-button *ngIf="file"
+                    (click)="remove()"
+                >{{deleteButtonText}}</button>
+                <a
+                    *ngIf="downloadButtonText && file" [download]="file.name"
+                    [href]="file.source"
+                ><button md-button>{{downloadButtonText}}</button></a>
             </md-card-actions>
         </md-card>
     `
@@ -1691,6 +1698,9 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         _attachments: [], id: null}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() name:?string = null
+    @Input() deleteButtonText:string = 'delete'
+    @Input() downloadButtonText:string = 'download'
+    @Input() newButtonText:string = 'new'
     @Input() showValidationErrorMessages:boolean = false
     @Input() synchronizeImmediately:boolean|PlainObject = false
     /**
