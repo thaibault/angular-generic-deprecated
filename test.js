@@ -803,12 +803,12 @@ registerAngularTest(function(
                     assert.strictEqual(
                         fixture.componentInstance.searchTerm, 'test')
                     fixture.componentInstance.applyPageConstraints()
-                    fixture.componentInstance.delete({id: 2})
+                    fixture.componentInstance.update(true)
                     fixture.detectChanges()
                     await fixture.whenStable()
                     assert.strictEqual(
                         fixture.componentInstance._router.url,
-                        'admin/items/_id-asc/0/2/regex-test')
+                        'items/_id-asc/0/2/regex-test')
                 } catch (error) {
                     console.error(error)
                 }
