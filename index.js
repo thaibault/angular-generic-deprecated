@@ -1504,6 +1504,11 @@ export class TimeValueAccessor extends AbstractValueAccessor {
     constructor(renderer:Renderer, elementRef:ElementRef) {
         super(renderer, elementRef, null)
     }
+    /**
+     * Manipulates editable value representation.
+     * @param value - Value to manipulate.
+     * @returns Given and transformed value.
+     */
     exportValue(value:any):any {
         if (this.type === 'time' && value) {
             value = new Date(value)
@@ -1519,6 +1524,11 @@ export class TimeValueAccessor extends AbstractValueAccessor {
         }
         return value
     }
+    /**
+     * Reads internal value representation.
+     * @param value - Value to convert to its internal representation.
+     * @returns Given and transformed value.
+     */
     importValue(value:any):any {
         if (this.type === 'time' && typeof value === 'string') {
             const match = /^([0-9]{2}):([0-9]{2})$/.exec(value)
