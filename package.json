@@ -45,6 +45,7 @@
     "watchDLL": "webOptimizer buildDLL --watch"
   },
   "dependencies": {
+    "@angular/animations": "latest",
     "@angular/common": "latest",
     "@angular/compiler": "latest",
     "@angular/core": "latest",

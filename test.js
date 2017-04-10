@@ -32,9 +32,12 @@ registerAngularTest(function(
     component:Function;
 } {
     // region imports
+
     const {Component, Injectable, NgModule} = require('@angular/core')
     const {ComponentFixture} = require('@angular/core/testing')
     const {By} = require('@angular/platform-browser')
+    const {NoopAnimationsModule} = require(
+        '@angular/platform-browser/animations')
     const {ActivatedRoute, Router} = require('@angular/router')
     const index:Object = require('./index')
     const {
@@ -163,7 +166,7 @@ registerAngularTest(function(
             @NgModule({
                 bootstrap: [ApplicationComponent],
                 declarations: [ApplicationComponent, ItemsComponent],
-                imports: [GenericModule],
+                imports: [GenericModule, NoopAnimationsModule],
                 providers: [Resolver]
             })
             // endregion
@@ -748,7 +751,7 @@ registerAngularTest(function(
                     ItemsComponent,
                     RouterOutletStubComponent
                 ],
-                imports: [GenericModule],
+                imports: [GenericModule, NoopAnimationsModule],
                 providers: [
                     {provide: ActivatedRoute, useClass: ActivatedRouteStub},
                     {provide: Router, useClass: RouterStub}

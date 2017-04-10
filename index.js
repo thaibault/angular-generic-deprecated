@@ -1438,6 +1438,7 @@ export class AbstractItemsComponent {
  * @property type - Saves current input type.
  */
 export class AbstractValueAccessor extends DefaultValueAccessor {
+    // TODO check tests
     @Input() type:?string
     /**
      * Manipulates editable value representation.
@@ -1494,6 +1495,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
  * Time value accessor with "ngModel" support.
  */
 export class TimeValueAccessor extends AbstractValueAccessor {
+    // TODO check tests
     /**
      * Initializes and forwards needed services to the default value accesor
      * constructor.
