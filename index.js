@@ -21,11 +21,13 @@
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
-    /* AfterViewInit,*/ Component, ElementRef, EventEmitter, Injectable,
-    Injector, Input, NgModule, /* OnInit,*/ Output, Pipe, PipeTransform,
-    ReflectiveInjector, ViewChild
+    /* AfterViewInit,*/ Component, Directive, ElementRef, EventEmitter,
+    forwardRef, Injectable, Injector, Input, NgModule, /* OnInit,*/ Output,
+    Pipe, PipeTransform, ReflectiveInjector, Renderer, ViewChild
 } from '@angular/core'
-import {FormsModule} from '@angular/forms'
+import {
+    DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
+} from '@angular/forms'
 import {MaterialModule} from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {
@@ -1207,7 +1209,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
 }
 // / endregion
 // endregion
-// region components
+// region components/directives
 // / region abstract
 /**
  * Generic input component.
@@ -1431,7 +1433,103 @@ export class AbstractItemsComponent {
         this.searchTermStream.next(this.searchTerm)
     }
 }
+/**
+ * Generic value accessor with "ngModel" support.
+ * @property type - Saves current input type.
+ */
+export class AbstractValueAccessor extends DefaultValueAccessor {
+    @Input() type:?string
+    /**
+     * Manipulates editable value representation.
+     * @param value - Value to manipulate.
+     * @returns Given and transformed value.
+     */
+    exportValue(value:any):any {
+        return value
+    }
+    /**
+     * Reads internal value representation.
+     * @param value - Value to convert to its internal representation.
+     * @returns Given and transformed value.
+     */
+    importValue(value:any):any {
+        return value
+    }
+    /**
+     * Overridden inherited function for value export.
+     * @param value - Value to export.
+     * @param additionalParameter - Additional arguments will be forwarded to
+     * the overridden method invocation.
+     * @returns The transformed give value.
+     */
+    writeValue(value:any, ...additionalParameter:Array<any>):any {
+        return super.writeValue(this.exportValue(
+            value, ...additionalParameter
+        ), ...additionalParameter)
+    }
+    /**
+     * Overridden inherited function for value import.
+     * @param value - Value to import.
+     * @param additionalParameter - Additional arguments will be forwarded to
+     * the overridden method invocation.
+     * @returns The transformed give value.
+     */
+    _handleInput(value:any, ...additionalParameter:Array<any>):any {
+        return super._handleInput(this.importValue(
+            value, ...additionalParameter
+        ), ...additionalParameter)
+    }
+}
 // / endregion
+// // region time
+@Directive(Tools.extendObject(
+    true, {}, DefaultValueAccessor.decorators[0].args[0], {
+        providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(():TimeValueAccessor => TimeValueAccessor),
+            multi: true
+        }]
+}))
+/**
+ * Time value accessor with "ngModel" support.
+ */
+export class TimeValueAccessor extends AbstractValueAccessor {
+    /**
+     * Initializes and forwards needed services to the default value accesor
+     * constructor.
+     * @param renderer - TODO
+     * @param elementRef - TODO
+     * @param TODO - TODO
+     */
+    constructor(renderer:Renderer, elementRef:ElementRef) {
+        super(renderer, elementRef, null)
+    }
+    exportValue(value:any):any {
+        if (this.type === 'time' && value) {
+            value = new Date(value)
+            if (value) {
+                let hours:string = `${value.getHours()}`
+                if (hours.length === 1)
+                    hours = `0${hours}`
+                let minutes:string = `${value.getMinutes()}`
+                if (minutes.length === 1)
+                    minutes = `0${minutes}`
+                return `${hours}:${minutes}`
+            }
+        }
+        return value
+    }
+    importValue(value:any):any {
+        if (this.type === 'time' && typeof value === 'string') {
+            const match = /^([0-9]{2}):([0-9]{2})$/.exec(value)
+            if (match)
+                return new Date(
+                    1970, 0, 1, parseInt(match[1]), parseInt(match[2]))
+        }
+        return value
+    }
+}
+// // endregion
 // // region text
 /* eslint-disable max-len */
 const propertyInputContent:string = `
@@ -2084,9 +2182,9 @@ export class GenericPaginationComponent {
 // region modules
 const declarations:Array<Object> = Object.keys(module.exports).filter((
     name:string
-):boolean => !name.startsWith('Abstract') && (name.endsWith(
-    'Component'
-) || name.endsWith('Directive') || name.endsWith('Pipe'))).map((
+):boolean => !name.startsWith('Abstract') && [
+    'Accessor', 'Component', 'Directive', 'Pipe'
+].some((suffix:string):boolean => name.endsWith(suffix))).map((
     name:string
 ):Object => module.exports[name])
 const providers:Array<Object> = Object.keys(module.exports).filter((
