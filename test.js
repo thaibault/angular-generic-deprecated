@@ -24,37 +24,13 @@ try {
 } catch (error) {}
 // endregion
 // region tests
-registerAngularTest(async function(
+registerAngularTest(function(
     ApplicationComponent:Object, roundType:string, targetTechnology:?string,
     $:any
-):Promise<{
+):{
     bootstrap:Function;
     component:Function;
-}> {
-    for (const domNodeSpecification:PlainObject of [
-        {link: {
-            attributes: {
-                href: 'node_modules/@angular/material/prebuilt-themes/' +
-                    'deeppurple-amber.css',
-                rel: 'stylesheet',
-                type: 'text/css'
-            },
-            inject: window.document.getElementsByTagName('head')[0]
-        }}
-    ]) {
-        const domNodeName:string = Object.keys(domNodeSpecification)[0]
-        const domNode:DomNode = window.document.createElement(domNodeName)
-        for (const name:string in domNodeSpecification[domNodeName].attributes)
-            if (domNodeSpecification[domNodeName].attributes.hasOwnProperty(
-                name
-            ))
-                domNode.setAttribute(name, domNodeSpecification[
-                    domNodeName
-                ].attributes[name])
-        domNodeSpecification[domNodeName].inject.appendChild(domNode)
-        await new Promise((resolve:Function):void => domNode.addEventListener(
-            'load', resolve))
-    }
+} {
     // region imports
     const {Component, Injectable, NgModule} = require('@angular/core')
     const {ComponentFixture} = require('@angular/core/testing')
