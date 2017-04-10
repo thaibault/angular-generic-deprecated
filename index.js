@@ -1497,9 +1497,8 @@ export class TimeValueAccessor extends AbstractValueAccessor {
     /**
      * Initializes and forwards needed services to the default value accesor
      * constructor.
-     * @param renderer - TODO
-     * @param elementRef - TODO
-     * @param TODO - TODO
+     * @param renderer - Angular's dom abstraction layer.
+     * @param elementRef - Host element reference.
      */
     constructor(renderer:Renderer, elementRef:ElementRef):void {
         super(renderer, elementRef, null)
