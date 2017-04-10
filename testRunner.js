@@ -91,9 +91,13 @@ export default function(
             callback = callback.call(
                 this, ApplicationComponent, roundType, targetTechnology, $,
                 ...parameter)
+        if ('then' in callback)
+            callback = await callback
         let result:any = callback.bootstrap.call(
             this, ApplicationComponent, roundType, targetTechnology, $,
             ...parameter)
+        if ('then' in result)
+            result = await result
         if (!Array.isArray(result))
             result = [result]
         // / region bootstrap test application

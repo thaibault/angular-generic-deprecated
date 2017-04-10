@@ -1483,14 +1483,12 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
 }
 // / endregion
 // // region time
-@Directive(Tools.extendObject(
-    true, {}, DefaultValueAccessor.decorators[0].args[0], {
-        providers: [{
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(():TimeValueAccessor => TimeValueAccessor),
-            multi: true
-        }]
-}))
+@Directive(Tools.extendObject(true, {
+}, DefaultValueAccessor.decorators[0].args[0], {providers: [{
+    provide: NG_VALUE_ACCESSOR,
+    useExisting: forwardRef(():TimeValueAccessor => TimeValueAccessor),
+    multi: true
+}]}))
 /**
  * Time value accessor with "ngModel" support.
  */
@@ -1503,7 +1501,7 @@ export class TimeValueAccessor extends AbstractValueAccessor {
      * @param elementRef - TODO
      * @param TODO - TODO
      */
-    constructor(renderer:Renderer, elementRef:ElementRef) {
+    constructor(renderer:Renderer, elementRef:ElementRef):void {
         super(renderer, elementRef, null)
     }
     /**
