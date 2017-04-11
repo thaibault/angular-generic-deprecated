@@ -1153,7 +1153,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
             NOTE: We can't use "limit" here since we want to provide total data
             set size for pagination.
         */
-        const options:PlainObject = {skip: (page - 1) * limit}
+        const options:PlainObject = {skip: Math.max(page - 1, 0) * limit}
         if (options.skip === 0)
             delete options.skip
         if (sort.length)
