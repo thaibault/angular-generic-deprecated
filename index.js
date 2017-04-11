@@ -1268,7 +1268,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
         this._changesStream.cancel()
     }
     onDataChange(event:PlainObject, type:string):boolean {
-        return type === 'change'
+        return type === 'action'
     }
 }
 /**
