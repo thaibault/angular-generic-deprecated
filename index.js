@@ -1676,7 +1676,7 @@ export class GenericTextareaComponent extends AbstractInputComponent {
         <md-card>
             <md-card-header>
                 <h3>
-                    {{headerText || model._attachments[internalName]?.description || name}}
+                    {{headerText || file?.name || name || model._attachments[internalName]?.description}}
                     <span
                         md-suffix (click)="showDeclaration = !showDeclaration"
                         title="info"
