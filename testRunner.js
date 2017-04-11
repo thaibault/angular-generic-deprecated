@@ -15,6 +15,7 @@
     endregion
 */
 // region imports
+import type {DomNode, PlainObject} from 'clientnode'
 import registerTest from 'clientnode/test'
 // NOTE: Only needed for debugging this file.
 try {

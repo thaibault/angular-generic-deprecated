@@ -1539,21 +1539,23 @@ export class TimeValueAccessor extends AbstractValueAccessor {
     }
 }
 // // endregion
-// // region text
+// // region text/selection
 /* eslint-disable max-len */
+const propertyGenericContent:string = `
+    [required]="!model.nullable"
+    [(ngModel)]="model.value"
+    [placeholder]="model.description || model.name"
+    #state="ngModel"
+    #data
+    (change)="onChange(state)"
+`
 const propertyInputContent:string = `
     [disabled]="model.disabled || model.mutable === false || model.writable === false"
     [maxlength]="model.type === 'string' ? model.maximum : null"
     [minlength]="model.type === 'string' ? model.minimum : null"
     [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
-    [placeholder]="model.description || model.name"
-    [required]="!model.nullable"
-    [(ngModel)]="model.value"
-    #state="ngModel"
-    #data
-    (change)="onChange(state)"
 `
-const mdInputContent:string = `
+const inputContent:string = `
     <md-hint align="start">
         <span
             mdSuffix (click)="showDeclaration = !showDeclaration" title="info"
@@ -1594,15 +1596,26 @@ const mdInputContent:string = `
 @Component({
     selector: 'generic-input',
     template: `
-        <md-input-container>
+        <md-input-container *ngIf="!model.selection">
             <input
                 mdInput [max]="model.type === 'number' ? model.maximum : null"
                 [min]="model.type === 'number' ? model.minimum : null"
                 [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
                 ${propertyInputContent}
+                ${propertyGenericContent}
             >
-            ${mdInputContent}
+            ${inputContent}
+            <ng-content></ng-content>
         </md-input-container>
+        <span *ngIf="model.selection">
+            <md-select [(ngModel)]="model.value" ${propertyGenericContent}>
+                <md-option
+                    *ngFor="let value of model.selection" [value]="value"
+                >{{value}}</md-option>
+            </md-select>
+            ${inputContent}
+            <ng-content></ng-content>
+        </span>
     `
 })
 /* eslint-enable max-len */
@@ -1628,8 +1641,12 @@ export class GenericInputComponent extends AbstractInputComponent {
     selector: 'generic-textarea',
     template: `
         <md-input-container>
-            <textarea mdInput [rows]="rows" ${propertyInputContent}></textarea>
-            ${mdInputContent}
+            <textarea
+                mdInput [rows]="rows" ${propertyInputContent}
+                ${propertyGenericContent}
+            ></textarea>
+            ${inputContent}
+            <ng-content></ng-content>
         </md-input-container>
     `
 })
