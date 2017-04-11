@@ -708,12 +708,9 @@ registerAngularTest(function(
                                     limit: 2, sort: 'a-desc'
                                 }
                             ])
-                                await new Promise((resolve:Function):void =>
-                                    resolver.resolve({params: test}).subscribe(
-                                        (data:Array<PlainObject>):void => {
-                                            assert.deepEqual(data[0], item)
-                                            resolve()
-                                        }))
+                                assert.deepEqual((await resolver.resolve({
+                                    params: test
+                                }))[0], item)
                             for (const test:PlainObject of [
                                 {searchTerm: 'exact-a'},
                                 {page: 2},
@@ -724,12 +721,9 @@ registerAngularTest(function(
                                     limit: 1, sort: 'a-asc'
                                 }
                             ])
-                                await new Promise((resolve:Function):void =>
-                                    resolver.resolve({params: test}).subscribe(
-                                        (data:Array<PlainObject>):void => {
-                                            assert.strictEqual(data.length, 0)
-                                            resolve()
-                                        }))
+                                assert.strictEqual((await resolver.resolve({
+                                    params: test
+                                })).length, 0)
                             // endregion
                             await data.destroy()
                             await data.initialize()
