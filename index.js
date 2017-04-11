@@ -1348,7 +1348,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     _route:ActivatedRoute
     _router:Router
     _tools:typeof Tools
-    items:Promise<Array<PlainObject>>
+    items:Array<PlainObject>
     limit:number
     page:number
     regularExpression:boolean = false
@@ -1416,6 +1416,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
         const oldLimit:number = this.limit
         this.limit = Math.max(1, this.limit || 1)
         this.page = Math.max(1, Math.min(this.page, Math.ceil(
+            // IgnoreTypeCheck
             this.items.total / this.limit)))
         return this.page !== oldPage || this.limit !== oldLimit
     }
@@ -1560,6 +1561,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
 }
 // / endregion
 // // region time
+// IgnoreTypeCheck
 @Directive(Tools.extendObject(true, {
 }, DefaultValueAccessor.decorators[0].args[0], {providers: [{
     provide: NG_VALUE_ACCESSOR,
