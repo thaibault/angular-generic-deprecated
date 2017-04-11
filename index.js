@@ -1422,7 +1422,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     }
     /**
      * A function factory to generate functions which updates current view if
-     * no route change between an asynchronous process.
+     * no route change happened between an asynchronous process.
      * @param callback - Function to wrap.
      * @returns Given function wrapped.
      */
