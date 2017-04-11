@@ -1169,11 +1169,11 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
      * observable.
      * @param route - Current route informations.
      * @param state - Current state informations.
-     * @returns Observable with data filtered by current route informations.
+     * @returns Promise with data filtered by current route informations.
      */
     resolve(
         route:ActivatedRouteSnapshot, state:RouterStateSnapshot
-    ):Observable<Array<PlainObject>> {
+    ):Promise<Array<PlainObject>> {
     /* eslint-enable no-unused-vars */
         let searchTerm:string = ''
         if ('searchTerm' in route.params) {
@@ -1203,9 +1203,9 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
                 }
                 return {[name]: type}
             })
-        return Observable.fromPromise(this.list(sort, parseInt(
+        return this.list(sort, parseInt(
             route.params.page || 1
-        ), parseInt(route.params.limit || 10), searchTerm))
+        ), parseInt(route.params.limit || 10), searchTerm)
     }
 }
 // / endregion
@@ -1213,9 +1213,16 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
 // region components/directives
 // / region abstract
 // TODO
-export class AbstractLiveDataComponent/* implements OnDestroy*/ {
+export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     actions:Array<PlainObject> = []
-    changes:Object
+    _canceled:boolean = false
+    _changeDetectorRef:ChangeDetectorRef
+    _changesStream:Object
+    _data:GenericDataService
+    _liveUpdateOptions:PlainObject = {
+        heartbeat: 300000, limit: 9999, live: true, timeout: 999999,
+        since: 'now'
+    }
     /**
      * Saves injected service instances as instance properties.
      * @param changeDetectorRef - Model dirty checking service.
@@ -1225,28 +1232,42 @@ export class AbstractLiveDataComponent/* implements OnDestroy*/ {
     constructor(
         changeDetectorRef:ChangeDetectorRef, data:GenericDataService
     ):void {
-        this.changes = data.connection.changes({since: 1, live: true})
-        .on('change', (action:PlainObject):void => {
+        this._changeDetectorRef = changeDetectorRef
+        this._data = data
+    }
+    ngOnInit():void {
+        this._changesStream = this._data.connection.changes(
+            this._liveUpdateOptions
+        ).on('change', (action:PlainObject):void => {
+            if (this._canceled)
+                return
             action.name = 'change'
             this.actions.unshift(action)
-            this.onChange(action, 'action')
-            changeDetectorRef.detectChanges()
+            this.onDataChange(action, 'action')
+            if (this.onDataChange(action, 'action'))
+                this._changeDetectorRef.detectChanges()
         }).on('complete', (info:PlainObject):void => {
+            if (this._canceled)
+                return
             info.name = 'complete'
             this.actions.unshift(info)
-            this.onChange(info, 'complete')
-            changeDetectorRef.detectChanges()
+            this.onDataChange(info, 'complete')
+            if (this.onDataChange(info, 'complete'))
+                this._changeDetectorRef.detectChanges()
         }).on('error', (error:PlainObject):void => {
+            if (this._canceled)
+                return
             error.name = 'error'
             this.actions.unshift(error)
-            if (this.onChange(error, 'error'))
-                changeDetectorRef.detectChanges()
+            if (this.onDataChange(error, 'error'))
+                this._changeDetectorRef.detectChanges()
         })
     }
     ngOnDestroy():void {
-        this.changes.cancel()
+        this._canceled = true
+        this._changesStream.cancel()
     }
-    onChange():boolean {
+    onDataChange():boolean {
         return true
     }
 }
@@ -1261,7 +1282,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy*/ {
  * should be suppressed or be shown automatically. Useful to prevent error
  * component from showing error messages before the user has submit the form.
  */
-export class AbstractInputComponent {
+export class AbstractInputComponent/* implements OnInit*/ {
     _extendObject:Function
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
@@ -1327,7 +1348,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     _route:ActivatedRoute
     _router:Router
     _tools:typeof Tools
-    items:Observable<Array<PlainObject>>
+    items:Promise<Array<PlainObject>>
     limit:number
     page:number
     regularExpression:boolean = false
@@ -1352,6 +1373,20 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
         this._route = route
         this._router = router
         this._tools = tools.tools
+        /*
+            NOTE: Parameter have to be read before data to ensure that all page
+            constraints have been set correctly before item slicing.
+        */
+        this._route.params.subscribe((data:PlainObject):void => {
+            this.page = parseInt(data.page)
+            this.limit = parseInt(data.limit)
+            const match:Array<string> = /(regex|exact)-(.*)/.exec(
+                data.searchTerm)
+            if (match) {
+                this.regularExpression = match[1] === 'regex'
+                this.searchTerm = match[2]
+            }
+        })
         this._route.data.subscribe((data:PlainObject):void => {
             this.limit = Math.max(1, this.limit || 1)
             const total:number = data.items.length + (
@@ -1364,16 +1399,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             if (this.applyPageConstraints())
                 this._tools.timeout(():boolean => this.update())
         })
-        this._route.params.subscribe((data:PlainObject):void => {
-            this.page = parseInt(data.page)
-            this.limit = parseInt(data.limit)
-            const match:Array<string> = /(regex|exact)-(.*)/.exec(
-                data.searchTerm)
-            if (match) {
-                this.regularExpression = match[1] === 'regex'
-                this.searchTerm = match[2]
-            }
-        })
         this.searchTermStream.debounceTime(200).distinctUntilChanged().map((
         ):boolean => {
             this.page = 1
@@ -1383,7 +1408,8 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     /**
      * Updates constraints between limit, page number and number of total
      * available items.
-     * @returns Nothing.
+     * @returns A boolean indicating if something has changed to fulfill page
+     * constraints.
      */
     applyPageConstraints():boolean {
         const oldPage:number = this.page
@@ -1434,7 +1460,11 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     goToItem(itemID:string):void {
         this._router.navigate([this._itemPath, itemID])
     }
-    onChange():false {
+    onDataChange():false {
+        /*
+            NOTE: We want to avoid another reload if page is already violating
+            page constraints which indicates a page reload workaround.
+        */
         this.update(true)
         return false
     }
@@ -1456,7 +1486,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
      */
     update(reload:boolean = false):boolean {
         this.applyPageConstraints()
-        if (reload)
+        if (reload && this.page !== 0)
             /*
                 NOTE: Will be normalised to "1" after route reload (hack to
                 enforce route reloading).
