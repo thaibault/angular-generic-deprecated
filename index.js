@@ -21,9 +21,10 @@
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
-    /* AfterViewInit,*/ Component, Directive, ElementRef, EventEmitter,
-    forwardRef, Injectable, Injector, Input, NgModule, /* OnInit,*/ Output,
-    Pipe, PipeTransform, ReflectiveInjector, Renderer, ViewChild
+    /* AfterViewInit,*/ ChangeDetectorRef, Component, Directive, ElementRef,
+    EventEmitter, forwardRef, Injectable, Injector, Input, NgModule,
+    /* OnInit,*/ Output, Pipe, PipeTransform, ReflectiveInjector, Renderer,
+    ViewChild
 } from '@angular/core'
 import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
@@ -1211,6 +1212,44 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
 // endregion
 // region components/directives
 // / region abstract
+// TODO
+export class AbstractLiveDataComponent/* implements OnDestroy*/ {
+    actions:Array<PlainObject> = []
+    changes:Object
+    /**
+     * Saves injected service instances as instance properties.
+     * @param changeDetectorRef - Model dirty checking service.
+     * @param data - Data stream service.
+     * @returns Nothing.
+     */
+    constructor(
+        changeDetectorRef:ChangeDetectorRef, data:GenericDataService
+    ):void {
+        this.changes = data.connection.changes({since: 1, live: true})
+        .on('change', (action:PlainObject):void => {
+            action.name = 'change'
+            this.actions.unshift(action)
+            this.onChange(action, 'action')
+            changeDetectorRef.detectChanges()
+        }).on('complete', (info:PlainObject):void => {
+            info.name = 'complete'
+            this.actions.unshift(info)
+            this.onChange(info, 'complete')
+            changeDetectorRef.detectChanges()
+        }).on('error', (error:PlainObject):void => {
+            error.name = 'error'
+            this.actions.unshift(error)
+            if (this.onChange(error, 'error'))
+                changeDetectorRef.detectChanges()
+        })
+    }
+    ngOnDestroy():void {
+        this.changes.cancel()
+    }
+    onChange():boolean {
+        return true
+    }
+}
 /**
  * Generic input component.
  * @property extendObject - Holds the extend object's pipe transformation
@@ -1281,7 +1320,7 @@ export class AbstractInputComponent {
  * purposes.
  * @property sort - Sorting informations.
  */
-export class AbstractItemsComponent {
+export class AbstractItemsComponent extends AbstractLiveDataComponent {
     // TODO check tests
     _itemPath:string = 'item'
     _itemsPath:string = 'items'
@@ -1298,14 +1337,18 @@ export class AbstractItemsComponent {
     sort:PlainObject = {_id: 'asc'}
     /**
      * Saves injected service instances as instance properties.
+     * @param changeDetectorRef - Model dirty checking service.
+     * @param data - Data stream service.
      * @param route - Current route configuration.
      * @param router - Injected router service instance.
      * @param tools - Injected tools service instance.
      * @returns Nothing.
      */
     constructor(
+        changeDetectorRef:ChangeDetectorRef, data:GenericDataService,
         route:ActivatedRoute, router:Router, tools:GenericToolsService
     ):void {
+        super(changeDetectorRef, data)
         this._route = route
         this._router = router
         this._tools = tools.tools
@@ -1390,6 +1433,10 @@ export class AbstractItemsComponent {
      */
     goToItem(itemID:string):void {
         this._router.navigate([this._itemPath, itemID])
+    }
+    onChange():false {
+        this.update(true)
+        return false
     }
     /**
      * Select all available items.
