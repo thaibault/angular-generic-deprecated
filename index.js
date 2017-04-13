@@ -647,6 +647,9 @@ export class GenericDataService {
                                .plugin(PouchDBValidationPlugin)
         this.extendObject = extendObject.transform.bind(extendObject)
         this.configuration = initialData.configuration
+        if (this.configuration.database.hasOwnProperty('publicURL'))
+            this.configuration.database.url =
+                this.configuration.database.publicURL
         this.stringFormat = stringFormat.transform.bind(stringFormat)
         for (const plugin:Object of this.configuration.database.plugins || [])
             this.database = this.database.plugin(plugin)
