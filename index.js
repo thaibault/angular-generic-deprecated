@@ -1693,7 +1693,9 @@ const inputContent:string = `
             <md-select [(ngModel)]="model.value" ${propertyGenericContent}>
                 <md-option
                     *ngFor="let value of model.selection" [value]="value"
-                >{{value}}</md-option>
+                >
+                    {{labels.hasOwnProperty(value) ? labels[value] : value}}
+                </md-option>
             </md-select>
             ${inputContent}
             <ng-content></ng-content>
@@ -1708,6 +1710,7 @@ const inputContent:string = `
  */
 export class GenericInputComponent extends AbstractInputComponent {
     @Input() type:?string
+    @Input() labels:{[key:string]:string} = {}
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
