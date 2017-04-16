@@ -1289,6 +1289,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
     _extendObject:Function
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
+    parseInt = parseInt
     parseFloat = parseFloat
     @Input() showValidationErrorMessages:boolean = false
     /**
@@ -1627,7 +1628,7 @@ export class TimeValueAccessor extends AbstractValueAccessor {
 const propertyGenericContent:string = `
     [required]="!model.nullable"
     [ngModel]="model.value"
-    (ngModelChange)="model.value = model.type === 'number' ? parseFloat($event) : $event"
+    (ngModelChange)="model.value = model.type === 'integer' ? parseInt($event) : model.type === 'number' ? parseFloat($event) : $event"
     [placeholder]="model.description || model.name"
     #state="ngModel"
     #data
