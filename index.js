@@ -1626,7 +1626,7 @@ export class TimeValueAccessor extends AbstractValueAccessor {
 const propertyGenericContent:string = `
     [required]="!model.nullable"
     [ngModel]="model.value"
-    (ngModel)="model.value = model.type === 'number' ? parseFloat($event) : $event"
+    (ngModelChange)="model.value = model.type === 'number' ? parseFloat($event) : $event"
     [placeholder]="model.description || model.name"
     #state="ngModel"
     #data
