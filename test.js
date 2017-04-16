@@ -897,7 +897,7 @@ registerAngularTest(function(
                                     By.css('input')
                                 ).nativeElement.attributes.type.value,
                                 'password')
-                                fixture.componentInstance.type = 'number'
+                                fixture.componentInstance.model.type = 'number'
                                 inputDomNode.value = 2
                                 inputDomNode.dispatchEvent(getNativeEvent(
                                     'input'))

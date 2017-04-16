@@ -1289,6 +1289,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
     _extendObject:Function
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
+    parseFloat = parseFloat
     @Input() showValidationErrorMessages:boolean = false
     /**
      * Sets needed services as property values.
@@ -1710,8 +1711,8 @@ const inputContent:string = `
  * @property type - Optionally defines an input type explicitly.
  */
 export class GenericInputComponent extends AbstractInputComponent {
-    @Input() type:?string
     @Input() labels:{[key:string]:string} = {}
+    @Input() type:?string
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
