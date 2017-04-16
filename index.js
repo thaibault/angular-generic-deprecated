@@ -1625,7 +1625,8 @@ export class TimeValueAccessor extends AbstractValueAccessor {
 /* eslint-disable max-len */
 const propertyGenericContent:string = `
     [required]="!model.nullable"
-    [(ngModel)]="model.value"
+    [ngModel]="model.value"
+    (ngModel)="model.value = model.type === 'number' ? parseFloat($event) : $event"
     [placeholder]="model.description || model.name"
     #state="ngModel"
     #data

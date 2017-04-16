@@ -32,7 +32,8 @@ registerAngularTest(function(
     component:Function;
 } {
     // region imports
-    const {Component, Injectable, NgModule} = require('@angular/core')
+    const {ChangeDetectorRef, Component, Injectable, NgModule} = require(
+        '@angular/core')
     const {ComponentFixture} = require('@angular/core/testing')
     const {By} = require('@angular/platform-browser')
     const {NoopAnimationsModule} = require(
@@ -47,6 +48,7 @@ registerAngularTest(function(
     // region extend abstract components
     const {
         AbstractItemsComponent,
+        GenericDataService,
         GenericToolsService
     } = index
     // IgnoreTypeCheck
@@ -61,11 +63,14 @@ registerAngularTest(function(
         /**
          * Sets service instances as instance property values and test route
          * parameter.
+         * @param changeDetectorRef - Model dirty checking service.
+         * @param data - Data stream service.
          * @param route - Current route state.
          * @param router - Application wide router instance.
          * @param tools - Application wide tools service instance.
          */
         constructor(
+            changeDetectorRef:ChangeDetectorRef, data:GenericDataService,
             route:ActivatedRoute, router:Router, tools:GenericToolsService
         ):void {
             route.testData = {items: []}
@@ -74,7 +79,7 @@ registerAngularTest(function(
                 page: 1,
                 searchTerm: 'exact-'
             }
-            super(route, router, tools)
+            super(changeDetectorRef, data, route, router, tools)
         }
     }
     // endregion
@@ -129,7 +134,6 @@ registerAngularTest(function(
                 GenericStringHasTimeSuffixPipe,
                 GenericNumberPercentPipe,
                 GenericCanDeactivateRouteLeaveGuard,
-                GenericDataService,
                 GenericDataScopeService,
                 AbstractResolver
             } = index
@@ -893,6 +897,14 @@ registerAngularTest(function(
                                     By.css('input')
                                 ).nativeElement.attributes.type.value,
                                 'password')
+                                fixture.componentInstance.type = 'number'
+                                inputDomNode.value = 2
+                                inputDomNode.dispatchEvent(getNativeEvent(
+                                    'input'))
+                                fixture.detectChanges()
+                                await fixture.whenStable()
+                                assert.strictEqual(
+                                    fixture.componentInstance.model.value, 2)
                             }
                         } catch (error) {
                             console.error(error)
