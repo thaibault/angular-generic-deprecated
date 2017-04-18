@@ -1687,7 +1687,7 @@ const inputContent:string = `
     </md-hint>
     <md-hint
         align="end"
-        *ngIf="model.type === 'string' && model.maximum !== null && model.maximum < 100"
+        *ngIf="!model.selection && model.type === 'string' && model.maximum !== null && model.maximum < 100"
     >{{data.characterCount}} / {{model.maximum}}</md-hint>
 `
 // IgnoreTypeCheck
