@@ -1255,6 +1255,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
             ):Promise<void> => {
                 if (this._canceled)
                     return
+                action.name = type
                 this.actions.unshift(action)
                 // IgnoreTypeCheck
                 let result:Promise<boolean>|boolean = this[
