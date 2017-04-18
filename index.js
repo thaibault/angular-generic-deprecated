@@ -1241,28 +1241,26 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     ngOnInit():void {
         this._changesStream = this._data.connection.changes(
             this._liveUpdateOptions
-        ).on('change', (action:PlainObject):void => {
+        ).on('change', async (action:PlainObject):Promise<void> => {
             if (this._canceled)
                 return
             action.name = 'change'
             this.actions.unshift(action)
-            this.onDataChange(action, 'action')
-            if (this.onDataChange(action, 'action'))
+            if (await this.onDataChange(action, 'action'))
                 this._changeDetectorRef.detectChanges()
-        }).on('complete', (info:PlainObject):void => {
+        }).on('complete', async (info:PlainObject):Promise<void> => {
             if (this._canceled)
                 return
             info.name = 'complete'
             this.actions.unshift(info)
-            this.onDataChange(info, 'complete')
-            if (this.onDataChange(info, 'complete'))
+            if (await this.onDataChange(info, 'complete'))
                 this._changeDetectorRef.detectChanges()
-        }).on('error', (error:PlainObject):void => {
+        }).on('error', async (error:PlainObject):Promise<void> => {
             if (this._canceled)
                 return
             error.name = 'error'
             this.actions.unshift(error)
-            if (this.onDataChange(error, 'error'))
+            if (await this.onDataChange(error, 'error'))
                 this._changeDetectorRef.detectChanges()
         })
     }
