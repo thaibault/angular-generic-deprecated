@@ -268,12 +268,21 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                         delete result[name]
                 } else
                     result[name] = newDocument[name]
+        console.log('A', result, oldDocument)
         if (oldDocument) {
+            // TODO you have to:
+            // - do it recursively
+            // - why are "_constraintExpressions" present
+            // - '_' as prefix is a (too) strong assumption!
             for (const name:string in oldDocument)
-                if (oldDocument.hasOwnProperty(
+                if (!name.startsWith('_') && oldDocument.hasOwnProperty(
                     name
-                ) && !newDocument.hasOwnProperty(name))
-                    result[name] = null
+                ))
+                    if (result.hasOwnProperty(name)) {
+                        if (name !== '-type' && newDocument[name] === oldDocument[name].value)
+                            delete result[name]
+                    } else
+                        result[name] = null
             // Handle attachment removes or replacements.
             if (oldDocument.hasOwnProperty(
                 '_attachments'
