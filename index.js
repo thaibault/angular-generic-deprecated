@@ -1660,25 +1660,25 @@ const inputContent:string = `
             *ngIf="model.declaration"
         >[i]</span>
         <span *ngIf="showValidationErrorMessages">
-            <span *ngIf="model.state.errors?.required">
+            <span *ngIf="model.state?.errors?.required">
                 Bitte füllen Sie das Feld "{{model.description || model.name}}"
                 aus.
             </span>
-            <span *ngIf="model.state.errors?.maxlength">
+            <span *ngIf="model.state?.errors?.maxlength">
                 Bitte geben Sie maximal {{model.maximum}} Zeichen ein.
             </span>
-            <span *ngIf="model.state.errors?.minlength">
+            <span *ngIf="model.state?.errors?.minlength">
                 Bitte geben Sie mindestens {{model.minimum}} Zeichen ein.
             </span>
-            <span *ngIf="model.state.errors?.max">
+            <span *ngIf="model.state?.errors?.max">
                 Bitte geben Sie eine Zahl kleiner oder gleich {{model.maximum}}
                 ein.
             </span>
-            <span *ngIf="model.state.errors?.min">
+            <span *ngIf="model.state?.errors?.min">
                 Bitte geben Sie eine Zahl größer oder gleich {{model.minimum}}
                 ein.
             </span>
-            <span *ngIf="model.state.errors?.pattern">
+            <span *ngIf="model.state?.errors?.pattern">
                 Bitte geben Sie eine Zeinefolge ein die dem regulären Ausdruck
                 "{{model.regularExpressionPattern}}" entspricht.
             </span>
@@ -1813,25 +1813,25 @@ export class GenericTextareaComponent extends AbstractInputComponent {
                 <ng-content></ng-content>
                 <span *ngIf="showValidationErrorMessages">
                     <p
-                        *ngIf="model._attachments[internalName]?.state.errors?.required"
+                        *ngIf="model._attachments[internalName]?.state?.errors?.required"
                     >Bitte wählen Sie eine Datei aus.</p>
                     <p
-                        *ngIf="model._attachments[internalName]?.state.errors?.name"
+                        *ngIf="model._attachments[internalName]?.state?.errors?.name"
                     >
                         Der Dateiname "{{file.name}}" entspricht nicht dem
                         vorgegebenen Muster "{{this.internalName}}".
                     </p>
                     <p
-                        *ngIf="model._attachments[internalName]?.state.errors?.contentType"
+                        *ngIf="model._attachments[internalName]?.state?.errors?.contentType"
                     >
                         Der Daten-Typ "{{file.content_type}}" entspricht
                         nicht dem vorgegebenen Muster
                         "{{model._attachments[internalName].contentTypeRegularExpressionPattern}}".
                     </p>
                     <p
-                        *ngIf="model._attachments[internalName]?.state.errors?.database"
+                        *ngIf="model._attachments[internalName]?.state?.errors?.database"
                     >
-                        {{model._attachments[internalName]?.state.errors?.database}}
+                        {{model._attachments[internalName]?.state?.errors?.database}}
                     </p>
                 </span>
             </md-card-content>
