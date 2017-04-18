@@ -565,6 +565,8 @@ export class GenericNumberPercentPipe/* implements PipeTransform*/ {
 // endregion
 const GenericArrayMakeRangePipe:PipeTransform =
     module.exports.GenericArrayMakeRangePipe
+const GenericStringCapitalizePipe:PipeTransform =
+    module.exports.GenericStringCapitalizePipe
 const GenericStringEscapeRegularExpressionsPipe:PipeTransform =
     module.exports.GenericStringEscapeRegularExpressionsPipe
 const GenericExtendObjectPipe:PipeTransform =
@@ -633,24 +635,24 @@ export class GenericDataService {
     /**
      * Creates the database constructor applies all plugins instantiates
      * the connection instance and registers all middlewares.
-     * @param extendObject - Injected extend object pipe instance.
+     * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
-     * @param stringFormat - Injected string format pipe instance.
+     * @param stringFormatPipe - Injected string format pipe instance.
      * @returns Nothing.
      */
     constructor(
-        extendObject:GenericExtendObjectPipe,
+        extendObjectPipe:GenericExtendObjectPipe,
         initialData:GenericInitialDataService,
-        stringFormat:GenericStringFormatPipe
+        stringFormatPipe:GenericStringFormatPipe
     ):void {
         this.database = PouchDB.plugin(PouchDBFindPlugin)
                                .plugin(PouchDBValidationPlugin)
-        this.extendObject = extendObject.transform.bind(extendObject)
+        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.configuration = initialData.configuration
         if (this.configuration.database.hasOwnProperty('publicURL'))
             this.configuration.database.url =
                 this.configuration.database.publicURL
-        this.stringFormat = stringFormat.transform.bind(stringFormat)
+        this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         for (const plugin:Object of this.configuration.database.plugins || [])
             this.database = this.database.plugin(plugin)
         this.initialize()
@@ -825,18 +827,18 @@ export class GenericDataScopeService {
     /**
      * Saves alle needed services as property values.
      * @param data - Injected data service instance.
-     * @param extendObject - Injected extend object pipe instance.
+     * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
      * @param tools - Injected tools service instance.
      * @returns Nothing.
      */
     constructor(
-        data:GenericDataService, extendObject:GenericExtendObjectPipe,
+        data:GenericDataService, extendObjectPipe:GenericExtendObjectPipe,
         initialData:GenericInitialDataService, tools:GenericToolsService
     ):void {
         this.configuration = initialData.configuration
         this.data = data
-        this.extendObject = extendObject.transform.bind(extendObject)
+        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.tools = tools.tools
     }
     /**
@@ -1104,22 +1106,23 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     /**
      * Sets all needed injected services as instance properties.
      * @param data - Injected data service instance.
-     * @param escapeRegularExpressions - Injected escape regular expression
+     * @param escapeRegularExpressionsPipe - Injected escape regular expression
      * pipe instance.
-     * @param extendObject - Injected extend object pipe instance.
+     * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
      * @returns Nothing.
      */
     constructor(
         data:GenericDataService,
-        escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe,
-        extendObject:GenericExtendObjectPipe,
+        escapeRegularExpressionsPipe:GenericStringEscapeRegularExpressionsPipe,
+        extendObjectPipe:GenericExtendObjectPipe,
         initialData:GenericInitialDataService
     ):void {
         this.data = data
         this.escapeRegularExpressions =
-            escapeRegularExpressions.transform.bind(escapeRegularExpressions)
-        this.extendObject = extendObject.transform.bind(extendObject)
+            escapeRegularExpressionsPipe.transform.bind(
+                escapeRegularExpressionsPipe)
+        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.models = initialData.configuration.database.model.entities
         this.typeName = initialData.configuration.database.model.property.name
             .special.type
@@ -1226,50 +1229,58 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
         heartbeat: 300000, limit: 9999, live: true, timeout: 999999,
         since: 'now'
     }
+    _stringCapitalize:Function
     /**
      * Saves injected service instances as instance properties.
      * @param changeDetectorRef - Model dirty checking service.
      * @param data - Data stream service.
+     * @param stringCapitalizePipe - The string capitalize pipe instance.
      * @returns Nothing.
      */
     constructor(
-        changeDetectorRef:ChangeDetectorRef, data:GenericDataService
+        changeDetectorRef:ChangeDetectorRef, data:GenericDataService,
+        stringCapitalizePipe:GenericStringCapitalizePipe
     ):void {
         this._changeDetectorRef = changeDetectorRef
         this._data = data
+        this._stringCapitalize = stringCapitalizePipe.transform.bind(
+            stringCapitalizePipe)
     }
     ngOnInit():void {
         this._changesStream = this._data.connection.changes(
-            this._liveUpdateOptions
-        ).on('change', async (action:PlainObject):Promise<void> => {
-            if (this._canceled)
-                return
-            action.name = 'change'
-            this.actions.unshift(action)
-            if (await this.onDataChange(action, 'action'))
-                this._changeDetectorRef.detectChanges()
-        }).on('complete', async (info:PlainObject):Promise<void> => {
-            if (this._canceled)
-                return
-            info.name = 'complete'
-            this.actions.unshift(info)
-            if (await this.onDataChange(info, 'complete'))
-                this._changeDetectorRef.detectChanges()
-        }).on('error', async (error:PlainObject):Promise<void> => {
-            if (this._canceled)
-                return
-            error.name = 'error'
-            this.actions.unshift(error)
-            if (await this.onDataChange(error, 'error'))
-                this._changeDetectorRef.detectChanges()
-        })
+            this._liveUpdateOptions)
+        for (const type:string of ['change', 'complete', 'error'])
+            this._changesStream.on(type, async (
+                action:PlainObject
+            ):Promise<void> => {
+                if (this._canceled)
+                    return
+                this.actions.unshift(action)
+                // IgnoreTypeCheck
+                let result:Promise<boolean>|boolean = this[
+                    `onData${this._stringCapitalize(type)}`
+                ](action)
+                if (
+                    result !== null && typeof result === 'object' &&
+                    'then' in result
+                )
+                    result = await result
+                if (result)
+                    this._changeDetectorRef.detectChanges()
+            })
     }
     ngOnDestroy():void {
         this._canceled = true
         this._changesStream.cancel()
     }
-    onDataChange(event:PlainObject, type:string):boolean {
-        return type === 'action'
+    onDataChange():boolean {
+        return true
+    }
+    onDataComplete():boolean {
+        return false
+    }
+    onDataError():boolean {
+        return false
     }
 }
 /**
@@ -1292,11 +1303,11 @@ export class AbstractInputComponent/* implements OnInit*/ {
     @Input() showValidationErrorMessages:boolean = false
     /**
      * Sets needed services as property values.
-     * @param extendObject - Injected extend object pipe instance.
+     * @param extendObjectPipe - Injected extend object pipe instance.
      * @returns Nothing.
      */
-    constructor(extendObject:GenericExtendObjectPipe):void {
-        this._extendObject = extendObject.transform.bind(extendObject)
+    constructor(extendObjectPipe:GenericExtendObjectPipe):void {
+        this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
     }
     /**
      * Triggers after input values have been resolved.
@@ -1365,14 +1376,17 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
      * @param data - Data stream service.
      * @param route - Current route configuration.
      * @param router - Injected router service instance.
+     * @param stringCapitalizePipe - String capitalize pipe instance.
      * @param tools - Injected tools service instance.
      * @returns Nothing.
      */
     constructor(
         changeDetectorRef:ChangeDetectorRef, data:GenericDataService,
-        route:ActivatedRoute, router:Router, tools:GenericToolsService
+        route:ActivatedRoute, router:Router,
+        stringCapitalizePipe:GenericStringCapitalizePipe,
+        tools:GenericToolsService
     ):void {
-        super(changeDetectorRef, data)
+        super(changeDetectorRef, data, stringCapitalizePipe)
         this._route = route
         this._router = router
         this._tools = tools.tools
@@ -1715,11 +1729,11 @@ export class GenericInputComponent extends AbstractInputComponent {
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
-     * @param extendObject - Injected extend object pipe instance.
+     * @param extendObjectPipe - Injected extend object pipe instance.
      * @returns Nothing.
      */
-    constructor(extendObject:GenericExtendObjectPipe):void {
-        super(extendObject)
+    constructor(extendObjectPipe:GenericExtendObjectPipe):void {
+        super(extendObjectPipe)
     }
 }
 // IgnoreTypeCheck
@@ -1745,11 +1759,11 @@ export class GenericTextareaComponent extends AbstractInputComponent {
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
-     * @param extendObject - Injected extend object pipe instance.
+     * @param extendObjectPipe - Injected extend object pipe instance.
      * @returns Nothing.
      */
-    constructor(extendObject:GenericExtendObjectPipe):void {
-        super(extendObject)
+    constructor(extendObjectPipe:GenericExtendObjectPipe):void {
+        super(extendObjectPipe)
     }
 }
 // // endregion
@@ -1920,31 +1934,33 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
      * Sets needed services as property values.
      * @param data - Injected data service instance.
      * @param domSanitizer - Injected dom sanitizer service instance.
-     * @param extendObject - Injected extend object pipe instance.
-     * @param getFilenameByPrefix - Saves the file name by prefix retriever
+     * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
      * @param initialData - Injected initial data service instance.
-     * @param representObject - Saves the object to string representation pipe
-     * instance.
-     * @param stringFormat - Saves the string formation pipe instance.
+     * @param representObjectPipe - Saves the object to string representation
+     * pipe instance.
+     * @param stringFormatPipe - Saves the string formation pipe instance.
      * @returns Nothing.
      */
     constructor(
         data:GenericDataService, domSanitizer:DomSanitizer,
-        extendObject:GenericExtendObjectPipe,
-        getFilenameByPrefix:GenericGetFilenameByPrefixPipe,
+        extendObjectPipe:GenericExtendObjectPipe,
+        getFilenameByPrefixPipe:GenericGetFilenameByPrefixPipe,
         initialData:GenericInitialDataService,
-        representObject:GenericRepresentObjectPipe,
-        stringFormat:GenericStringFormatPipe
+        representObjectPipe:GenericRepresentObjectPipe,
+        stringFormatPipe:GenericStringFormatPipe
     ):void {
         this._configuration = initialData.configuration
         this._data = data
         this._domSanitizer = domSanitizer
-        this._extendObject = extendObject.transform.bind(extendObject)
-        this._getFilenameByPrefix = getFilenameByPrefix.transform.bind(
-            getFilenameByPrefix)
-        this._representObject = representObject.transform.bind(representObject)
-        this._stringFormat = stringFormat.transform.bind(stringFormat)
+        this._extendObject = extendObjectPipe.transform.bind(
+            extendObjectPipe)
+        this._getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
+            getFilenameByPrefixPipe)
+        this._representObject = representObjectPipe.transform.bind(
+            representObjectPipe)
+        this._stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
     }
     /**
      * Initializes file upload handler.
@@ -2214,7 +2230,8 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
 /* eslint-enable max-len */
 /**
  * Provides a generic pagination component.
- * @property _makeRange - Saves the make range pipe transformation function.
+ * @property _makeRangePipe - Saves the make range pipe transformation
+ * function.
  * @property itemsPerPage - Number of items to show per page as maximum.
  * @property page - Contains currently selected page number.
  * @property pageChange - Event emitter to fire on each page change event.
@@ -2230,11 +2247,11 @@ export class GenericPaginationComponent {
     @Input() total:number = 0
     /**
      * Sets needed services as property values.
-     * @param makeRange - Saves the make range pipe instance.
+     * @param makeRangePipe - Saves the make range pipe instance.
      * @returns Nothing.
      */
-    constructor(makeRange:GenericArrayMakeRangePipe):void {
-        this._makeRange = makeRange.transform.bind(makeRange)
+    constructor(makeRangePipe:GenericArrayMakeRangePipe):void {
+        this._makeRange = makeRangePipe.transform.bind(makeRangePipe)
     }
     /**
      * Is called whenever a page change should be performed.

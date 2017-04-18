@@ -49,6 +49,7 @@ registerAngularTest(function(
     const {
         AbstractItemsComponent,
         GenericDataService,
+        GenericStringCapitalizePipe,
         GenericToolsService
     } = index
     // IgnoreTypeCheck
@@ -67,11 +68,14 @@ registerAngularTest(function(
          * @param data - Data stream service.
          * @param route - Current route state.
          * @param router - Application wide router instance.
+         * @param stringCapitalizePipe - String capitalize pipe instance.
          * @param tools - Application wide tools service instance.
          */
         constructor(
             changeDetectorRef:ChangeDetectorRef, data:GenericDataService,
-            route:ActivatedRoute, router:Router, tools:GenericToolsService
+            route:ActivatedRoute, router:Router,
+            stringCapitalizePipe:GenericStringCapitalizePipe,
+            tools:GenericToolsService
         ):void {
             route.testData = {items: []}
             route.testParameter = {
@@ -79,7 +83,9 @@ registerAngularTest(function(
                 page: 1,
                 searchTerm: 'exact-'
             }
-            super(changeDetectorRef, data, route, router, tools)
+            super(
+                changeDetectorRef, data, route, router, stringCapitalizePipe,
+                tools)
         }
     }
     // endregion
