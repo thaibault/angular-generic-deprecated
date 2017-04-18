@@ -239,9 +239,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                     result[name] = {}
                     let empty:boolean = true
                     for (const fileName:string in newDocument[name])
-                        if (newDocument[name].hasOwnProperty(
-                            fileName
-                        ))
+                        if (newDocument[name].hasOwnProperty(fileName))
                             if (newDocument[name][fileName].hasOwnProperty(
                                 'data'
                             ) && !(oldDocument && oldDocument.hasOwnProperty(
@@ -270,13 +268,20 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                         delete result[name]
                 } else
                     result[name] = newDocument[name]
-        // Handle attachment removes or replacements.
-        if (oldDocument && oldDocument.hasOwnProperty(
-            '_attachments'
-        ) && oldDocument._attachments)
-            this._handleAttachmentChanges(
-                result, oldDocument._attachments, fileTypeReplacement,
-                untouchedAttachments)
+        if (oldDocument) {
+            for (const name:string in oldDocument)
+                if (oldDocument.hasOwnProperty(
+                    name
+                ) && !newDocument.hasOwnProperty(name))
+                    result[name] = null
+            // Handle attachment removes or replacements.
+            if (oldDocument.hasOwnProperty(
+                '_attachments'
+            ) && oldDocument._attachments)
+                this._handleAttachmentChanges(
+                    result, oldDocument._attachments, fileTypeReplacement,
+                    untouchedAttachments)
+        }
         return result
     }
 }
