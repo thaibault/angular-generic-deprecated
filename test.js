@@ -352,7 +352,8 @@ registerAngularTest(function(
                                     content_type: 'a/b',
                                     data: 2
                                 }}
-                            }]
+                            }],
+                            [[{}, {a: 2}], {a: null}]
                         ])
                             assert.deepEqual(
                                 extractRawData.transform(...test[0]), test[1])
