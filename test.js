@@ -314,16 +314,16 @@ registerAngularTest(function(
                         // endregion
                         // region transform
                         for (const test:Array<any> of [
-                            [[{}], {}],
-                            [[{}, {}], {}],
-                            [[{}, {}, false], {}],
+                            [[{}], null],
+                            [[{}, {}], null],
+                            [[{}, {}, false], null],
                             [[{a: 2}, {}, false], {a: 2}],
-                            [[{a: undefined, b: null, c: ''}, {}, false], {}],
+                            [[{a: undefined, b: null, c: ''}, {}, false], null],
                             [[{a: undefined, b: null, c: '', d: {}}], {d: {}}],
                             [[{a: undefined, b: 3}], {b: 3}],
-                            [[{a: undefined, _revisions: 3}], {}],
-                            [[{_attachments: undefined}], {}],
-                            [[{_attachments: {a: {}}}], {}],
+                            [[{a: undefined, _revisions: 3}], null],
+                            [[{_attachments: undefined}], null],
+                            [[{_attachments: {a: {}}}], null],
                             [[{_attachments: {a: {data: 2}}}], {_attachments: {
                                 a: {
                                     content_type: 'application/octet-stream',
@@ -337,19 +337,19 @@ registerAngularTest(function(
                             }}}],
                             [[{_attachments: {a: {data: 2}}}, {_attachments: {
                                 a: {data: 2}
-                            }}], {}],
+                            }}], null],
                             [[{_attachments: {a: {
                                 content_type: 'a/b', data: 2
                             }}}, {_attachments: {a: {
                                 content_type: 'a/b',
                                 data: 2
-                            }}}], {}],
+                            }}}], null],
                             [[{_attachments: {a: {data: 2}}}, {_attachments: {
                                 a: {
                                     content_type: 'application/octet-stream',
                                     data: 2
                                 }
-                            }}], {}],
+                            }}], null],
                             [[{_attachments: {a: {data: 2}}}, {_attachments: {
                                 a: {data: 3}
                             }}], {_attachments: {a: {

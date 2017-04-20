@@ -203,6 +203,35 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
         this.configuration = initialData.configuration
         this.equals = equalsPipe.transform.bind(equalsPipe)
     }
+    // TODO
+    _convertDateToTimestampRecursively(document:PlainObject):PlainObject {
+        const result:PlainObject = {}
+        for (const name:string in document)
+            if (
+                document.hasOwnProperty(name) &&
+                typeof document[name] === 'object' &&
+                document[name] !== null
+            ) {
+                if ('getTime' in document[name])
+                    result[name] = document[name].getTime()
+                else if (Array.isArray(document[name])) {
+                    result[name] = []
+                    let index:number = 0
+                    for (const value:any of document[name]) {
+                        result[name][index] =
+                            this._convertDateToTimestampRecursively(
+                                document[name][index])
+                        index += 1
+                    }
+                } else if (Object.getPrototypeOf(
+                    document[name]
+                ) === Object.prototype)
+                    result[name] = this._convertDateToTimestampRecursively(
+                        document[name])
+            } else
+                result[name] = document[name]
+        return result
+    }
     /**
      * Implements attachment changes or removes.
      * @param newDocument - Document to slice meta data from.
@@ -251,14 +280,22 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
      * account.
      * @param fileTypeReplacement - Indicates whether file type replacements
      * and removes should be taken into account.
-     * @returns The copies sliced version of given document.
+     * @returns The copied sliced version of given document if changes exists
+     * (checked against given old document) and "null" otherwise.
      */
     transform(
         newDocument:PlainObject, oldDocument:?PlainObject,
         fileTypeReplacement:boolean = true
-    ):PlainObject {
+    ):?PlainObject {
+        oldDocument = this._convertDateToTimestampRecursively(oldDocument)
+        newDocument = this._convertDateToTimestampRecursively(newDocument)
         const result:PlainObject = {}
         const untouchedAttachments:Array<string> = []
+        let payloadExists:boolean = false
+        /*
+            Add all needed values in new document (respect only values in model
+            if present).
+        */
         for (const name:string in newDocument)
             if (newDocument.hasOwnProperty(name) && ![
                 undefined, null, ''
@@ -274,12 +311,11 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                     .constraints.execution,
                 this.configuration.database.model.property.name.special
                     .constraints.expression,
-                this.configuration.database.model.property.name.special
-                    .constraints.extend,
+                this.configuration.database.model.property.name.special.extend,
                 this.configuration.database.model.property.name.special
                     .revisions,
                 this.configuration.database.model.property.name.special
-                    .constraints.validatedDocumentsCache,
+                    .validatedDocumentsCache,
             ].includes(name) && (!(
                 this.configuration.database.model.property.name.special.type in
                 newDocument
@@ -321,29 +357,54 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                                 untouchedAttachments.push(fileName)
                     if (empty)
                         delete result[name]
-                } else
+                } else {
+                    if (
+                        !this.configuration.database.model.property.name
+                            .reserved.includes(name)
+                    )
+                        payloadExists = true
                     result[name] = newDocument[name]
+                }
         if (oldDocument) {
             /*
                 Remove already existing values and mark removed or truncated
-                values.
+                values (respect values in model only if specified).
             */
             for (const name:string in oldDocument)
                 if (oldDocument.hasOwnProperty(
                     name
-                ) && !this.configuration.database.model.property.name.reserved
+                ) && !(this.configuration.database.model.property.name.reserved
                     .concat([
+                        this.configuration.database.model.property.name.special
+                            .allowedRoles,
                         this.configuration.database.model.property.name.special
                             .attachments,
                         this.configuration.database.model.property.name.special
+                            .constraints.execution,
+                        this.configuration.database.model.property.name.special
+                            .constraints.expression,
+                        this.configuration.database.model.property.name.special
+                            .extend,
+                        this.configuration.database.model.property.name.special
                             .revisions,
                         this.configuration.database.model.property.name.special
-                            .type
-                    ]).includes(name)
-                )
+                            .type,
+                        this.configuration.database.model.property.name.special
+                            .validatedDocumentsCache
+                    ]).includes(name) || [null, undefined].includes(
+                        oldDocument[name].value)
+                ) && (!(
+                    this.configuration.database.model.property.name.special
+                        .type in newDocument
+                ) || this.configuration.database.model.entities[newDocument[
+                    this.configuration.database.model.property.name.special
+                        .type
+                ]].hasOwnProperty(name)))
                     if (result.hasOwnProperty(name)) {
                         if (Array.isArray(result[name])) {
-                            if (this.equals(result[name], oldDocument[name]))
+                            if (this.equals(result[name], oldDocument[
+                                name
+                            ].value))
                                 delete result[name]
                         } else if (
                             typeof result[name] === 'object' &&
@@ -359,21 +420,37 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                                 NOTE: If only the type property is given we can
                                 skip the key completely.
                             */
-                            if (Object.keys(result[name]).length === 1)
+                            if (result[name] === null)
                                 delete result[name]
                         } else if (result[name] === oldDocument[name].value)
                             delete result[name]
-                    } else
+                    } else {
+                        payloadExists = true
                         result[name] = null
+                    }
             // Handle attachment removes or replacements.
+            // TODO avoid attachments hardcoded here.
             if (oldDocument.hasOwnProperty(
-                '_attachments'
-            ) && oldDocument._attachments)
-                this._handleAttachmentChanges(
-                    result, oldDocument._attachments, fileTypeReplacement,
-                    untouchedAttachments)
+                this.configuration.database.model.property.name.special
+                    .attachments
+            ) && oldDocument[
+                this.configuration.database.model.property.name.special
+                    .attachments
+            ]) {
+                this._handleAttachmentChanges(result, oldDocument[
+                    this.configuration.database.model.property.name.special
+                        .attachments
+                ], fileTypeReplacement, untouchedAttachments)
+                if (this.configuration.database.model.property.name.special
+                    .attachments in result
+                )
+                    payloadExists = true
+            } else if (this.configuration.database.model.property.name.special
+                .attachments in result
+            )
+                payloadExists = true
         }
-        return result
+        return payloadExists ? result : null
     }
 }
 // IgnoreTypeCheck
@@ -939,8 +1016,17 @@ export class GenericDataScopeService {
                 'hasOwnProperty' in scope && scope[key].hasOwnProperty('value')
             )
                 result[key] = scope[key].value
-        if (scope.hasOwnProperty('_attachments') && scope._attachments)
-            for (const key:string in scope._attachments)
+        if (scope.hasOwnProperty(
+            this.configuration.database.model.property.name.special
+                .attachments
+        ) && scope[
+            this.configuration.database.model.property.name.special
+                .attachments
+        ])
+            for (const key:string in scope[
+                this.configuration.database.model.property.name.special
+                    .attachments]
+            )
                 if (
                     scope._attachments.hasOwnProperty(key) &&
                     typeof scope._attachments[key] === 'object' &&
