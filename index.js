@@ -262,11 +262,31 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
         for (const name:string in newDocument)
             if (newDocument.hasOwnProperty(name) && ![
                 undefined, null, ''
-            ].includes(
-                newDocument[name]
-            ) && name !== this.configuration.database.model.property.name
-                .special.revisions
-            )
+            ].includes(newDocument[name]) && (
+                this.configuration.database.model.property.name.reserved
+                    .includes(name) ||
+                this.configuration.database.model.property.name.special
+                    .type === name ||
+            ![
+                this.configuration.database.model.property.name.special
+                    .allowedRoles,
+                this.configuration.database.model.property.name.special
+                    .constraints.execution,
+                this.configuration.database.model.property.name.special
+                    .constraints.expression,
+                this.configuration.database.model.property.name.special
+                    .constraints.extend,
+                this.configuration.database.model.property.name.special
+                    .revisions,
+                this.configuration.database.model.property.name.special
+                    .constraints.validatedDocumentsCache,
+            ].includes(name) && (!(
+                this.configuration.database.model.property.name.special.type in
+                newDocument
+            ) || this.configuration.database.model.entities[newDocument[
+                this.configuration.database.model.property.name.special
+                    .type
+            ]].hasOwnProperty(name))))
                 if (
                     name === this.configuration.database.model.property.name
                         .special.attachments
@@ -304,8 +324,14 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 } else
                     result[name] = newDocument[name]
         if (oldDocument) {
+            /*
+                Remove already existing values and mark removed or truncated
+                values.
+            */
             for (const name:string in oldDocument)
-                if (!this.configuration.database.model.property.name.reserved
+                if (oldDocument.hasOwnProperty(
+                    name
+                ) && !this.configuration.database.model.property.name.reserved
                     .concat([
                         this.configuration.database.model.property.name.special
                             .attachments,
@@ -313,7 +339,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                             .revisions,
                         this.configuration.database.model.property.name.special
                             .type
-                    ]).includes(name) && oldDocument.hasOwnProperty(name)
+                    ]).includes(name)
                 )
                     if (result.hasOwnProperty(name)) {
                         if (Array.isArray(result[name])) {

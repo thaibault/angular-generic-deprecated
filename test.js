@@ -111,9 +111,17 @@ registerAngularTest(function(
                             name: {
                                 reserved: ['_deleted', '_id', '_rev'],
                                 special: {
+                                    allowedRoles: '_allowedRoles',
                                     attachments: '_attachments',
+                                    constraints: {
+                                        execution: '_constraintExecutions',
+                                        expression: '_constraintExpressions'
+                                    },
+                                    extend: '_extends',
                                     revisions: '_revisions',
-                                    type: '-type'
+                                    type: '-type',
+                                    validatedDocumentsCache:
+                                        '_validatedDocuments'
                                 }
                             }
                         }
@@ -357,7 +365,15 @@ registerAngularTest(function(
                                     data: 2
                                 }}
                             }],
-                            [[{}, {a: 2}], {a: null}]
+                            [[{}, {a: {value: 2}}], {a: null}],
+                            [[{'-type': 'Test', b: 2}], {'-type': 'Test'}],
+                            [
+                                [{'-type': 'Test', a: '2', b: 2}],
+                                {'-type': 'Test', a: '2'}
+                            ],
+                            [[{'-type': 'Test', a: '2', b: 2}, {
+                                '-type': 'Test', a: {value: '2'}
+                            }], {'-type': 'Test'}]
                         ])
                             assert.deepEqual(
                                 extractRawData.transform(...test[0]), test[1])
