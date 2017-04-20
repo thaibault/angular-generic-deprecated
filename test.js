@@ -366,14 +366,14 @@ registerAngularTest(function(
                                 }}
                             }],
                             [[{}, {a: {value: 2}}], {a: null}],
-                            [[{'-type': 'Test', b: 2}], {'-type': 'Test'}],
+                            [[{'-type': 'Test', b: 2}], null],
                             [
                                 [{'-type': 'Test', a: '2', b: 2}],
                                 {'-type': 'Test', a: '2'}
                             ],
                             [[{'-type': 'Test', a: '2', b: 2}, {
                                 '-type': 'Test', a: {value: '2'}
-                            }], {'-type': 'Test'}]
+                            }], null]
                         ])
                             assert.deepEqual(
                                 extractRawData.transform(...test[0]), test[1])

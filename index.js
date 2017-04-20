@@ -219,8 +219,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                     let index:number = 0
                     for (const value:any of document[name]) {
                         result[name][index] =
-                            this._convertDateToTimestampRecursively(
-                                document[name][index])
+                            this._convertDateToTimestampRecursively(value)
                         index += 1
                     }
                 } else if (Object.getPrototypeOf(
@@ -300,7 +299,8 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
         newDocument:PlainObject, oldDocument:?PlainObject,
         fileTypeReplacement:boolean = true
     ):?PlainObject {
-        oldDocument = this._convertDateToTimestampRecursively(oldDocument)
+        if (oldDocument)
+            oldDocument = this._convertDateToTimestampRecursively(oldDocument)
         newDocument = this._convertDateToTimestampRecursively(newDocument)
         const result:PlainObject = {}
         const untouchedAttachments:Array<string> = []
@@ -327,7 +327,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 this.configuration.database.model.property.name.special
                     .revisions,
                 this.configuration.database.model.property.name.special
-                    .validatedDocumentsCache,
+                    .validatedDocumentsCache
             ].includes(name) && (!(
                 this.configuration.database.model.property.name.special.type in
                 newDocument
@@ -455,23 +455,20 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 .attachments in result
             )
                 payloadExists = true
-            // Check if real payload exists in currently determined raw data.
-            if (!payloadExists)
-                for (const name:string in result)
-                    if (result.hasOwnProperty(
-                        name
-                    ) && !this.configuration.database.model.property.name
-                        .reserved.concat(
-                            this.configuration.database.model.property.name
-                                .special.type
-                        ).includes(name)
-                    ) {
-                        console.log(name)
-                        payloadExists = true
-                    }
-        } else
-            payloadExists = true
-        console.log('A', payloadExists, result)
+        }
+        // Check if real payload exists in currently determined raw data.
+        if (!payloadExists)
+            for (const name:string in result)
+                if (result.hasOwnProperty(
+                    name
+                ) && !this.configuration.database.model.property.name.reserved
+                    .concat(this.configuration.database.model.property.name
+                        .special.type
+                    ).includes(name)
+                ) {
+                    payloadExists = true
+                    break
+                }
         return payloadExists ? result : null
     }
 }
