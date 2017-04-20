@@ -167,17 +167,41 @@ for (const configuration:PlainObject of [
                 }
             }
         }
+const GenericArrayMakeRangePipe:PipeTransform =
+    module.exports.GenericArrayMakeRangePipe
+const GenericEqualsPipe:PipeTransform = module.exports.GenericEqualsPipe
+const GenericExtendObjectPipe:PipeTransform =
+    module.exports.GenericExtendObjectPipe
+const GenericRepresentObjectPipe:PipeTransform =
+    module.exports.GenericRepresentObjectPipe
+const GenericStringCapitalizePipe:PipeTransform =
+    module.exports.GenericStringCapitalizePipe
+const GenericStringEscapeRegularExpressionsPipe:PipeTransform =
+    module.exports.GenericStringEscapeRegularExpressionsPipe
+const GenericStringFormatPipe:PipeTransform =
+    module.exports.GenericStringFormatPipe
 // / endregion
 // / region object
 // IgnoreTypeCheck
 @Pipe({name: 'genericExtractRawData'})
 /**
  * Removes all meta data from documents.
+ * @property configuration - Initial given configuration object.
+ * @property equals - Equals pipe transform function.
  */
 export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
     configuration:PlainObject
-    constructor(initialData:GenericInitialDataService):void {
+    equals:Function
+    /**
+     * Gets injected services.
+     * @param equalsPipe - Equals pipe service instance.
+     * @param initialData - Initial data service instance.
+     */
+    constructor(
+        equalsPipe:GenericEqualsPipe, initialData:GenericInitialDataService
+    ):void {
         this.configuration = initialData.configuration
+        this.equals = equalsPipe.transform.bind(equalsPipe)
     }
     /**
      * Implements attachment changes or removes.
@@ -279,10 +303,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                         delete result[name]
                 } else
                     result[name] = newDocument[name]
-        console.log('A', result, oldDocument)
         if (oldDocument) {
-            // TODO you have to:
-            // - do it recursively
             for (const name:string in oldDocument)
                 if (!this.configuration.database.model.property.name.reserved
                     .concat([
@@ -295,8 +316,26 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                     ]).includes(name) && oldDocument.hasOwnProperty(name)
                 )
                     if (result.hasOwnProperty(name)) {
-                        // Equals if not subtype
-                        if (newDocument[name] === oldDocument[name].value)
+                        if (Array.isArray(result[name])) {
+                            if (this.equals(result[name], oldDocument[name]))
+                                delete result[name]
+                        } else if (
+                            typeof result[name] === 'object' &&
+                            result[name] !== null &&
+                            result[name].hasOwnProperty(
+                                this.configuration.database.model.property.name
+                                    .special.type)
+                        ) {
+                            result[name] = this.transform(
+                                result[name], oldDocument[name],
+                                fileTypeReplacement)
+                            /*
+                                NOTE: If only the type property is given we can
+                                skip the key completely.
+                            */
+                            if (Object.keys(result[name]).length === 1)
+                                delete result[name]
+                        } else if (result[name] === oldDocument[name].value)
                             delete result[name]
                     } else
                         result[name] = null
@@ -594,18 +633,6 @@ export class GenericNumberPercentPipe/* implements PipeTransform*/ {
 }
 // / endregion
 // endregion
-const GenericArrayMakeRangePipe:PipeTransform =
-    module.exports.GenericArrayMakeRangePipe
-const GenericStringCapitalizePipe:PipeTransform =
-    module.exports.GenericStringCapitalizePipe
-const GenericStringEscapeRegularExpressionsPipe:PipeTransform =
-    module.exports.GenericStringEscapeRegularExpressionsPipe
-const GenericExtendObjectPipe:PipeTransform =
-    module.exports.GenericExtendObjectPipe
-const GenericRepresentObjectPipe:PipeTransform =
-    module.exports.GenericRepresentObjectPipe
-const GenericStringFormatPipe:PipeTransform =
-    module.exports.GenericStringFormatPipe
 // region services
 // IgnoreTypeCheck
 @Injectable()

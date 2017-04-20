@@ -109,8 +109,12 @@ registerAngularTest(function(
                         property: {
                             defaultSpecification: {minimum: 0},
                             name: {
-                                reserved: ['_id', '_rev'],
-                                special: {type: '-type'}
+                                reserved: ['_deleted', '_id', '_rev'],
+                                special: {
+                                    attachments: '_attachments',
+                                    revisions: '_revisions',
+                                    type: '-type'
+                                }
                             }
                         }
                     },
