@@ -175,6 +175,10 @@ for (const configuration:PlainObject of [
  * Removes all meta data from documents.
  */
 export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
+    configuration:PlainObject
+    constructor(initialData:GenericInitialDataService):void {
+        this.configuration = initialData.configuration
+    }
     /**
      * Implements attachment changes or removes.
      * @param newDocument - Document to slice meta data from.
@@ -234,8 +238,15 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
         for (const name:string in newDocument)
             if (newDocument.hasOwnProperty(name) && ![
                 undefined, null, ''
-            ].includes(newDocument[name]) && name !== '_revisions')
-                if (name === '_attachments') {
+            ].includes(
+                newDocument[name]
+            ) && name !== this.configuration.database.model.property.name
+                .special.revisions
+            )
+                if (
+                    name === this.configuration.database.model.property.name
+                        .special.attachments
+                ) {
                     result[name] = {}
                     let empty:boolean = true
                     for (const fileName:string in newDocument[name])
@@ -272,14 +283,20 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
         if (oldDocument) {
             // TODO you have to:
             // - do it recursively
-            // - why are "_constraintExpressions" present
-            // - '_' as prefix is a (too) strong assumption!
             for (const name:string in oldDocument)
-                if (!name.startsWith('_') && oldDocument.hasOwnProperty(
-                    name
-                ))
+                if (!this.configuration.database.model.property.name.reserved
+                    .concat([
+                        this.configuration.database.model.property.name.special
+                            .attachments,
+                        this.configuration.database.model.property.name.special
+                            .revisions,
+                        this.configuration.database.model.property.name.special
+                            .type
+                    ]).includes(name) && oldDocument.hasOwnProperty(name)
+                )
                     if (result.hasOwnProperty(name)) {
-                        if (name !== '-type' && newDocument[name] === oldDocument[name].value)
+                        // Equals if not subtype
+                        if (newDocument[name] === oldDocument[name].value)
                             delete result[name]
                     } else
                         result[name] = null
