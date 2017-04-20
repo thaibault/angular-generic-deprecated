@@ -250,26 +250,39 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
             if (oldAttachments.hasOwnProperty(type) && ![
                 undefined, null
             ].includes(oldAttachments[type].value)) {
-                if (newDocument._attachments) {
-                    if (newDocument._attachments.hasOwnProperty(
-                        oldAttachments[type].value.name
-                    ))
+                if (newDocument[
+                    this.configuration.database.model.property.name.special
+                        .attachments
+                ]) {
+                    if (newDocument[
+                        this.configuration.database.model.property.name.special
+                            .attachments
+                    ].hasOwnProperty(oldAttachments[type].value.name))
                         continue
                 } else if (!untouchedAttachments.includes(
                     oldAttachments[type].value.name
                 )) {
-                    newDocument._attachments = {
-                        [oldAttachments[type].value.name]: {data: null}}
+                    newDocument[
+                        this.configuration.database.model.property.name.special
+                            .attachments
+                    ] = {[oldAttachments[type].value.name]: {data: null}}
                     continue
                 }
                 if (fileTypeReplacement)
-                    for (const fileName:string in newDocument._attachments)
-                        if (newDocument._attachments.hasOwnProperty(
+                    for (const fileName:string in newDocument[
+                        this.configuration.database.model.property.name.special
+                            .attachments
+                    ])
+                        if (newDocument[
+                            this.configuration.database.model.property.name
+                                .special.attachments
+                        ].hasOwnProperty(
                             fileName
                         ) && (new RegExp(type)).test(fileName))
-                            newDocument._attachments[oldAttachments[
-                                type
-                            ].value.name] = {data: null}
+                            newDocument[
+                                this.configuration.database.model.property.name
+                                    .special.attachments
+                            ][oldAttachments[type].value.name] = {data: null}
             }
         return newDocument
     }
@@ -291,7 +304,6 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
         newDocument = this._convertDateToTimestampRecursively(newDocument)
         const result:PlainObject = {}
         const untouchedAttachments:Array<string> = []
-        let payloadExists:boolean = false
         /*
             Add all needed values in new document (respect only values in model
             if present).
@@ -357,14 +369,9 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                                 untouchedAttachments.push(fileName)
                     if (empty)
                         delete result[name]
-                } else {
-                    if (
-                        !this.configuration.database.model.property.name
-                            .reserved.includes(name)
-                    )
-                        payloadExists = true
+                } else
                     result[name] = newDocument[name]
-                }
+        let payloadExists:boolean = false
         if (oldDocument) {
             /*
                 Remove already existing values and mark removed or truncated
@@ -429,7 +436,6 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                         result[name] = null
                     }
             // Handle attachment removes or replacements.
-            // TODO avoid attachments hardcoded here.
             if (oldDocument.hasOwnProperty(
                 this.configuration.database.model.property.name.special
                     .attachments
@@ -449,7 +455,23 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 .attachments in result
             )
                 payloadExists = true
-        }
+            // Check if real payload exists in currently determined raw data.
+            if (!payloadExists)
+                for (const name:string in result)
+                    if (result.hasOwnProperty(
+                        name
+                    ) && !this.configuration.database.model.property.name
+                        .reserved.concat(
+                            this.configuration.database.model.property.name
+                                .special.type
+                        ).includes(name)
+                    ) {
+                        console.log(name)
+                        payloadExists = true
+                    }
+        } else
+            payloadExists = true
+        console.log('A', payloadExists, result)
         return payloadExists ? result : null
     }
 }
@@ -1027,19 +1049,39 @@ export class GenericDataScopeService {
                 this.configuration.database.model.property.name.special
                     .attachments]
             )
-                if (
-                    scope._attachments.hasOwnProperty(key) &&
-                    typeof scope._attachments[key] === 'object' &&
-                    scope._attachments[key] !== null &&
-                    'hasOwnProperty' in scope._attachments &&
-                    scope._attachments[key].hasOwnProperty('value') &&
-                    scope._attachments[key].value
-                ) {
-                    if (!result._attachments)
-                        result._attachments = {}
-                    result._attachments[scope._attachments[
-                        key
-                    ].value.name] = scope._attachments[key].value
+                if (scope[
+                    this.configuration.database.model.property.name.special
+                        .attachments
+                ].hasOwnProperty(key) && typeof scope[
+                    this.configuration.database.model.property.name.special
+                        .attachments
+                ][key] === 'object' && scope[
+                    this.configuration.database.model.property.name.special
+                        .attachments
+                ][key] !== null && 'hasOwnProperty' in scope[
+                    this.configuration.database.model.property.name.special
+                        .attachments
+                ] && scope[
+                    this.configuration.database.model.property.name.special
+                        .attachments
+                ][key].hasOwnProperty('value') && scope[
+                    this.configuration.database.model.property.name.special
+                        .attachments
+                ][key].value) {
+                    if (!result[this.configuration.database.model.property.name
+                        .special.attachments
+                    ])
+                        result[this.configuration.database.model.property.name
+                            .special.attachments
+                        ] = {}
+                    result[this.configuration.database.model.property.name
+                        .special.attachments
+                    ][scope[this.configuration.database.model.property.name
+                        .special.attachments
+                    ][key].value.name] = scope[
+                        this.configuration.database.model.property.name
+                            .special.attachments
+                    ][key].value
                 }
         for (const name:string of this.configuration.database.model.property
             .name.reserved.concat(
@@ -1067,7 +1109,9 @@ export class GenericDataScopeService {
             this.configuration.database.model.entities[modelName]
         for (const name:string in modelSpecification)
             if (modelSpecification.hasOwnProperty(name))
-                if (name === '_attachments') {
+                if (name === this.configuration.database.model.property.name
+                    .special.attachments
+                ) {
                     for (const fileName:string in modelSpecification[name])
                         if (modelSpecification[name].hasOwnProperty(fileName))
                             modelSpecification[name][fileName] =
@@ -1091,7 +1135,9 @@ export class GenericDataScopeService {
                     modelSpecification[name])
             else
                 result[name] = {}
-            if (name === '_attachments') {
+            if (name === this.configuration.database.model.property.name
+                .special.attachments
+            ) {
                 for (const type:string in modelSpecification[name])
                     if (modelSpecification[name].hasOwnProperty(type)) {
                         result[name][type].name = type
@@ -1947,15 +1993,15 @@ export class GenericTextareaComponent extends AbstractInputComponent {
         <md-card>
             <md-card-header>
                 <h3>
-                    {{headerText || file?.name || name || model._attachments[internalName]?.description}}
+                    {{headerText || file?.name || name || model[attachmentTypeName][internalName]?.description}}
                     <span
                         md-suffix (click)="showDeclaration = !showDeclaration"
                         title="info"
-                        *ngIf="model._attachments[internalName]?.declaration"
+                        *ngIf="model[attachmentTypeName][internalName]?.declaration"
                     >[i]</span>
                 </h3>
                 <p *ngIf="showDeclaration">
-                    {{model._attachments[internalName].declaration}}
+                    {{model[attachmentTypeName][internalName].declaration}}
                 </p>
             </md-card-header>
             <img md-card-image
@@ -1983,25 +2029,25 @@ export class GenericTextareaComponent extends AbstractInputComponent {
                 <ng-content></ng-content>
                 <span *ngIf="showValidationErrorMessages">
                     <p
-                        *ngIf="model._attachments[internalName]?.state?.errors?.required"
+                        *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.required"
                     >Bitte wählen Sie eine Datei aus.</p>
                     <p
-                        *ngIf="model._attachments[internalName]?.state?.errors?.name"
+                        *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.name"
                     >
                         Der Dateiname "{{file.name}}" entspricht nicht dem
                         vorgegebenen Muster "{{this.internalName}}".
                     </p>
                     <p
-                        *ngIf="model._attachments[internalName]?.state?.errors?.contentType"
+                        *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.contentType"
                     >
                         Der Daten-Typ "{{file.content_type}}" entspricht
                         nicht dem vorgegebenen Muster
-                        "{{model._attachments[internalName].contentTypeRegularExpressionPattern}}".
+                        "{{model[attachmentTypeName][internalName].contentTypeRegularExpressionPattern}}".
                     </p>
                     <p
-                        *ngIf="model._attachments[internalName]?.state?.errors?.database"
+                        *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.database"
                     >
-                        {{model._attachments[internalName]?.state?.errors?.database}}
+                        {{model[attachmentTypeName][internalName]?.state?.errors?.database}}
                     </p>
                 </span>
             </md-card-content>
@@ -2085,6 +2131,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     _representObject:Function
     _stringFormat:Function
     _prefixMatch:boolean = false
+    attachmentTypeName:string
     @Output() delete:EventEmitter = new EventEmitter()
     @Input() deleteButtonText:string = 'delete'
     @Input() downloadButtonText:string = 'download'
@@ -2094,8 +2141,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
     internalName:string
     @Input() headerText:string = ''
     @Input() mapNameToField:?string|?Array<string> = null
-    @Input() model:{id:?string;[key:string]:any;} = {
-        _attachments: [], id: null}
+    @Input() model:{id:?string;[key:string]:any;}
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() name:?string = null
     @Input() newButtonText:string = 'new'
@@ -2132,6 +2178,9 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         this._representObject = representObjectPipe.transform.bind(
             representObjectPipe)
         this._stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
+        this.attachmentTypeName = this._configuration.database.model.property
+            .name.special.attachments
+        this.model = {[this.attachmentTypeName]: [], id: null}
     }
     /**
      * Initializes file upload handler.
@@ -2141,16 +2190,22 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         if (this.mapNameToField && !Array.isArray(this.mapNameToField))
             this.mapNameToField = [this.mapNameToField]
         const name:string = this._getFilenameByPrefix(
-            this.model._attachments, this.name)
+            this.model[this.attachmentTypeName], this.name)
         if (this.name && name !== this.name)
             this._prefixMatch = true
         this.internalName = name
-        this.file = this.model._attachments[this.internalName].value
-        this.model._attachments[this.internalName].state = {}
+        this.file = this.model[this.attachmentTypeName][
+            this.internalName
+        ].value
+        this.model[this.attachmentTypeName][this.internalName].state = {}
         if (this.file)
             this.file.descriptionName = this.name
-        else if (!this.model._attachments[this.internalName].nullable)
-            this.model._attachments[this.internalName].state.errors = {
+        else if (!this.model[this.attachmentTypeName][
+            this.internalName
+        ].nullable)
+            this.model[this.attachmentTypeName][
+                this.internalName
+            ].state.errors = {
                 required: true}
         if (this.file) {
             this.file.hash = `#${this.file.digest}`
@@ -2172,7 +2227,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         ):Promise<void> => {
             if (this.input.nativeElement.files.length < 1)
                 return
-            this.model._attachments[this.internalName].state = {}
+            this.model[this.attachmentTypeName][this.internalName].state = {}
             const oldFileName:?string = this.file ? this.file.name : null
             this.file = {
                 descriptionName: this.name,
@@ -2194,26 +2249,35 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
             this.file.content_type = this.file.data.type || 'text/plain'
             // IgnoreTypeCheck
             this.file.length = this.file.data.size
-            this.model._attachments[this.internalName].value = this.file
+            this.model[this.attachmentTypeName][
+                this.internalName
+            ].value = this.file
             if (!(new RegExp(this.internalName)).test(this.file.name))
-                this.model._attachments[this.internalName].state.errors = {
-                    name: true}
-            if (!([undefined, null].includes(this.model._attachments[
-                this.internalName].contentTypeRegularExpressionPattern
-            ) || (new RegExp(this.model._attachments[
-                this.internalName].contentTypeRegularExpressionPattern
-            )).test(this.file.content_type))) {
-                if (this.model._attachments[this.internalName].state.errors)
-                    this.model._attachments[this.internalName].state.errors
-                        .contentType = true
+                this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors = {name: true}
+            if (!([undefined, null].includes(this.model[
+                this.attachmentTypeName
+            ][this.internalName].contentTypeRegularExpressionPattern) || (
+                new RegExp(this.model[this.attachmentTypeName][
+                    this.internalName
+                ].contentTypeRegularExpressionPattern)
+            ).test(this.file.content_type))) {
+                if (this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors)
+                    this.model[this.attachmentTypeName][
+                        this.internalName
+                    ].state.errors.contentType = true
                 else
-                    this.model._attachments[this.internalName].state.errors = {
-                        contentType: true}
+                    this.model[this.attachmentTypeName][
+                        this.internalName
+                    ].state.errors = {contentType: true}
                 this.determinePresentationType()
             }
-            if (this.synchronizeImmediately && !this.model._attachments[
-                this.internalName
-            ].state.errors) {
+            if (this.synchronizeImmediately && !this.model[
+                this.attachmentTypeName
+            ][this.internalName].state.errors) {
                 let result:PlainObject
                 const newData:PlainObject = {
                     [
@@ -2224,7 +2288,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                             .special.type
                     ],
                     _id: this.model._id,
-                    _attachments: {
+                    [this.attachmentTypeName]: {
                         [this.file.name]: {
                             content_type: this.file.content_type,
                             data: this.file.data
@@ -2236,7 +2300,8 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                         true, newData, this.synchronizeImmediately)
                 // NOTE: We want to replace old medium.
                 if (oldFileName && oldFileName !== this.file.name)
-                    newData._attachments[oldFileName] = {data: null}
+                    newData[this.attachmentTypeName][oldFileName] = {
+                        data: null}
                 if (![undefined, null].includes(this.model._rev))
                     newData._rev = this.model._rev
                 if (this.mapNameToField) {
@@ -2247,7 +2312,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                         try {
                             result = await this._data.put(newData)
                         } catch (error) {
-                            this.model._attachments[
+                            this.model[this.attachmentTypeName][
                                 this.internalName
                             ].state.errors = {
                                 database: 'message' in error ? error.message :
@@ -2266,7 +2331,9 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                 try {
                     result = await this._data.put(newData)
                 } catch (error) {
-                    this.model._attachments[this.internalName].state.errors = {
+                    this.model[this.attachmentTypeName][
+                        this.internalName
+                    ].state.errors = {
                         database: 'message' in error ? error.message :
                             this._representObject(error)
                     }
@@ -2339,7 +2406,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                 ],
                 _id: this.model._id,
                 _rev: this.model._rev,
-                _attachments: {[this.file.name]: {
+                [this.attachmentTypeName]: {[this.file.name]: {
                     content_type: 'text/plain',
                     data: null
                 }}
@@ -2349,9 +2416,9 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
             try {
                 result = await this._data.put(update)
             } catch (error) {
-                this.model._attachments[this.internalName].state.errors = {
-                    database: this._representObject(error)
-                }
+                this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors = {database: this._representObject(error)}
                 return
             }
             if (this.mapNameToField && this.mapNameToField.includes('_id'))
@@ -2359,11 +2426,12 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
             else
                 this.model._rev = result.rev
         }
-        this.model._attachments[this.internalName].state.errors =
-            this.model._attachments[this.internalName].value = this.file = null
-        if (!this.model._attachments[this.internalName].nullable)
-            this.model._attachments[this.internalName].state.errors = {
-                required: true}
+        this.model[this.attachmentTypeName][this.internalName].state.errors =
+            this.model[this.attachmentTypeName][this.internalName].value =
+                this.file = null
+        if (!this.model[this.attachmentTypeName][this.internalName].nullable)
+            this.model[this.attachmentTypeName][this.internalName].state
+                .errors = {required: true}
         this.fileChange.emit(this.file)
         this.modelChange.emit(this.model)
     }
