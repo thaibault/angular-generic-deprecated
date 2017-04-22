@@ -213,7 +213,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 document[name] !== null
             ) {
                 if (document[name] instanceof Date)
-                    newValue = Date.UTC(
+                    document[name] = Date.UTC(
                         document[name].getFullYear(),
                         document[name].getMonth(),
                         document[name].getDate(), document[name].getHours(),
@@ -1798,18 +1798,17 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
 }
 // / endregion
 // // region date/time
-// TODO add Date and maybe datetime.
 // IgnoreTypeCheck
 @Directive(Tools.extendObject(true, {
 }, DefaultValueAccessor.decorators[0].args[0], {providers: [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(():TimeValueAccessor => TimeValueAccessor),
+    useExisting: forwardRef(():DateTimeValueAccessor => DateTimeValueAccessor),
     multi: true
 }]}))
 /**
  * Time value accessor with "ngModel" support.
  */
-export class TimeValueAccessor extends AbstractValueAccessor {
+export class DateTimeValueAccessor extends AbstractValueAccessor {
     // TODO check tests
     /**
      * Initializes and forwards needed services to the default value accesor
@@ -1826,17 +1825,26 @@ export class TimeValueAccessor extends AbstractValueAccessor {
      * @returns Given and transformed value.
      */
     exportValue(value:any):any {
-        if (this.type === 'time' && value) {
+        if (value && ['date', 'time'].includes(this.type)) {
             value = new Date(value)
-            if (value) {
-                let hours:string = `${value.getHours()}`
-                if (hours.length === 1)
-                    hours = `0${hours}`
-                let minutes:string = `${value.getMinutes()}`
-                if (minutes.length === 1)
-                    minutes = `0${minutes}`
-                return `${hours}:${minutes}`
-            }
+            if (value)
+                if (this.type === 'time') {
+                    let hours:string = `${value.getHours()}`
+                    if (hours.length === 1)
+                        hours = `0${hours}`
+                    let minutes:string = `${value.getMinutes()}`
+                    if (minutes.length === 1)
+                        minutes = `0${minutes}`
+                    return `${hours}:${minutes}`
+                } else if (this.type === 'date') {
+                    let month:string = `${value.getMonth()}`
+                    if (month.length === 1)
+                        month = `0${month}`
+                    let day:string = `${value.getDate()}`
+                    if (day.length === 1)
+                        day = `0${days}`
+                    return `${value.getFullYear()}-${month}-${day}`
+                }
         }
         return value
     }
@@ -1852,6 +1860,11 @@ export class TimeValueAccessor extends AbstractValueAccessor {
                 return new Date(Date.UTC(1970, 0, 1, parseInt(
                     match[1]
                 ), parseInt(match[2])))
+        } else if (this.type === 'date' && typeof value === 'string') {
+            const date:Date = new Date(value)
+            if (isNaN(date.getDate()))
+                return new Date(Date.UTC(
+                    date.getFullYear(), date.getMonth(), date.getDate()))
         }
         return value
     }
