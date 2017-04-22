@@ -212,8 +212,14 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 typeof document[name] === 'object' &&
                 document[name] !== null
             ) {
-                if ('getTime' in document[name])
-                    result[name] = document[name].getTime()
+                if (document[name] instanceof Date)
+                    newValue = Date.UTC(
+                        document[name].getFullYear(),
+                        document[name].getMonth(),
+                        document[name].getDate(), document[name].getHours(),
+                        document[name].getMinutes(),
+                        document[name].getSeconds(),
+                        document[name].getMilliseconds())
                 else if (Array.isArray(document[name])) {
                     result[name] = []
                     let index:number = 0
@@ -1791,7 +1797,8 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
     }
 }
 // / endregion
-// // region time
+// // region date/time
+// TODO add Date
 // IgnoreTypeCheck
 @Directive(Tools.extendObject(true, {
 }, DefaultValueAccessor.decorators[0].args[0], {providers: [{
@@ -1842,8 +1849,9 @@ export class TimeValueAccessor extends AbstractValueAccessor {
         if (this.type === 'time' && typeof value === 'string') {
             const match = /^([0-9]{2}):([0-9]{2})$/.exec(value)
             if (match)
-                return new Date(
-                    1970, 0, 1, parseInt(match[1]), parseInt(match[2]))
+                return new Date(Date.UTC(1970, 0, 1, parseInt(
+                    match[1]
+                ), parseInt(match[2])))
         }
         return value
     }
