@@ -1798,7 +1798,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
 }
 // / endregion
 // // region date/time
-// TODO add Date
+// TODO add Date and maybe datetime.
 // IgnoreTypeCheck
 @Directive(Tools.extendObject(true, {
 }, DefaultValueAccessor.decorators[0].args[0], {providers: [{
