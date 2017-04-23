@@ -1883,7 +1883,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
      * @param value - Value to manipulate.
      * @returns Given and transformed value.
      */
-    exportValue(value:any):?string {
+    exportValue(value:any):any {
         if (value && ['date', 'time'].includes(this.type)) {
             const date:Date = new Date(value)
             if (isNaN(date.getDate()))
@@ -1913,7 +1913,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
      * @param value - Value to convert to its internal representation.
      * @returns Given and transformed value.
      */
-    importValue(value:any):?Date {
+    importValue(value:any):any {
         if (typeof value === 'string')
             if (this.type === 'time') {
                 const match = /^([0-9]{2}):([0-9]{2})$/.exec(value)
@@ -1927,7 +1927,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
                         parseInt(match[1]), parseInt(match[2]) - 1,
                         parseInt(match[3]))
             }
-        return
+        return value
     }
 }
 // // endregion
