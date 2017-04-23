@@ -221,12 +221,12 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 if (document[name] instanceof Date)
                     // NOTE: We save given date as an utc timestamp.
                     result[name] = Date.UTC(
-                        document[name].getFullYear(),
-                        document[name].getMonth(),
-                        document[name].getDate(), document[name].getHours(),
-                        document[name].getMinutes(),
-                        document[name].getSeconds(),
-                        document[name].getMilliseconds())
+                        document[name].getUTCFullYear(),
+                        document[name].getUTCMonth(),
+                        document[name].getUTCDate(), document[name].getHours(),
+                        document[name].getUTCMinutes(),
+                        document[name].getUTCSeconds(),
+                        document[name].getUTCMilliseconds())
                 else if (Array.isArray(document[name])) {
                     result[name] = []
                     let index:number = 0
@@ -1219,7 +1219,7 @@ export class GenericDataScopeService {
                     ])
                         if (result[name].hasOwnProperty(type) && result[name][
                             type
-                        ])
+                        ]) {
                             result[name].value = (new Function(
                                 'newDocument', 'oldDocument', 'userContext',
                                 'securitySettings', 'name', 'models',
@@ -1235,6 +1235,9 @@ export class GenericDataScopeService {
                                 (object:Object):string => JSON.stringify(
                                     object, null, 4
                                 ), modelName, modelSpecification, result[name])
+                            if (result[name].value === undefined)
+                                result[name].value = null
+                        }
                 if (data.hasOwnProperty(name) && ![undefined, null].includes(
                     data[name]
                 ))
@@ -1252,13 +1255,11 @@ export class GenericDataScopeService {
                 if (!(result[name].value instanceof Date) && (name.endsWith(
                     'Time'
                 ) || name.endsWith('Date'))) {
-                    // NOTE: We interpret given value as an UTC timestamp.
+                    // NOTE: We interpret given value as an utc timestamp.
                     const date:Date = new Date(result[name].value)
                     result[name].value = new Date(
-                        date.getUTCFullYear(), date.getUTCMonth(),
-                        date.getUTCDate(), date.getUTCHours(),
-                        date.getUTCMinutes(), date.getUTCSeconds(),
-                        date.getUTCMilliseconds())
+                        result[name].value +
+                        date.getTimezoneOffset() * 60 * 1000)
                 }
             }
         }
