@@ -1752,6 +1752,11 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     goToItem(itemID:string):void {
         this._router.navigate([this._itemPath, itemID])
     }
+    /**
+     * Triggers on any data changes and updates item constraints.
+     * @returns False so their wont be a view update since a complete route
+     * reload will be triggered.
+     */
     onDataChange():false {
         /*
             NOTE: We want to avoid another reload if page is already violating
@@ -1878,7 +1883,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
      * @param value - Value to manipulate.
      * @returns Given and transformed value.
      */
-    exportValue(value:any):any {
+    exportValue(value:any):?string {
         if (value && ['date', 'time'].includes(this.type)) {
             const date:Date = new Date(value)
             if (isNaN(date.getDate()))
@@ -1908,7 +1913,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
      * @param value - Value to convert to its internal representation.
      * @returns Given and transformed value.
      */
-    importValue(value:any):any {
+    importValue(value:any):?Date {
         if (typeof value === 'string')
             if (this.type === 'time') {
                 const match = /^([0-9]{2}):([0-9]{2})$/.exec(value)
