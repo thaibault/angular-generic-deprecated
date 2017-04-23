@@ -203,7 +203,13 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
         this.configuration = initialData.configuration
         this.equals = equalsPipe.transform.bind(equalsPipe)
     }
-    // TODO
+    // TODO test
+    /**
+     * Converts all (nested) date object in given data structure to their
+     * corresponding utc timestamps in milliseconds.
+     * @param document - Given data structure to convert.
+     * @returns Given converted object.
+     */
     _convertDateToTimestampRecursively(document:PlainObject):PlainObject {
         const result:PlainObject = {}
         for (const name:string in document)
@@ -213,6 +219,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 document[name] !== null
             ) {
                 if (document[name] instanceof Date)
+                    // NOTE: We save given date as an utc timestamp.
                     result[name] = Date.UTC(
                         document[name].getFullYear(),
                         document[name].getMonth(),
@@ -1244,8 +1251,15 @@ export class GenericDataScopeService {
                     result[name].value = result[name].selection[0]
                 if (!(result[name].value instanceof Date) && (name.endsWith(
                     'Time'
-                ) || name.endsWith('Date')))
-                    result[name].value = new Date(result[name].value)
+                ) || name.endsWith('Date'))) {
+                    // NOTE: We interpret given value as an UTC timestamp.
+                    const date:Date = new Date(result[name].value)
+                    result[name].value = new Date(
+                        date.getUTCFullYear(), date.getUTCMonth(),
+                        date.getUTCDate(), date.getUTCHours(),
+                        date.getUTCMinutes(), date.getUTCSeconds(),
+                        date.getUTCMilliseconds())
+                }
             }
         }
         for (const name:string of this.configuration.database.model.property
@@ -1439,7 +1453,21 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
 // endregion
 // region components/directives
 // / region abstract
-// TODO
+// TODO test
+/**
+ * Observes database for any data changes and triggers corresponding methods
+ * on corresponding events.
+ * @property actions - Array if actions which have happen.
+ * @property _canceled - Indicates whether current view has been destroyed and
+ * data observation should bee canceled.
+ * @property _changeDetectorRef - Current views change detector reference
+ * service instance.
+ * @property _changesStream - Database observation representation.
+ * @property _data - Data service instance.
+ * @property _liveUpdateOptions - Options for database observation.
+ * @property _stringCapitalize - String capitalize pipe transformation
+ * function.
+ */
 export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     actions:Array<PlainObject> = []
     _canceled:boolean = false
@@ -1467,6 +1495,10 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
         this._stringCapitalize = stringCapitalizePipe.transform.bind(
             stringCapitalizePipe)
     }
+    /**
+     * Initializes data observation when view has been initialized.
+     * @returns Nothing.
+     */
     ngOnInit():void {
         this._changesStream = this._data.connection.changes(
             this._liveUpdateOptions)
@@ -1491,16 +1523,36 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
                     this._changeDetectorRef.detectChanges()
             })
     }
+    /**
+     * Marks current live data observation as canceled and closes initially
+     * requested update stream.
+     * @returns Nothing.
+     */
     ngOnDestroy():void {
         this._canceled = true
         this._changesStream.cancel()
     }
+    /**
+     * Triggers on any data changes.
+     * @returns A boolean indicating whether a view update should be triggered
+     * or not.
+     */
     onDataChange():boolean {
         return true
     }
+    /**
+     * Triggers on completed data change observation.
+     * @returns A boolean indicating whether a view update should be triggered
+     * or not.
+     */
     onDataComplete():boolean {
         return false
     }
+    /**
+     * Triggers on data change observation errors.
+     * @returns A boolean indicating whether a view update should be triggered
+     * or not.
+     */
     onDataError():boolean {
         return false
     }
