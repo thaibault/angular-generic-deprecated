@@ -213,7 +213,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 document[name] !== null
             ) {
                 if (document[name] instanceof Date)
-                    document[name] = Date.UTC(
+                    result[name] = Date.UTC(
                         document[name].getFullYear(),
                         document[name].getMonth(),
                         document[name].getDate(), document[name].getHours(),
@@ -435,7 +435,9 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                             */
                             if (result[name] === null)
                                 delete result[name]
-                        } else if (result[name] === oldDocument[name].value)
+                        } else if (this.equals(
+                            result[name], oldDocument[name].value
+                        ))
                             delete result[name]
                     } else {
                         payloadExists = true
@@ -1826,25 +1828,26 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
      */
     exportValue(value:any):any {
         if (value && ['date', 'time'].includes(this.type)) {
-            value = new Date(value)
-            if (value)
-                if (this.type === 'time') {
-                    let hours:string = `${value.getHours()}`
-                    if (hours.length === 1)
-                        hours = `0${hours}`
-                    let minutes:string = `${value.getMinutes()}`
-                    if (minutes.length === 1)
-                        minutes = `0${minutes}`
-                    return `${hours}:${minutes}`
-                } else if (this.type === 'date') {
-                    let month:string = `${value.getMonth()}`
-                    if (month.length === 1)
-                        month = `0${month}`
-                    let day:string = `${value.getDate()}`
-                    if (day.length === 1)
-                        day = `0${days}`
-                    return `${value.getFullYear()}-${month}-${day}`
-                }
+            const date:Date = new Date(value)
+            if (isNaN(date.getDate()))
+                return
+            else if (this.type === 'time') {
+                let hours:string = `${date.getHours()}`
+                if (hours.length === 1)
+                    hours = `0${hours}`
+                let minutes:string = `${date.getMinutes()}`
+                if (minutes.length === 1)
+                    minutes = `0${minutes}`
+                return `${hours}:${minutes}`
+            } else if (this.type === 'date') {
+                let month:string = `${date.getMonth() + 1}`
+                if (month.length === 1)
+                    month = `0${month}`
+                let day:string = `${date.getDate()}`
+                if (day.length === 1)
+                    day = `0${day}`
+                return `${date.getFullYear()}-${month}-${day}`
+            }
         }
         return value
     }
@@ -1854,19 +1857,20 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
      * @returns Given and transformed value.
      */
     importValue(value:any):any {
-        if (this.type === 'time' && typeof value === 'string') {
-            const match = /^([0-9]{2}):([0-9]{2})$/.exec(value)
-            if (match)
-                return new Date(Date.UTC(1970, 0, 1, parseInt(
-                    match[1]
-                ), parseInt(match[2])))
-        } else if (this.type === 'date' && typeof value === 'string') {
-            const date:Date = new Date(value)
-            if (isNaN(date.getDate()))
-                return new Date(Date.UTC(
-                    date.getFullYear(), date.getMonth(), date.getDate()))
-        }
-        return value
+        if (typeof value === 'string')
+            if (this.type === 'time') {
+                const match = /^([0-9]{2}):([0-9]{2})$/.exec(value)
+                if (match)
+                    return new Date(
+                        1970, 0, 1, parseInt(match[1]), parseInt(match[2]))
+            } else if (this.type === 'date') {
+                const match = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(value)
+                if (match)
+                    return new Date(
+                        parseInt(match[1]), parseInt(match[2]) - 1,
+                        parseInt(match[3]))
+            }
+        return
     }
 }
 // // endregion
