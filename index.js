@@ -223,7 +223,8 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                     result[name] = Date.UTC(
                         document[name].getUTCFullYear(),
                         document[name].getUTCMonth(),
-                        document[name].getUTCDate(), document[name].getHours(),
+                        document[name].getUTCDate(),
+                        document[name].getUTCHours(),
                         document[name].getUTCMinutes(),
                         document[name].getUTCSeconds(),
                         document[name].getUTCMilliseconds())
