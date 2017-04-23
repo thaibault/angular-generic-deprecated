@@ -1255,13 +1255,11 @@ export class GenericDataScopeService {
                     result[name].value = result[name].selection[0]
                 if (!(result[name].value instanceof Date) && (name.endsWith(
                     'Time'
-                ) || name.endsWith('Date'))) {
+                ) || name.endsWith('Date')))
                     // NOTE: We interpret given value as an utc timestamp.
-                    const date:Date = new Date(result[name].value)
-                    result[name].value = new Date(
-                        result[name].value +
-                        date.getTimezoneOffset() * 60 * 1000)
-                }
+                    result[name].value = new Date(result[name].value + (
+                        new Date(result[name].value)
+                    ).getTimezoneOffset() * 60 * 1000)
             }
         }
         for (const name:string of this.configuration.database.model.property
