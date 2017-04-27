@@ -1257,9 +1257,7 @@ export class GenericDataScopeService {
                     'Time'
                 ) || name.endsWith('Date')))
                     // NOTE: We interpret given value as an utc timestamp.
-                    result[name].value = new Date(result[name].value + (
-                        new Date(result[name].value)
-                    ).getTimezoneOffset() * 60 * 1000)
+                    result[name].value = new Date(result[name].value)
             }
         }
         for (const name:string of this.configuration.database.model.property
