@@ -288,6 +288,29 @@ registerAngularTest(function(
                     self.test(`GenericExtractRawDataPipe (${roundType})`, (
                         assert:Object
                     ):void => {
+                        // region _convertDateToTimestampRecursively
+                        for (const test:Array<any> of [
+                            [{}, {}],
+                            [null, null],
+                            [true, true],
+                            [2, 2],
+                            [0, 0],
+                            [[], []],
+                            [[1], [1]],
+                            [[1, 2], [1, 2]],
+                            [[1, new Date(0)], [1, 0]],
+                            [{a: 1, b: true}, {a: 1, b: true}],
+                            [{a: new Date(Date.UTC(1970, 0, 1))}, {a: 0}],
+                            [{a: new Date(0)}, {a: 0}],
+                            [{a: new Date(0), b: [2, 3]}, {a: 0, b: [2, 3]}],
+                            [{a: [new Date(90)]}, {a: [90]}]
+                        ])
+                            assert.deepEqual(
+                                extractRawData.constructor
+                                    ._convertDateToTimestampRecursively(
+                                        test[0]),
+                                test[1])
+                        // endregion
                         // region _handleAttachmentChanges
                         for (const test:Array<any> of [
                             [{}, {}, true, [], {}],
@@ -795,59 +818,6 @@ registerAngularTest(function(
             // endregion
             // region test components
             this.module(`GenericModule.components (${roundType})`)
-            this.test(`AbstractItemsComponent (${roundType})`, async (
-                assert:Object
-            ):Promise<void> => {
-                const done:Function = assert.async()
-                try {
-                    const fixture:ComponentFixture<ItemsComponent> =
-                        TestBed.createComponent(ItemsComponent)
-                    fixture.detectChanges()
-                    await fixture.whenStable()
-                    assert.deepEqual(fixture.componentInstance.items, [])
-                    assert.strictEqual(
-                        fixture.componentInstance.items.length, 0)
-                    assert.strictEqual(
-                        fixture.componentInstance.items.total, 0)
-                    fixture.componentInstance._route.testData = {items: [{
-                        _id: 2}]}
-                    fixture.detectChanges()
-                    await fixture.whenStable()
-                    assert.deepEqual(fixture.componentInstance.items, [{
-                        _id: 2}])
-                    assert.strictEqual(
-                        fixture.componentInstance.items.length, 1)
-                    assert.strictEqual(
-                        fixture.componentInstance.items.total, 1)
-                    assert.strictEqual(fixture.componentInstance.page, 1)
-                    assert.strictEqual(fixture.componentInstance.limit, 10)
-                    assert.strictEqual(
-                        fixture.componentInstance.regularExpression, false)
-                    assert.strictEqual(
-                        fixture.componentInstance.searchTerm, '')
-                    fixture.componentInstance._route.testParameter = {
-                        limit: 2,
-                        page: 2,
-                        searchTerm: 'regex-test'
-                    }
-                    assert.strictEqual(fixture.componentInstance.page, 2)
-                    assert.strictEqual(fixture.componentInstance.limit, 2)
-                    assert.strictEqual(
-                        fixture.componentInstance.regularExpression, true)
-                    assert.strictEqual(
-                        fixture.componentInstance.searchTerm, 'test')
-                    fixture.componentInstance.applyPageConstraints()
-                    fixture.componentInstance.update(true)
-                    fixture.detectChanges()
-                    await fixture.whenStable()
-                    assert.strictEqual(
-                        fixture.componentInstance._router.url,
-                        'items/_id-asc/0/2/regex-test')
-                } catch (error) {
-                    console.error(error)
-                }
-                done()
-            })
             // / region input/textarea
             for (const component:AbstractInputComponent of [
                 GenericInputComponent, GenericTextareaComponent
@@ -939,6 +909,71 @@ registerAngularTest(function(
                         done()
                     })
             // endregion
+            const testName:string =
+                'AbstractLiveDataComponent/AbstractItemsComponent (' +
+                `${roundType})`
+            this.test(testName, async (assert:Object):Promise<void> => {
+                const done:Function = assert.async()
+                try {
+                    const fixture:ComponentFixture<ItemsComponent> =
+                        TestBed.createComponent(ItemsComponent)
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.deepEqual(
+                        typeof fixture.componentInstance._changesStream,
+                        'object')
+                    assert.deepEqual(
+                        fixture.componentInstance._canceled, false)
+                    assert.deepEqual(
+                        fixture.componentInstance.onDataChange(), false)
+                    assert.deepEqual(
+                        fixture.componentInstance.onDataComplete(), false)
+                    assert.deepEqual(
+                        fixture.componentInstance.onDataError(), false)
+                    assert.deepEqual(fixture.componentInstance.items, [])
+                    assert.strictEqual(
+                        fixture.componentInstance.items.length, 0)
+                    assert.strictEqual(
+                        fixture.componentInstance.items.total, 0)
+                    fixture.componentInstance._route.testData = {items: [{
+                        _id: 2}]}
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.deepEqual(fixture.componentInstance.items, [{
+                        _id: 2}])
+                    assert.strictEqual(
+                        fixture.componentInstance.items.length, 1)
+                    assert.strictEqual(
+                        fixture.componentInstance.items.total, 1)
+                    assert.strictEqual(fixture.componentInstance.page, 1)
+                    assert.strictEqual(fixture.componentInstance.limit, 10)
+                    assert.strictEqual(
+                        fixture.componentInstance.regularExpression, false)
+                    assert.strictEqual(
+                        fixture.componentInstance.searchTerm, '')
+                    fixture.componentInstance._route.testParameter = {
+                        limit: 2,
+                        page: 2,
+                        searchTerm: 'regex-test'
+                    }
+                    assert.strictEqual(fixture.componentInstance.page, 2)
+                    assert.strictEqual(fixture.componentInstance.limit, 2)
+                    assert.strictEqual(
+                        fixture.componentInstance.regularExpression, true)
+                    assert.strictEqual(
+                        fixture.componentInstance.searchTerm, 'test')
+                    fixture.componentInstance.applyPageConstraints()
+                    fixture.componentInstance.update(true)
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.strictEqual(
+                        fixture.componentInstance._router.url,
+                        'items/_id-asc/0/2/regex-test')
+                } catch (error) {
+                    console.error(error)
+                }
+                done()
+            })
             this.test(`GenericFileInputComponent (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {

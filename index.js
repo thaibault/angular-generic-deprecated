@@ -203,47 +203,39 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
         this.configuration = initialData.configuration
         this.equals = equalsPipe.transform.bind(equalsPipe)
     }
-    // TODO test
     /**
      * Converts all (nested) date object in given data structure to their
      * corresponding utc timestamps in milliseconds.
-     * @param document - Given data structure to convert.
+     * @param value - Given data structure to convert.
      * @returns Given converted object.
      */
-    _convertDateToTimestampRecursively(document:PlainObject):PlainObject {
-        const result:PlainObject = {}
-        for (const name:string in document)
-            if (
-                document.hasOwnProperty(name) &&
-                typeof document[name] === 'object' &&
-                document[name] !== null
-            ) {
-                if (document[name] instanceof Date)
-                    // NOTE: We save given date as an utc timestamp.
-                    result[name] = Date.UTC(
-                        document[name].getUTCFullYear(),
-                        document[name].getUTCMonth(),
-                        document[name].getUTCDate(),
-                        document[name].getUTCHours(),
-                        document[name].getUTCMinutes(),
-                        document[name].getUTCSeconds(),
-                        document[name].getUTCMilliseconds())
-                else if (Array.isArray(document[name])) {
-                    result[name] = []
-                    let index:number = 0
-                    for (const value:any of document[name]) {
-                        result[name][index] =
-                            this._convertDateToTimestampRecursively(value)
-                        index += 1
-                    }
-                } else if (Object.getPrototypeOf(
-                    document[name]
-                ) === Object.prototype)
-                    result[name] = this._convertDateToTimestampRecursively(
-                        document[name])
-            } else
-                result[name] = document[name]
-        return result
+    static _convertDateToTimestampRecursively(value:any):PlainObject {
+        if (typeof value === 'object' && value !== null)
+            if (value instanceof Date)
+                // NOTE: We save given date as an utc timestamp.
+                return Date.UTC(
+                    value.getUTCFullYear(),
+                    value.getUTCMonth(),
+                    value.getUTCDate(),
+                    value.getUTCHours(),
+                    value.getUTCMinutes(),
+                    value.getUTCSeconds(),
+                    value.getUTCMilliseconds())
+            else if (Array.isArray(value)) {
+                const result:Array<any> = []
+                for (const subValue:any of value)
+                    result.push(GenericExtractRawDataPipe
+                        ._convertDateToTimestampRecursively(subValue))
+                return result
+            } else if (Object.getPrototypeOf(value) === Object.prototype) {
+                const result:PlainObject = {}
+                for (const name:string in value)
+                    if (value.hasOwnProperty(name))
+                        result[name] = GenericExtractRawDataPipe
+                            ._convertDateToTimestampRecursively(value[name])
+                return result
+            }
+        return value
     }
     /**
      * Implements attachment changes or removes.
@@ -313,9 +305,10 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
         newDocument:PlainObject, oldDocument:?PlainObject,
         fileTypeReplacement:boolean = true
     ):?PlainObject {
-        if (oldDocument)
-            oldDocument = this._convertDateToTimestampRecursively(oldDocument)
-        newDocument = this._convertDateToTimestampRecursively(newDocument)
+        oldDocument = this.constructor._convertDateToTimestampRecursively(
+            oldDocument)
+        newDocument = this.constructor._convertDateToTimestampRecursively(
+            newDocument)
         const result:PlainObject = {}
         const untouchedAttachments:Array<string> = []
         /*
@@ -1451,7 +1444,58 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
 // endregion
 // region components/directives
 // / region abstract
-// TODO test
+/**
+ * Generic input component.
+ * @property extendObject - Holds the extend object's pipe transformation
+ * @property model - Holds model informations including actual value and
+ * metadata.
+ * @property modelChange - Model event emitter emitting events on each model
+ * change.
+ * @property showValidationErrorMessages - Indicates whether validation errors
+ * should be suppressed or be shown automatically. Useful to prevent error
+ * component from showing error messages before the user has submit the form.
+ */
+export class AbstractInputComponent/* implements OnInit*/ {
+    _extendObject:Function
+    @Input() model:PlainObject = {}
+    @Output() modelChange:EventEmitter = new EventEmitter()
+    parseInt = parseInt
+    parseFloat = parseFloat
+    @Input() showValidationErrorMessages:boolean = false
+    /**
+     * Sets needed services as property values.
+     * @param extendObjectPipe - Injected extend object pipe instance.
+     * @returns Nothing.
+     */
+    constructor(extendObjectPipe:GenericExtendObjectPipe):void {
+        this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+    }
+    /**
+     * Triggers after input values have been resolved.
+     * @returns Nothing.
+     */
+    ngOnInit():void {
+        this._extendObject(this.model, this._extendObject({
+            disabled: false,
+            maximum: Infinity,
+            minimum: (this.model.type === 'string') ? 0 : -Infinity,
+            nullable: true,
+            regularExpressionPattern: '.*',
+            state: {},
+            type: 'string'
+        }, this.model))
+    }
+    /**
+     * Triggers when ever a change to current model happens inside this
+     * component.
+     * @param state - Saves the current model state.
+     * @returns Nothing.
+     */
+    onChange(state:Object):void {
+        this.model.state = state
+        this.modelChange.emit(this.model)
+    }
+}
 /**
  * Observes database for any data changes and triggers corresponding methods
  * on corresponding events.
@@ -1556,58 +1600,6 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     }
 }
 /**
- * Generic input component.
- * @property extendObject - Holds the extend object's pipe transformation
- * @property model - Holds model informations including actual value and
- * metadata.
- * @property modelChange - Model event emitter emitting events on each model
- * change.
- * @property showValidationErrorMessages - Indicates whether validation errors
- * should be suppressed or be shown automatically. Useful to prevent error
- * component from showing error messages before the user has submit the form.
- */
-export class AbstractInputComponent/* implements OnInit*/ {
-    _extendObject:Function
-    @Input() model:PlainObject = {}
-    @Output() modelChange:EventEmitter = new EventEmitter()
-    parseInt = parseInt
-    parseFloat = parseFloat
-    @Input() showValidationErrorMessages:boolean = false
-    /**
-     * Sets needed services as property values.
-     * @param extendObjectPipe - Injected extend object pipe instance.
-     * @returns Nothing.
-     */
-    constructor(extendObjectPipe:GenericExtendObjectPipe):void {
-        this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
-    }
-    /**
-     * Triggers after input values have been resolved.
-     * @returns Nothing.
-     */
-    ngOnInit():void {
-        this._extendObject(this.model, this._extendObject({
-            disabled: false,
-            maximum: Infinity,
-            minimum: (this.model.type === 'string') ? 0 : -Infinity,
-            nullable: true,
-            regularExpressionPattern: '.*',
-            state: {},
-            type: 'string'
-        }, this.model))
-    }
-    /**
-     * Triggers when ever a change to current model happens inside this
-     * component.
-     * @param state - Saves the current model state.
-     * @returns Nothing.
-     */
-    onChange(state:Object):void {
-        this.model.state = state
-        this.modelChange.emit(this.model)
-    }
-}
-/**
  * A generic abstract component to edit, search, navigate and filter a list of
  * entities.
  * @property _itemPath - Routing path to a specific item.
@@ -1628,7 +1620,6 @@ export class AbstractInputComponent/* implements OnInit*/ {
  * @property sort - Sorting informations.
  */
 export class AbstractItemsComponent extends AbstractLiveDataComponent {
-    // TODO check tests
     _itemPath:string = 'item'
     _itemsPath:string = 'items'
     _route:ActivatedRoute
@@ -1709,6 +1700,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             this.items.total / this.limit)))
         return this.page !== oldPage || this.limit !== oldLimit
     }
+    // TODO test
     /**
      * A function factory to generate functions which updates current view if
      * no route change happened between an asynchronous process.
@@ -1732,6 +1724,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             return result
         }
     }
+    // TODO test
     /**
      * Clear all currently selected items.
      * @returns Nothing.
@@ -1742,6 +1735,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             item.selected = false
         }
     }
+    // TODO test
     /**
      * Switches section to item which has given id.
      * @param itemID - ID of item to switch to.
@@ -1763,6 +1757,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
         this.update(true)
         return false
     }
+    // TODO test
     /**
      * Select all available items.
      * @returns Nothing.
@@ -1797,6 +1792,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             encodeURIComponent(this.searchTerm)
         ])
     }
+    // TODO test
     /**
      * Applies current search term to the search term stream.
      * @returns Nothing.
