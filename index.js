@@ -2375,8 +2375,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                 if (oldFileName && oldFileName !== this.file.name)
                     newData[this.attachmentTypeName][oldFileName] = {
                         data: null}
-                if (![undefined, null].includes(this.model._rev))
-                    newData._rev = this.model._rev
+                newData._rev = 'latest'
                 if (this.mapNameToField) {
                     if (this.model._id && this.mapNameToField.includes(
                         '_id'
@@ -2478,7 +2477,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                         .type
                 ],
                 _id: this.model._id,
-                _rev: this.model._rev,
+                _rev: 'latest',
                 [this.attachmentTypeName]: {[this.file.name]: {
                     content_type: 'text/plain',
                     data: null
