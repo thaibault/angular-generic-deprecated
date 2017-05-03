@@ -1533,7 +1533,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     _changesStream:Object
     _data:GenericDataService
     _liveUpdateOptions:PlainObject = {
-        include_docs: true, live: true, timeout: false}
+        heartbeat: 3000, include_docs: true, live: true, timeout: false}
     _stringCapitalize:Function
     /**
      * Saves injected service instances as instance properties.
