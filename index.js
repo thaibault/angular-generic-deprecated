@@ -944,15 +944,9 @@ export class GenericDataService {
     async find(
         selector:PlainObject, options:PlainObject = {}
     ):Promise<Array<PlainObject>> {
-        const results:Array<PlainObject> = (await this.connection.find(
-            this.extendObject(true, {selector}, options)
-        )).docs
-        let index:number = 0
-        for (const document:PlainObject of results) {
-            results[index] = this.constructor.getNewestDocument(document)
-            index += 1
-        }
-        return results
+        return (await this.connection.find(this.extendObject(true, {
+            selector
+        }, options))).docs
     }
     /**
      * Retrieves a resource by id.
@@ -961,20 +955,15 @@ export class GenericDataService {
      * @returns Whatever pouchdb's "get()" method returns.
      */
     async get(...parameter:Array<any>):Promise<PlainObject> {
-        return this.constructor.getNewestDocument(await this.connection.get(
-            ...parameter))
-    }
-    // TODO
-    static getNewestDocument(document:PlainObject):PlainObject {
-        if (LAST_KNOWN_DATA.data.hasOwnProperty(document._id) && parseInt(
-            document._rev.match(
-                GenericDataService.revisionNumberRegularExpression
-            )[1]
-        ) < parseInt(LAST_KNOWN_DATA.data[document._id]._rev.match(
-            GenericDataService.revisionNumberRegularExpression
+        const result:PlainObject = await this.connection.get(...parameter)
+        if (LAST_KNOWN_DATA.data.hasOwnProperty(result._id) && parseInt(
+            result._rev.match(
+                this.constructor.revisionNumberRegularExpression)[1]
+        ) < parseInt(LAST_KNOWN_DATA.data[result._id]._rev.match(
+            this.constructor.revisionNumberRegularExpression
         )[1]))
-            return LAST_KNOWN_DATA.data[document._id]
-        return document
+            return LAST_KNOWN_DATA.data[result._id]
+        return this.constructor.getNewestData(result)
     }
     /**
      * Creates or updates given data.
