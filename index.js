@@ -45,6 +45,9 @@ try {
     module.require('source-map-support/register')
 } catch (error) {}
 // endregion
+let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
+    data: {}, sequence: 'now'
+}
 // region basic services
 // IgnoreTypeCheck
 @Injectable()
@@ -791,6 +794,10 @@ export class GenericCanDeactivateRouteLeaveGuard
 @Injectable()
 /**
  * A generic database connector.
+ * @property static:revisionNumberRegularExpression - Compiled regular
+ * expression to retrieve revision number from revision hash.
+ * @property static:wrappableMethodNames - Saves a list of method names which
+ * can be intercepted.
  * @property connection - The current database connection instance.
  * @property database - The entire database constructor.
  * @property extendObject - Holds the extend object's pipe transformation
@@ -803,6 +810,7 @@ export class GenericCanDeactivateRouteLeaveGuard
  * method.
  */
 export class GenericDataService {
+    static revisionNumberRegularExpression:RegExp = /^([0-9]+)-/
     static wrappableMethodNames:Array<string> = [
         'allDocs', 'bulkDocs', 'bulkGet', 'changes', 'close', 'compact',
         'compactDocument', 'createIndex', 'deleteIndexs', 'destroy', 'find',
@@ -936,9 +944,15 @@ export class GenericDataService {
     async find(
         selector:PlainObject, options:PlainObject = {}
     ):Promise<Array<PlainObject>> {
-        return (await this.connection.find(this.extendObject(true, {
-            selector
-        }, options))).docs
+        const results:Array<PlainObject> = (await this.connection.find(
+            this.extendObject(true, {selector}, options)
+        )).docs
+        let index:number = 0
+        for (const document:PlainObject of results) {
+            results[index] = this.constructor.getNewestDocument(document)
+            index += 1
+        }
+        return results
     }
     /**
      * Retrieves a resource by id.
@@ -946,8 +960,21 @@ export class GenericDataService {
      * pouchdb's "get()" method.
      * @returns Whatever pouchdb's "get()" method returns.
      */
-    get(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.get(...parameter)
+    async get(...parameter:Array<any>):Promise<PlainObject> {
+        return this.constructor.getNewestDocument(await this.connection.get(
+            ...parameter))
+    }
+    // TODO
+    static getNewestDocument(document:PlainObject):PlainObject {
+        if (LAST_KNOWN_DATA.data.hasOwnProperty(document._id) && parseInt(
+            document._rev.match(
+                GenericDataService.revisionNumberRegularExpression
+            )[1]
+        ) < parseInt(LAST_KNOWN_DATA.data[document._id]._rev.match(
+            GenericDataService.revisionNumberRegularExpression
+        )[1]))
+            return LAST_KNOWN_DATA.data[document._id]
+        return document
     }
     /**
      * Creates or updates given data.
@@ -1496,7 +1523,6 @@ export class AbstractInputComponent/* implements OnInit*/ {
         this.modelChange.emit(this.model)
     }
 }
-let LAST_KNOWN_SEQUENCE_NUMBER:number|string = 'now'
 /**
  * Observes database for any data changes and triggers corresponding methods
  * on corresponding events.
@@ -1517,7 +1543,8 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     _changeDetectorRef:ChangeDetectorRef
     _changesStream:Object
     _data:GenericDataService
-    _liveUpdateOptions:PlainObject = {live: true}
+    _liveUpdateOptions:PlainObject = {
+        include_docs: true, live: true, timeout: false}
     _stringCapitalize:Function
     /**
      * Saves injected service instances as instance properties.
@@ -1540,7 +1567,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      * @returns Nothing.
      */
     ngOnInit():void {
-        this._liveUpdateOptions.since = LAST_KNOWN_SEQUENCE_NUMBER
+        this._liveUpdateOptions.since = LAST_KNOWN_DATA.sequence
         this._changesStream = this._data.connection.changes(
             this._liveUpdateOptions)
         for (const type:string of ['change', 'complete', 'error'])
@@ -1549,8 +1576,11 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
             ):Promise<void> => {
                 if (this._canceled)
                     return
-                if ('seq' in action && typeof action.seq === 'number')
-                    LAST_KNOWN_SEQUENCE_NUMBER = action.seq
+                if (type === 'change') {
+                    if ('seq' in action && typeof action.seq === 'number')
+                        LAST_KNOWN_DATA.sequence = action.seq
+                    LAST_KNOWN_DATA.data[action.id] = action.doc
+                }
                 action.name = type
                 this.actions.unshift(action)
                 // IgnoreTypeCheck
