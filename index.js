@@ -1496,6 +1496,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
         this.modelChange.emit(this.model)
     }
 }
+let LAST_KNOWN_SEQUENCE_NUMBER:number|string = 'now'
 /**
  * Observes database for any data changes and triggers corresponding methods
  * on corresponding events.
@@ -1516,10 +1517,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     _changeDetectorRef:ChangeDetectorRef
     _changesStream:Object
     _data:GenericDataService
-    _liveUpdateOptions:PlainObject = {
-        heartbeat: 300000, limit: 9999, live: true, timeout: 999999,
-        since: 'now'
-    }
+    _liveUpdateOptions:PlainObject = {live: true}
     _stringCapitalize:Function
     /**
      * Saves injected service instances as instance properties.
@@ -1542,6 +1540,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      * @returns Nothing.
      */
     ngOnInit():void {
+        this._liveUpdateOptions.since = LAST_KNOWN_SEQUENCE_NUMBER
         this._changesStream = this._data.connection.changes(
             this._liveUpdateOptions)
         for (const type:string of ['change', 'complete', 'error'])
@@ -1550,6 +1549,8 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
             ):Promise<void> => {
                 if (this._canceled)
                     return
+                if ('seq' in action && typeof action.seq === 'number')
+                    LAST_KNOWN_SEQUENCE_NUMBER = action.seq
                 action.name = type
                 this.actions.unshift(action)
                 // IgnoreTypeCheck
