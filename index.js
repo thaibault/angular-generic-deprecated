@@ -1626,7 +1626,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
  * @property _itemsPath - Routing path to the items overview.
  * @property _route - Current route configuration.
  * @property _router - Router service instance.
- * @property _tools - Tools service instance property.
+ * @property _tools - Instance of tools service instance property.
  * @property items - Current list of visible items.
  * @property limit - Maximal number of visible items.
  * @property page - Current page number of each item list part.
@@ -1644,7 +1644,8 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     _itemsPath:string = 'items'
     _route:ActivatedRoute
     _router:Router
-    _tools:typeof Tools
+    _tools:Tools
+    _currentParameter:PlainObject
     items:Array<PlainObject>
     limit:number
     page:number
@@ -1672,16 +1673,17 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
         super(changeDetectorRef, data, stringCapitalizePipe)
         this._route = route
         this._router = router
-        this._tools = tools.tools
+        this._tools = new tools.tools()
         /*
             NOTE: Parameter have to be read before data to ensure that all page
             constraints have been set correctly before item slicing.
         */
         this._route.params.subscribe((data:PlainObject):void => {
-            this.page = parseInt(data.page)
-            this.limit = parseInt(data.limit)
+            this._currentParameter = data
+            this.limit = parseInt(this._currentParameter.limit)
+            this.page = parseInt(this._currentParameter.page)
             const match:Array<string> = /(regex|exact)-(.*)/.exec(
-                data.searchTerm)
+                this._currentParameter.searchTerm)
             if (match) {
                 this.regularExpression = match[1] === 'regex'
                 this.searchTerm = match[2]
@@ -1697,7 +1699,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             this.items = data.items
             this.items.total = total
             if (this.applyPageConstraints())
-                this._tools.timeout(():boolean => this.update())
+                this.update()
         })
         this.searchTermStream.debounceTime(200).distinctUntilChanged().map((
         ):boolean => {
@@ -1794,9 +1796,10 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
      * a changed list of available items is expected for example.
      * @returns A boolean indicating whether route change was successful.
      */
-    update(reload:boolean = false):boolean {
+    async update(reload:boolean = false):Promise<boolean> {
+        await this._tools.acquireLock(`${this.constructor.name}Update`)
         this.applyPageConstraints()
-        if (reload && this.page !== 0)
+        if (reload && parseInt(this._currentParameter.page) !== 0)
             /*
                 NOTE: Will be normalised to "1" after route reload (hack to
                 enforce route reloading).
@@ -1806,11 +1809,17 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
         for (const name:string in this.sort)
             if (this.sort.hasOwnProperty(name))
                 sort += `${sort ? ',' : ''}${name}-${this.sort[name]}`
-        return this._router.navigate([
+        const result:boolean = await this._router.navigate([
             this._itemsPath, sort, this.page, this.limit,
             `${this.regularExpression ? 'regex' : 'exact'}-` +
             encodeURIComponent(this.searchTerm)
-        ])
+        ], {
+            preserveFragment: true,
+            replaceUrl: parseInt(this._currentParameter.page) === 0,
+            skipLocationChange: this.page === 0
+        })
+        this._tools.releaseLock(`${this.constructor.name}Update`)
+        return result
     }
     // TODO test
     /**
@@ -1970,7 +1979,7 @@ const inputContent:string = `
         >[i]</span>
         <span *ngIf="showValidationErrorMessages">
             <span *ngIf="model.state?.errors?.required">
-                Bitte füllen Sie das Feld "{{model.description || model.name}}"
+                Bitte fÃ¼llen Sie das Feld "{{model.description || model.name}}"
                 aus.
             </span>
             <span *ngIf="model.state?.errors?.maxlength">
@@ -1984,11 +1993,11 @@ const inputContent:string = `
                 ein.
             </span>
             <span *ngIf="model.state?.errors?.min">
-                Bitte geben Sie eine Zahl größer oder gleich {{model.minimum}}
+                Bitte geben Sie eine Zahl grÃ¶Ãer oder gleich {{model.minimum}}
                 ein.
             </span>
             <span *ngIf="model.state?.errors?.pattern">
-                Bitte geben Sie eine Zeinefolge ein die dem regulären Ausdruck
+                Bitte geben Sie eine Zeinefolge ein die dem regulÃ¤ren Ausdruck
                 "{{model.regularExpressionPattern}}" entspricht.
             </span>
         </span>
@@ -2106,7 +2115,7 @@ export class GenericTextareaComponent extends AbstractInputComponent {
                 *ngIf="file?.type === 'video' && file?.source"
             >
                 <source [attr.src]="file.source" [type]="file.content_type">
-                Keine Vorschau möglich.
+                Keine Vorschau mÃ¶glich.
             </video>
             <iframe
                 [src]="file.source"
@@ -2116,14 +2125,14 @@ export class GenericTextareaComponent extends AbstractInputComponent {
             <div
                 md-card-image
                 *ngIf="!file?.type && (file?.source || (file?.source | genericType) === 'string')"
-            >Keine Vorschau möglich.</div>
-            <div md-card-image *ngIf="!file">Keine Datei ausgewählt.</div>
+            >Keine Vorschau mÃ¶glich.</div>
+            <div md-card-image *ngIf="!file">Keine Datei ausgewÃ¤hlt.</div>
             <md-card-content>
                 <ng-content></ng-content>
                 <span *ngIf="showValidationErrorMessages">
                     <p
                         *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.required"
-                    >Bitte wählen Sie eine Datei aus.</p>
+                    >Bitte wÃ¤hlen Sie eine Datei aus.</p>
                     <p
                         *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.name"
                     >
