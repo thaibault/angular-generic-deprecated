@@ -1980,7 +1980,6 @@ const propertyGenericContent:string = `
     (ngModelChange)="model.value = model.type === 'integer' ? parseInt($event) : model.type === 'number' ? parseFloat($event) : $event"
     [placeholder]="model.description || model.name"
     #state="ngModel"
-    #data
     (change)="onChange(state)"
 `
 const propertyInputContent:string = `
@@ -2024,7 +2023,7 @@ const inputContent:string = `
     <md-hint
         align="end"
         *ngIf="!model.selection && model.type === 'string' && model.maximum !== null && model.maximum < 100"
-    >{{data.characterCount}} / {{model.maximum}}</md-hint>
+    >{{model.value?.length}} / {{model.maximum}}</md-hint>
 `
 // IgnoreTypeCheck
 @Component({
@@ -2328,7 +2327,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
             ].state.errors = {
                 required: true}
         if (this.file) {
-            this.file.hash = `#${this.file.digest}`
+            this.file.hash = `?${this.file.digest}`
             this.file.source =
                 this._domSanitizer.bypassSecurityTrustResourceUrl(
                     this._stringFormat(this._configuration.database.url, '') +
@@ -2464,7 +2463,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                     return
                 }
                 this.file.revision = this.model._rev = result.rev
-                this.file.hash = `#${result.rev}`
+                this.file.hash = `?${result.rev}`
                 this.file.source =
                     this._domSanitizer.bypassSecurityTrustResourceUrl(
                         this._stringFormat(
