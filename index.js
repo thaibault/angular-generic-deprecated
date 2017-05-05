@@ -363,11 +363,10 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                             if (oldDocument && oldDocument.hasOwnProperty(
                                 name
                             ))
-                                for (
-                                    const type:string in
-                                    oldDocument[name]
-                                )
+                                for (const type:string in oldDocument[name])
                                     if (oldDocument[name][
+                                        type
+                                    ].value && oldDocument[name][
                                         type
                                     ].value.name === fileName)
                                         oldAttachment = oldDocument[name][
