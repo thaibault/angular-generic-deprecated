@@ -2324,15 +2324,22 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         ].nullable)
             this.model[this.attachmentTypeName][
                 this.internalName
-            ].state.errors = {
-                required: true}
+            ].state.errors = {required: true}
         if (this.file) {
-            this.file.hash = `?${this.file.digest}`
-            this.file.source =
-                this._domSanitizer.bypassSecurityTrustResourceUrl(
-                    this._stringFormat(this._configuration.database.url, '') +
-                    `/${this._configuration.name || 'generic'}/` +
-                    `${this.model._id}/${this.file.name}${this.file.hash}`)
+            this.file.query = `?version=${this.file.digest}`
+            /*
+                NOTE: Only set new file source if isn't already present to
+                prevent to download an immediately uploaded file and grab and
+                older cached one.
+            */
+            if (!this.file.source)
+                this.file.source =
+                    this._domSanitizer.bypassSecurityTrustResourceUrl(
+                        this._stringFormat(
+                            this._configuration.database.url, ''
+                        ) + `/${this._configuration.name || 'generic'}/` +
+                        `${this.model._id}/${this.file.name}${this.file.query}`
+                    )
         }
         this.determinePresentationType()
         this.fileChange.emit(this.file)
@@ -2463,13 +2470,13 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                     return
                 }
                 this.file.revision = this.model._rev = result.rev
-                this.file.hash = `?${result.rev}`
+                this.file.query = `?version=${result.rev}`
                 this.file.source =
                     this._domSanitizer.bypassSecurityTrustResourceUrl(
                         this._stringFormat(
                             this._configuration.database.url, ''
                         ) + `/${this._configuration.name}/${this.model._id}/` +
-                        `${this.file.name}${this.file.hash}`)
+                        `${this.file.name}${this.file.query}`)
                 this.determinePresentationType()
                 this.fileChange.emit(this.file)
                 this.modelChange.emit(this.model)
@@ -2477,6 +2484,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                 this.determinePresentationType()
                 const fileReader:FileReader = new FileReader()
                 fileReader.onload = (event:Object):void => {
+                    this.file.digest = (new Date()).getTime()
                     this.file.source =
                         this._domSanitizer.bypassSecurityTrustResourceUrl(
                             event.target.result)
