@@ -212,7 +212,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
      * @param value - Given data structure to convert.
      * @returns Given converted object.
      */
-    static _convertDateToTimestampRecursively(value:any):PlainObject {
+    static _convertDateToTimestampRecursively(value:any):any {
         if (typeof value === 'object' && value !== null)
             if (value instanceof Date)
                 // NOTE: We save given date as an utc timestamp.
@@ -1691,6 +1691,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
         super(changeDetectorRef, data, stringCapitalizePipe, tools)
         this._route = route
         this._router = router
+        // IgnoreTypeCheck
         this._toolsInstance = new tools.tools()
         /*
             NOTE: Parameter have to be read before data to ensure that all page
@@ -1720,7 +1721,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
                 this.update()
         })
         this.searchTermStream.debounceTime(200).distinctUntilChanged().map((
-        ):boolean => {
+        ):Promise<boolean> => {
             this.page = 1
             return this.update()
         }).subscribe()
