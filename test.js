@@ -1001,6 +1001,7 @@ registerAngularTest(function(
                         }},
                         name: 'name'
                     }
+                    fixture.componentInstance.ngOnChanges()
                     fixture.detectChanges()
                     await fixture.whenStable()
                     assert.strictEqual(
@@ -1015,6 +1016,7 @@ registerAngularTest(function(
                         {})
                     fixture.componentInstance.input.nativeElement
                         .dispatchEvent(getNativeEvent('change'))
+                    fixture.componentInstance.ngOnChanges()
                     fixture.detectChanges()
                     await fixture.whenStable()
                     fixture.componentInstance.file.content_type = 'image/png'
@@ -1052,7 +1054,7 @@ registerAngularTest(function(
                         '-type': 'Test',
                         name: 'name'
                     }
-                    fixture.componentInstance.ngOnInit()
+                    fixture.componentInstance.ngOnChanges()
                     fixture.componentInstance.ngAfterViewInit()
                     await fixture.componentInstance.remove()
                     assert.ok(

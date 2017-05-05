@@ -2305,7 +2305,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
      * Initializes file upload handler.
      * @returns Nothing.
      */
-    ngOnInit():void {
+    ngOnChanges():void {
         if (this.mapNameToField && !Array.isArray(this.mapNameToField))
             this.mapNameToField = [this.mapNameToField]
         const name:string = this._getFilenameByPrefix(
@@ -2313,10 +2313,10 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         if (this.name && name !== this.name)
             this._prefixMatch = true
         this.internalName = name
+        this.model[this.attachmentTypeName][this.internalName].state = {}
         this.file = this.model[this.attachmentTypeName][
             this.internalName
         ].value
-        this.model[this.attachmentTypeName][this.internalName].state = {}
         if (this.file)
             this.file.descriptionName = this.name
         else if (!this.model[this.attachmentTypeName][
