@@ -1007,7 +1007,7 @@ registerAngularTest(function(
                     assert.strictEqual(
                         fixture.componentInstance.file.type, 'text')
                     assert.strictEqual(
-                        fixture.componentInstance.file.hash, '?hash')
+                        fixture.componentInstance.file.query, '?version=hash')
                     assert.strictEqual(
                         fixture.componentInstance.internalName, 'name')
                     assert.deepEqual(
