@@ -358,37 +358,42 @@ registerAngularTest(function(
                             }}}], {_attachments: {a: {
                                 content_type: 'a/b', data: 2
                             }}}],
-                            [[{_attachments: {a: {data: 2}}}, {_attachments: {
-                                a: {data: 2}
-                            }}], null],
+                            [[{_attachments: {a: {data: 2, length: 2}}}, {
+                                _attachments: {a: {value: {
+                                    name: 'a', length: 2
+                                }}}
+                            }], null],
                             [[{_attachments: {a: {
-                                content_type: 'a/b', data: 2
-                            }}}, {_attachments: {a: {
-                                content_type: 'a/b',
-                                data: 2
-                            }}}], null],
-                            [[{_attachments: {a: {data: 2}}}, {_attachments: {
-                                a: {
+                                content_type: 'a/b', data: 2, length: 2
+                            }}}, {_attachments: {a: {value: {
+                                content_type: 'a/b', length: 2, name: 'a'
+                            }}}}], null],
+                            // 34.
+                            [[{_attachments: {a: {data: 2, length: 2}}}, {
+                                _attachments: {a: {value: {
                                     content_type: 'application/octet-stream',
-                                    data: 2
-                                }
-                            }}], null],
-                            [[{_attachments: {a: {data: 2}}}, {_attachments: {
-                                a: {data: 3}
-                            }}], {_attachments: {a: {
+                                    length: 2, name: 'a'
+                                }}}
+                            }], null],
+                            [[{_attachments: {a: {data: 2, length: 2}}}, {
+                                _attachments: {a: {value: {
+                                    length: 3, name: 'a'
+                                }}}
+                            }], {_attachments: {a: {
                                 content_type: 'application/octet-stream',
                                 data: 2
                             }}}],
                             [[{_attachments: {a: {
-                                content_type: 'a/b',
-                                data: 2
-                            }}}, {_attachments: {a: {data: 2}}}], {
-                                _attachments: {a: {
-                                    content_type: 'a/b',
-                                    data: 2
-                                }}
-                            }],
-                            [[{}, {a: {value: 2}}], {a: null}],
+                                content_type: 'a/b', data: 2, length: 2
+                            }}}, {_attachments: {a: {value: {
+                                length: 2, name: 'a'
+                            }}}}], {_attachments: {a: {
+                                content_type: 'a/b', data: 2
+                            }}}],
+                            [
+                                [{}, {a: {value: {length: 2, name: 'a'}}}],
+                                {a: null}
+                            ],
                             [[{'-type': 'Test', b: 2}], null],
                             [
                                 [{'-type': 'Test', a: '2', b: 2}],
@@ -963,7 +968,7 @@ registerAngularTest(function(
                     assert.strictEqual(
                         fixture.componentInstance.searchTerm, 'test')
                     fixture.componentInstance.applyPageConstraints()
-                    fixture.componentInstance.update(true)
+                    await fixture.componentInstance.update(true)
                     fixture.detectChanges()
                     await fixture.whenStable()
                     assert.strictEqual(
@@ -1001,7 +1006,7 @@ registerAngularTest(function(
                     assert.strictEqual(
                         fixture.componentInstance.file.type, 'text')
                     assert.strictEqual(
-                        fixture.componentInstance.file.hash, '#hash')
+                        fixture.componentInstance.file.hash, '?hash')
                     assert.strictEqual(
                         fixture.componentInstance.internalName, 'name')
                     assert.deepEqual(
