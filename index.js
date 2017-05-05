@@ -308,12 +308,6 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
         newDocument:PlainObject, oldDocument:?PlainObject,
         fileTypeReplacement:boolean = true
     ):?PlainObject {
-        if (oldDocument && oldDocument._attachments) {
-            console.log('A', oldDocument._attachments[
-                'logo\\.(?:bmp|gif|ico|jpe?g|png|svg|tiff|webp)'
-            ].value)
-            console.log(newDocument._attachments)
-        }
         oldDocument = this.constructor._convertDateToTimestampRecursively(
             oldDocument)
         newDocument = this.constructor._convertDateToTimestampRecursively(
@@ -398,7 +392,6 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 } else
                     result[name] = newDocument[name]
         let payloadExists:boolean = false
-        console.log('U', untouchedAttachments)
         if (oldDocument) {
             /*
                 Remove already existing values and mark removed or truncated
