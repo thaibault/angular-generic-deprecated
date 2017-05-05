@@ -308,6 +308,12 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
         newDocument:PlainObject, oldDocument:?PlainObject,
         fileTypeReplacement:boolean = true
     ):?PlainObject {
+        if (oldDocument && oldDocument._attachments) {
+            console.log('A', oldDocument._attachments[
+                'logo\\.(?:bmp|gif|ico|jpe?g|png|svg|tiff|webp)'
+            ].value)
+            console.log(newDocument._attachments)
+        }
         oldDocument = this.constructor._convertDateToTimestampRecursively(
             oldDocument)
         newDocument = this.constructor._convertDateToTimestampRecursively(
@@ -352,17 +358,27 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                     result[name] = {}
                     let empty:boolean = true
                     for (const fileName:string in newDocument[name])
-                        if (newDocument[name].hasOwnProperty(fileName))
+                        if (newDocument[name].hasOwnProperty(fileName)) {
+                            let oldAttachment:?PlainObject
+                            if (oldDocument && oldDocument.hasOwnProperty(
+                                name
+                            ))
+                                for (
+                                    const type:string in
+                                    oldDocument[name]
+                                )
+                                    if (oldDocument[name][
+                                        type
+                                    ].value.name === fileName)
+                                        oldAttachment = oldDocument[name][
+                                            type
+                                        ].value
                             if (newDocument[name][fileName].hasOwnProperty(
                                 'data'
-                            ) && !(oldDocument && oldDocument.hasOwnProperty(
-                                name
-                            ) && oldDocument[name].hasOwnProperty(
+                            ) && !(oldAttachment && newDocument[name][
                                 fileName
-                            ) && newDocument[name][
-                                fileName
-                            ].data === oldDocument[name][fileName].data && (
-                                oldDocument[name][fileName].content_type ||
+                            ].length === oldAttachment.length && (
+                                oldAttachment.content_type ||
                                 'application/octet-stream'
                             ) === (newDocument[name][
                                 fileName
@@ -377,11 +393,13 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                                 empty = false
                             } else
                                 untouchedAttachments.push(fileName)
+                        }
                     if (empty)
                         delete result[name]
                 } else
                     result[name] = newDocument[name]
         let payloadExists:boolean = false
+        console.log('U', untouchedAttachments)
         if (oldDocument) {
             /*
                 Remove already existing values and mark removed or truncated
@@ -1515,6 +1533,8 @@ export class AbstractInputComponent/* implements OnInit*/ {
 /**
  * Observes database for any data changes and triggers corresponding methods
  * on corresponding events.
+ * @property static:_defaultLiveUpdateOptions - Options for database
+ * observation.
  * @property actions - Array if actions which have happen.
  * @property _canceled - Indicates whether current view has been destroyed and
  * data observation should bee canceled.
@@ -1527,14 +1547,16 @@ export class AbstractInputComponent/* implements OnInit*/ {
  * function.
  */
 export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
+    static _defaultLiveUpdateOptions:PlainObject = {
+        heartbeat: 3000, include_docs: true, live: true, timeout: false}
     actions:Array<PlainObject> = []
     _canceled:boolean = false
     _changeDetectorRef:ChangeDetectorRef
     _changesStream:Object
     _data:GenericDataService
-    _liveUpdateOptions:PlainObject = {
-        heartbeat: 3000, include_docs: true, live: true, timeout: false}
+    _liveUpdateOptions:PlainObject = {}
     _stringCapitalize:Function
+    _tools:typeof Tools
     /**
      * Saves injected service instances as instance properties.
      * @param changeDetectorRef - Model dirty checking service.
@@ -1544,21 +1566,25 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      */
     constructor(
         changeDetectorRef:ChangeDetectorRef, data:GenericDataService,
-        stringCapitalizePipe:GenericStringCapitalizePipe
+        stringCapitalizePipe:GenericStringCapitalizePipe,
+        tools:GenericToolsService
     ):void {
         this._changeDetectorRef = changeDetectorRef
         this._data = data
         this._stringCapitalize = stringCapitalizePipe.transform.bind(
             stringCapitalizePipe)
+        this._tools = tools.tools
     }
     /**
      * Initializes data observation when view has been initialized.
      * @returns Nothing.
      */
     ngOnInit():void {
-        this._liveUpdateOptions.since = LAST_KNOWN_DATA.sequence
         this._changesStream = this._data.connection.changes(
-            this._liveUpdateOptions)
+            this._tools.extendObject(
+                {since: LAST_KNOWN_DATA.sequence},
+                this.constructor._defaultLiveUpdateOptions,
+                this._liveUpdateOptions))
         for (const type:string of ['change', 'complete', 'error'])
             this._changesStream.on(type, async (
                 action:PlainObject
@@ -1670,7 +1696,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
         stringCapitalizePipe:GenericStringCapitalizePipe,
         tools:GenericToolsService
     ):void {
-        super(changeDetectorRef, data, stringCapitalizePipe)
+        super(changeDetectorRef, data, stringCapitalizePipe, tools)
         this._route = route
         this._router = router
         this._toolsInstance = new tools.tools()
@@ -2401,10 +2427,14 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                     this._extendObject(
                         true, newData, this.synchronizeImmediately)
                 // NOTE: We want to replace old medium.
-                if (oldFileName && oldFileName !== this.file.name)
+                if (oldFileName && oldFileName !== this.file.name && !(
+                    this.mapNameToField && this.model._id &&
+                    this.mapNameToField.includes('_id')
+                ))
                     newData[this.attachmentTypeName][oldFileName] = {
                         data: null}
-                newData._rev = 'latest'
+                if (![undefined, null].includes(this.model._rev))
+                    newData._rev = this.model._rev
                 if (this.mapNameToField) {
                     if (this.model._id && this.mapNameToField.includes(
                         '_id'
@@ -2429,6 +2459,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                         this.model[name] = this.file.name
                     }
                 }
+                newData._rev = 'upsert'
                 try {
                     result = await this._data.put(newData)
                 } catch (error) {
@@ -2506,7 +2537,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
                         .type
                 ],
                 _id: this.model._id,
-                _rev: 'latest',
+                _rev: this.model._rev,
                 [this.attachmentTypeName]: {[this.file.name]: {
                     content_type: 'text/plain',
                     data: null
