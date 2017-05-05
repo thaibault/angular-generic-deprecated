@@ -963,7 +963,7 @@ export class GenericDataService {
             this.constructor.revisionNumberRegularExpression
         )[1]))
             return LAST_KNOWN_DATA.data[result._id]
-        return this.constructor.getNewestData(result)
+        return result
     }
     /**
      * Creates or updates given data.
@@ -1626,7 +1626,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
  * @property _itemsPath - Routing path to the items overview.
  * @property _route - Current route configuration.
  * @property _router - Router service instance.
- * @property _tools - Instance of tools service instance property.
+ * @property _toolsInstance - Instance of tools service instance property.
  * @property items - Current list of visible items.
  * @property limit - Maximal number of visible items.
  * @property page - Current page number of each item list part.
@@ -1644,7 +1644,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     _itemsPath:string = 'items'
     _route:ActivatedRoute
     _router:Router
-    _tools:Tools
+    _toolsInstance:Tools
     _currentParameter:PlainObject
     items:Array<PlainObject>
     limit:number
@@ -1673,7 +1673,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
         super(changeDetectorRef, data, stringCapitalizePipe)
         this._route = route
         this._router = router
-        this._tools = new tools.tools()
+        this._toolsInstance = new tools.tools()
         /*
             NOTE: Parameter have to be read before data to ensure that all page
             constraints have been set correctly before item slicing.
@@ -1797,7 +1797,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
      * @returns A boolean indicating whether route change was successful.
      */
     async update(reload:boolean = false):Promise<boolean> {
-        await this._tools.acquireLock(`${this.constructor.name}Update`)
+        await this._toolsInstance.acquireLock(`${this.constructor.name}Update`)
         this.applyPageConstraints()
         if (reload && parseInt(this._currentParameter.page) !== 0)
             /*
@@ -1818,7 +1818,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             replaceUrl: parseInt(this._currentParameter.page) === 0,
             skipLocationChange: this.page === 0
         })
-        this._tools.releaseLock(`${this.constructor.name}Update`)
+        this._toolsInstance.releaseLock(`${this.constructor.name}Update`)
         return result
     }
     // TODO test
@@ -1979,7 +1979,7 @@ const inputContent:string = `
         >[i]</span>
         <span *ngIf="showValidationErrorMessages">
             <span *ngIf="model.state?.errors?.required">
-                Bitte fÃ¼llen Sie das Feld "{{model.description || model.name}}"
+                Bitte füllen Sie das Feld "{{model.description || model.name}}"
                 aus.
             </span>
             <span *ngIf="model.state?.errors?.maxlength">
@@ -1993,11 +1993,11 @@ const inputContent:string = `
                 ein.
             </span>
             <span *ngIf="model.state?.errors?.min">
-                Bitte geben Sie eine Zahl grÃ¶Ãer oder gleich {{model.minimum}}
+                Bitte geben Sie eine Zahl größer oder gleich {{model.minimum}}
                 ein.
             </span>
             <span *ngIf="model.state?.errors?.pattern">
-                Bitte geben Sie eine Zeinefolge ein die dem regulÃ¤ren Ausdruck
+                Bitte geben Sie eine Zeinefolge ein die dem regulären Ausdruck
                 "{{model.regularExpressionPattern}}" entspricht.
             </span>
         </span>
@@ -2115,7 +2115,7 @@ export class GenericTextareaComponent extends AbstractInputComponent {
                 *ngIf="file?.type === 'video' && file?.source"
             >
                 <source [attr.src]="file.source" [type]="file.content_type">
-                Keine Vorschau mÃ¶glich.
+                Keine Vorschau möglich.
             </video>
             <iframe
                 [src]="file.source"
@@ -2125,14 +2125,14 @@ export class GenericTextareaComponent extends AbstractInputComponent {
             <div
                 md-card-image
                 *ngIf="!file?.type && (file?.source || (file?.source | genericType) === 'string')"
-            >Keine Vorschau mÃ¶glich.</div>
-            <div md-card-image *ngIf="!file">Keine Datei ausgewÃ¤hlt.</div>
+            >Keine Vorschau möglich.</div>
+            <div md-card-image *ngIf="!file">Keine Datei ausgewählt.</div>
             <md-card-content>
                 <ng-content></ng-content>
                 <span *ngIf="showValidationErrorMessages">
                     <p
                         *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.required"
-                    >Bitte wÃ¤hlen Sie eine Datei aus.</p>
+                    >Bitte wählen Sie eine Datei aus.</p>
                     <p
                         *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.name"
                     >
