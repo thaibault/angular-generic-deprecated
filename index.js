@@ -1348,9 +1348,11 @@ export class GenericDataScopeService {
         let data:PlainObject = {}
         if (id) {
             const options:PlainObject = {}
-            if (revision === 'latest')
+            if (revision === 'latest') {
                 options.latest = true
-            else
+                if (revisionHistory)
+                    options.revs_info = true
+            } else
                 options.rev = revision
             try {
                 data = await this.data.get(id, options)
@@ -1360,7 +1362,7 @@ export class GenericDataScopeService {
                     `${revision}" isn't available: ` +
                     this.tools.representObject(error))
             }
-            if (revisionHistory) {
+            if (revision !== 'latest' && revisionHistory) {
                 delete options.rev
                 options.revs_info = true
                 let latestData:PlainObject
