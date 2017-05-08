@@ -1645,6 +1645,8 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
  * @property _route - Current route configuration.
  * @property _router - Router service instance.
  * @property _toolsInstance - Instance of tools service instance property.
+ * @property allItemsChecked - Indicates whether all currently selected items
+ * are checked via select all selector.
  * @property items - Current list of visible items.
  * @property limit - Maximal number of visible items.
  * @property page - Current page number of each item list part.
@@ -1664,6 +1666,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     _router:Router
     _toolsInstance:Tools
     _currentParameter:PlainObject
+    allItemsChecked:boolean = false
     items:Array<PlainObject>
     limit:number
     page:number
@@ -1837,6 +1840,8 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             replaceUrl: parseInt(this._currentParameter.page) === 0,
             skipLocationChange: this.page === 0
         })
+        if (result)
+            this.allItemsChecked = false
         this._toolsInstance.releaseLock(`${this.constructor.name}Update`)
         return result
     }
