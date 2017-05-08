@@ -1688,6 +1688,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
 /**
  * A generic abstract component to edit, search, navigate and filter a list of
  * entities.
+ * @property _currentParameter - Saves current route url parameter.
  * @property _itemPath - Routing path to a specific item.
  * @property _itemsPath - Routing path to the items overview.
  * @property _route - Current route configuration.
@@ -1708,12 +1709,12 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
  * @property sort - Sorting informations.
  */
 export class AbstractItemsComponent extends AbstractLiveDataComponent {
+    _currentParameter:PlainObject
     _itemPath:string = 'item'
     _itemsPath:string = 'items'
     _route:ActivatedRoute
     _router:Router
     _toolsInstance:Tools
-    _currentParameter:PlainObject
     allItemsChecked:boolean = false
     items:Array<PlainObject>
     limit:number
