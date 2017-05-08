@@ -87,49 +87,48 @@ export class GenericInitialDataService {
 // endregion
 // region pipes
 // / region forwarded methods
-const reference:Object = {}
-for (const name:string of Object.getOwnPropertyNames(Tools))
-    if (!['caller', 'arguments'].includes(name))
-        // IgnoreTypeCheck
-        reference[name] = Tools[name]
-for (const configuration:PlainObject of [
-    {
-        invert: ['array'],
-        methodGroups: {
-            string: ['encodeURIComponent'],
-            number: ['pow']
-        },
-        reference: window
-    }, {
-        invert: ['array'],
-        methodGroups: {
-            '': [
-                'convertCircularObjectToJSON', 'equals', 'extendObject',
-                'representObject', 'sort'
-            ],
-            array: '*',
-            number: '*',
-            string: '*'
-        },
-        reference: reference
-    }
-])
-    for (const methodTypePrefix:string in configuration.methodGroups)
-        if (configuration.methodGroups.hasOwnProperty(methodTypePrefix)) {
-            let methodNames:Array<string> = []
-            if (configuration.methodGroups[methodTypePrefix] === '*') {
-                for (const name:string in configuration.reference)
-                    if (configuration.reference.hasOwnProperty(
-                        name
-                    ) && configuration.reference.hasOwnProperty(name) && (
-                        new RegExp(`^${methodTypePrefix}[A-Z0-9]`)
-                    ).test(name))
-                        methodNames.push(name)
-            } else
-                methodNames = configuration.methodGroups[methodTypePrefix]
-            for (const methodName:string of methodNames) {
-                const pipeName:string = Tools.stringCapitalize(methodName)
-                module.exports[`Generic${pipeName}Pipe`] = class {
+// // region configuration
+const invert:Array<string> = ['array']
+const methodGroups:PlainObject = {
+    '': [
+        'convertCircularObjectToJSON', 'equals', 'extendObject',
+        'representObject', 'sort'
+    ],
+    array: '*',
+    number: '*',
+    string: '*'
+}
+// // endregion
+for (const methodTypePrefix:string in methodGroups)
+    if (methodGroups.hasOwnProperty(methodTypePrefix)) {
+        let methodNames:Array<string> = []
+        if (methodGroups[methodTypePrefix] === '*') {
+            for (const name:string of Object.getOwnPropertyNames(Tools))
+                if (Tools.hasOwnProperty(name) && Tools.hasOwnProperty(
+                    name
+                ) && (new RegExp(`^${methodTypePrefix}[A-Z0-9]`)).test(name))
+                    methodNames.push(name)
+        } else
+            methodNames = methodGroups[methodTypePrefix]
+        for (const methodName:string of methodNames) {
+            const pipeName:string = Tools.stringCapitalize(methodName)
+            module.exports[`Generic${pipeName}Pipe`] = class {
+                /**
+                 * Performs the concrete conversion logic.
+                 * @param parameter - Saves all generic parameter to forward it
+                 * for triggering the underlying tools utility.
+                 * @returns Whatever the underlying tools function returns.
+                 */
+                transform(...parameter:Array<any>):any {
+                    return ReflectiveInjector.resolveAndCreate([
+                        GenericToolsService
+                    ]).get(GenericToolsService).tools[methodName](...parameter)
+                }
+            }
+            Pipe({name: `generic${pipeName}`})(
+                module.exports[`Generic${pipeName}Pipe`])
+            if (invert.includes(methodTypePrefix)) {
+                module.exports[`generic${pipeName}InvertedPipe`] = class {
                     /**
                      * Performs the concrete conversion logic.
                      * @param parameter - Saves all generic parameter to
@@ -137,39 +136,20 @@ for (const configuration:PlainObject of [
                      * @returns Whatever the underlying tools function returns.
                      */
                     transform(...parameter:Array<any>):any {
-                        return ReflectiveInjector.resolveAndCreate([
-                            GenericToolsService
-                        ]).get(GenericToolsService).tools[methodName](
+                        const tools:typeof Tools =
+                            ReflectiveInjector.resolveAndCreate([
+                                GenericToolsService
+                            ]).get(GenericToolsService).tools
+                        // IgnoreTypeCheck
+                        return tools.invertArrayFilter(tools[methodName])(
                             ...parameter)
                     }
                 }
-                Pipe({name: `generic${pipeName}`})(
-                    module.exports[`Generic${pipeName}Pipe`])
-                if (configuration.invert.includes(methodTypePrefix)) {
-                    module.exports[`generic${pipeName}InvertedPipe`] = class {
-                        /**
-                         * Performs the concrete conversion logic.
-                         * @param parameter - Saves all generic parameter to
-                         * forward it for triggering the underlying tools
-                         * utility.
-                         * @returns Whatever the underlying tools function
-                         * returns.
-                         */
-                        transform(...parameter:Array<any>):any {
-                            const tools:typeof Tools =
-                                ReflectiveInjector.resolveAndCreate([
-                                    GenericToolsService
-                                ]).get(GenericToolsService).tools
-                            // IgnoreTypeCheck
-                            return tools.invertArrayFilter(tools[methodName])(
-                                ...parameter)
-                        }
-                    }
-                    Pipe({name: `generic${pipeName}Inverted`})(
-                        module.exports[`generic${pipeName}InvertedPipe`])
-                }
+                Pipe({name: `generic${pipeName}Inverted`})(
+                    module.exports[`generic${pipeName}InvertedPipe`])
             }
         }
+    }
 const GenericArrayMakeRangePipe:PipeTransform =
     module.exports.GenericArrayMakeRangePipe
 const GenericEqualsPipe:PipeTransform = module.exports.GenericEqualsPipe
@@ -495,23 +475,6 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
     }
 }
 // IgnoreTypeCheck
-@Pipe({name: 'genericIsDefined'})
-/**
- * Checks if given reference is defined.
- */
-export class GenericIsDefinedPipe/* implements PipeTransform*/ {
-    /**
-     * Performs the actual comparison.
-     * @param object - Object to compare against "undefined" or "null".
-     * @param nullIsUndefined - Indicates whether "null" should be handles as
-     * "undefined".
-     * @returns The comparison result.
-     */
-    transform(object:any, nullIsUndefined:boolean = false):boolean {
-        return !(object === undefined || nullIsUndefined && object === null)
-    }
-}
-// IgnoreTypeCheck
 @Pipe({name: 'genericGetFilenameByPrefix'})
 /**
  * Retrieves a matching filename by given filename prefix.
@@ -538,6 +501,41 @@ export class GenericGetFilenameByPrefixPipe/* implements PipeTransform*/ {
                 return keys[0]
         }
         return null
+    }
+}
+// TODO test
+// IgnoreTypeCheck
+@Pipe({name: 'genericKeys'})
+/**
+ * Retrieves a matching filename by given filename prefix.
+ */
+export class GenericKeysPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the "Object" native "keys()" method.
+     * @param object - Object to retrieve key names from.
+     * @returns Arrays of key names.
+     */
+    transform(object:?Object):Array<string> {
+        if (typeof object === 'object' && object !== null)
+            return Object.keys(object)
+        return []
+    }
+}
+// IgnoreTypeCheck
+@Pipe({name: 'genericIsDefined'})
+/**
+ * Checks if given reference is defined.
+ */
+export class GenericIsDefinedPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual comparison.
+     * @param object - Object to compare against "undefined" or "null".
+     * @param nullIsUndefined - Indicates whether "null" should be handles as
+     * "undefined".
+     * @returns The comparison result.
+     */
+    transform(object:any, nullIsUndefined:boolean = false):boolean {
+        return !(object === undefined || nullIsUndefined && object === null)
     }
 }
 // IgnoreTypeCheck
