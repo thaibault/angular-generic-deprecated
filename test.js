@@ -710,7 +710,7 @@ registerAngularTest(function(
                             ), test[1]))
                         // endregion
                         // region set
-                        assert.deepEqual(await dataScope.set(
+                        assert.deepEqual(await dataScope.determine(
                             'Test'
                         ), extendObject.transform(true, {
                             _attachments: {'.+\\.(?:jpe?g|png)': {

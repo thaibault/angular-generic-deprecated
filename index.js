@@ -1332,8 +1332,6 @@ export class GenericDataScopeService {
     /**
      * Useful to sets route specific data in a resolver.
      * @param modelName - Name of model to retrieve data from.
-     * @param scope - Scope or array of scopes to extend and set retrieved
-     * values in.
      * @param id - ID of an entity to retrieve data from.
      * @param propertyNames - List of property names to retrieve data from.
      * @param revision - Revision to use for retrieving needed data from data
@@ -1342,40 +1340,55 @@ export class GenericDataScopeService {
      * be included.
      * @returns A promise wrapping requested data.
      */
-    async set(
-        modelName:string, scope:?Array<Object>|?Object = null,
-        id:?string = null, propertyNames:?Array<string> = null,
-        revision:string = 'latest', revisionHistory:boolean = false
+    async determine(
+        modelName:string, id:?string = null,
+        propertyNames:?Array<string> = null, revision:string = 'latest',
+        revisionHistory:boolean = false
     ):Promise<PlainObject> {
         let data:PlainObject = {}
         if (id) {
             const options:PlainObject = {}
-            if (revision) {
-                if (revisionHistory)
-                    options.revs_info = true
-                if (revision === 'latest')
-                    options.latest = true
-                else
-                    options.rev = revision
-            }
+            if (revision === 'latest')
+                options.latest = true
+            else
+                options.rev = revision
             try {
                 data = await this.data.get(id, options)
             } catch (error) {
                 throw new Error(
-                    `Document with given id "${id}" isn't available: ` +
+                    `Document with given id "${id}" and revision "` +
+                    `${revision}" isn't available: ` +
                     this.tools.representObject(error))
             }
+            if (revisionHistory) {
+                delete options.rev
+                options.revs_info = true
+                let latestData:PlainObject
+                try {
+                    latestData = await this.data.get(id, options)
+                } catch (error) {
+                    throw new Error(
+                        `Document with given id "${id}" and revision "` +
+                        `${revision}" isn't available: ` +
+                        this.tools.representObject(error))
+                }
+                data[
+                    this.configuration.database.model.property.name.special
+                    .revisionInformations
+                ] = latestData[
+                    this.configuration.database.model.property.name.special
+                    .revisionInformations]
+                delete latestData[
+                    this.configuration.database.model.property.name.special
+                    .revisionInformations]
+                data[
+                    this.configuration.database.model.property.name.special
+                    .revisionInformations
+                ][latestData._rev].scope = this.generate(
+                    modelName, propertyNames, latestData)
+            }
         }
-        const result:PlainObject = this.generate(
-            modelName, propertyNames, data)
-        if (scope) {
-            if (!Array.isArray(scope))
-                scope = [scope]
-            for (const object:Object of scope)
-                this.extendObject(true, object, result)
-            return result
-        }
-        return result
+        return this.generate(modelName, propertyNames, data)
     }
 }
 // / region abstract
