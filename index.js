@@ -165,6 +165,44 @@ const GenericStringFormatPipe:PipeTransform =
     module.exports.GenericStringFormatPipe
 // / endregion
 // / region object
+// TODO test
+// IgnoreTypeCheck
+@Pipe({name: 'genericLimitTo'})
+/**
+ * Retrieves a matching filename by given filename prefix.
+ */
+export class GenericLimitToPipe/* implements PipeTransform*/ {
+    /**
+     * Limits number of items of given string, Object (keys) or Array.
+     * @param input - Object to retrieve key names from.
+     * @param limit - Number of needed items.
+     * @param begin - Starting point to slice from.
+     * @returns Copy of given sliced object.
+     */
+    transform(input:any, limit:any, begin:any):any {
+        limit = Math.abs(Number(limit)) === Infinity ? Number(
+            limit
+        ) : parseInt(limit)
+        if (isNaN(limit))
+            return input
+        if (typeof input === 'number')
+            input = input.toString()
+        else if (typeof input === 'object' && input !== null && !Array.isArray(
+            input
+        ))
+            input = Object.keys(input)
+        if (!(Array.isArray(input) || typeof input === 'string'))
+            return input
+        begin = !begin || isNaN(begin) ? 0 : parseInt(begin)
+        if (begin < 0)
+            begin = Math.max(0, input.length + begin)
+        if (limit >= 0)
+            return input.slice(begin, begin + limit)
+        else if (begin === 0)
+            return input.slice(limit, input.length)
+        return input.slice(Math.max(0, begin + limit), begin)
+    }
+}
 // IgnoreTypeCheck
 @Pipe({name: 'genericExtractRawData'})
 /**
@@ -1390,18 +1428,22 @@ export class GenericDataScopeService {
                     this.configuration.database.model.property.name.special
                     .revisionInformations
                 ] = {}
-                for (const item:PlainObject of revisions)
+                let first:boolean = true
+                for (const item:PlainObject of revisions) {
                     data[
                         this.configuration.database.model.property.name.special
                         .revisionInformations
-                    ][item.rev] = {
-                        status: item.status
+                    ][first ? 'latest' : item.rev] = {
+                        status: item.status,
+                        revision: item.rev
                     }
+                    first = false
+                }
                 if (latestData)
                     data[
                         this.configuration.database.model.property.name.special
                         .revisionInformations
-                    ][latestData._rev].scope = this.generate(
+                    ].latest.scope = this.generate(
                         modelName, propertyNames, latestData)
             }
         }
