@@ -303,9 +303,16 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 undefined, null, ''
             ].includes(newDocument[name]) && (
                 this.configuration.database.model.property.name.reserved
-                    .includes(name) ||
-                this.configuration.database.model.property.name.special
-                    .type === name ||
+                    .concat(
+                        this.configuration.database.model.property.name.special
+                            .deleted,
+                        this.configuration.database.model.property.name.special
+                            .id,
+                        this.configuration.database.model.property.name.special
+                            .revision,
+                        this.configuration.database.model.property.name.special
+                            .type
+                    ).includes(name) ||
             ![
                 this.configuration.database.model.property.name.special
                     .allowedRoles,
@@ -314,6 +321,8 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 this.configuration.database.model.property.name.special
                     .constraints.expression,
                 this.configuration.database.model.property.name.special.extend,
+                this.configuration.database.model.property.name.special
+                    .revisionInformationss,
                 this.configuration.database.model.property.name.special
                     .revisions,
                 this.configuration.database.model.property.name.special
@@ -391,7 +400,15 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                         this.configuration.database.model.property.name.special
                             .constraints.expression,
                         this.configuration.database.model.property.name.special
+                            .deleted,
+                        this.configuration.database.model.property.name.special
                             .extend,
+                        this.configuration.database.model.property.name.special
+                            .id,
+                        this.configuration.database.model.property.name.special
+                            .revision,
+                        this.configuration.database.model.property.name.special
+                            .revisionInformations,
                         this.configuration.database.model.property.name.special
                             .revisions,
                         this.configuration.database.model.property.name.special
@@ -464,8 +481,15 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
                 if (result.hasOwnProperty(
                     name
                 ) && !this.configuration.database.model.property.name.reserved
-                    .concat(this.configuration.database.model.property.name
-                        .special.type
+                    .concat(
+                        this.configuration.database.model.property.name
+                            .special.deleted,
+                        this.configuration.database.model.property.name
+                            .special.id,
+                        this.configuration.database.model.property.name
+                            .special.revision,
+                        this.configuration.database.model.property.name
+                            .special.type
                     ).includes(name)
                 ) {
                     payloadExists = true
@@ -1115,6 +1139,12 @@ export class GenericDataScopeService {
                 }
         for (const name:string of this.configuration.database.model.property
             .name.reserved.concat(
+                this.configuration.database.model.property.name.special
+                    .deleted,
+                this.configuration.database.model.property.name.special
+                    .id,
+                this.configuration.database.model.property.name.special
+                    .revision,
                 this.configuration.database.model.property.name.special.type)
         )
             if (scope.hasOwnProperty(name))
@@ -1279,9 +1309,16 @@ export class GenericDataScopeService {
         }
         for (const name:string of this.configuration.database.model.property
             .name.reserved.concat(
-                this.configuration.database.model.property.name.special.type,
                 this.configuration.database.model.property.name.special
-                    .revisions)
+                    .deleted,
+                this.configuration.database.model.property.name.special.id,
+                this.configuration.database.model.property.name.special
+                    .revision,
+                this.configuration.database.model.property.name.special
+                    .revisionInformations,
+                this.configuration.database.model.property.name.special
+                    .revisions,
+                this.configuration.database.model.property.name.special.type)
         )
             if (data.hasOwnProperty(name))
                 result[name] = data[name]
@@ -1315,7 +1352,7 @@ export class GenericDataScopeService {
             const options:PlainObject = {}
             if (revision) {
                 if (revisionHistory)
-                    options.revs = true
+                    options.revs_info = true
                 if (revision === 'latest')
                     options.latest = true
                 else

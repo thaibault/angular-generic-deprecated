@@ -109,7 +109,7 @@ registerAngularTest(function(
                         property: {
                             defaultSpecification: {minimum: 0},
                             name: {
-                                reserved: ['_deleted', '_id', '_rev'],
+                                reserved: [],
                                 special: {
                                     allowedRoles: '_allowedRoles',
                                     attachments: '_attachments',
@@ -118,7 +118,11 @@ registerAngularTest(function(
                                         execution: '_constraintExecutions',
                                         expression: '_constraintExpressions'
                                     },
+                                    deleted: '_deleted',
                                     extend: '_extends',
+                                    id: '_id',
+                                    revision: '_rev',
+                                    revisionInformations: '_revs_info',
                                     revisions: '_revisions',
                                     type: '-type',
                                     validatedDocumentsCache:
