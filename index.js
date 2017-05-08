@@ -1362,32 +1362,47 @@ export class GenericDataScopeService {
                     `${revision}" isn't available: ` +
                     this.tools.representObject(error))
             }
-            if (revision !== 'latest' && revisionHistory) {
-                delete options.rev
-                options.revs_info = true
-                let latestData:PlainObject
-                try {
-                    latestData = await this.data.get(id, options)
-                } catch (error) {
-                    throw new Error(
-                        `Document with given id "${id}" and revision "` +
-                        `${revision}" isn't available: ` +
-                        this.tools.representObject(error))
-                }
+            if (revisionHistory) {
+                let revisions:Array<PlainObject>
+                let latestData:?PlainObject
+                if (revision !== 'latest') {
+                    delete options.rev
+                    options.revs_info = true
+                    try {
+                        latestData = await this.data.get(id, options)
+                    } catch (error) {
+                        throw new Error(
+                            `Document with given id "${id}" and revision "` +
+                            `${revision}" isn't available: ` +
+                            this.tools.representObject(error))
+                    }
+                    revisions = latestData[
+                        this.configuration.database.model.property.name.special
+                        .revisionInformations]
+                    delete latestData[
+                        this.configuration.database.model.property.name.special
+                        .revisionInformations]
+                } else
+                    revisions = data[
+                        this.configuration.database.model.property.name.special
+                        .revisionInformations]
                 data[
                     this.configuration.database.model.property.name.special
                     .revisionInformations
-                ] = latestData[
-                    this.configuration.database.model.property.name.special
-                    .revisionInformations]
-                delete latestData[
-                    this.configuration.database.model.property.name.special
-                    .revisionInformations]
-                data[
-                    this.configuration.database.model.property.name.special
-                    .revisionInformations
-                ][latestData._rev].scope = this.generate(
-                    modelName, propertyNames, latestData)
+                ] = {}
+                for (const item:PlainObject of revisions)
+                    data[
+                        this.configuration.database.model.property.name.special
+                        .revisionInformations
+                    ][item.rev] = {
+                        status: item.status
+                    }
+                if (latestData)
+                    data[
+                        this.configuration.database.model.property.name.special
+                        .revisionInformations
+                    ][latestData._rev].scope = this.generate(
+                        modelName, propertyNames, latestData)
             }
         }
         return this.generate(modelName, propertyNames, data)
