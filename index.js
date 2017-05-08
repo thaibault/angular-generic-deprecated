@@ -1281,7 +1281,9 @@ export class GenericDataScopeService {
         }
         for (const name:string of this.configuration.database.model.property
             .name.reserved.concat(
-                this.configuration.database.model.property.name.special.type)
+                this.configuration.database.model.property.name.special.type,
+                this.configuration.database.model.property.name.special
+                    .revisions)
         )
             if (data.hasOwnProperty(name))
                 result[name] = data[name]
@@ -1299,25 +1301,35 @@ export class GenericDataScopeService {
      * values in.
      * @param id - ID of an entity to retrieve data from.
      * @param propertyNames - List of property names to retrieve data from.
-     * @param options - To use for retrieving needed data from data service.
+     * @param revision - Revision to use for retrieving needed data from data
+     * service.
+     * @param revisionHistory - Indicates whether the revision history should
+     * be included.
      * @returns A promise wrapping requested data.
      */
     async set(
         modelName:string, scope:?Array<Object>|?Object = null,
         id:?string = null, propertyNames:?Array<string> = null,
-        options:PlainObject = {}
+        revision:string = 'latest', revisionHistory:boolean = false
     ):Promise<PlainObject> {
-        if (propertyNames && !options.hasOwnProperty('fields'))
-            options.fields = propertyNames
         let data:PlainObject = {}
         if (id) {
-            const result:Array<PlainObject> = await this.data.find({[
-                this.configuration.database.model.property.name.special.type
-            ]: modelName, _id: id}, options)
-            if (result.length === 0)
+            const options:PlainObject = {}
+            if (revision) {
+                if (revisionHistory)
+                    options.revs = true
+                if (revision === 'latest')
+                    options.latest = true
+                else
+                    options.rev = revision
+            }
+            try {
+                data = await this.data.get(id, options)
+            } catch (error) {
                 throw new Error(
-                    `Document with given id "${id}" isn't available.`)
-            data = result[0]
+                    `Document with given id "${id}" isn't available: ` +
+                    this.tools.representObject(error))
+            }
         }
         const result:PlainObject = this.generate(
             modelName, propertyNames, data)
@@ -1554,6 +1566,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      * @param changeDetectorRef - Model dirty checking service.
      * @param data - Data stream service.
      * @param stringCapitalizePipe - The string capitalize pipe instance.
+     * @param tools - The injected tools service instance.
      * @returns Nothing.
      */
     constructor(
@@ -1783,10 +1796,11 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     /**
      * Switches section to item which has given id.
      * @param itemID - ID of item to switch to.
+     * @param itemVersion - Version of item to switch to.
      * @returns Nothing.
      */
-    goToItem(itemID:string):void {
-        this._router.navigate([this._itemPath, itemID])
+    goToItem(itemID:string, itemVersion:string):void {
+        this._router.navigate([this._itemPath, itemID, itemVersion])
     }
     /**
      * Triggers on any data changes and updates item constraints.

@@ -113,6 +113,7 @@ registerAngularTest(function(
                                 special: {
                                     allowedRoles: '_allowedRoles',
                                     attachments: '_attachments',
+                                    conflict: '_conflicts',
                                     constraints: {
                                         execution: '_constraintExecutions',
                                         expression: '_constraintExpressions'
