@@ -1405,7 +1405,6 @@ export class GenericDataScopeService {
                     `${revision}" isn't available: ` +
                     this.tools.representObject(error))
             }
-            console.log('A', options.rev, data._rev)
             if (revisionHistory) {
                 let revisions:Array<PlainObject>
                 let latestData:?PlainObject
