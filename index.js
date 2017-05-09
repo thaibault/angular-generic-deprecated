@@ -1026,7 +1026,12 @@ export class GenericDataService {
      */
     async get(...parameter:Array<any>):Promise<PlainObject> {
         const result:PlainObject = await this.connection.get(...parameter)
-        if (LAST_KNOWN_DATA.data.hasOwnProperty(result._id) && parseInt(
+        if (parameter.length > 1 && typeof parameter[
+            1
+        ] === 'object' && parameter[1] !== null && parameter[1].hasOwnProperty(
+            'rev'
+        ) && parameter[1].rev === 'latest' &&
+        LAST_KNOWN_DATA.data.hasOwnProperty(result._id) && parseInt(
             result._rev.match(
                 this.constructor.revisionNumberRegularExpression)[1]
         ) < parseInt(LAST_KNOWN_DATA.data[result._id]._rev.match(
@@ -1400,6 +1405,7 @@ export class GenericDataScopeService {
                     `${revision}" isn't available: ` +
                     this.tools.representObject(error))
             }
+            console.log('A', options.rev, data._rev)
             if (revisionHistory) {
                 let revisions:Array<PlainObject>
                 let latestData:?PlainObject
