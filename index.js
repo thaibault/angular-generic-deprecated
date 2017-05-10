@@ -1446,16 +1446,14 @@ export class DataScopeService {
                     .revisionInformations
                 ] = {}
                 let first:boolean = true
-                for (const item:PlainObject of revisions) {
-                    data[
-                        this.configuration.database.model.property.name.special
-                        .revisionInformations
-                    ][first ? 'latest' : item.rev] = {
-                        status: item.status,
-                        revision: item.rev
+                for (const item:PlainObject of revisions)
+                    if (item.status === 'available')
+                        data[
+                            this.configuration.database.model.property.name
+                                .special.revisionInformations
+                        ][first ? 'latest' : item.rev] = {revision: item.rev}
+                        first = false
                     }
-                    first = false
-                }
                 if (latestData)
                     data[
                         this.configuration.database.model.property.name.special
