@@ -2121,7 +2121,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
         /></md-input-container>
     `
 })
-export default class IntervallInputComponent {
+export class IntervallInputComponent {
     @Input() model:{end:Date;start:Date} = {
         end: (new Date(1970, 0, 1)).getTime(),
         start: (new Date(1970, 0, 1)).getTime()
@@ -2144,7 +2144,7 @@ export default class IntervallInputComponent {
         </div>
     `
 })
-export default class IntervalleesInputComponent {
+export class IntervalleesInputComponent {
     _extendObject:Function
     _typeNameDescription:string
     @Input() additionalObjectData:PlainObject
