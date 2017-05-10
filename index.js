@@ -992,10 +992,19 @@ export class GenericDataService {
         return this.connection.createIndex(...parameter)
     }
     /**
+     * Creates or updates given data.
+     * @param parameter - All parameter will be forwarded to the underlining
+     * pouchdb's "bulkDocs()" method.
+     * @returns Whatever pouchdb's method returns.
+     */
+    bulkDocs(...parameter:Array<any>):Promise<PlainObject> {
+        return this.connection.bulkDocs(...parameter)
+    }
+    /**
      * Removes current active database.
      * @param parameter - All parameter will be forwarded to the underlining
      * pouchdb's "destroy()" method.
-     * @returns Whatever pouchdb's "destroy()" method returns.
+     * @returns Whatever pouchdb's method returns.
      */
     destroy(...parameter:Array<any>):Promise<PlainObject> {
         if (this.synchronisation)
@@ -1022,7 +1031,7 @@ export class GenericDataService {
      * Retrieves a resource by id.
      * @param parameter - All parameter will be forwarded to the underlining
      * pouchdb's "get()" method.
-     * @returns Whatever pouchdb's "get()" method returns.
+     * @returns Whatever pouchdb's method returns.
      */
     async get(...parameter:Array<any>):Promise<PlainObject> {
         const result:PlainObject = await this.connection.get(...parameter)
@@ -1044,7 +1053,7 @@ export class GenericDataService {
      * Creates or updates given data.
      * @param parameter - All parameter will be forwarded to the underlining
      * pouchdb's "put()" method.
-     * @returns Whatever pouchdb's "put()" method returns.
+     * @returns Whatever pouchdb's method returns.
      */
     put(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.put(...parameter)
