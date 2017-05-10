@@ -636,15 +636,21 @@ export class ObjectKeysPipe/* implements PipeTransform*/ {
      * @param sort - Indicates whether sorting should be enabled. If an array
      * is provided it will be interpreted as arguments given to the array's
      * sort method.
+     * @param reverse - Reverses sorted list.
      * @returns Arrays of key names.
      */
-    transform(object:?Object, sort:any = false):Array<string> {
+    transform(
+        object:?Object, sort:any = false, reverse:boolean = false
+    ):Array<string> {
         if (typeof object === 'object' && object !== null) {
             const result:Array<string> = Object.keys(object)
             if (sort) {
                 if (!Array.isArray(sort))
                     sort = []
-                return result.sort(...sort)
+                result.sort(...sort)
+                if (reverse)
+                    result.reverse()
+                return result
             }
             return result
         }
