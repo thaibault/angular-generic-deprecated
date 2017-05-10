@@ -173,7 +173,8 @@ registerAngularTest(function(
                  * @param data - Injected data service instance.
                  * @param escapeRegularExpressionsPipe - Injected regular
                  * expression escape pipe instance.
-                 * @param extendObjectPipe - Injected extend object pipe instance.
+                 * @param extendObjectPipe - Injected extend object pipe
+                 * instance.
                  * @param initialData - Injected initial data service instance.
                  * @returns Nothing.
                  */
@@ -217,16 +218,19 @@ registerAngularTest(function(
                  * pipe instance.
                  * @param initialData - Injected initial data service instance.
                  * @param isDefinedPipe - Injected is defined pipe instance.
+                 * @param limitToPipe - Injected limit to pipe instance.
                  * @param mapPipe - Injected map pipe instance.
-                 * @param md5Pipe - Injected md5 pipe instance.
                  * @param numberPercentPipe - Injected number percent pipe
                  * instance.
+                 * @param objectKeysPipe - Injected object keys pipe instance.
                  * @param resolver - Injected resolver service instance.
                  * @param stringEndsWithPipe - Injected string ends with pipe
                  * instance.
-                 * @param stringHasTimeSuffix - Injected string has time suffix
+                 * @param stringHasTimeSuffixPipe - Injected string has time
+                 * suffix pipe instance.
+                 * @param stringMatchPipe - Injected string match pipe
                  * instance.
-                 * @param stringMatchPipe - Injected string match pipe instance.
+                 * @param stringMD5Pipe - Injected md5 pipe instance.
                  * @param stringReplacePipe - Injected string replace pipe
                  * instance.
                  * @param stringShowIfPatternMatchesPipe - Injected string show

@@ -102,13 +102,16 @@ const methodGroups:PlainObject = {
 for (const methodTypePrefix:string in methodGroups)
     if (methodGroups.hasOwnProperty(methodTypePrefix)) {
         let methodNames:Array<string> = []
-        if (methodGroups[methodTypePrefix] === '*') {
-            for (const name:string of Object.getOwnPropertyNames(Tools))
+        if (methodGroups[methodTypePrefix] === '*')
+            /* eslint-disable curly */
+            for (const name:string of Object.getOwnPropertyNames(Tools)) {
                 if (Tools.hasOwnProperty(name) && Tools.hasOwnProperty(
                     name
                 ) && (new RegExp(`^${methodTypePrefix}[A-Z0-9]`)).test(name))
                     methodNames.push(name)
-        } else
+            }
+            /* eslint-enable curly */
+        else
             methodNames = methodGroups[methodTypePrefix]
         for (const methodName:string of methodNames) {
             const pipeName:string = Tools.stringCapitalize(methodName)
@@ -2107,10 +2110,10 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
     }
 }
 // // / region intervall
-// TODO
+// TODO test
 // IgnoreTypeCheck
 @Component({
-    selector: 'generic-intervall-input',
+    selector: 'generic-interval-input',
     template: `
         <md-input-container><input
             mdInput type="time" [(ngModel)]="model.start" placeholder="Start"
@@ -2121,35 +2124,54 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
         /></md-input-container>
     `
 })
-export class IntervallInputComponent {
-    @Input() model:{end:Date;start:Date} = {
+/**
+ * Represents an interval input.
+ * @property model - Object that saves start and end time as unix timestamp in
+ * milliseconds.
+ */
+export class IntervalInputComponent {
+    @Input() model:{end:number;start:number} = {
         end: (new Date(1970, 0, 1)).getTime(),
         start: (new Date(1970, 0, 1)).getTime()
     }
 }
-// TODO
+// TODO test
 // IgnoreTypeCheck
 @Component({
-    selector: 'generic-intervallees-input',
+    selector: 'generic-intervals-input',
     template: `
         <div>{{model.description || model.name}}</div>
         <div *ngFor="let interval of model.value">
-            <generic-intervall-input [model]="interval">
+            <generic-interval-input [model]="interval">
                 <ng-content></ng-content>
-            </generic-intervall-input>
+            </generic-interval-input>
+            <span (click)="remove(interval)">x</span>
         </div>
-        <div>
-            <span (click)="add()">+</span>
-            <span *ngIf="model.value.length" (click)="remove()">-</span>
-        </div>
+        <span (click)="add()">+</span>
     `
 })
-export class IntervalleesInputComponent {
+/**
+ * Represents an editable list of intervals.
+ * @property _extendObject - Holds the extend object pipe instance's transform
+ * method.
+ * @property _typeNameDescription - Saves current configured type name.
+ * @property additionalObjectData - Additional object data to save with current
+ * interval object.
+ * @property model - Saves current list of intervals.
+ * @property modelChange - Event emitter for interval list changes.
+ */
+export class IntervalsInputComponent {
     _extendObject:Function
     _typeNameDescription:string
     @Input() additionalObjectData:PlainObject
     @Input() model:PlainObject = {value: []}
     @Output() modelChange:EventEmitter<Array<PlainObject>> = new EventEmitter()
+    /**
+     * Constructs the interval list component.
+     * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param initialData - Injected initial data service instance.
+     * @returns Nothing.
+     */
     constructor(
         extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService
     ):void {
@@ -2157,12 +2179,20 @@ export class IntervalleesInputComponent {
         this._typeNameDescription =
             initialData.configuration.database.model.property.name.special.type
     }
+    /**
+     * Extends additional model data with default one if nothing is provided.
+     * @returns Nothing.
+     */
     ngOnInit():void {
         if (!this.additionalObjectData)
             this.additionalObjectData = {
-                [this._typeNameDescription]: '_intervall'
+                [this._typeNameDescription]: '_interval'
             }
     }
+    /**
+     * Adds a new interval.
+     * @returns Nothing.
+     */
     add():void {
         const lastEnd:Date = (
             this.model.value && this.model.value.length
@@ -2177,9 +2207,17 @@ export class IntervalleesInputComponent {
         }, this.additionalObjectData))
         this.modelChange.emit(this.model)
     }
-    remove():void {
-        this.model.value.pop()
-        this.modelChange.emit(this.model)
+    /**
+     * Removes given interval.
+     * @param interval - Interval to remove from current list.
+     * @returns Nothing.
+     */
+    remove(interval:PlainObject):void {
+        const index:number = this.model.value.indexOf(interval)
+        if (index !== -1) {
+            this.model.value.splice(index)
+            this.modelChange.emit(this.model)
+        }
     }
 }
 // // / endregion
