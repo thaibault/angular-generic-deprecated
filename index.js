@@ -929,6 +929,7 @@ export class DataService {
      */
     initialize():void {
         const options:PlainObject = {}
+        let type:string
         if (this.configuration.database.local)
             type = 'local'
         else {
