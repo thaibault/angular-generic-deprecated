@@ -567,11 +567,11 @@ export class GenericGetFilenameByPrefixPipe/* implements PipeTransform*/ {
 }
 // TODO test
 // IgnoreTypeCheck
-@Pipe({name: 'genericKeys'})
+@Pipe({name: 'genericObjectKeys'})
 /**
  * Retrieves a matching filename by given filename prefix.
  */
-export class GenericKeysPipe/* implements PipeTransform*/ {
+export class GenericObjectKeysPipe/* implements PipeTransform*/ {
     /**
      * Performs the "Object" native "keys()" method.
      * @param object - Object to retrieve key names from.
