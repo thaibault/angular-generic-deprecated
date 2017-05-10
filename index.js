@@ -637,16 +637,20 @@ export class ObjectKeysPipe/* implements PipeTransform*/ {
      * is provided it will be interpreted as arguments given to the array's
      * sort method.
      * @param reverse - Reverses sorted list.
+     * @param asNumber - Sort number aware.
      * @returns Arrays of key names.
      */
     transform(
-        object:?Object, sort:any = false, reverse:boolean = false
+        object:?Object, sort:any = false, reverse:boolean = false,
+        asNumber:boolean = false
     ):Array<string> {
         if (typeof object === 'object' && object !== null) {
             const result:Array<string> = Object.keys(object)
             if (sort) {
                 if (!Array.isArray(sort))
-                    sort = []
+                    sort = asNumber ? [(first, second):number =>
+                        parseInt(first) - parseInt(second)
+                    ] : []
                 result.sort(...sort)
                 if (reverse)
                     result.reverse()

@@ -484,7 +484,10 @@ registerAngularTest(function(
                             [[[2]], ['0']],
                             [[{a: 2}], ['a']],
                             [[{b: 3, a: 2}, true], ['a', 'b']],
-                            [[{b: 3, a: 2}, true, true], ['b', 'a']]
+                            [[{b: 3, a: 2}, true, true], ['b', 'a']],
+                            [[{
+                                '2-a': 3, '1-b': 2, '3-c': 3
+                            }, true, true, true], ['3-c', '2-a', '1-b']]
                         ])
                             assert.deepEqual(
                                 objectKeysPipe.transform(...test[0]), test[1])
