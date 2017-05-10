@@ -928,15 +928,18 @@ export class DataService {
      * @returns Nothing.
      */
     initialize():void {
-        const type:string = (
-            this.configuration.database.local
-        ) ? 'local' : this.stringFormat(this.configuration.database.url, '')
+        const options:PlainObject = {}
+        if (this.configuration.database.local)
+            type = 'local'
+        else {
+            options.skip_setup = false
+            type = this.stringFormat(this.configuration.database.url, '')
+        }
         this.connection = new this.database(type + (/^[a-z]+:\/\/.+$/g.test(
             type
         ) ? `/${this.configuration.name || 'generic'}` : ''),
-        this.extendObject(true, {
-            skip_setup: true
-        }, this.configuration.database.options || {}))
+        this.extendObject(
+            true, options, this.configuration.database.connector || {}))
         for (const name:string in this.connection)
             if (this.constructor.wrappableMethodNames.includes(
                 name
