@@ -648,9 +648,15 @@ export class ObjectKeysPipe/* implements PipeTransform*/ {
             const result:Array<string> = Object.keys(object)
             if (sort) {
                 if (!Array.isArray(sort))
-                    sort = asNumber ? [(first, second):number =>
-                        parseInt(first) - parseInt(second)
-                    ] : []
+                    sort = asNumber ? [(first:any, second:any):number => {
+                        first = parseInt(first)
+                        second = parseInt(second)
+                        if (isNaN(first))
+                            return isNaN(second) ? 0 : +1
+                        else if (isNaN(second))
+                            return -1
+                        return first - second
+                    }] : []
                 result.sort(...sort)
                 if (reverse)
                     result.reverse()
