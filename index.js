@@ -2106,6 +2106,83 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
         return value
     }
 }
+// // / region intervall
+// TODO
+// IgnoreTypeCheck
+@Component({
+    selector: 'generic-intervall-input',
+    template: `
+        <md-input-container><input
+            mdInput type="time" [(ngModel)]="model.start" placeholder="Start"
+        /></md-input-container>
+        <span class="delimiter"><ng-content></ng-content></span>
+        <md-input-container><input
+            mdInput type="time" [(ngModel)]="model.end" placeholder="Ende"
+        /></md-input-container>
+    `
+})
+export default class IntervallInputComponent {
+    @Input() model:{end:Date;start:Date} = {
+        end: (new Date(1970, 0, 1)).getTime(),
+        start: (new Date(1970, 0, 1)).getTime()
+    }
+}
+// TODO
+// IgnoreTypeCheck
+@Component({
+    selector: 'generic-intervallees-input',
+    template: `
+        <div>{{model.description || model.name}}</div>
+        <div *ngFor="let interval of model.value">
+            <generic-intervall-input [model]="interval">
+                <ng-content></ng-content>
+            </generic-intervall-input>
+        </div>
+        <div>
+            <span (click)="add()">+</span>
+            <span *ngIf="model.value.length" (click)="remove()">-</span>
+        </div>
+    `
+})
+export default class IntervalleesInputComponent {
+    _extendObject:Function
+    _typeNameDescription:string
+    @Input() additionalObjectData:PlainObject
+    @Input() model:PlainObject = {value: []}
+    @Output() modelChange:EventEmitter<Array<PlainObject>> = new EventEmitter()
+    constructor(
+        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService
+    ):void {
+        this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this._typeNameDescription =
+            initialData.configuration.database.model.property.name.special.type
+    }
+    ngOnInit():void {
+        if (!this.additionalObjectData)
+            this.additionalObjectData = {
+                [this._typeNameDescription]: '_intervall'
+            }
+    }
+    add():void {
+        const lastEnd:Date = (
+            this.model.value && this.model.value.length
+        ) ? new Date(
+            this.model.value[this.model.value.length - 1].end
+        ) : new Date(1970, 0, 1)
+        this.model.value.push(this._extendObject({
+            end: new Date(lastEnd.getTime() + (new Date(
+                1970, 0, 1, 2
+            )).getTime()),
+            start: lastEnd
+        }, this.additionalObjectData))
+        this.modelChange.emit(this.model)
+    }
+    remove():void {
+        this.model.value.pop()
+        this.modelChange.emit(this.model)
+    }
+}
+// // / endregion
 // // endregion
 // // region text/selection
 /* eslint-disable max-len */
