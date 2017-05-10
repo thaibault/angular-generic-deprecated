@@ -1447,7 +1447,7 @@ export class DataScopeService {
                 ] = {}
                 let first:boolean = true
                 for (const item:PlainObject of revisions)
-                    if (item.status === 'available')
+                    if (item.status === 'available') {
                         data[
                             this.configuration.database.model.property.name
                                 .special.revisionInformations
