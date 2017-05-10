@@ -48,9 +48,9 @@ registerAngularTest(function(
     // region extend abstract components
     const {
         AbstractItemsComponent,
-        GenericDataService,
-        GenericStringCapitalizePipe,
-        GenericToolsService
+        DataService,
+        StringCapitalizePipe,
+        ToolsService
     } = index
     // IgnoreTypeCheck
     @Component({
@@ -72,10 +72,9 @@ registerAngularTest(function(
          * @param tools - Application wide tools service instance.
          */
         constructor(
-            changeDetectorRef:ChangeDetectorRef, data:GenericDataService,
+            changeDetectorRef:ChangeDetectorRef, data:DataService,
             route:ActivatedRoute, router:Router,
-            stringCapitalizePipe:GenericStringCapitalizePipe,
-            tools:GenericToolsService
+            stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
         ):void {
             route.testData = {items: []}
             route.testParameter = {
@@ -137,28 +136,30 @@ registerAngularTest(function(
                 },
                 test: true
             }}
-            const GenericModule:Object = index.default
+            const Module:Object = index.default
             const {
-                GenericExtendObjectPipe,
-                GenericInitialDataService,
-                GenericStringMD5Pipe,
-                GenericExtractRawDataPipe,
-                GenericGetFilenameByPrefixPipe,
-                GenericMapPipe,
-                GenericTypePipe,
-                GenericIsDefinedPipe,
-                GenericStringEscapeRegularExpressionsPipe,
-                GenericStringReplacePipe,
-                GenericStringShowIfPatternMatchesPipe,
-                GenericStringStartsWithPipe,
-                GenericStringEndsWithPipe,
-                GenericStringMatchPipe,
-                GenericStringSliceMatchPipe,
-                GenericStringHasTimeSuffixPipe,
-                GenericNumberPercentPipe,
-                GenericCanDeactivateRouteLeaveGuard,
-                GenericDataScopeService,
-                AbstractResolver
+                AbstractResolver,
+                CanDeactivateRouteLeaveGuard,
+                DataScopeService,
+                ExtendObjectPipe,
+                ExtractRawDataPipe,
+                GetFilenameByPrefixPipe,
+                InitialDataService,
+                IsDefinedPipe,
+                LimitToPipe,
+                MapPipe,
+                NumberPercentPipe,
+                ObjectKeysPipe,
+                StringMD5Pipe,
+                StringEscapeRegularExpressionsPipe,
+                StringReplacePipe,
+                StringShowIfPatternMatchesPipe,
+                StringStartsWithPipe,
+                StringEndsWithPipe,
+                StringMatchPipe,
+                StringSliceMatchPipe,
+                StringHasTimeSuffixPipe,
+                TypePipe
             } = index
             // IgnoreTypeCheck
             @Injectable()
@@ -170,20 +171,20 @@ registerAngularTest(function(
                 /**
                  * Initializes the abstract resolver class.
                  * @param data - Injected data service instance.
-                 * @param escapeRegularExpressions - Injected regular
+                 * @param escapeRegularExpressionsPipe - Injected regular
                  * expression escape pipe instance.
-                 * @param extendObject - Injected extend object pipe instance.
+                 * @param extendObjectPipe - Injected extend object pipe instance.
                  * @param initialData - Injected initial data service instance.
                  * @returns Nothing.
                  */
                 constructor(
-                    data:GenericDataService,
-            escapeRegularExpressions:GenericStringEscapeRegularExpressionsPipe,
-                    extendObject:GenericExtendObjectPipe,
-                    initialData:GenericInitialDataService
+                    data:DataService,
+            escapeRegularExpressionsPipe:StringEscapeRegularExpressionsPipe,
+                    extendObjectPipe:ExtendObjectPipe,
+                    initialData:InitialDataService
                 ):void {
                     super(
-                        data, escapeRegularExpressions, extendObject,
+                        data, escapeRegularExpressionsPipe, extendObjectPipe,
                         initialData)
                 }
             }
@@ -192,7 +193,7 @@ registerAngularTest(function(
             @NgModule({
                 bootstrap: [ApplicationComponent],
                 declarations: [ApplicationComponent, ItemsComponent],
-                imports: [GenericModule, NoopAnimationsModule],
+                imports: [Module, NoopAnimationsModule],
                 providers: [Resolver]
             })
             // endregion
@@ -201,7 +202,7 @@ registerAngularTest(function(
              * Dummy module to inject services to test and test if
              * bootstrapping works.
              */
-            class Module {
+            class TestModule {
                 /**
                  * Dummy constructor to inject needed service instances and
                  * perform various tests.
@@ -209,60 +210,62 @@ registerAngularTest(function(
                  * route leave guard instance.
                  * @param data - Injected data service instance.
                  * @param dataScope - Injected data scope service instance.
-                 * @param extractRawData - Injected extract raw data pipe
+                 * @param extractRawDataPipe - Injected extract raw data pipe
                  * instance.
-                 * @param extendObject - Injected extend object data pipe.
-                 * @param getFilenameByPrefix - Injected filename getter pipe
-                 * instance.
+                 * @param extendObjectPipe - Injected extend object data pipe.
+                 * @param getFilenameByPrefixPipe - Injected filename getter
+                 * pipe instance.
                  * @param initialData - Injected initial data service instance.
-                 * @param isDefined - Injected is defined pipe instance.
-                 * @param map - Injected map pipe instance.
-                 * @param md5 - Injected md5 pipe instance.
-                 * @param numberPercent - Injected number percent pipe
+                 * @param isDefinedPipe - Injected is defined pipe instance.
+                 * @param mapPipe - Injected map pipe instance.
+                 * @param md5Pipe - Injected md5 pipe instance.
+                 * @param numberPercentPipe - Injected number percent pipe
                  * instance.
                  * @param resolver - Injected resolver service instance.
-                 * @param stringEndsWith - Injected string ends with pipe
+                 * @param stringEndsWithPipe - Injected string ends with pipe
                  * instance.
                  * @param stringHasTimeSuffix - Injected string has time suffix
                  * instance.
-                 * @param stringMatch - Injected string match pipe instance.
-                 * @param stringReplace - Injected string replace pipe
+                 * @param stringMatchPipe - Injected string match pipe instance.
+                 * @param stringReplacePipe - Injected string replace pipe
                  * instance.
-                 * @param stringShowIfPatternMatches - Injected string show
+                 * @param stringShowIfPatternMatchesPipe - Injected string show
                  * pipe instance.
-                 * @param stringSliceMatch - Injected string slice match pipe
-                 * instance.
-                 * @param stringStartsWith - Injected start starts with pipe
-                 * instances.
+                 * @param stringSliceMatchPipe - Injected string slice match
+                 * pipe instance.
+                 * @param stringStartsWithPipe - Injected start starts with
+                 * pipe instances.
                  * @param tools - Injected tools service instance.
-                 * @param type - Injected type pipe instance.
+                 * @param typePipe - Injected type pipe instance.
                  * @returns Nothing.
                  */
                 constructor(
-                canDeactivateRouteLeave:GenericCanDeactivateRouteLeaveGuard,
-                    data:GenericDataService,
-                    dataScope:GenericDataScopeService,
-                    extractRawData:GenericExtractRawDataPipe,
-                    extendObject:GenericExtendObjectPipe,
-                    getFilenameByPrefix:GenericGetFilenameByPrefixPipe,
-                    initialData:GenericInitialDataService,
-                    isDefined:GenericIsDefinedPipe,
-                    map:GenericMapPipe,
-                    md5:GenericStringMD5Pipe,
-                    numberPercent:GenericNumberPercentPipe,
+                canDeactivateRouteLeave:CanDeactivateRouteLeaveGuard,
+                    data:DataService,
+                    dataScope:DataScopeService,
+                    extractRawDataPipe:ExtractRawDataPipe,
+                    extendObjectPipe:ExtendObjectPipe,
+                    getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
+                    initialData:InitialDataService,
+                    isDefinedPipe:IsDefinedPipe,
+                    limitToPipe:LimitToPipe,
+                    mapPipe:MapPipe,
+                    numberPercentPipe:NumberPercentPipe,
+                    objectKeysPipe:ObjectKeysPipe,
                     resolver:Resolver,
-                    stringEndsWith:GenericStringEndsWithPipe,
-                    stringHasTimeSuffix:GenericStringHasTimeSuffixPipe,
-                    stringMatch:GenericStringMatchPipe,
-                    stringReplace:GenericStringReplacePipe,
-            stringShowIfPatternMatches:GenericStringShowIfPatternMatchesPipe,
-                    stringSliceMatch:GenericStringSliceMatchPipe,
-                    stringStartsWith:GenericStringStartsWithPipe,
-                    tools:GenericToolsService,
-                    type:GenericTypePipe
+                    stringEndsWithPipe:StringEndsWithPipe,
+                    stringHasTimeSuffixPipe:StringHasTimeSuffixPipe,
+                    stringMatchPipe:StringMatchPipe,
+                    stringMD5Pipe:StringMD5Pipe,
+                    stringReplacePipe:StringReplacePipe,
+                stringShowIfPatternMatchesPipe:StringShowIfPatternMatchesPipe,
+                    stringSliceMatchPipe:StringSliceMatchPipe,
+                    stringStartsWithPipe:StringStartsWithPipe,
+                    tools:ToolsService,
+                    typePipe:TypePipe
                 ):void {
                     // region basic services
-                    self.test(`GenericToolsService (${roundType})`, (
+                    self.test(`ToolsService (${roundType})`, (
                         assert:Object
                     ):void => {
                         assert.ok(tools.$)
@@ -271,26 +274,26 @@ registerAngularTest(function(
                             'test'
                         ), '098f6bcd4621d373cade4e832627b4f6')
                     })
-                    self.test(`GenericInitialDataService (${roundType})`, (
+                    self.test(`InitialDataService (${roundType})`, (
                         assert:Object
                     ):void => assert.strictEqual(
                         initialData.configuration.test, true))
                     // endregion
                     // region pipes
                     // / region forwarded
-                    self.test(`GenericStringMD5Pipe (${roundType})`, (
+                    self.test(`StringMD5Pipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.strictEqual(md5.transform(
+                        assert.strictEqual(stringMD5Pipe.transform(
                             ''
                         ), 'd41d8cd98f00b204e9800998ecf8427e')
-                        assert.strictEqual(md5.transform(
+                        assert.strictEqual(stringMD5Pipe.transform(
                             'test'
                         ), '098f6bcd4621d373cade4e832627b4f6')
                     })
                     // / endregion
                     // / region object
-                    self.test(`GenericExtractRawDataPipe (${roundType})`, (
+                    self.test(`ExtractRawDataPipe (${roundType})`, (
                         assert:Object
                     ):void => {
                         // region _convertDateToTimestampRecursively
@@ -311,7 +314,7 @@ registerAngularTest(function(
                             [{a: [new Date(90)]}, {a: [90]}]
                         ])
                             assert.deepEqual(
-                                extractRawData.constructor
+                                extractRawDataPipe.constructor
                                     ._convertDateToTimestampRecursively(
                                         test[0]),
                                 test[1])
@@ -336,7 +339,7 @@ registerAngularTest(function(
                             ]
                         ])
                             assert.deepEqual(
-                                extractRawData._handleAttachmentChanges(
+                                extractRawDataPipe._handleAttachmentChanges(
                                     test[0], test[1], test[2], test[3]
                                 ), test[4])
                         // endregion
@@ -409,41 +412,79 @@ registerAngularTest(function(
                             }], null]
                         ])
                             assert.deepEqual(
-                                extractRawData.transform(...test[0]), test[1])
+                                extractRawDataPipe.transform(...test[0]),
+                                test[1])
                         // endregion
                     })
-                    self.test(`GenericIsDefinedPipe (${roundType})`, (
+                    self.test(`IsDefinedPipe (${roundType})`, (
                         assert:Object
                     ):void => {
                         for (const test:any of [
                             2, true, {}, null, new Error('a'), Object, []
                         ])
-                            assert.ok(isDefined.transform(test))
-                        assert.notOk(isDefined.transform(null, true))
-                        assert.notOk(isDefined.transform(undefined))
-                        assert.notOk(isDefined.transform(undefined, true))
+                            assert.ok(isDefinedPipe.transform(test))
+                        assert.notOk(isDefinedPipe.transform(null, true))
+                        assert.notOk(isDefinedPipe.transform(undefined))
+                        assert.notOk(isDefinedPipe.transform(undefined, true))
                     })
-                    self.test(
-                        `GenericGetFilenameByPrefixPipe (${roundType})`,
-                        (assert:Object):void => {
-                            for (const test:Array<any> of [
-                                [[{}], null],
-                                [[{a: 2}], 'a'],
-                                [[{a: 2, b: 3}, 'b'], 'b'],
-                                [[{a: 2, b: 3}, 'c'], null]
-                            ])
-                                assert.strictEqual(
-                                    getFilenameByPrefix.transform(...test[0]),
-                                    test[1])
-                        })
-                    self.test(`GenericMapPipe (${roundType})`, (
+                    self.test(`GetFilenameByPrefixPipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.deepEqual(map.transform(
-                            ['a', 'b', 'ab'], GenericStringEndsWithPipe, 'b'
+                        for (const test:Array<any> of [
+                            [[{}], null],
+                            [[{a: 2}], 'a'],
+                            [[{a: 2, b: 3}, 'b'], 'b'],
+                            [[{a: 2, b: 3}, 'c'], null]
+                        ])
+                            assert.strictEqual(
+                                getFilenameByPrefixPipe.transform(...test[0]),
+                                test[1])
+                    })
+                    self.test(`LimitToPipe (${roundType})`, (
+                        assert:Object
+                    ):void => {
+                        for (const test:Array<any> of [
+                            [[{}], {}],
+                            [[2], 2],
+                            [[2, 1], '2'],
+                            [[{}, 1], []],
+                            [[{a: 2}, 1], ['a']],
+                            [[{a: 2}, 0], []],
+                            [[{a: 2}, 2], ['a']],
+                            [[{b: 1, a: 2}, 2], ['a', 'b']],
+                            [[[1, 2]], [1, 2]],
+                            [[[1, 2], 1, 1], [2]],
+                            [[[1, 2, 3], 1, -1], [3]],
+                            [[[1, 2, 3], -2, 0], [2, 3]],
+                            [[null], null],
+                            [[2], 2],
+                            [[[1, 2, 3], 2], [1, 2]]
+                        ])
+                            assert.deepEqual(
+                                limitToPipe.transform(...test[0]), test[1])
+                    })
+                    self.test(`MapPipe (${roundType})`, (
+                        assert:Object
+                    ):void => {
+                        assert.deepEqual(mapPipe.transform(
+                            ['a', 'b', 'ab'], StringEndsWithPipe, 'b'
                         ), [false, true, true])
                     })
-                    self.test(`GenericTypePipe (${roundType})`, (
+                    self.test(`ObjectKeysPipe (${roundType})`, (
+                        assert:Object
+                    ):void => {
+                        for (const test:Array<any> of [
+                            [[{}], []],
+                            [[null], []],
+                            [[2], []],
+                            [[[2]], ['0']],
+                            [[{a: 2}], ['a']],
+                            [[{b: 3, a: 2}, true], ['a', 'b']]
+                        ])
+                            assert.deepEqual(
+                                objectKeysPipe.transform(...test[0]), test[1])
+                    })
+                    self.test(`TypePipe (${roundType})`, (
                         assert:Object
                     ):void => {
                         for (const test:Array<any> of [
@@ -455,30 +496,30 @@ registerAngularTest(function(
                             [[], 'object']
                         ])
                             assert.strictEqual(
-                                type.transform(test[0]), test[1])
+                                typePipe.transform(test[0]), test[1])
                     })
                     // / endregion
                     // / region string
-                    self.test(`GenericStringEndsWithPipe (${roundType})`, (
+                    self.test(`StringEndsWithPipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.ok(stringEndsWith.transform('aab', 'b'))
-                        assert.notOk(stringEndsWith.transform('aab', 'a'))
+                        assert.ok(stringEndsWithPipe.transform('aab', 'b'))
+                        assert.notOk(stringEndsWithPipe.transform('aab', 'a'))
                     })
-                    self.test(
-                        `GenericStringHasTimeSuffixPipe (${roundType})`,
-                        (assert:Object):void => {
-                            for (const test:string of [
-                                'aDate', 'aTime', 'aDateTime', 'timestamp'
-                            ])
-                                assert.ok(stringHasTimeSuffix.transform(test))
-                            for (const test:any of [
-                                'a', 'atime', 'aDatetime', 'timestamptime',
-                                false, null, {}
-                            ])
-                                assert.notOk(stringHasTimeSuffix.transform(
-                                    test))
-                        })
+                    self.test(`StringHasTimeSuffixPipe (${roundType})`, (
+                        assert:Object
+                    ):void => {
+                        for (const test:string of [
+                            'aDate', 'aTime', 'aDateTime', 'timestamp'
+                        ])
+                            assert.ok(stringHasTimeSuffixPipe.transform(test))
+                        for (const test:any of [
+                            'a', 'atime', 'aDatetime', 'timestamptime',
+                            false, null, {}
+                        ])
+                            assert.notOk(stringHasTimeSuffixPipe.transform(
+                                test))
+                    })
                     self.test(`GericStringMatchPipe (${roundType})`, (
                         assert:Object
                     ):void => {
@@ -489,7 +530,7 @@ registerAngularTest(function(
                             [/^[ab]$/, 'a', 'g'],
                             [/a/, 'A', 'i']
                         ])
-                            assert.ok(stringMatch.transform(...test))
+                            assert.ok(stringMatchPipe.transform(...test))
                         for (const test:Array<any> of [
                             ['a', 'b'],
                             ['[ab]', 'c'],
@@ -497,9 +538,9 @@ registerAngularTest(function(
                             [/^[ab]$/, 'aa', 'g'],
                             [/^[ab]$/, 'AA', 'i']
                         ])
-                            assert.notOk(stringMatch.transform(...test))
+                            assert.notOk(stringMatchPipe.transform(...test))
                     })
-                    self.test(`GenericStringReplacePipe (${roundType})`, (
+                    self.test(`StringReplacePipe (${roundType})`, (
                         assert:Object
                     ):void => {
                         for (const test:Array<any> of [
@@ -509,10 +550,11 @@ registerAngularTest(function(
                             [['aa', 'a', 'b', 'g'], 'bb']
                         ])
                             assert.strictEqual(
-                                stringReplace.transform(...test[0]), test[1])
+                                stringReplacePipe.transform(...test[0]),
+                                test[1])
                     })
                     self.test(
-                        `GenericStringShowIfPatternMatchesPipe (${roundType})`,
+                        `StringShowIfPatternMatchesPipe (${roundType})`,
                         (assert:Object):void => {
                             for (const test:Array<any> of [
                                 [['a', 'a'], 'a'],
@@ -523,17 +565,18 @@ registerAngularTest(function(
                                 [['aa', 'A', false, 'i'], 'aa']
                             ])
                                 assert.strictEqual(
-                                    stringShowIfPatternMatches.transform(
+                                    stringShowIfPatternMatchesPipe.transform(
                                         ...test[0]
                                     ), test[1])
                         })
-                    self.test(`GenericStringStartsWithPipe (${roundType})`, (
+                    self.test(`StringStartsWithPipe (${roundType})`, (
                         assert:Object
                     ):void => {
-                        assert.ok(stringStartsWith.transform('baa', 'b'))
-                        assert.notOk(stringStartsWith.transform('baa', 'a'))
+                        assert.ok(stringStartsWithPipe.transform('baa', 'b'))
+                        assert.notOk(
+                            stringStartsWithPipe.transform('baa', 'a'))
                     })
-                    self.test(`GenericStringSliceMatchPipe (${roundType})`, (
+                    self.test(`StringSliceMatchPipe (${roundType})`, (
                         assert:Object
                     ):void => {
                         for (const test:Array<any> of [
@@ -543,11 +586,11 @@ registerAngularTest(function(
                             [['ab', '.(.)', 1, ''], 'b']
                         ])
                             assert.strictEqual(
-                                stringSliceMatch.transform(...test[0]), test[1]
-                            )
+                                stringSliceMatchPipe.transform(...test[0]),
+                                test[1])
                     })
                     // / endregion
-                    self.test(`GenericNumberPercentPipe (${roundType})`, (
+                    self.test(`NumberPercentPipe (${roundType})`, (
                         assert:Object
                     ):void => {
                         for (const test:Array<number> of [
@@ -558,24 +601,24 @@ registerAngularTest(function(
                             [9, 10, 90]
                         ])
                             assert.strictEqual(
-                                numberPercent.transform(test[0], test[1]),
+                                numberPercentPipe.transform(test[0], test[1]),
                                 test[2])
                     })
                     // endregion
                     // region services
-                    self.test(
-                        `GenericCanDeactivateRouteLeaveGuard (${roundType})`,
-                        (assert:Object):void => {
-                            for (const test:Array<any> of [
-                                [{}, true],
-                                [{canDeactivate: ():false => false}, false]
-                            ])
-                                assert.strictEqual(
-                                    canDeactivateRouteLeave.canDeactivate(
-                                        test[0]
-                                    ), test[1])
-                        })
-                    self.test(`GenericDataService (${roundType})`, async (
+                    self.test(`CanDeactivateRouteLeaveGuard (${roundType})`, (
+                        assert:Object
+                    ):void => {
+                        for (const test:Array<any> of [
+                            [{}, true],
+                            [{canDeactivate: ():false => false}, false]
+                        ])
+                            assert.strictEqual(
+                                canDeactivateRouteLeave.canDeactivate(
+                                    test[0]
+                                ), test[1])
+                    })
+                    self.test(`DataService (${roundType})`, async (
                         assert:Object
                     ):Promise<void> => {
                         const done:Function = assert.async()
@@ -611,7 +654,7 @@ registerAngularTest(function(
                         assert.ok(true)
                         done()
                     })
-                    self.test(`GenericDataScopeService (${roundType})`, async (
+                    self.test(`DataScopeService (${roundType})`, async (
                         assert:Object
                     ):Promise<void> => {
                         const done:Function = assert.async()
@@ -703,7 +746,7 @@ registerAngularTest(function(
                         ])
                             assert.deepEqual(dataScope.generate(
                                 ...test[0]
-                            ), extendObject.transform(true, {
+                            ), extendObjectPipe.transform(true, {
                                 _metaData: {submitted: false},
                                 '-type': 'Test'
                             }, (
@@ -715,7 +758,7 @@ registerAngularTest(function(
                         // region set
                         assert.deepEqual(await dataScope.determine(
                             'Test'
-                        ), extendObject.transform(true, {
+                        ), extendObjectPipe.transform(true, {
                             _attachments: {'.+\\.(?:jpe?g|png)': {
                                 name: '.+\\.(?:jpe?g|png)',
                                 value: {name: 'a.jpg'}
@@ -805,13 +848,13 @@ registerAngularTest(function(
                     // endregion
                 }
             }
-            this.module(`GenericModule.services (${roundType})`)
-            return [Module, {
+            this.module(`Module.services (${roundType})`)
+            return [TestModule, {
                 declarations: [
                     ItemsComponent,
                     RouterOutletStubComponent
                 ],
-                imports: [GenericModule, NoopAnimationsModule],
+                imports: [Module, NoopAnimationsModule],
                 providers: [
                     {provide: ActivatedRoute, useClass: ActivatedRouteStub},
                     {provide: Router, useClass: RouterStub}
@@ -823,17 +866,17 @@ registerAngularTest(function(
             // region prepare components
             const {
                 AbstractInputComponent,
-                GenericInputComponent,
-                GenericTextareaComponent,
-                GenericFileInputComponent,
-                GenericPaginationComponent
+                InputComponent,
+                TextareaComponent,
+                FileInputComponent,
+                PaginationComponent
             } = index
             // endregion
             // region test components
-            this.module(`GenericModule.components (${roundType})`)
+            this.module(`Module.components (${roundType})`)
             // / region input/textarea
             for (const component:AbstractInputComponent of [
-                GenericInputComponent, GenericTextareaComponent
+                InputComponent, TextareaComponent
             ])
                 this.test(
                     `AbstractInputComponent/${component.name} (${roundType})`,
@@ -861,7 +904,7 @@ registerAngularTest(function(
                             const inputDomNode:DomNode =
                                 fixture.debugElement.query(By.css(
                                     component.name.replace(
-                                        /^Generic(.+)Component$/, '$1'
+                                        /^(.+)Component$/, '$1'
                                     ).toLowerCase()
                                 )).nativeElement
                             inputDomNode.value = 'aa'
@@ -899,7 +942,7 @@ registerAngularTest(function(
                             ).nativeElement.textContent.trim().replace(
                                 /\s+/g, ' '
                             ), 'Bitte füllen Sie das Feld "test" aus.')
-                            if (component.name === 'GenericInputComponent') {
+                            if (component.name === 'InputComponent') {
                                 fixture.componentInstance.type = 'password'
                                 fixture.detectChanges()
                                 await fixture.whenStable()
@@ -987,13 +1030,13 @@ registerAngularTest(function(
                 }
                 done()
             })
-            this.test(`GenericFileInputComponent (${roundType})`, async (
+            this.test(`FileInputComponent (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
                 try {
-                    const fixture:ComponentFixture<GenericFileInputComponent> =
-                        TestBed.createComponent(GenericFileInputComponent)
+                    const fixture:ComponentFixture<FileInputComponent> =
+                        TestBed.createComponent(FileInputComponent)
                     fixture.componentInstance.mapNameToField = ['_id', 'name']
                     fixture.componentInstance.showValidationErrorMessages =
                         true
@@ -1074,13 +1117,13 @@ registerAngularTest(function(
                 done()
             })
             // /  region pagination
-            this.test(`GenericPaginationComponent (${roundType})`, async (
+            this.test(`PaginationComponent (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
                 try {
-                    const fixture:ComponentFixture<GenericPaginationComponent> =
-                        TestBed.createComponent(GenericPaginationComponent)
+                    const fixture:ComponentFixture<PaginationComponent> =
+                        TestBed.createComponent(PaginationComponent)
                     fixture.componentInstance.total = 10
                     fixture.detectChanges()
                     await fixture.whenStable()

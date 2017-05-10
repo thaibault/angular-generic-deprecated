@@ -59,7 +59,7 @@ let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
  * global scope.
  * @property tools - Holds a reference to the wrapped tools class.
  */
-export class GenericToolsService {
+export class ToolsService {
     $:any = $
     globalContext:Object = globalContext
     tools:Object = Tools
@@ -69,7 +69,7 @@ export class GenericToolsService {
 /**
  * Serves initial data provided via a global variable.
  */
-export class GenericInitialDataService {
+export class InitialDataService {
     configuration:PlainObject
     /**
      * Sets all properties of given initial data as properties to this
@@ -77,7 +77,7 @@ export class GenericInitialDataService {
      * @param tools - Saves the generic tools service.
      * @returns Nothing.
      */
-    constructor(tools:GenericToolsService):void {
+    constructor(tools:ToolsService):void {
         for (const key:string in tools.globalContext.genericInitialData)
             if (tools.globalContext.genericInitialData.hasOwnProperty(key))
                 // IgnoreTypeCheck
@@ -112,7 +112,7 @@ for (const methodTypePrefix:string in methodGroups)
             methodNames = methodGroups[methodTypePrefix]
         for (const methodName:string of methodNames) {
             const pipeName:string = Tools.stringCapitalize(methodName)
-            module.exports[`Generic${pipeName}Pipe`] = class {
+            module.exports[`${pipeName}Pipe`] = class {
                 /**
                  * Performs the concrete conversion logic.
                  * @param parameter - Saves all generic parameter to forward it
@@ -121,14 +121,14 @@ for (const methodTypePrefix:string in methodGroups)
                  */
                 transform(...parameter:Array<any>):any {
                     return ReflectiveInjector.resolveAndCreate([
-                        GenericToolsService
-                    ]).get(GenericToolsService).tools[methodName](...parameter)
+                        ToolsService
+                    ]).get(ToolsService).tools[methodName](...parameter)
                 }
             }
             Pipe({name: `generic${pipeName}`})(
-                module.exports[`Generic${pipeName}Pipe`])
+                module.exports[`${pipeName}Pipe`])
             if (invert.includes(methodTypePrefix)) {
-                module.exports[`generic${pipeName}InvertedPipe`] = class {
+                module.exports[`${pipeName}InvertedPipe`] = class {
                     /**
                      * Performs the concrete conversion logic.
                      * @param parameter - Saves all generic parameter to
@@ -138,71 +138,28 @@ for (const methodTypePrefix:string in methodGroups)
                     transform(...parameter:Array<any>):any {
                         const tools:typeof Tools =
                             ReflectiveInjector.resolveAndCreate([
-                                GenericToolsService
-                            ]).get(GenericToolsService).tools
+                                ToolsService
+                            ]).get(ToolsService).tools
                         // IgnoreTypeCheck
                         return tools.invertArrayFilter(tools[methodName])(
                             ...parameter)
                     }
                 }
                 Pipe({name: `generic${pipeName}Inverted`})(
-                    module.exports[`generic${pipeName}InvertedPipe`])
+                    module.exports[`${pipeName}InvertedPipe`])
             }
         }
     }
-const GenericArrayMakeRangePipe:PipeTransform =
-    module.exports.GenericArrayMakeRangePipe
-const GenericEqualsPipe:PipeTransform = module.exports.GenericEqualsPipe
-const GenericExtendObjectPipe:PipeTransform =
-    module.exports.GenericExtendObjectPipe
-const GenericRepresentObjectPipe:PipeTransform =
-    module.exports.GenericRepresentObjectPipe
-const GenericStringCapitalizePipe:PipeTransform =
-    module.exports.GenericStringCapitalizePipe
-const GenericStringEscapeRegularExpressionsPipe:PipeTransform =
-    module.exports.GenericStringEscapeRegularExpressionsPipe
-const GenericStringFormatPipe:PipeTransform =
-    module.exports.GenericStringFormatPipe
+const ArrayMakeRangePipe:PipeTransform = module.exports.ArrayMakeRangePipe
+const EqualsPipe:PipeTransform = module.exports.EqualsPipe
+const ExtendObjectPipe:PipeTransform = module.exports.ExtendObjectPipe
+const RepresentObjectPipe:PipeTransform = module.exports.RepresentObjectPipe
+const StringCapitalizePipe:PipeTransform = module.exports.StringCapitalizePipe
+const StringEscapeRegularExpressionsPipe:PipeTransform =
+    module.exports.StringEscapeRegularExpressionsPipe
+const StringFormatPipe:PipeTransform = module.exports.StringFormatPipe
 // / endregion
 // / region object
-// TODO test
-// IgnoreTypeCheck
-@Pipe({name: 'genericLimitTo'})
-/**
- * Retrieves a matching filename by given filename prefix.
- */
-export class GenericLimitToPipe/* implements PipeTransform*/ {
-    /**
-     * Limits number of items of given string, Object (keys) or Array.
-     * @param input - Object to retrieve key names from.
-     * @param limit - Number of needed items.
-     * @param begin - Starting point to slice from.
-     * @returns Copy of given sliced object.
-     */
-    transform(input:any, limit:any, begin:any):any {
-        limit = Math.abs(Number(limit)) === Infinity ? Number(
-            limit
-        ) : parseInt(limit)
-        if (isNaN(limit))
-            return input
-        if (typeof input === 'number')
-            input = input.toString()
-        else if (typeof input === 'object' && input !== null && !Array.isArray(
-            input
-        ))
-            input = Object.keys(input)
-        if (!(Array.isArray(input) || typeof input === 'string'))
-            return input
-        begin = !begin || isNaN(begin) ? 0 : parseInt(begin)
-        if (begin < 0)
-            begin = Math.max(0, input.length + begin)
-        if (limit >= 0)
-            return input.slice(begin, begin + limit)
-        else if (begin === 0)
-            return input.slice(limit, input.length)
-        return input.slice(Math.max(0, begin + limit), begin)
-    }
-}
 // IgnoreTypeCheck
 @Pipe({name: 'genericExtractRawData'})
 /**
@@ -210,7 +167,7 @@ export class GenericLimitToPipe/* implements PipeTransform*/ {
  * @property configuration - Initial given configuration object.
  * @property equals - Equals pipe transform function.
  */
-export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
+export class ExtractRawDataPipe/* implements PipeTransform*/ {
     configuration:PlainObject
     equals:Function
     /**
@@ -219,7 +176,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
      * @param initialData - Initial data service instance.
      */
     constructor(
-        equalsPipe:GenericEqualsPipe, initialData:GenericInitialDataService
+        equalsPipe:EqualsPipe, initialData:InitialDataService
     ):void {
         this.configuration = initialData.configuration
         this.equals = equalsPipe.transform.bind(equalsPipe)
@@ -245,14 +202,14 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
             else if (Array.isArray(value)) {
                 const result:Array<any> = []
                 for (const subValue:any of value)
-                    result.push(GenericExtractRawDataPipe
+                    result.push(ExtractRawDataPipe
                         ._convertDateToTimestampRecursively(subValue))
                 return result
             } else if (Object.getPrototypeOf(value) === Object.prototype) {
                 const result:PlainObject = {}
                 for (const name:string in value)
                     if (value.hasOwnProperty(name))
-                        result[name] = GenericExtractRawDataPipe
+                        result[name] = ExtractRawDataPipe
                             ._convertDateToTimestampRecursively(value[name])
                 return result
             }
@@ -541,7 +498,7 @@ export class GenericExtractRawDataPipe/* implements PipeTransform*/ {
 /**
  * Retrieves a matching filename by given filename prefix.
  */
-export class GenericGetFilenameByPrefixPipe/* implements PipeTransform*/ {
+export class GetFilenameByPrefixPipe/* implements PipeTransform*/ {
     /**
      * Performs the actual transformations process.
      * @param attachments - Documents attachments object to determine file with
@@ -565,30 +522,12 @@ export class GenericGetFilenameByPrefixPipe/* implements PipeTransform*/ {
         return null
     }
 }
-// TODO test
-// IgnoreTypeCheck
-@Pipe({name: 'genericObjectKeys'})
-/**
- * Retrieves a matching filename by given filename prefix.
- */
-export class GenericObjectKeysPipe/* implements PipeTransform*/ {
-    /**
-     * Performs the "Object" native "keys()" method.
-     * @param object - Object to retrieve key names from.
-     * @returns Arrays of key names.
-     */
-    transform(object:?Object):Array<string> {
-        if (typeof object === 'object' && object !== null)
-            return Object.keys(object)
-        return []
-    }
-}
 // IgnoreTypeCheck
 @Pipe({name: 'genericIsDefined'})
 /**
  * Checks if given reference is defined.
  */
-export class GenericIsDefinedPipe/* implements PipeTransform*/ {
+export class IsDefinedPipe/* implements PipeTransform*/ {
     /**
      * Performs the actual comparison.
      * @param object - Object to compare against "undefined" or "null".
@@ -601,6 +540,43 @@ export class GenericIsDefinedPipe/* implements PipeTransform*/ {
     }
 }
 // IgnoreTypeCheck
+@Pipe({name: 'genericLimitTo'})
+/**
+ * Retrieves a matching filename by given filename prefix.
+ */
+export class LimitToPipe/* implements PipeTransform*/ {
+    /**
+     * Limits number of items of given string, Object (keys) or Array.
+     * @param input - Object to retrieve key names from.
+     * @param limit - Number of needed items.
+     * @param begin - Starting point to slice from.
+     * @returns Copy of given sliced object.
+     */
+    transform(input:any, limit:any, begin:any):any {
+        limit = Math.abs(Number(limit)) === Infinity ? Number(
+            limit
+        ) : parseInt(limit)
+        if (isNaN(limit))
+            return input
+        if (typeof input === 'number')
+            input = input.toString()
+        else if (typeof input === 'object' && input !== null && !Array.isArray(
+            input
+        ))
+            input = Object.keys(input).sort()
+        if (!(Array.isArray(input) || typeof input === 'string'))
+            return input
+        begin = !begin || isNaN(begin) ? 0 : parseInt(begin)
+        if (begin < 0)
+            begin = Math.max(0, input.length + begin)
+        if (limit >= 0)
+            return input.slice(begin, begin + limit)
+        else if (begin === 0)
+            return input.slice(limit, input.length)
+        return input.slice(Math.max(0, begin + limit), begin)
+    }
+}
+// IgnoreTypeCheck
 @Pipe({name: 'genericMap'})
 /**
  * Returns a copy of given object where each item was processed through given
@@ -608,7 +584,7 @@ export class GenericIsDefinedPipe/* implements PipeTransform*/ {
  * @property injector - Pipe specific injector to determine pipe dynamically at
  * runtime.
  */
-export class GenericMapPipe/* implements PipeTransform*/ {
+export class MapPipe/* implements PipeTransform*/ {
     injector:Injector
     /**
      * Injects the injector and saves as instance property.
@@ -646,11 +622,38 @@ export class GenericMapPipe/* implements PipeTransform*/ {
     }
 }
 // IgnoreTypeCheck
+@Pipe({name: 'genericObjectKeys'})
+/**
+ * Retrieves a matching filename by given filename prefix.
+ */
+export class ObjectKeysPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the "Object" native "keys()" method.
+     * @param object - Object to retrieve key names from.
+     * @param sort - Indicates whether sorting should be enabled. If an array
+     * is provided it will be interpreted as arguments given to the array's
+     * sort method.
+     * @returns Arrays of key names.
+     */
+    transform(object:?Object, sort:any = false):Array<string> {
+        if (typeof object === 'object' && object !== null) {
+            const result:Array<string> = Object.keys(object)
+            if (sort) {
+                if (!Array.isArray(sort))
+                    sort = []
+                return result.sort(...sort)
+            }
+            return result
+        }
+        return []
+    }
+}
+// IgnoreTypeCheck
 @Pipe({name: 'genericType'})
 /**
  * Determines type of given object.
  */
-export class GenericTypePipe/* implements PipeTransform*/ {
+export class TypePipe/* implements PipeTransform*/ {
     /**
      * Returns type of given object.
      * @param object - Object to determine type of.
@@ -667,7 +670,7 @@ export class GenericTypePipe/* implements PipeTransform*/ {
 /**
  * Forwards javaScript's native "stringEndsWith" method.
  */
-export class GenericStringEndsWithPipe/* implements PipeTransform*/ {
+export class StringEndsWithPipe/* implements PipeTransform*/ {
     /**
      * Performs the actual indicator method.
      * @param string - To check.
@@ -684,7 +687,7 @@ export class GenericStringEndsWithPipe/* implements PipeTransform*/ {
 /**
  * Determines if given string has a time indicating suffix.
  */
-export class GenericStringHasTimeSuffixPipe/* implements PipeTransform*/ {
+export class StringHasTimeSuffixPipe/* implements PipeTransform*/ {
     /**
      * Performs the actual string suffix check.
      * @param string - To search in.
@@ -703,7 +706,7 @@ export class GenericStringHasTimeSuffixPipe/* implements PipeTransform*/ {
 /**
  * Tests if given pattern matches against given subject.
  */
-export class GenericStringMatchPipe/* implements PipeTransform*/ {
+export class StringMatchPipe/* implements PipeTransform*/ {
     /**
      * Performs the actual matching.
      * @param pattern - String or regular expression to search for.
@@ -722,7 +725,7 @@ export class GenericStringMatchPipe/* implements PipeTransform*/ {
 /**
  * Provides javascript's native string replacement method as pipe.
  */
-export class GenericStringReplacePipe/* implements PipeTransform*/ {
+export class StringReplacePipe/* implements PipeTransform*/ {
     /**
      * Performs the actual replacement.
      * @param string - String to replace content.
@@ -743,12 +746,10 @@ export class GenericStringReplacePipe/* implements PipeTransform*/ {
 }
 // IgnoreTypeCheck
 @Pipe({name: 'genericStringShowIfPatternMatches'})
-/* eslint-disable brace-style */
 /**
  * Returns given string if it matches given pattern.
  */
-export class GenericStringShowIfPatternMatchesPipe
-/* implements PipeTransform*/ {
+export class StringShowIfPatternMatchesPipe/* implements PipeTransform*/ {
     /**
      * Performs the actual matching.
      * @param string - String to replace content.
@@ -770,13 +771,12 @@ export class GenericStringShowIfPatternMatchesPipe
         return indicator ? string : ''
     }
 }
-/* eslint-enable brace-style */
 // IgnoreTypeCheck
 @Pipe({name: 'genericStringStartsWith'})
 /**
  * Forwards javascript's native "stringStartsWith" method.
  */
-export class GenericStringStartsWithPipe/* implements PipeTransform*/ {
+export class StringStartsWithPipe/* implements PipeTransform*/ {
     /**
      * Performs the actual indicator method.
      * @param string - To check.
@@ -794,7 +794,7 @@ export class GenericStringStartsWithPipe/* implements PipeTransform*/ {
  * Returns a matched part of given subject with given pattern. Default is the
  * whole (zero) matched part.
  */
-export class GenericStringSliceMatchPipe/* implements PipeTransform*/ {
+export class StringSliceMatchPipe/* implements PipeTransform*/ {
     /**
      * Performs the actual matching.
      * @param subject - String to search in.
@@ -824,7 +824,7 @@ export class GenericStringSliceMatchPipe/* implements PipeTransform*/ {
 /**
  * Returns part in percent of all.
  */
-export class GenericNumberPercentPipe/* implements PipeTransform*/ {
+export class NumberPercentPipe/* implements PipeTransform*/ {
     /**
      * Performs the actual calculation.
      * @param part - Part to divide "all" through.
@@ -840,14 +840,12 @@ export class GenericNumberPercentPipe/* implements PipeTransform*/ {
 // region services
 // IgnoreTypeCheck
 @Injectable()
-/* eslint-disable brace-style */
 /**
  * A generic guard which prevents from switching to route if its component's
  * "canDeactivate()" method returns "false", a promise or observable wrapping
  * a boolean.
  */
-export class GenericCanDeactivateRouteLeaveGuard
-/* implements CanDeactivate<Object>*/ {
+export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
     /**
      * Calls the component specific "canDeactivate()" method.
      * @param component - Component instance of currently selected route.
@@ -859,7 +857,6 @@ export class GenericCanDeactivateRouteLeaveGuard
         return 'canDeactivate' in component ? component.canDeactivate() : true
     }
 }
-/* eslint-disable brace-style */
 // IgnoreTypeCheck
 @Injectable()
 /**
@@ -879,7 +876,7 @@ export class GenericCanDeactivateRouteLeaveGuard
  * @property stringFormat - Holds the string format's pipe transformation
  * method.
  */
-export class GenericDataService {
+export class DataService {
     static revisionNumberRegularExpression:RegExp = /^([0-9]+)-/
     static wrappableMethodNames:Array<string> = [
         'allDocs', 'bulkDocs', 'bulkGet', 'changes', 'close', 'compact',
@@ -908,9 +905,8 @@ export class GenericDataService {
      * @returns Nothing.
      */
     constructor(
-        extendObjectPipe:GenericExtendObjectPipe,
-        initialData:GenericInitialDataService,
-        stringFormatPipe:GenericStringFormatPipe
+        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService,
+        stringFormatPipe:StringFormatPipe
     ):void {
         this.database = PouchDB.plugin(PouchDBFindPlugin)
                                .plugin(PouchDBValidationPlugin)
@@ -1108,9 +1104,9 @@ export class GenericDataService {
  * method.
  * @property tools - Holds the tools class from the tools service.
  */
-export class GenericDataScopeService {
+export class DataScopeService {
     configuration:PlainObject
-    data:GenericDataService
+    data:DataService
     extendObject:Function
     tools:typeof Tools
     /**
@@ -1122,8 +1118,8 @@ export class GenericDataScopeService {
      * @returns Nothing.
      */
     constructor(
-        data:GenericDataService, extendObjectPipe:GenericExtendObjectPipe,
-        initialData:GenericInitialDataService, tools:GenericToolsService
+        data:DataService, extendObjectPipe:ExtendObjectPipe,
+        initialData:InitialDataService, tools:ToolsService
     ):void {
         this.configuration = initialData.configuration
         this.data = data
@@ -1498,10 +1494,9 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
      * @returns Nothing.
      */
     constructor(
-        data:GenericDataService,
-        escapeRegularExpressionsPipe:GenericStringEscapeRegularExpressionsPipe,
-        extendObjectPipe:GenericExtendObjectPipe,
-        initialData:GenericInitialDataService
+        data:DataService,
+        escapeRegularExpressionsPipe:StringEscapeRegularExpressionsPipe,
+        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService
     ):void {
         this.data = data
         this.escapeRegularExpressions =
@@ -1626,7 +1621,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @returns Nothing.
      */
-    constructor(extendObjectPipe:GenericExtendObjectPipe):void {
+    constructor(extendObjectPipe:ExtendObjectPipe):void {
         this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
     }
     /**
@@ -1678,7 +1673,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     _canceled:boolean = false
     _changeDetectorRef:ChangeDetectorRef
     _changesStream:Object
-    _data:GenericDataService
+    _data:DataService
     _liveUpdateOptions:PlainObject = {}
     _stringCapitalize:Function
     _tools:typeof Tools
@@ -1691,9 +1686,8 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      * @returns Nothing.
      */
     constructor(
-        changeDetectorRef:ChangeDetectorRef, data:GenericDataService,
-        stringCapitalizePipe:GenericStringCapitalizePipe,
-        tools:GenericToolsService
+        changeDetectorRef:ChangeDetectorRef, data:DataService,
+        stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
     ):void {
         this._changeDetectorRef = changeDetectorRef
         this._data = data
@@ -1821,10 +1815,9 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
      * @returns Nothing.
      */
     constructor(
-        changeDetectorRef:ChangeDetectorRef, data:GenericDataService,
+        changeDetectorRef:ChangeDetectorRef, data:DataService,
         route:ActivatedRoute, router:Router,
-        stringCapitalizePipe:GenericStringCapitalizePipe,
-        tools:GenericToolsService
+        stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
     ):void {
         super(changeDetectorRef, data, stringCapitalizePipe, tools)
         this._route = route
@@ -2201,7 +2194,7 @@ const inputContent:string = `
  * description support.
  * @property type - Optionally defines an input type explicitly.
  */
-export class GenericInputComponent extends AbstractInputComponent {
+export class InputComponent extends AbstractInputComponent {
     @Input() labels:{[key:string]:string} = {}
     @Input() type:?string
     /**
@@ -2210,7 +2203,7 @@ export class GenericInputComponent extends AbstractInputComponent {
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @returns Nothing.
      */
-    constructor(extendObjectPipe:GenericExtendObjectPipe):void {
+    constructor(extendObjectPipe:ExtendObjectPipe):void {
         super(extendObjectPipe)
     }
 }
@@ -2232,7 +2225,7 @@ export class GenericInputComponent extends AbstractInputComponent {
  * A generic form textarea component with validation, labeling and info
  * description support.
  */
-export class GenericTextareaComponent extends AbstractInputComponent {
+export class TextareaComponent extends AbstractInputComponent {
     @Input() rows:?string
     /**
      * Forwards injected service instances to the abstract input component's
@@ -2240,7 +2233,7 @@ export class GenericTextareaComponent extends AbstractInputComponent {
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @returns Nothing.
      */
-    constructor(extendObjectPipe:GenericExtendObjectPipe):void {
+    constructor(extendObjectPipe:ExtendObjectPipe):void {
         super(extendObjectPipe)
     }
 }
@@ -2374,7 +2367,7 @@ export class GenericTextareaComponent extends AbstractInputComponent {
  * done immediately after a file was selected (or synchronously with other
  * model data).
  */
-export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
+export class FileInputComponent/* implements OnInit, AfterViewInit*/ {
     static imageMimeTypeRegularExpression:RegExp = new RegExp(
         '^image/(?:p?jpe?g|png|svg(?:\\+xml)?|vnd\\.microsoft\\.icon|gif|' +
         'tiff|webp|vnd\\.wap\\.wbmp|x-(?:icon|jng|ms-bmp))$')
@@ -2385,7 +2378,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
         '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
         '(?:application/(?:x-)?shockwave-flash)$')
     _configuration:PlainObject
-    _data:GenericDataService
+    _data:DataService
     _domSanitizer:DomSanitizer
     _extendObject:Function
     _getFilenameByPrefix:Function
@@ -2422,12 +2415,12 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
      * @returns Nothing.
      */
     constructor(
-        data:GenericDataService, domSanitizer:DomSanitizer,
-        extendObjectPipe:GenericExtendObjectPipe,
-        getFilenameByPrefixPipe:GenericGetFilenameByPrefixPipe,
-        initialData:GenericInitialDataService,
-        representObjectPipe:GenericRepresentObjectPipe,
-        stringFormatPipe:GenericStringFormatPipe
+        data:DataService, domSanitizer:DomSanitizer,
+        extendObjectPipe:ExtendObjectPipe,
+        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
+        initialData:InitialDataService,
+        representObjectPipe:RepresentObjectPipe,
+        stringFormatPipe:StringFormatPipe
     ):void {
         this._configuration = initialData.configuration
         this._data = data
@@ -2750,7 +2743,7 @@ export class GenericFileInputComponent/* implements OnInit, AfterViewInit*/ {
  * @property pageRangeLimit - Number of concrete page links to show.
  * @property total - Contains total number of pages.
  */
-export class GenericPaginationComponent {
+export class PaginationComponent {
     _makeRange:Function
     @Input() itemsPerPage:number = 20
     @Input() page:number = 1
@@ -2762,7 +2755,7 @@ export class GenericPaginationComponent {
      * @param makeRangePipe - Saves the make range pipe instance.
      * @returns Nothing.
      */
-    constructor(makeRangePipe:GenericArrayMakeRangePipe):void {
+    constructor(makeRangePipe:ArrayMakeRangePipe):void {
         this._makeRange = makeRangePipe.transform.bind(makeRangePipe)
     }
     /**
@@ -2849,7 +2842,7 @@ const modules:Array<Object> = [
 /**
  * Represents the importable angular module.
  */
-export default class GenericModule {}
+export default class Module {}
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
