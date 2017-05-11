@@ -2299,7 +2299,7 @@ const inputContent:string = `
 @Component({
     selector: 'generic-input',
     template: `
-        <md-input-container *ngIf="!model.selection">
+        <md-input-container *ngIf="model.selection; else selectInput">
             <input
                 mdInput [max]="model.type === 'number' ? model.maximum : null"
                 [min]="model.type === 'number' ? model.minimum : null"
@@ -2310,7 +2310,7 @@ const inputContent:string = `
             ${inputContent}
             <ng-content></ng-content>
         </md-input-container>
-        <span *ngIf="model.selection">
+        <span #selectInput>
             <md-select [(ngModel)]="model.value" ${propertyGenericContent}>
                 <md-option
                     *ngFor="let value of model.selection" [value]="value"
