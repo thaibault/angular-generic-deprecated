@@ -2259,37 +2259,33 @@ const propertyInputContent:string = `
     [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
 `
 const inputContent:string = `
-    <md-hint align="start">
-        <span
-            mdSuffix (click)="showDeclaration = !showDeclaration" title="info"
-            *ngIf="model.declaration"
-        >[i]</span>
-        <span *ngIf="showValidationErrorMessages">
-            <span *ngIf="model.state?.errors?.required">
-                Bitte füllen Sie das Feld "{{model.description || model.name}}"
-                aus.
-            </span>
-            <span *ngIf="model.state?.errors?.maxlength">
-                Bitte geben Sie maximal {{model.maximum}} Zeichen ein.
-            </span>
-            <span *ngIf="model.state?.errors?.minlength">
-                Bitte geben Sie mindestens {{model.minimum}} Zeichen ein.
-            </span>
-            <span *ngIf="model.state?.errors?.max">
-                Bitte geben Sie eine Zahl kleiner oder gleich {{model.maximum}}
-                ein.
-            </span>
-            <span *ngIf="model.state?.errors?.min">
-                Bitte geben Sie eine Zahl größer oder gleich {{model.minimum}}
-                ein.
-            </span>
-            <span *ngIf="model.state?.errors?.pattern">
-                Bitte geben Sie eine Zeinefolge ein die dem regulären Ausdruck
-                "{{model.regularExpressionPattern}}" entspricht.
-            </span>
-        </span>
-        <span *ngIf="showDeclaration">{{model.declaration}}</span>
-    </md-hint>
+    <md-hint
+        align="start" (click)="showDeclaration = !showDeclaration" title="info"
+        *ngIf="model.declaration"
+    >[i]<span *ngIf="showDeclaration"> {{model.declaration}}</span></md-hint>
+    <span generic-error *ngIf="showValidationErrorMessages">
+        <p *ngIf="model.state?.errors?.required">
+            Bitte füllen Sie das Feld "{{model.description || model.name}}"
+            aus.
+        </p>
+        <p *ngIf="model.state?.errors?.maxlength">
+            Bitte geben Sie maximal {{model.maximum}} Zeichen ein.
+        </p>
+        <p *ngIf="model.state?.errors?.minlength">
+            Bitte geben Sie mindestens {{model.minimum}} Zeichen ein.
+        </p>
+        <p *ngIf="model.state?.errors?.max">
+            Bitte geben Sie eine Zahl kleiner oder gleich {{model.maximum}}
+            ein.
+        </p>
+        <p *ngIf="model.state?.errors?.min">
+            Bitte geben Sie eine Zahl größer oder gleich {{model.minimum}} ein.
+        </p>
+        <p *ngIf="model.state?.errors?.pattern">
+            Bitte geben Sie eine Zeinefolge ein die dem regulären Ausdruck
+            "{{model.regularExpressionPattern}}" entspricht.
+        </p>
+    </span>
     <md-hint
         align="end"
         *ngIf="!model.selection && model.type === 'string' && model.maximum !== null && model.maximum < 100"
@@ -2299,18 +2295,7 @@ const inputContent:string = `
 @Component({
     selector: 'generic-input',
     template: `
-        <md-input-container *ngIf="model.selection; else selectInput">
-            <input
-                mdInput [max]="model.type === 'number' ? model.maximum : null"
-                [min]="model.type === 'number' ? model.minimum : null"
-                [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
-                ${propertyInputContent}
-                ${propertyGenericContent}
-            >
-            ${inputContent}
-            <ng-content></ng-content>
-        </md-input-container>
-        <ng-template #selectInput>
+        <ng-container *ngIf="model.selection; else textInput">
             <md-select [(ngModel)]="model.value" ${propertyGenericContent}>
                 <md-option
                     *ngFor="let value of model.selection" [value]="value"
@@ -2320,6 +2305,19 @@ const inputContent:string = `
             </md-select>
             ${inputContent}
             <ng-content></ng-content>
+        </ng-container>
+        <ng-template #textInput>
+            <md-input-container>
+                <input
+                    mdInput [max]="model.type === 'number' ? model.maximum : null"
+                    [min]="model.type === 'number' ? model.minimum : null"
+                    [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+                    ${propertyInputContent}
+                    ${propertyGenericContent}
+                >
+                ${inputContent}
+                <ng-content></ng-content>
+            </md-input-container>
         </ng-template>
     `
 })
@@ -2381,17 +2379,19 @@ export class TextareaComponent extends AbstractInputComponent {
     template: `
         <md-card>
             <md-card-header>
-                <h3>
+                <md-card-title>
                     {{headerText || file?.name || name || model[attachmentTypeName][internalName]?.description}}
-                    <span
-                        md-suffix (click)="showDeclaration = !showDeclaration"
-                        title="info"
-                        *ngIf="model[attachmentTypeName][internalName]?.declaration"
-                    >[i]</span>
-                </h3>
-                <p *ngIf="showDeclaration">
-                    {{model[attachmentTypeName][internalName].declaration}}
-                </p>
+                </md-card-title>
+                <md-card-subtitle
+                    (click)="showDeclaration = !showDeclaration"
+                    title="info"
+                    *ngIf="model[attachmentTypeName][internalName]?.declaration"
+                >
+                    [i]
+                    <span *ngIf="showDeclaration">
+                        {{model[attachmentTypeName][internalName].declaration}}
+                    </span>
+                </md-card-subtitle>
             </md-card-header>
             <img md-card-image
                 *ngIf="file?.type === 'image' && file?.source"
@@ -2409,14 +2409,19 @@ export class TextareaComponent extends AbstractInputComponent {
                 *ngIf="file?.type === 'text' && file?.source"
                 style="border:none;width:100%;max-height:150px"
             ></iframe>
-            <div
-                md-card-image
-                *ngIf="!file?.type && (file?.source || (file?.source | genericType) === 'string')"
-            >Keine Vorschau möglich.</div>
-            <div md-card-image *ngIf="!file">Keine Datei ausgewählt.</div>
+            <div md-card-image>
+                <ng-container
+                    *ngIf="!file?.type && (file?.source || (file?.source | genericType) === 'string')"
+                >
+                    Keine Vorschau möglich.
+                </ng-container>
+                <ng-container *ngIf="!file">
+                    Keine Datei ausgewählt.
+                </ng-container>
+            </div>
             <md-card-content>
                 <ng-content></ng-content>
-                <span *ngIf="showValidationErrorMessages">
+                <div *ngIf="showValidationErrorMessages">
                     <p
                         *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.required"
                     >Bitte wählen Sie eine Datei aus.</p>
@@ -2438,7 +2443,7 @@ export class TextareaComponent extends AbstractInputComponent {
                     >
                         {{model[attachmentTypeName][internalName]?.state?.errors?.database}}
                     </p>
-                </span>
+                </div>
             </md-card-content>
             <md-card-actions>
                 <input #input type="file" style="display:none" />
