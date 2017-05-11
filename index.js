@@ -1877,6 +1877,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             this.page = 1
             return this.update()
         }).subscribe()
+        this.debouncedUpdate = this._tools.debounce(this.update.bind(this))
     }
     /**
      * Updates constraints between limit, page number and number of total
@@ -1948,7 +1949,8 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             NOTE: We want to avoid another reload if page is already violating
             page constraints which indicates a page reload workaround.
         */
-        this.update(true)
+        if (!this.selectedItems.size)
+            this.debouncedUpdate(true)
         return false
     }
     // TODO test
