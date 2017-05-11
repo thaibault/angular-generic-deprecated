@@ -2310,7 +2310,7 @@ const inputContent:string = `
             ${inputContent}
             <ng-content></ng-content>
         </md-input-container>
-        <span #selectInput>
+        <ng-template #selectInput>
             <md-select [(ngModel)]="model.value" ${propertyGenericContent}>
                 <md-option
                     *ngFor="let value of model.selection" [value]="value"
@@ -2320,7 +2320,7 @@ const inputContent:string = `
             </md-select>
             ${inputContent}
             <ng-content></ng-content>
-        </span>
+        </ng-template>
     `
 })
 /* eslint-enable max-len */
