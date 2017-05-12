@@ -21,6 +21,7 @@
 import {Component, Directive, Injectable, Input} from '@angular/core'
 import {NavigationExtras} from '@angular/router'
 import type {PlainObject} from 'clientnode'
+import {Subject} from 'rxjs'
 import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 // endregion
 // region native
@@ -49,6 +50,7 @@ export const dummyEvent = {preventDefault: ():void => {}}
  * Mocks the router.
  */
 export class RouterStub {
+    events:Subject<any> = new Subject()
     url:string
     /* eslint-disable no-unused-vars */
     /**

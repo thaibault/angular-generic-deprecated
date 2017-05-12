@@ -1817,6 +1817,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     _router:Router
     _toolsInstance:Tools
     allItemsChecked:boolean = false
+    debouncedUpdate:Function
     items:Array<PlainObject>
     limit:number
     page:number
@@ -1894,7 +1895,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             this.items.total / this.limit)))
         return this.page !== oldPage || this.limit !== oldLimit
     }
-    // TODO test
     /**
      * A function factory to generate functions which updates current view if
      * no route change happened between an asynchronous process.
@@ -1914,11 +1914,10 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             })
             const result:any = await callback(...parameter)
             if (update)
-                this.update(true)
+                await this.update(true)
             return result
         }
     }
-    // TODO test
     /**
      * Clear all currently selected items.
      * @returns Nothing.
@@ -1929,15 +1928,14 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             item.selected = false
         }
     }
-    // TODO test
     /**
      * Switches section to item which has given id.
      * @param itemID - ID of item to switch to.
      * @param itemVersion - Version of item to switch to.
-     * @returns Nothing.
+     * @returns A promise wrapping the navigation result.
      */
-    goToItem(itemID:string, itemVersion:string):void {
-        this._router.navigate([this._itemPath, itemID, itemVersion])
+    goToItem(itemID:string, itemVersion:string):Promise<boolean> {
+        return this._router.navigate([this._itemPath, itemID, itemVersion])
     }
     /**
      * Triggers on any data changes and updates item constraints.
@@ -1953,7 +1951,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             this.debouncedUpdate(true)
         return false
     }
-    // TODO test
     /**
      * Select all available items.
      * @returns Nothing.
@@ -1997,7 +1994,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
         this._toolsInstance.releaseLock(`${this.constructor.name}Update`)
         return result
     }
-    // TODO test
     /**
      * Applies current search term to the search term stream.
      * @returns Nothing.

@@ -489,7 +489,7 @@ registerAngularTest(function(
                                 '2-a': 3, '1-b': 2, '3-c': 3
                             }, true, true, true], ['3-c', '2-a', '1-b']],
                             [[{
-                                '2-a': 3, '1-b': 2, 'a': 4, '3-c': 3
+                                '2-a': 3, '1-b': 2, a: 4, '3-c': 3
                             }, true, true, true], ['a', '3-c', '2-a', '1-b']]
                         ])
                             assert.deepEqual(
@@ -920,7 +920,6 @@ registerAngularTest(function(
                                 )).nativeElement
                             inputDomNode.value = 'aa'
                             inputDomNode.dispatchEvent(getNativeEvent('input'))
-                            fixture.detectChanges()
                             await fixture.whenStable()
                             assert.strictEqual(
                                 fixture.componentInstance.model.value, 'aa')
@@ -965,7 +964,6 @@ registerAngularTest(function(
                                 inputDomNode.value = 2
                                 inputDomNode.dispatchEvent(getNativeEvent(
                                     'input'))
-                                fixture.detectChanges()
                                 await fixture.whenStable()
                                 assert.strictEqual(
                                     fixture.componentInstance.model.value, 2)
@@ -991,17 +989,20 @@ registerAngularTest(function(
                         'object')
                     assert.deepEqual(
                         fixture.componentInstance._canceled, false)
+                    // region data change listener
                     assert.deepEqual(
                         fixture.componentInstance.onDataChange(), false)
                     assert.deepEqual(
                         fixture.componentInstance.onDataComplete(), false)
                     assert.deepEqual(
                         fixture.componentInstance.onDataError(), false)
+                    // endregion
                     assert.deepEqual(fixture.componentInstance.items, [])
                     assert.strictEqual(
                         fixture.componentInstance.items.length, 0)
                     assert.strictEqual(
                         fixture.componentInstance.items.total, 0)
+                    // region applyPageConstraints/update
                     fixture.componentInstance._route.testData = {items: [{
                         _id: 2}]}
                     fixture.detectChanges()
@@ -1031,11 +1032,72 @@ registerAngularTest(function(
                         fixture.componentInstance.searchTerm, 'test')
                     fixture.componentInstance.applyPageConstraints()
                     await fixture.componentInstance.update(true)
-                    fixture.detectChanges()
                     await fixture.whenStable()
                     assert.strictEqual(
                         fixture.componentInstance._router.url,
-                        'items/_id-asc/0/2/regex-test')
+                        `${fixture.componentInstance._itemsPath}/_id-asc/0/2` +
+                        '/regex-test')
+                    // endregion
+                    await fixture.componentInstance._router.navigate([
+                        fixture.componentInstance._itemsPath, '_id-asc', 1, 2,
+                        'regex-'])
+                    await fixture.whenStable()
+                    assert.strictEqual(
+                        fixture.componentInstance._router.url,
+                        `${fixture.componentInstance._itemsPath}/_id-asc/1/2` +
+                        '/regex-')
+                    // region changeItemWrapperFactory
+                    assert.strictEqual(
+                        await fixture.componentInstance
+                            .changeItemWrapperFactory((a:number):number => a)(
+                                2),
+                        2)
+                    await fixture.whenStable()
+                    assert.strictEqual(
+                        fixture.componentInstance._router.url,
+                        `${fixture.componentInstance._itemsPath}/_id-asc/0/2` +
+                        '/regex-test')
+                    // endregion
+                    assert.deepEqual(
+                        fixture.componentInstance.selectedItems, new Set())
+                    assert.deepEqual(
+                        fixture.componentInstance.items, [{_id: 2}])
+                    // region clearSelectedItems
+                    fixture.componentInstance.selectedItems.add(
+                        fixture.componentInstance.items[0])
+                    fixture.componentInstance.clearSelectedItems()
+                    assert.deepEqual(
+                        fixture.componentInstance.items,
+                        [{_id: 2, selected: false}])
+                    assert.deepEqual(
+                        fixture.componentInstance.selectedItems, new Set())
+                    // endregion
+                    // region gotToItem
+                    await fixture.componentInstance.goToItem(1, 2)
+                    await fixture.whenStable()
+                    assert.strictEqual(
+                        fixture.componentInstance._router.url,
+                        `${fixture.componentInstance._itemPath}/1/2`)
+                    // endregion
+                    // region selectedAllItems
+                    fixture.componentInstance.clearSelectedItems()
+                    fixture.componentInstance.selectAllItems()
+                    assert.deepEqual(
+                        fixture.componentInstance.items,
+                        [{_id: 2, selected: true}])
+                    assert.deepEqual(
+                        fixture.componentInstance.selectedItems,
+                        new Set(fixture.componentInstance.items))
+                    // endregion
+                    // region updateSearch
+                    let test:boolean = false
+                    fixture.componentInstance.searchTermStream.map(():void => {
+                        test = true
+                    }).subscribe()
+                    fixture.componentInstance.updateSearch()
+                    await fixture.whenStable()
+                    assert.ok(test)
+                    // endregion
                 } catch (error) {
                     console.error(error)
                 }
@@ -1064,7 +1126,6 @@ registerAngularTest(function(
                         name: 'name'
                     }
                     fixture.componentInstance.ngOnChanges()
-                    fixture.detectChanges()
                     await fixture.whenStable()
                     assert.strictEqual(
                         fixture.componentInstance.file.type, 'text')
@@ -1079,7 +1140,6 @@ registerAngularTest(function(
                     fixture.componentInstance.input.nativeElement
                         .dispatchEvent(getNativeEvent('change'))
                     fixture.componentInstance.ngOnChanges()
-                    fixture.detectChanges()
                     await fixture.whenStable()
                     fixture.componentInstance.file.content_type = 'image/png'
                     fixture.componentInstance.determinePresentationType()
