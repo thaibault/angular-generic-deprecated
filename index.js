@@ -23,8 +23,8 @@ import {$, globalContext, default as Tools} from 'clientnode'
 import {
     /* AfterViewInit,*/ ChangeDetectorRef, Component, Directive, ElementRef,
     EventEmitter, forwardRef, Injectable, Injector, Input, NgModule,
-    /* OnChanges, OnInit,*/ Output, Pipe, PipeTransform, ReflectiveInjector, Renderer,
-    ViewChild
+    /* OnChanges, OnInit,*/ Output, Pipe, PipeTransform, ReflectiveInjector,
+    Renderer, ViewChild
 } from '@angular/core'
 import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
@@ -1715,6 +1715,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
         return false
     }
 }
+/* eslint-disable brace-style */
 /**
  * A generic abstract component to edit, search, navigate and filter a list of
  * entities.
@@ -1742,6 +1743,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
  */
 export class AbstractItemsComponent extends AbstractLiveDataComponent
 /* implements AfterContentChecked*/ {
+/* eslint-enable brace-style */
     _currentParameter:PlainObject
     _itemPath:string = 'item'
     _itemsPath:string = 'items'
@@ -2521,7 +2523,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         this.model = {[this.attachmentTypeName]: [], id: null}
     }
     /**
-     * (Re-)Initializes file upload handler.
+     * Initializes file upload handler.
      * @returns Nothing.
      */
     ngOnChanges():void {
