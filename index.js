@@ -23,7 +23,7 @@ import {$, globalContext, default as Tools} from 'clientnode'
 import {
     /* AfterViewInit,*/ ChangeDetectorRef, Component, Directive, ElementRef,
     EventEmitter, forwardRef, Injectable, Injector, Input, NgModule,
-    /* OnInit,*/ Output, Pipe, PipeTransform, ReflectiveInjector, Renderer,
+    /* OnChanges, OnInit,*/ Output, Pipe, PipeTransform, ReflectiveInjector, Renderer,
     ViewChild
 } from '@angular/core'
 import {
@@ -1728,7 +1728,9 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
  * are checked via select all selector.
  * @property items - Current list of visible items.
  * @property limit - Maximal number of visible items.
- * @property page - Current page number of each item list part.
+ * @property page - Current page number of each item list part.#
+ * @property preventedDataUpdate - Saves null or arguments to a prevented data
+ * updates.
  * @property regularExpression - Indicator whether searching via regular
  * expressions should be used.
  * @property searchTerm - Search string to filter visible item list.
@@ -1738,7 +1740,8 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
  * purposes.
  * @property sort - Sorting informations.
  */
-export class AbstractItemsComponent extends AbstractLiveDataComponent {
+export class AbstractItemsComponent extends AbstractLiveDataComponent
+/* implements AfterContentChecked*/ {
     _currentParameter:PlainObject
     _itemPath:string = 'item'
     _itemsPath:string = 'items'
@@ -1750,6 +1753,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     items:Array<PlainObject>
     limit:number
     page:number
+    preventedDataUpdate:?Array<any> = null
     regularExpression:boolean = false
     searchTerm:string = ''
     searchTermStream:Subject<string> = new Subject()
@@ -1866,18 +1870,33 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     goToItem(itemID:string, itemVersion:string):Promise<boolean> {
         return this._router.navigate([this._itemPath, itemID, itemVersion])
     }
+    // TODO test
+    /**
+     * Checks if selection has changed.
+     * @returns Nothing.
+     */
+    ngAfterContentChecked():void {
+        if (this.preventedDataUpdate)
+            this.onDataChange(...this.preventedDataUpdate)
+    }
     /**
      * Triggers on any data changes and updates item constraints.
+     * @param parameter - Parameter to save for delayed update.
      * @returns False so their wont be a view update since a complete route
      * reload will be triggered.
      */
-    onDataChange():false {
+    onDataChange(...parameter:Array<any>):false {
+        // TODO test
+        if (this.selectedItems.size)
+            this.preventedDataUpdate = parameter
+        else {
+            this.preventedDataUpdate = null
+            this.debouncedUpdate(true)
+        }
         /*
             NOTE: We want to avoid another reload if page is already violating
             page constraints which indicates a page reload workaround.
         */
-        if (!this.selectedItems.size)
-            this.debouncedUpdate(true)
         return false
     }
     /**
@@ -2432,7 +2451,7 @@ export class TextareaComponent extends AbstractInputComponent {
  * done immediately after a file was selected (or synchronously with other
  * model data).
  */
-export class FileInputComponent/* implements OnInit, AfterViewInit*/ {
+export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     static imageMimeTypeRegularExpression:RegExp = new RegExp(
         '^image/(?:p?jpe?g|png|svg(?:\\+xml)?|vnd\\.microsoft\\.icon|gif|' +
         'tiff|webp|vnd\\.wap\\.wbmp|x-(?:icon|jng|ms-bmp))$')
@@ -2502,7 +2521,7 @@ export class FileInputComponent/* implements OnInit, AfterViewInit*/ {
         this.model = {[this.attachmentTypeName]: [], id: null}
     }
     /**
-     * Initializes file upload handler.
+     * (Re-)Initializes file upload handler.
      * @returns Nothing.
      */
     ngOnChanges():void {
