@@ -290,7 +290,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             oldDocument)
         newDocument = this.constructor._convertDateToTimestampRecursively(
             newDocument)
-        const specialNames:{[key:string]:string} =
+        const specialNames:PlainObject =
             this.configuration.database.model.property.name.special
         const result:PlainObject = {}
         const untouchedAttachments:Array<string> = []
@@ -1122,8 +1122,8 @@ export class DataScopeService {
                 'hasOwnProperty' in scope && scope[key].hasOwnProperty('value')
             )
                 result[key] = scope[key].value
-        const specialNames:{[key:string]:string} = this.configuration.database
-            .model.property.name.special
+        const specialNames:PlainObject =
+            this.configuration.database.model.property.name.special
         const attachmentName:string = specialNames.attachment
         if (scope.hasOwnProperty(attachmentName) && scope[attachmentName])
             for (const key:string in scope[attachmentName])
