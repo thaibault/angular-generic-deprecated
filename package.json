@@ -58,7 +58,6 @@
     "clientnode": "latest",
     "hammerjs": "latest",
     "pouchdb": "latest",
-    "pouchdb-find": "latest",
     "pouchdb-validation": "latest",
     "reflect-metadata": "^0.1.8",
     "rxjs": "5.0.0-beta.12",
@@ -135,13 +134,12 @@
           "^hammerjs$": "hammerjs/hammer.min.js",
           "^jquery$": "jquery/dist/jquery.min.js",
           "^pouchdb(?:/.+)?$": "pouchdb/dist/pouchdb.min.js",
-          "^pouchdb-find(?:/.+)?$": "pouchdb-find/dist/pouchdb.pouchdb-find.min.js",
           "^DOESNT WORK: rxjs(?:/.+)?$": "rxjs/bundles/Rx.min.js",
           "^DOESNT WORK IN NODE: zone\\.js(?:/.+)?$": "zone.js/dist/zone.min.js"
         }
       },
       "skipParseRegularExpressions": {
-        "__evaluate__": "/(?:^|\\/)(?:(?:babel-polyfill\\/dist\\/polyfill)|(?:hammerjs\\/hammer)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb)|(?:pouchdb\\.find\\/dist\\/pouchdb\\.find)|(?:reflect-metadata\\/Reflect)|(?:rxjs\\/bundles\\/Rx)|(?:webpack\\/buildin\\/global)|(?:webpack\\/buildin\\/module)|(?:zone\\.js\\/dist\\/zone))(?:\\.min)?\\.js(?:\\?.+|$)/"
+        "__evaluate__": "/(?:^|\\/)(?:(?:babel-polyfill\\/dist\\/polyfill)|(?:hammerjs\\/hammer)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb)|(?:reflect-metadata\\/Reflect)|(?:rxjs\\/bundles\\/Rx)|(?:webpack\\/buildin\\/global)|(?:webpack\\/buildin\\/module)|(?:zone\\.js\\/dist\\/zone))(?:\\.min)?\\.js(?:\\?.+|$)/"
       }
     }
   }
