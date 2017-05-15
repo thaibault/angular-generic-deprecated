@@ -1014,19 +1014,23 @@ export class DataService {
      * @returns Whatever pouchdb's method returns.
      */
     async get(...parameter:Array<any>):Promise<PlainObject> {
+        const idName:string =
+            this.configuration.database.model.property.name.special.id
+        const revisionName:string =
+            this.configuration.database.model.property.name.special.revision
         const result:PlainObject = await this.connection.get(...parameter)
         if (parameter.length > 1 && typeof parameter[
             1
         ] === 'object' && parameter[1] !== null && parameter[1].hasOwnProperty(
             'rev'
         ) && parameter[1].rev === 'latest' &&
-        LAST_KNOWN_DATA.data.hasOwnProperty(result._id) && parseInt(
-            result._rev.match(
+        LAST_KNOWN_DATA.data.hasOwnProperty(result[idName]) && parseInt(
+            result[revisionName].match(
                 this.constructor.revisionNumberRegularExpression)[1]
-        ) < parseInt(LAST_KNOWN_DATA.data[result._id]._rev.match(
+        ) < parseInt(LAST_KNOWN_DATA.data[resut[idName]][revisionName].match(
             this.constructor.revisionNumberRegularExpression
         )[1]))
-            return LAST_KNOWN_DATA.data[result._id]
+            return LAST_KNOWN_DATA.data[result[idName]]
         return result
     }
     /**
@@ -1172,11 +1176,11 @@ export class DataScopeService {
     ):PlainObject {
         const modelSpecification:PlainObject =
             this.configuration.database.model.entities[modelName]
+        const specialNames:PlainObjec =
+            this.configuration.database.model.property.name.special
         for (const name:string in modelSpecification)
             if (modelSpecification.hasOwnProperty(name))
-                if (name === this.configuration.database.model.property.name
-                    .special.attachment
-                ) {
+                if (name === specialNames.attachment) {
                     for (const fileName:string in modelSpecification[name])
                         if (modelSpecification[name].hasOwnProperty(fileName))
                             modelSpecification[name][fileName] =
@@ -1200,9 +1204,7 @@ export class DataScopeService {
                     modelSpecification[name])
             else
                 result[name] = {}
-            if (name === this.configuration.database.model.property.name
-                .special.attachment
-            ) {
+            if (name === specialNames.attachment) {
                 for (const type:string in modelSpecification[name])
                     if (modelSpecification[name].hasOwnProperty(type)) {
                         result[name][type].name = type
@@ -1314,22 +1316,16 @@ export class DataScopeService {
         }
         for (const name:string of this.configuration.database.model.property
             .name.reserved.concat(
-                this.configuration.database.model.property.name.special
-                    .deleted,
-                this.configuration.database.model.property.name.special.id,
-                this.configuration.database.model.property.name.special
-                    .revision,
-                this.configuration.database.model.property.name.special
-                    .revisionsInformation,
-                this.configuration.database.model.property.name.special
-                    .revisions,
-                this.configuration.database.model.property.name.special.type)
+                specialNames.deleted,
+                specialNames.id,
+                specialNames.revision,
+                specialNames.revisionsInformation,
+                specialNames.revisions,
+                specialNames.type)
         )
             if (data.hasOwnProperty(name))
                 result[name] = data[name]
-            else if (name === this.configuration.database.model.property.name
-                .special.type
-            )
+            else if (name === specialNames.type)
                 result[name] = modelName
         result._metaData = {submitted: false}
         return result
@@ -1368,6 +1364,9 @@ export class DataScopeService {
                     this.tools.representObject(error))
             }
             if (revisionHistory) {
+                const revisionsInformationName:string =
+                    this.configuration.database.model.property.name.special
+                    .revisionsInformation
                 let revisions:Array<PlainObject>
                 let latestData:?PlainObject
                 if (revision !== 'latest') {
@@ -1381,35 +1380,22 @@ export class DataScopeService {
                             `${revision}" isn't available: ` +
                             this.tools.representObject(error))
                     }
-                    revisions = latestData[
-                        this.configuration.database.model.property.name.special
-                        .revisionsInformation]
-                    delete latestData[
-                        this.configuration.database.model.property.name.special
-                        .revisionsInformation]
+                    revisions = latestData[revisionsInformationName]
+                    delete latestData[revisionsInformationName]
                 } else
-                    revisions = data[
-                        this.configuration.database.model.property.name.special
-                        .revisionsInformation]
-                data[
-                    this.configuration.database.model.property.name.special
-                    .revisionsInformation
-                ] = {}
+                    revisions = data[revisionsInformationName]
+                data[revisionsInformationName] = {}
                 let first:boolean = true
                 for (const item:PlainObject of revisions)
                     if (item.status === 'available') {
-                        data[
-                            this.configuration.database.model.property.name
-                                .special.revisionsInformation
-                        ][first ? 'latest' : item.rev] = {revision: item.rev}
+                        data[revisionsInformationName][
+                            first ? 'latest' : item.rev
+                        ] = {revision: item.rev}
                         first = false
                     }
                 if (latestData)
-                    data[
-                        this.configuration.database.model.property.name.special
-                        .revisionsInformation
-                    ].latest.scope = this.generate(
-                        modelName, propertyNames, latestData)
+                    data[revisionsInformationName].latest.scope =
+                        this.generate(modelName, propertyNames, latestData)
             }
         }
         return this.generate(modelName, propertyNames, data)
@@ -2543,7 +2529,10 @@ export class FileInputComponent/* implements OnInit, AfterViewInit*/ {
                         this._stringFormat(
                             this._configuration.database.url, ''
                         ) + `/${this._configuration.name || 'generic'}/` +
-                        `${this.model._id}/${this.file.name}${this.file.query}`
+                        this.model[
+                            this._configuration.database.model.property.name
+                            .special.id
+                        ] + `/${this.file.name}${this.file.query}`
                     )
         }
         this.determinePresentationType()
@@ -2609,16 +2598,21 @@ export class FileInputComponent/* implements OnInit, AfterViewInit*/ {
             if (this.synchronizeImmediately && !this.model[
                 this.attachmentTypeName
             ][this.internalName].state.errors) {
+                const deletedName:string =
+                    this._configuration.database.model.property.name.special
+                    .deleted
+                const idName:string =
+                    this._configuration.database.model.property.name.special.id
+                const revisionName:string =
+                    this._configuration.database.model.property.name.special
+                    .revision
+                const typeName:string =
+                    this._configuration.database.model.property.name.special
+                    .type
                 let result:PlainObject
                 const newData:PlainObject = {
-                    [
-                        this._configuration.database.model.property.name
-                            .special.type
-                    ]: this.model[
-                        this._configuration.database.model.property.name
-                            .special.type
-                    ],
-                    _id: this.model._id,
+                    [typeName]: this.model[typeName],
+                    [idName]: this.model[idName],
                     [this.attachmentTypeName]: {
                         [this.file.name]: {
                             content_type: this.file.content_type,
@@ -2631,18 +2625,18 @@ export class FileInputComponent/* implements OnInit, AfterViewInit*/ {
                         true, newData, this.synchronizeImmediately)
                 // NOTE: We want to replace old medium.
                 if (oldFileName && oldFileName !== this.file.name && !(
-                    this.mapNameToField && this.model._id &&
-                    this.mapNameToField.includes('_id')
+                    this.mapNameToField && this.model[idName] &&
+                    this.mapNameToField.includes(idName)
                 ))
                     newData[this.attachmentTypeName][oldFileName] = {
                         data: null}
-                if (![undefined, null].includes(this.model._rev))
-                    newData._rev = this.model._rev
+                if (![undefined, null].includes(this.model[revisionName]))
+                    newData[revisionName] = this.model[revisionName]
                 if (this.mapNameToField) {
-                    if (this.model._id && this.mapNameToField.includes(
-                        '_id'
+                    if (this.model[idName] && this.mapNameToField.includes(
+                        idName
                     )) {
-                        newData._deleted = true
+                        newData[deletedName] = true
                         try {
                             result = await this._data.put(newData)
                         } catch (error) {
@@ -2654,15 +2648,15 @@ export class FileInputComponent/* implements OnInit, AfterViewInit*/ {
                             }
                             return
                         }
-                        delete newData._deleted
-                        delete newData._rev
+                        delete newData[deletedName]
+                        delete newData[revisionName]
                     }
                     for (const name:string of this.mapNameToField) {
                         newData[name] = this.file.name
                         this.model[name] = this.file.name
                     }
                 }
-                newData._rev = 'upsert'
+                newData[revisionName] = 'upsert'
                 try {
                     result = await this._data.put(newData)
                 } catch (error) {
@@ -2674,14 +2668,15 @@ export class FileInputComponent/* implements OnInit, AfterViewInit*/ {
                     }
                     return
                 }
-                this.file.revision = this.model._rev = result.rev
+                this.file.revision = this.model[revisionName] = result.rev
                 this.file.query = `?version=${result.rev}`
                 this.file.source =
                     this._domSanitizer.bypassSecurityTrustResourceUrl(
                         this._stringFormat(
                             this._configuration.database.url, ''
-                        ) + `/${this._configuration.name}/${this.model._id}/` +
-                        `${this.file.name}${this.file.query}`)
+                        ) + `/${this._configuration.name}/` +
+                        `${this.model[idName]}/${this.file.name}` +
+                        this.file.query)
                 this.determinePresentationType()
                 this.fileChange.emit(this.file)
                 this.modelChange.emit(this.model)
@@ -2731,24 +2726,28 @@ export class FileInputComponent/* implements OnInit, AfterViewInit*/ {
      */
     async remove():Promise<void> {
         if (this.synchronizeImmediately && this.file) {
+            const deletedName:string =
+                this._configuration.database.model.property.name.special
+                .deleted
+            const idName:string =
+                this._configuration.database.model.property.name.special.id
+            const revisionName:string =
+                this._configuration.database.model.property.name.special
+                .revision
+            const typeName:string =
+                this._configuration.database.model.property.name.special.type
             let result:PlainObject
             const update:PlainObject = {
-                [
-                    this._configuration.database.model.property.name.special
-                        .type
-                ]: this.model[
-                    this._configuration.database.model.property.name.special
-                        .type
-                ],
-                _id: this.model._id,
-                _rev: this.model._rev,
+                [typeName]: this.model[typeName],
+                [idName]: this.model[idName],
+                [revisionName]: this.model[revisionName],
                 [this.attachmentTypeName]: {[this.file.name]: {
                     content_type: 'text/plain',
                     data: null
                 }}
             }
-            if (this.mapNameToField && this.mapNameToField.includes('_id'))
-                update._deleted = true
+            if (this.mapNameToField && this.mapNameToField.includes(idName))
+                update[deletedName] = true
             try {
                 result = await this._data.put(update)
             } catch (error) {
@@ -2757,10 +2756,10 @@ export class FileInputComponent/* implements OnInit, AfterViewInit*/ {
                 ].state.errors = {database: this._representObject(error)}
                 return
             }
-            if (this.mapNameToField && this.mapNameToField.includes('_id'))
+            if (this.mapNameToField && this.mapNameToField.includes(idName))
                 this.delete.emit(result)
             else
-                this.model._rev = result.rev
+                this.model[revisionName] = result.rev
         }
         this.model[this.attachmentTypeName][this.internalName].state.errors =
             this.model[this.attachmentTypeName][this.internalName].value =
