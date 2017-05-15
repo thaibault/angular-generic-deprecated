@@ -983,8 +983,37 @@ export class DataService {
      * pouchdb's "bulkDocs()" method.
      * @returns Whatever pouchdb's method returns.
      */
-    bulkDocs(...parameter:Array<any>):Promise<PlainObject> {
-        return this.connection.bulkDocs(...parameter)
+    async bulkDocs(...parameter:Array<any>):Promise<PlainObject> {
+        // TODO test
+        /*
+            Implements a generic retry mechanism for "upsert" and "latest"
+            updates.
+        */
+        let result:Array<PlainObject>
+        try {
+            result = await this.connection.bulkDocs(...parameter)
+        } catch (error) {
+            throw error
+        }
+        const conflictingIndexes:Array<number> = []
+        const conflicts:Array<number> = []
+        let index:number = 0
+        for (const item:PlainObject of result)
+            if (item.name === 'conflict') {
+                conflicts.push(item)
+                conflictingIndexes.push(index)
+            }
+            index += 1
+        parameter[0] = conflicts
+        let retriedResults:Array<PlainObject>
+        try {
+            retriedResults = await this.connection.bulkDocs(...parameter)
+        } catch (error) {
+            throw error
+        }
+        for (const retriedResult:PlainObject of retriedResults)
+            result[conflictingIndexes.shift()] = retriedResult
+        return result
     }
     /**
      * Removes current active database.
