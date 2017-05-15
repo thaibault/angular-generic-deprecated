@@ -29,7 +29,7 @@ import {
 import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
-import {MaterialModule} from '@angular/material'
+import {MdCardModule, MdInputModule, MdSelectModule} from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {
     ActivatedRoute, ActivatedRouteSnapshot, /* CanDeactivate,*/ NavigationEnd,
@@ -2898,7 +2898,9 @@ const providers:Array<Object> = Object.keys(module.exports).filter((
 const modules:Array<Object> = [
     BrowserModule,
     FormsModule,
-    MaterialModule.forRoot()
+    MdCardModule,
+    MdInputModule,
+    MdSelectModule
 ]
 // IgnoreTypeCheck
 @NgModule({
