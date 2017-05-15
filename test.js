@@ -794,6 +794,9 @@ registerAngularTest(function(
                                     fields: ['-type', name],
                                     name: `Test-${name}-GenericIndex`
                                 }})
+                            try {
+                                await data.remove(await data.get('a'))
+                            } catch (error) {}
                             const item:PlainObject = {
                                 _id: 'a', '-type': 'Test', a: 'test'}
                             item._rev = (await data.put(item)).rev
