@@ -1033,7 +1033,7 @@ export class DataService {
         LAST_KNOWN_DATA.data.hasOwnProperty(result[idName]) && parseInt(
             result[revisionName].match(
                 this.constructor.revisionNumberRegularExpression)[1]
-        ) < parseInt(LAST_KNOWN_DATA.data[resut[idName]][revisionName].match(
+        ) < parseInt(LAST_KNOWN_DATA.data[result[idName]][revisionName].match(
             this.constructor.revisionNumberRegularExpression
         )[1]))
             return LAST_KNOWN_DATA.data[result[idName]]
@@ -1182,7 +1182,7 @@ export class DataScopeService {
     ):PlainObject {
         const modelSpecification:PlainObject =
             this.configuration.database.model.entities[modelName]
-        const specialNames:PlainObjec =
+        const specialNames:PlainObject =
             this.configuration.database.model.property.name.special
         for (const name:string in modelSpecification)
             if (modelSpecification.hasOwnProperty(name))
