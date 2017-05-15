@@ -110,10 +110,10 @@ registerAngularTest(function(
                             name: {
                                 reserved: [],
                                 special: {
-                                    allowedRoles: '_allowedRoles',
-                                    attachments: '_attachments',
+                                    allowedRole: '_allowedRoles',
+                                    attachment: '_attachments',
                                     conflict: '_conflicts',
-                                    constraints: {
+                                    constraint: {
                                         execution: '_constraintExecutions',
                                         expression: '_constraintExpressions'
                                     },
@@ -121,7 +121,7 @@ registerAngularTest(function(
                                     extend: '_extends',
                                     id: '_id',
                                     revision: '_rev',
-                                    revisionInformations: '_revs_info',
+                                    revisionsInformation: '_revs_info',
                                     revisions: '_revisions',
                                     type: '-type',
                                     validatedDocumentsCache:

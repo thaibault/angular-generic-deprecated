@@ -238,11 +238,11 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             ].includes(oldAttachments[type].value)) {
                 if (newDocument[
                     this.configuration.database.model.property.name.special
-                        .attachments
+                        .attachment
                 ]) {
                     if (newDocument[
                         this.configuration.database.model.property.name.special
-                            .attachments
+                            .attachment
                     ].hasOwnProperty(oldAttachments[type].value.name))
                         continue
                 } else if (!untouchedAttachments.includes(
@@ -250,24 +250,24 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                 )) {
                     newDocument[
                         this.configuration.database.model.property.name.special
-                            .attachments
+                            .attachment
                     ] = {[oldAttachments[type].value.name]: {data: null}}
                     continue
                 }
                 if (fileTypeReplacement)
                     for (const fileName:string in newDocument[
                         this.configuration.database.model.property.name.special
-                            .attachments
+                            .attachment
                     ])
                         if (newDocument[
                             this.configuration.database.model.property.name
-                                .special.attachments
+                                .special.attachment
                         ].hasOwnProperty(
                             fileName
                         ) && (new RegExp(type)).test(fileName))
                             newDocument[
                                 this.configuration.database.model.property.name
-                                    .special.attachments
+                                    .special.attachment
                             ][oldAttachments[type].value.name] = {data: null}
             }
         return newDocument
@@ -290,6 +290,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             oldDocument)
         newDocument = this.constructor._convertDateToTimestampRecursively(
             newDocument)
+        const specialNames:{[key:string]:string} =
+            this.configuration.database.model.property.name.special
         const result:PlainObject = {}
         const untouchedAttachments:Array<string> = []
         /*
@@ -302,40 +304,25 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             ].includes(newDocument[name]) && (
                 this.configuration.database.model.property.name.reserved
                     .concat(
-                        this.configuration.database.model.property.name.special
-                            .deleted,
-                        this.configuration.database.model.property.name.special
-                            .id,
-                        this.configuration.database.model.property.name.special
-                            .revision,
-                        this.configuration.database.model.property.name.special
-                            .type
+                        specialNames.deleted,
+                        specialNames.id,
+                        specialNames.revision,
+                        specialNames.type
                     ).includes(name) ||
             ![
-                this.configuration.database.model.property.name.special
-                    .allowedRoles,
-                this.configuration.database.model.property.name.special
-                    .constraints.execution,
-                this.configuration.database.model.property.name.special
-                    .constraints.expression,
-                this.configuration.database.model.property.name.special.extend,
-                this.configuration.database.model.property.name.special
-                    .revisionInformationss,
-                this.configuration.database.model.property.name.special
-                    .revisions,
-                this.configuration.database.model.property.name.special
-                    .validatedDocumentsCache
+                specialNames.allowedRole,
+                specialNames.constraint.execution,
+                specialNames.constraint.expression,
+                specialNames.extend,
+                specialNames.revisionsInformations,
+                specialNames.revisions,
+                specialNames.validatedDocumentsCache
             ].includes(name) && (!(
-                this.configuration.database.model.property.name.special.type in
-                newDocument
+                specialNames.type in newDocument
             ) || this.configuration.database.model.entities[newDocument[
-                this.configuration.database.model.property.name.special
-                    .type
+                specialNames.type
             ]].hasOwnProperty(name))))
-                if (
-                    name === this.configuration.database.model.property.name
-                        .special.attachments
-                ) {
+                if (name === specialNames.attachment) {
                     result[name] = {}
                     let empty:boolean = true
                     for (const fileName:string in newDocument[name])
@@ -370,7 +357,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                     'application/octet-stream',
                                     data: newDocument[name][fileName].data
                                 }
-                                empty = false
+                                empty
+                             = false
                             } else
                                 untouchedAttachments.push(fileName)
                         }
@@ -389,38 +377,24 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     name
                 ) && !(this.configuration.database.model.property.name.reserved
                     .concat([
-                        this.configuration.database.model.property.name.special
-                            .allowedRoles,
-                        this.configuration.database.model.property.name.special
-                            .attachments,
-                        this.configuration.database.model.property.name.special
-                            .constraints.execution,
-                        this.configuration.database.model.property.name.special
-                            .constraints.expression,
-                        this.configuration.database.model.property.name.special
-                            .deleted,
-                        this.configuration.database.model.property.name.special
-                            .extend,
-                        this.configuration.database.model.property.name.special
-                            .id,
-                        this.configuration.database.model.property.name.special
-                            .revision,
-                        this.configuration.database.model.property.name.special
-                            .revisionInformations,
-                        this.configuration.database.model.property.name.special
-                            .revisions,
-                        this.configuration.database.model.property.name.special
-                            .type,
-                        this.configuration.database.model.property.name.special
-                            .validatedDocumentsCache
+                        specialNames.allowedRole,
+                        specialNames.attachment,
+                        specialNames.constraint.execution,
+                        specialNames.constraint.expression,
+                        specialNames.deleted,
+                        specialNames.extend,
+                        specialNames.id,
+                        specialNames.revision,
+                        specialNames.revisionsInformation,
+                        specialNames.revisions,
+                        specialNames.type,
+                        specialNames.validatedDocumentsCache
                     ]).includes(name) || [null, undefined].includes(
                         oldDocument[name].value)
                 ) && (!(
-                    this.configuration.database.model.property.name.special
-                        .type in newDocument
+                    specialNames.type in newDocument
                 ) || this.configuration.database.model.entities[newDocument[
-                    this.configuration.database.model.property.name.special
-                        .type
+                    specialNames.type
                 ]].hasOwnProperty(name)))
                     if (result.hasOwnProperty(name)) {
                         if (Array.isArray(result[name])) {
@@ -431,9 +405,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         } else if (
                             typeof result[name] === 'object' &&
                             result[name] !== null &&
-                            result[name].hasOwnProperty(
-                                this.configuration.database.model.property.name
-                                    .special.type)
+                            result[name].hasOwnProperty(specialNames.type)
                         ) {
                             result[name] = this.transform(
                                 result[name], oldDocument[name],
@@ -454,23 +426,14 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     }
             // Handle attachment removes or replacements.
             if (oldDocument.hasOwnProperty(
-                this.configuration.database.model.property.name.special
-                    .attachments
-            ) && oldDocument[
-                this.configuration.database.model.property.name.special
-                    .attachments
-            ]) {
+                specialNames.attachment
+            ) && oldDocument[specialNames]) {
                 this._handleAttachmentChanges(result, oldDocument[
-                    this.configuration.database.model.property.name.special
-                        .attachments
+                    specialNames.attachment
                 ], fileTypeReplacement, untouchedAttachments)
-                if (this.configuration.database.model.property.name.special
-                    .attachments in result
-                )
+                if (specialNames.attachment in result)
                     payloadExists = true
-            } else if (this.configuration.database.model.property.name.special
-                .attachments in result
-            )
+            } else if (specialNames.attachment in result)
                 payloadExists = true
         }
         // Check if real payload exists in currently determined raw data.
@@ -480,14 +443,10 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     name
                 ) && !this.configuration.database.model.property.name.reserved
                     .concat(
-                        this.configuration.database.model.property.name
-                            .special.deleted,
-                        this.configuration.database.model.property.name
-                            .special.id,
-                        this.configuration.database.model.property.name
-                            .special.revision,
-                        this.configuration.database.model.property.name
-                            .special.type
+                        specialNames.deleted,
+                        specialNames.id,
+                        specialNames.revision,
+                        specialNames.type
                     ).includes(name)
                 ) {
                     payloadExists = true
@@ -1163,60 +1122,33 @@ export class DataScopeService {
                 'hasOwnProperty' in scope && scope[key].hasOwnProperty('value')
             )
                 result[key] = scope[key].value
-        if (scope.hasOwnProperty(
-            this.configuration.database.model.property.name.special
-                .attachments
-        ) && scope[
-            this.configuration.database.model.property.name.special
-                .attachments
-        ])
-            for (const key:string in scope[
-                this.configuration.database.model.property.name.special
-                    .attachments]
-            )
-                if (scope[
-                    this.configuration.database.model.property.name.special
-                        .attachments
-                ].hasOwnProperty(key) && typeof scope[
-                    this.configuration.database.model.property.name.special
-                        .attachments
-                ][key] === 'object' && scope[
-                    this.configuration.database.model.property.name.special
-                        .attachments
-                ][key] !== null && 'hasOwnProperty' in scope[
-                    this.configuration.database.model.property.name.special
-                        .attachments
-                ] && scope[
-                    this.configuration.database.model.property.name.special
-                        .attachments
-                ][key].hasOwnProperty('value') && scope[
-                    this.configuration.database.model.property.name.special
-                        .attachments
-                ][key].value) {
-                    if (!result[this.configuration.database.model.property.name
-                        .special.attachments
-                    ])
-                        result[this.configuration.database.model.property.name
-                            .special.attachments
-                        ] = {}
-                    result[this.configuration.database.model.property.name
-                        .special.attachments
-                    ][scope[this.configuration.database.model.property.name
-                        .special.attachments
-                    ][key].value.name] = scope[
-                        this.configuration.database.model.property.name
-                            .special.attachments
-                    ][key].value
+        const specialNames:{[key:string]:string} = this.configuration.database
+            .model.property.name.special
+        const attachmentName:string = specialNames.attachment
+        if (scope.hasOwnProperty(attachmentName) && scope[attachmentName])
+            for (const key:string in scope[attachmentName])
+                if (scope[attachmentName].hasOwnProperty(key) && typeof scope[
+                    attachmentName
+                ][key] === 'object' && scope[attachmentName][
+                    key
+                ] !== null && 'hasOwnProperty' in scope[
+                    attachmentName
+                ] && scope[attachmentName][key].hasOwnProperty(
+                    'value'
+                ) && scope[attachmentName][key].value) {
+                    if (!result[attachmentName])
+                        result[attachmentName] = {}
+                    result[attachmentName][scope[attachmentName][
+                        key
+                    ].value.name] = scope[attachmentName][key].value
                 }
         for (const name:string of this.configuration.database.model.property
             .name.reserved.concat(
-                this.configuration.database.model.property.name.special
-                    .deleted,
-                this.configuration.database.model.property.name.special
-                    .id,
-                this.configuration.database.model.property.name.special
-                    .revision,
-                this.configuration.database.model.property.name.special.type)
+                specialNames.deleted,
+                specialNames.id,
+                specialNames.revision,
+                specialNames.type
+            )
         )
             if (scope.hasOwnProperty(name))
                 result[name] = scope[name]
@@ -1241,7 +1173,7 @@ export class DataScopeService {
         for (const name:string in modelSpecification)
             if (modelSpecification.hasOwnProperty(name))
                 if (name === this.configuration.database.model.property.name
-                    .special.attachments
+                    .special.attachment
                 ) {
                     for (const fileName:string in modelSpecification[name])
                         if (modelSpecification[name].hasOwnProperty(fileName))
@@ -1267,7 +1199,7 @@ export class DataScopeService {
             else
                 result[name] = {}
             if (name === this.configuration.database.model.property.name
-                .special.attachments
+                .special.attachment
             ) {
                 for (const type:string in modelSpecification[name])
                     if (modelSpecification[name].hasOwnProperty(type)) {
@@ -1386,7 +1318,7 @@ export class DataScopeService {
                 this.configuration.database.model.property.name.special
                     .revision,
                 this.configuration.database.model.property.name.special
-                    .revisionInformations,
+                    .revisionsInformation,
                 this.configuration.database.model.property.name.special
                     .revisions,
                 this.configuration.database.model.property.name.special.type)
@@ -1449,31 +1381,31 @@ export class DataScopeService {
                     }
                     revisions = latestData[
                         this.configuration.database.model.property.name.special
-                        .revisionInformations]
+                        .revisionsInformation]
                     delete latestData[
                         this.configuration.database.model.property.name.special
-                        .revisionInformations]
+                        .revisionsInformation]
                 } else
                     revisions = data[
                         this.configuration.database.model.property.name.special
-                        .revisionInformations]
+                        .revisionsInformation]
                 data[
                     this.configuration.database.model.property.name.special
-                    .revisionInformations
+                    .revisionsInformation
                 ] = {}
                 let first:boolean = true
                 for (const item:PlainObject of revisions)
                     if (item.status === 'available') {
                         data[
                             this.configuration.database.model.property.name
-                                .special.revisionInformations
+                                .special.revisionsInformation
                         ][first ? 'latest' : item.rev] = {revision: item.rev}
                         first = false
                     }
                 if (latestData)
                     data[
                         this.configuration.database.model.property.name.special
-                        .revisionInformations
+                        .revisionsInformation
                     ].latest.scope = this.generate(
                         modelName, propertyNames, latestData)
             }
@@ -2569,7 +2501,7 @@ export class FileInputComponent/* implements OnInit, AfterViewInit*/ {
             representObjectPipe)
         this._stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.attachmentTypeName = this._configuration.database.model.property
-            .name.special.attachments
+            .name.special.attachment
         this.model = {[this.attachmentTypeName]: [], id: null}
     }
     /**
