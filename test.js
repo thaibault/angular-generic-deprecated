@@ -118,8 +118,10 @@ registerAngularTest(function(
                                         expression: '_constraintExpressions'
                                     },
                                     deleted: '_deleted',
+                                    deletedConflict: '_deleted_conflicts',
                                     extend: '_extends',
                                     id: '_id',
+                                    localSequence: '_local_seq',
                                     revision: '_rev',
                                     revisionsInformation: '_revs_info',
                                     revisions: '_revisions',

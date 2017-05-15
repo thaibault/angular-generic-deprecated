@@ -313,9 +313,12 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     ).includes(name) ||
             ![
                 specialNames.allowedRole,
+                specialNames.conflict,
                 specialNames.constraint.execution,
                 specialNames.constraint.expression,
+                specialNames.deletedConflict,
                 specialNames.extend,
+                specialNames.localSequence,
                 specialNames.revisionsInformations,
                 specialNames.revisions,
                 specialNames.validatedDocumentsCache
@@ -372,7 +375,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         if (oldDocument) {
             /*
                 Remove already existing values and mark removed or truncated
-                values (respect values in model only if specified).
+                values (only respect values if specified in model).
             */
             for (const name:string in oldDocument)
                 if (oldDocument.hasOwnProperty(
@@ -381,11 +384,14 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     .concat([
                         specialNames.allowedRole,
                         specialNames.attachment,
+                        specialNames.conflict,
                         specialNames.constraint.execution,
                         specialNames.constraint.expression,
                         specialNames.deleted,
+                        specialNames.deletedConflict,
                         specialNames.extend,
                         specialNames.id,
+                        specialNames.localSequence,
                         specialNames.revision,
                         specialNames.revisionsInformation,
                         specialNames.revisions,
@@ -1316,8 +1322,11 @@ export class DataScopeService {
         }
         for (const name:string of this.configuration.database.model.property
             .name.reserved.concat(
+                specialNames.conflict,
                 specialNames.deleted,
+                specialNames.deletedConflict,
                 specialNames.id,
+                specialNames.localSequence,
                 specialNames.revision,
                 specialNames.revisionsInformation,
                 specialNames.revisions,
