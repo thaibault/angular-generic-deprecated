@@ -38,6 +38,7 @@ import {
     /* Resolve,*/ Router, RouterStateSnapshot
 } from '@angular/router'
 import PouchDB from 'pouchdb'
+import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
 import {Subject} from 'rxjs'
 import {Observable} from 'rxjs/Observable'
@@ -887,7 +888,8 @@ export class DataService {
         extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService,
         stringFormatPipe:StringFormatPipe
     ):void {
-        this.database = PouchDB.plugin(PouchDBValidationPlugin)
+        this.database = PouchDB.plugin(PouchDBFindPlugin)
+                               .plugin(PouchDBValidationPlugin)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.configuration = initialData.configuration
         if (this.configuration.database.hasOwnProperty('publicURL'))
@@ -963,8 +965,8 @@ export class DataService {
     /**
      * Creates a database index.
      * @param parameter - All parameter will be forwarded to the underlining
-     * pouchdb find's "createIndex()" method.
-     * @returns Whatever pouchdb find's "createIndex()" method returns.
+     * pouchdb-find's "createIndex()" method.
+     * @returns Whatever pouchdb-find's "createIndex()" method returns.
      */
     createIndex(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.createIndex(...parameter)
