@@ -29,7 +29,9 @@ import {
 import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
-import {MdCardModule, MdInputModule, MdSelectModule} from '@angular/material'
+import {
+    MdButtonModule, MdCardModule, MdInputModule, MdSelectModule
+} from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {
     ActivatedRoute, ActivatedRouteSnapshot, /* CanDeactivate,*/ NavigationEnd,
@@ -2898,6 +2900,7 @@ const providers:Array<Object> = Object.keys(module.exports).filter((
 const modules:Array<Object> = [
     BrowserModule,
     FormsModule,
+    MdButtonModule,
     MdCardModule,
     MdInputModule,
     MdSelectModule
