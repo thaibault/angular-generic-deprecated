@@ -642,6 +642,10 @@ registerAngularTest(function(
                             assert.deepEqual(await data.get('a'), item)
                             item.a = 'a'
                             item._rev = (await data.bulkDocs([item]))[0].rev
+                            item._rev = 'upsert'
+                            item._rev = (await data.bulkDocs([item]))[0].rev
+                            item._rev = 'latest'
+                            item._rev = (await data.bulkDocs([item]))[0].rev
                             assert.deepEqual(await data.get('a'), item)
                             let test:boolean = false
                             const deregister:Function = data.register(

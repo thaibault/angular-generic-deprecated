@@ -984,24 +984,36 @@ export class DataService {
      * @returns Whatever pouchdb's method returns.
      */
     async bulkDocs(...parameter:Array<any>):Promise<PlainObject> {
-        // TODO test
         /*
             Implements a generic retry mechanism for "upsert" and "latest"
             updates.
         */
+        const revisionName:string =
+            this.configuration.database.model.property.name.special.revision
         let result:Array<PlainObject>
         try {
             result = await this.connection.bulkDocs(...parameter)
         } catch (error) {
-            throw error
+            if (error.name === 'bad_request') {
+                for (const item:PlainObject of parameter[0])
+                    if (['latest', 'upsert'].includes(item[revisionName]))
+                        item[revisionName] = (await this.connection.get(item[
+                            this.configuration.database.model.property.name
+                            .special.id
+                        ]))[revisionName]
+                try {
+                    result = await this.connection.bulkDocs(...parameter)
+                } catch (error) {
+                    throw error
+                }
+            } else
+                throw error
         }
-        const revisionName:string =
-            this.configuration.database.model.property.name.special.revision
         if (parameter[0].hasOwnProperty(revisionName) && [
             'latest', 'upsert'
         ].includes(parameter[0][revisionName])) {
             const conflictingIndexes:Array<number> = []
-            const conflicts:Array<number> = []
+            const conflicts:Array<PlainObject> = []
             let index:number = 0
             for (const item:PlainObject of result)
                 if (item.name === 'conflict') {
