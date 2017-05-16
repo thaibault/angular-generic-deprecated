@@ -1009,28 +1009,28 @@ export class DataService {
             } else
                 throw error
         }
-        if (parameter[0].hasOwnProperty(revisionName) && [
-            'latest', 'upsert'
-        ].includes(parameter[0][revisionName])) {
-            const conflictingIndexes:Array<number> = []
-            const conflicts:Array<PlainObject> = []
-            let index:number = 0
-            for (const item:PlainObject of result)
-                if (item.name === 'conflict') {
-                    conflicts.push(item)
-                    conflictingIndexes.push(index)
-                }
-                index += 1
-            parameter[0] = conflicts
-            let retriedResults:Array<PlainObject>
-            try {
-                retriedResults = await this.connection.bulkDocs(...parameter)
-            } catch (error) {
-                throw error
+        const conflictingIndexes:Array<number> = []
+        const conflicts:Array<PlainObject> = []
+        let index:number = 0
+        for (const item:PlainObject of result) {
+            if (parameter[0][index].hasOwnProperty(revisionName) && [
+                'latest', 'upsert'
+            ].includes(parameter[0][index][revisionName]) &&
+            item.name === 'conflict') {
+                conflicts.push(item)
+                conflictingIndexes.push(index)
             }
-            for (const retriedResult:PlainObject of retriedResults)
-                result[conflictingIndexes.shift()] = retriedResult
+            index += 1
         }
+        parameter[0] = conflicts
+        let retriedResults:Array<PlainObject>
+        try {
+            retriedResults = await this.connection.bulkDocs(...parameter)
+        } catch (error) {
+            throw error
+        }
+        for (const retriedResult:PlainObject of retriedResults)
+            result[conflictingIndexes.shift()] = retriedResult
         return result
     }
     /**
