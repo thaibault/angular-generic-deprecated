@@ -983,7 +983,7 @@ export class DataService {
      * pouchdb's "bulkDocs()" method.
      * @returns Whatever pouchdb's method returns.
      */
-    async bulkDocs(...parameter:Array<any>):Promise<PlainObject> {
+    async bulkDocs(...parameter:Array<any>):Promise<Array<PlainObject>> {
         /*
             Implements a generic retry mechanism for "upsert" and "latest"
             updates.
