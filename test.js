@@ -907,7 +907,11 @@ registerAngularTest(function(
                                 ComponentFixture<AbstractInputComponent> =
                                 TestBed.createComponent(component)
                             fixture.componentInstance.model = {
-                                disabled: true, name: 'test'
+                                disabled: true, name: 'test', trim: true,
+                                onUpdateExpression:
+                                    `typeof newDocument[name] === 'string' ?` +
+                                    ` newDocument[name].replace('c', 'C') : ` +
+                                    'newDocument[name]'
                             }
                             fixture.componentInstance.ngOnInit()
                             assert.strictEqual(
@@ -946,7 +950,7 @@ registerAngularTest(function(
                             const state:PlainObject = {errors: {
                                 required: true
                             }}
-                            fixture.componentInstance.onChange(state)
+                            fixture.componentInstance.onChange(null, state)
                             assert.deepEqual(
                                 fixture.componentInstance.model.state, state)
                             assert.deepEqual(
@@ -961,6 +965,18 @@ registerAngularTest(function(
                             ).nativeElement.textContent.trim().replace(
                                 /\s+/g, ' '
                             ), 'Bitte füllen Sie das Feld "test" aus.')
+                            inputDomNode.value = '  b '
+                            inputDomNode.dispatchEvent(getNativeEvent('input'))
+                            fixture.detectChanges()
+                            await fixture.whenStable()
+                            assert.deepEqual(
+                                'b', fixture.componentInstance.model.value)
+                            inputDomNode.value = '  cb '
+                            inputDomNode.dispatchEvent(getNativeEvent('input'))
+                            fixture.detectChanges()
+                            await fixture.whenStable()
+                            assert.deepEqual(
+                                'Cb', fixture.componentInstance.model.value)
                             if (component.name === 'InputComponent') {
                                 fixture.componentInstance.type = 'password'
                                 fixture.detectChanges()

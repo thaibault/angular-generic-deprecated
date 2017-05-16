@@ -1250,6 +1250,17 @@ export class DataScopeService {
                         ), modelSpecification[name])
         if (!propertyNames)
             propertyNames = Object.keys(modelSpecification)
+        const reservedNames:Array<string> =
+            this.configuration.database.model.property.name.reserved.concat(
+                specialNames.conflict,
+                specialNames.deleted,
+                specialNames.deletedConflict,
+                specialNames.id,
+                specialNames.localSequence,
+                specialNames.revision,
+                specialNames.revisionsInformation,
+                specialNames.revisions,
+                specialNames.type)
         const result:PlainObject = {}
         for (const name:string of propertyNames) {
             if (modelSpecification.hasOwnProperty(name))
@@ -1257,6 +1268,11 @@ export class DataScopeService {
                     modelSpecification[name])
             else
                 result[name] = {}
+            const now:Date = new Date()
+            const nowUTCTimestamp:number = Date.UTC(
+                now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+                now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
+                now.getUTCMilliseconds())
             if (name === specialNames.attachment) {
                 for (const type:string in modelSpecification[name])
                     if (modelSpecification[name].hasOwnProperty(type)) {
@@ -1274,7 +1290,8 @@ export class DataScopeService {
                                         'userContext', 'securitySettings',
                                         'name', 'models', 'modelConfiguration',
                                         'serialize', 'modelName', 'model',
-                                        'propertySpecification', (
+                                        'propertySpecification', 'now',
+                                        'nowUTCTimestamp', (
                                             hookType.endsWith(
                                                 'Expression'
                                             ) ? 'return ' : ''
@@ -1283,12 +1300,12 @@ export class DataScopeService {
                                         data, null, {}, {}, type,
                                         this.configuration.database.model
                                             .entities,
-                                        modelSpecification, (
+                                        this.configuration.database.model, (
                                             object:Object
                                         ):string => JSON.stringify(
                                             object, null, 4
-                                        ), modelName, modelSpecification,
-                                        result[name][type])
+                                        ), modelName, modelSpecification, now,
+                                        nowUTCTimestamp, result[name][type])
                                     if (result[name][type].hasOwnProperty(
                                         'value'
                                     ) && result[name][type].value === undefined
@@ -1318,7 +1335,7 @@ export class DataScopeService {
                                 type
                             ].default
                     }
-            } else if (!name.startsWith('_')) {
+            } else if (!reservedNames.includes(name)) {
                 result[name].name = name
                 result[name].value = null
                 if (Object.keys(data).length === 0)
@@ -1332,7 +1349,8 @@ export class DataScopeService {
                                 'newDocument', 'oldDocument', 'userContext',
                                 'securitySettings', 'name', 'models',
                                 'modelConfiguration', 'serialize', 'modelName',
-                                'model', 'propertySpecification', (
+                                'model', 'propertySpecification', 'now',
+                                'nowUTCTimestamp', (
                                     type.endsWith('Expression') ? 'return ' :
                                     ''
                                 ) + result[name][type]
@@ -1342,7 +1360,8 @@ export class DataScopeService {
                                 this.configuration.database.model,
                                 (object:Object):string => JSON.stringify(
                                     object, null, 4
-                                ), modelName, modelSpecification, result[name])
+                                ), modelName, modelSpecification, now,
+                                nowUTCTimestamp, result[name])
                             if (result[name].value === undefined)
                                 result[name].value = null
                         }
@@ -1367,18 +1386,7 @@ export class DataScopeService {
                     result[name].value = new Date(result[name].value)
             }
         }
-        for (const name:string of this.configuration.database.model.property
-            .name.reserved.concat(
-                specialNames.conflict,
-                specialNames.deleted,
-                specialNames.deletedConflict,
-                specialNames.id,
-                specialNames.localSequence,
-                specialNames.revision,
-                specialNames.revisionsInformation,
-                specialNames.revisions,
-                specialNames.type)
-        )
+        for (const name:string of reservedNames)
             if (data.hasOwnProperty(name))
                 result[name] = data[name]
             else if (name === specialNames.type)
@@ -1597,7 +1605,8 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
 // / region abstract
 /**
  * Generic input component.
- * @property extendObject - Holds the extend object's pipe transformation
+ * @property _modelConfiguration - All model configurations.
+ * @property _extendObject - Holds the extend object's pipe transformation
  * @property model - Holds model informations including actual value and
  * metadata.
  * @property modelChange - Model event emitter emitting events on each model
@@ -1607,6 +1616,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * component from showing error messages before the user has submit the form.
  */
 export class AbstractInputComponent/* implements OnInit*/ {
+    _modelConfiguration:PlainObject
     _extendObject:Function
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
@@ -1616,9 +1626,13 @@ export class AbstractInputComponent/* implements OnInit*/ {
     /**
      * Sets needed services as property values.
      * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param initialData - Injected initial data service instance.
      * @returns Nothing.
      */
-    constructor(extendObjectPipe:ExtendObjectPipe):void {
+    constructor(
+        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService
+    ):void {
+        this._modelConfiguration = initialData.configuration.database.model
         this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
     }
     /**
@@ -1629,22 +1643,63 @@ export class AbstractInputComponent/* implements OnInit*/ {
         this._extendObject(this.model, this._extendObject({
             disabled: false,
             maximum: Infinity,
-            minimum: (this.model.type === 'string') ? 0 : -Infinity,
+            minimum: this.model.type === 'string' ? 0 : -Infinity,
             nullable: true,
             regularExpressionPattern: '.*',
             state: {},
             type: 'string'
         }, this.model))
+        for (const hookType:string of [
+            'onUpdateExpression', 'onUpdateExecution'
+        ])
+            if (
+                this.model.hasOwnProperty(hookType) && this.model[hookType] &&
+                typeof this.model[hookType] !== 'function'
+            )
+                this.model[hookType] = new Function(
+                    'newDocument', 'oldDocument', 'userContext',
+                    'securitySettings', 'name', 'models', 'modelConfiguration',
+                    'serialize', 'modelName', 'model', 'propertySpecification',
+                    'now', 'nowUTCTimestamp', (hookType.endsWith(
+                        'Expression'
+                    ) ? 'return ' : '') + this.model[hookType])
     }
     /**
      * Triggers when ever a change to current model happens inside this
      * component.
+     * @param newValue - Value to use to update model with.
      * @param state - Saves the current model state.
      * @returns Nothing.
      */
-    onChange(state:Object):void {
+    onChange(newValue:any, state:Object):any {
+        if (this.model.type === 'integer')
+            newValue = parseInt(newValue)
+        else if (this.model.type === 'number')
+            newValue = parseFloat(newValue)
+        else if (newValue && this.model.type === 'string' && this.model.trim)
+            newValue = newValue.trim()
+        const now:Date = new Date()
+        const nowUTCTimestamp:number = Date.UTC(
+            now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
+            now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
+            now.getUTCMilliseconds())
+        for (const hookType:string of [
+            'onUpdateExpression', 'onUpdateExecution'
+        ])
+            if (
+                this.model.hasOwnProperty(hookType) && this.model[hookType] &&
+                typeof this.model[hookType] === 'function'
+            )
+                newValue = this.model[hookType](
+                    {[this.model.name]: newValue}, null, {}, {},
+                    this.model.name, this._modelConfiguration.entities,
+                    this._modelConfiguration, (object:Object):string =>
+                        JSON.stringify(object, null, 4),
+                    'generic', {generic: {[this.model.name]: this.model}},
+                    this.model, now, nowUTCTimestamp, newValue)
         this.model.state = state
         this.modelChange.emit(this.model)
+        return newValue
     }
 }
 /**
@@ -2238,12 +2293,12 @@ export class IntervalsInputComponent {
 // // region text/selection
 /* eslint-disable max-len */
 const propertyGenericContent:string = `
-    [required]="!model.nullable"
-    [ngModel]="model.value"
-    (ngModelChange)="model.value = model.type === 'integer' ? parseInt($event) : model.type === 'number' ? parseFloat($event) : $event"
-    [placeholder]="model.description || model.name"
     #state="ngModel"
-    (change)="onChange(state)"
+    [required]="!model.nullable"
+    [name]="model.name"
+    [ngModel]="model.value"
+    (ngModelChange)="model.value = onChange($event, state)"
+    [placeholder]="model.description || model.name"
 `
 const propertyInputContent:string = `
     [disabled]="model.disabled || model.mutable === false || model.writable === false"
@@ -2327,10 +2382,13 @@ export class InputComponent extends AbstractInputComponent {
      * Forwards injected service instances to the abstract input component's
      * constructor.
      * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param initialData - Injected initial data service instance.
      * @returns Nothing.
      */
-    constructor(extendObjectPipe:ExtendObjectPipe):void {
-        super(extendObjectPipe)
+    constructor(
+        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService
+    ):void {
+        super(extendObjectPipe, initialData)
     }
 }
 // IgnoreTypeCheck
@@ -2357,10 +2415,13 @@ export class TextareaComponent extends AbstractInputComponent {
      * Forwards injected service instances to the abstract input component's
      * constructor.
      * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param initialData - Injected initial data service instance.
      * @returns Nothing.
      */
-    constructor(extendObjectPipe:ExtendObjectPipe):void {
-        super(extendObjectPipe)
+    constructor(
+        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService
+    ):void {
+        super(extendObjectPipe, initialData)
     }
 }
 // // endregion
