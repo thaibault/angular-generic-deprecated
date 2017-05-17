@@ -93,6 +93,11 @@ registerAngularTest(function(
             // region prepare services
             $.global.genericInitialData = {configuration: {
                 database: {
+                    connector: {
+                        adapter: 'memory',
+                        auto_compaction: true,
+                        revs_limit: 10
+                    },
                     model: {
                         entities: {Test: {
                             _attachments: {'.+\\.(?:jpe?g|png)': {
@@ -131,11 +136,6 @@ registerAngularTest(function(
                                 }
                             }
                         }
-                    },
-                    connector: {
-                        adapter: 'memory',
-                        auto_compaction: true,
-                        revs_limit: 10
                     },
                     plugins: [PouchDBAdapterMemory],
                     url: 'test'
