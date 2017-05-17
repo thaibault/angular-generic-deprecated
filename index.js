@@ -865,6 +865,7 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
  * method.
  * @property synchronisation - This synchronisation instance represents the
  * active synchronisation process if a local offline database is in use.
+ * @property tools - Holds the tools class from the tools service.
  */
 export class DataService {
     static revisionNumberRegularExpression:RegExp = /^([0-9]+)-/
@@ -901,13 +902,14 @@ export class DataService {
         extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService,
         stringFormatPipe:StringFormatPipe, tools:ToolsService
     ):void {
-        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.configuration = initialData.configuration
         if (this.configuration.database.hasOwnProperty('publicURL'))
             this.configuration.database.url =
                 this.configuration.database.publicURL
-        this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.database = PouchDB
+        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
+        this.tools = tools.tools
         const nativeBulkDocs:Function = this.database.prototype.bulkDocs
         const self:DataService = this
         const idName:string =
@@ -993,17 +995,13 @@ export class DataService {
                      .plugin(PouchDBValidationPlugin)
         for (const plugin:Object of this.configuration.database.plugins || [])
             this.database.plugin(plugin)
-        /*
-            NOTE: We want to allow other services to integrate interception
-            promise.
-        */
-        tools.tools.timeout(this.initialize.bind(this))
+        this.initialize()
     }
     /**
      * Initializes database connection and synchronisation if needed.
      * @returns Nothing.
      */
-    async initialize():Promise<void> {
+    initialize():void {
         const options:PlainObject = this.extendObject(
             true, {skip_setup: true},
             this.configuration.database.connector || {})
@@ -1045,19 +1043,16 @@ export class DataService {
                 }
             }
         this.connection.installValidationMethods()
-        if (this.configuration.database.local) {
-            if (this.interceptSynchronisationPromise)
-                await this.interceptSynchronisationPromise
-            this.synchronisation = this.connection.sync(
-                this.remoteConnection, {live: true, retry: true})
-            .on('change', (info:Object):void => console.info('change', info))
-            .on('paused', ():void => console.info('paused'))
-            .on('active', ():void => console.info('active'))
-            .on('denied', (error:Object):void => console.warn('denied', error))
-            .on('complete', (info:Object):void => console.info(
-                'complete', info))
-            .on('error', (error:Object):void => console.error('error', error))
-        }
+        if (this.configuration.database.local)
+            /*
+                NOTE: We want to allow other services to integrate interception
+                promise.
+            */
+            this.tools.timeout(async ():Promise<void> => {
+                if (this.interceptSynchronisationPromise)
+                    await this.interceptSynchronisationPromise
+                this.startSynchronisation()
+            })
     }
     /**
      * Creates a database index.
@@ -1177,6 +1172,19 @@ export class DataService {
      */
     remove(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.remove(...parameter)
+    }
+    /**
+     * TODO
+     */
+    startSynchronisation():Object {
+        return this.synchronisation = this.connection.sync(
+            this.remoteConnection, {live: true, retry: true})
+        .on('change', (info:Object):void => console.info('change', info))
+        .on('paused', ():void => console.info('paused'))
+        .on('active', ():void => console.info('active'))
+        .on('denied', (error:Object):void => console.warn('denied', error))
+        .on('complete', (info:Object):void => console.info('complete', info))
+        .on('error', (error:Object):void => console.error('error', error))
     }
 }
 // IgnoreTypeCheck
