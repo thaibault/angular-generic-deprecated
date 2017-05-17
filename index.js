@@ -894,16 +894,98 @@ export class DataService {
         extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService,
         stringFormatPipe:StringFormatPipe
     ):void {
-        this.database = PouchDB.plugin(PouchDBFindPlugin)
-                               .plugin(PouchDBValidationPlugin)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.configuration = initialData.configuration
         if (this.configuration.database.hasOwnProperty('publicURL'))
             this.configuration.database.url =
                 this.configuration.database.publicURL
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
+        this.database = PouchDB
+        const nativeBulkDocs:Function = this.database.prototype.bulkDocs
+        const self:DataService = this
+        const idName:string =
+            this.configuration.database.model.property.name.special.id
+        const revisionName:string =
+            this.configuration.database.model.property.name.special.revision
+        const bulkDocs:Function = async function(
+            firstParameter:any, ...parameter:Array<any>
+        ):Promise<Array<PlainObject>> {
+            /*
+                Implements a generic retry mechanism for "upsert" and "latest"
+                updates.
+            */
+            if (
+                !Array.isArray(firstParameter) &&
+                typeof firstParameter === 'object' &&
+                firstParameter !== null &&
+                firstParameter.hasOwnProperty(idName)
+            )
+                firstParameter = [firstParameter]
+            let result:Array<PlainObject>
+            try {
+                result = await nativeBulkDocs.call(
+                    this, firstParameter, ...parameter)
+            } catch (error) {
+                if (error.name === 'bad_request') {
+                    for (const item:PlainObject of firstParameter)
+                        if (['latest', 'upsert'].includes(item[revisionName]))
+                            try {
+                                item[revisionName] = (
+                                    await self.connection.get(item[
+                                        self.configuration.database.model
+                                        .property.name.special.id])
+                                )[revisionName]
+                            } catch (error) {
+                                if (error.name === 'not_found')
+                                    delete item[revisionName]
+                                else
+                                    throw error
+                            }
+                    try {
+                        result = await nativeBulkDocs.call(
+                            this, firstParameter, ...parameter)
+                    } catch (error) {
+                        throw error
+                    }
+                } else
+                    throw error
+            }
+            const conflictingIndexes:Array<number> = []
+            const conflicts:Array<PlainObject> = []
+            let index:number = 0
+            for (const item:PlainObject of result) {
+                if (
+                    typeof firstParameter[index] === 'object' &&
+                    firstParameter !== null &&
+                    firstParameter[index].hasOwnProperty(revisionName) && [
+                        'latest', 'upsert'
+                    ].includes(firstParameter[index][revisionName]) &&
+                    item.name === 'conflict'
+                ) {
+                    conflicts.push(item)
+                    conflictingIndexes.push(index)
+                }
+                index += 1
+            }
+            if (conflicts.length) {
+                firstParameter = conflicts
+                let retriedResults:Array<PlainObject>
+                try {
+                    retriedResults = await this.bulkDocs(
+                        firstParameter, ...parameter)
+                } catch (error) {
+                    throw error
+                }
+                for (const retriedResult:PlainObject of retriedResults)
+                    result[conflictingIndexes.shift()] = retriedResult
+            }
+            return result
+        }
+        this.database.plugin({bulkDocs})
+                     .plugin(PouchDBFindPlugin)
+                     .plugin(PouchDBValidationPlugin)
         for (const plugin:Object of this.configuration.database.plugins || [])
-            this.database = this.database.plugin(plugin)
+            this.database.plugin(plugin)
         this.initialize()
     }
     /**
@@ -983,55 +1065,8 @@ export class DataService {
      * pouchdb's "bulkDocs()" method.
      * @returns Whatever pouchdb's method returns.
      */
-    async bulkDocs(...parameter:Array<any>):Promise<Array<PlainObject>> {
-        /*
-            Implements a generic retry mechanism for "upsert" and "latest"
-            updates.
-        */
-        const revisionName:string =
-            this.configuration.database.model.property.name.special.revision
-        let result:Array<PlainObject>
-        try {
-            result = await this.connection.bulkDocs(...parameter)
-        } catch (error) {
-            if (error.name === 'bad_request') {
-                for (const item:PlainObject of parameter[0])
-                    if (['latest', 'upsert'].includes(item[revisionName]))
-                        item[revisionName] = (await this.connection.get(item[
-                            this.configuration.database.model.property.name
-                            .special.id
-                        ]))[revisionName]
-                try {
-                    result = await this.connection.bulkDocs(...parameter)
-                } catch (error) {
-                    throw error
-                }
-            } else
-                throw error
-        }
-        const conflictingIndexes:Array<number> = []
-        const conflicts:Array<PlainObject> = []
-        let index:number = 0
-        for (const item:PlainObject of result) {
-            if (parameter[0][index].hasOwnProperty(revisionName) && [
-                'latest', 'upsert'
-            ].includes(parameter[0][index][revisionName]) &&
-            item.name === 'conflict') {
-                conflicts.push(item)
-                conflictingIndexes.push(index)
-            }
-            index += 1
-        }
-        parameter[0] = conflicts
-        let retriedResults:Array<PlainObject>
-        try {
-            retriedResults = await this.connection.bulkDocs(...parameter)
-        } catch (error) {
-            throw error
-        }
-        for (const retriedResult:PlainObject of retriedResults)
-            result[conflictingIndexes.shift()] = retriedResult
-        return result
+    bulkDocs(...parameter:Array<any>):Promise<Array<any>> {
+        return this.connection.bulkDocs(...parameter)
     }
     /**
      * Removes current active database.

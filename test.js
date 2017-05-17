@@ -132,7 +132,11 @@ registerAngularTest(function(
                             }
                         }
                     },
-                    options: {adapter: 'memory'},
+                    connector: {
+                        adapter: 'memory',
+                        auto_compaction: true,
+                        revs_limit: 10
+                    },
                     plugins: [PouchDBAdapterMemory],
                     url: 'test'
                 },
@@ -637,7 +641,8 @@ registerAngularTest(function(
                         const done:Function = assert.async()
                         try {
                             const item:PlainObject = {
-                                _id: 'a', '-type': 'Test', a: 'test'}
+                                _id: 'a', _rev: 'upsert', '-type': 'Test',
+                                a: 'test'}
                             item._rev = (await data.put(item)).rev
                             assert.deepEqual(await data.get('a'), item)
                             item.a = 'a'
@@ -646,6 +651,10 @@ registerAngularTest(function(
                             item._rev = (await data.bulkDocs([item]))[0].rev
                             item._rev = 'latest'
                             item._rev = (await data.bulkDocs([item]))[0].rev
+                            item._rev = 'upsert'
+                            item._rev = (await data.put(item)).rev
+                            item._rev = 'latest'
+                            item._rev = (await data.put(item)).rev
                             assert.deepEqual(await data.get('a'), item)
                             let test:boolean = false
                             const deregister:Function = data.register(
@@ -800,11 +809,9 @@ registerAngularTest(function(
                                     fields: ['-type', name],
                                     name: `Test-${name}-GenericIndex`
                                 }})
-                            try {
-                                await data.remove(await data.get('a'))
-                            } catch (error) {}
                             const item:PlainObject = {
-                                _id: 'a', '-type': 'Test', a: 'test'}
+                                _id: 'a', _rev: 'upsert', '-type': 'Test',
+                                a: 'test'}
                             item._rev = (await data.put(item)).rev
                             // region list
                             assert.deepEqual(
