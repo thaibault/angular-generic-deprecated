@@ -855,12 +855,16 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
  * @property database - The entire database constructor.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
+ * @property interceptSynchronisationPromise - Promise which have to be
+ * resolved before synchronisation for local database starts.
  * @property middlewares - Mapping of post and pre callback arrays to trigger
  * before or after each database transaction.
- * @property synchronisation - This synchronisation instance represents the
- * active synchronisation process if a local offline database is in use.
+ * @property remoteConnection - The current remote database connection
+ * instance.
  * @property stringFormat - Holds the string format's pipe transformation
  * method.
+ * @property synchronisation - This synchronisation instance represents the
+ * active synchronisation process if a local offline database is in use.
  */
 export class DataService {
     static revisionNumberRegularExpression:RegExp = /^([0-9]+)-/
@@ -873,6 +877,7 @@ export class DataService {
     configuration:PlainObject
     database:PouchDB
     extendObject:Function
+    interceptSynchronisationPromise:?Promise<any> = null
     middlewares:{
         pre:{[key:string]:Array<Function>};
         post:{[key:string]:Array<Function>};
@@ -880,6 +885,7 @@ export class DataService {
         post: {},
         pre: {}
     }
+    remoteConnection:PouchDB
     stringFormat:Function
     synchronisation:?Object
     /**
@@ -888,11 +894,12 @@ export class DataService {
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
      * @param stringFormatPipe - Injected string format pipe instance.
+     * @param tools - Injected tools service instance.
      * @returns Nothing.
      */
     constructor(
         extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService,
-        stringFormatPipe:StringFormatPipe
+        stringFormatPipe:StringFormatPipe, tools:ToolsService
     ):void {
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.configuration = initialData.configuration
@@ -986,26 +993,28 @@ export class DataService {
                      .plugin(PouchDBValidationPlugin)
         for (const plugin:Object of this.configuration.database.plugins || [])
             this.database.plugin(plugin)
-        this.initialize()
+        /*
+            NOTE: We want to allow other services to integrate interception
+            promise.
+        */
+        tools.tools.timeout(this.initialize.bind(this))
     }
     /**
      * Initializes database connection and synchronisation if needed.
      * @returns Nothing.
      */
-    initialize():void {
-        const options:PlainObject = {}
-        let type:string
+    async initialize():Promise<void> {
+        const options:PlainObject = this.extendObject(
+            true, {skip_setup: true},
+            this.configuration.database.connector || {})
+        const databaseName:string = this.configuration.name || 'generic'
+        this.remoteConnection = new this.database(this.stringFormat(
+            this.configuration.database.url, ''
+        ) + `/${databaseName}`, options)
         if (this.configuration.database.local)
-            type = 'local'
-        else {
-            options.skip_setup = false
-            type = this.stringFormat(this.configuration.database.url, '')
-        }
-        this.connection = new this.database(type + (/^[a-z]+:\/\/.+$/g.test(
-            type
-        ) ? `/${this.configuration.name || 'generic'}` : ''),
-        this.extendObject(
-            true, options, this.configuration.database.connector || {}))
+            this.connection = new this.database(databaseName, options)
+        else
+            this.connection = this.remoteConnection
         for (const name:string in this.connection)
             if (this.constructor.wrappableMethodNames.includes(
                 name
@@ -1036,19 +1045,19 @@ export class DataService {
                 }
             }
         this.connection.installValidationMethods()
-        if (this.configuration.database.local)
-            this.synchronisation = PouchDB.sync(this.stringFormat(
-                this.configuration.database.url, ''
-            ) + `/${this.configuration.name}`, 'local', {
-                live: true, retry: true
-            })
+        if (this.configuration.database.local) {
+            if (this.interceptSynchronisationPromise)
+                await this.interceptSynchronisationPromise
+            this.synchronisation = this.connection.sync(
+                this.remoteConnection, {live: true, retry: true})
             .on('change', (info:Object):void => console.info('change', info))
-            .on('paused', (error:Object):void => console.info('paused', error))
+            .on('paused', ():void => console.info('paused'))
             .on('active', ():void => console.info('active'))
             .on('denied', (error:Object):void => console.warn('denied', error))
             .on('complete', (info:Object):void => console.info(
                 'complete', info))
             .on('error', (error:Object):void => console.error('error', error))
+        }
     }
     /**
      * Creates a database index.
