@@ -2365,7 +2365,7 @@ const propertyGenericContent:string = `
     [required]="!model.nullable"
     [name]="model.name"
     [ngModel]="model.value"
-    (ngModelChange)="model.value = onChange($event, state)"
+    (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
     [placeholder]="model.description || model.name"
 `
 const propertyInputContent:string = `

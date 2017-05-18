@@ -958,6 +958,8 @@ registerAngularTest(function(
                                 required: true
                             }}
                             fixture.componentInstance.onChange(null, state)
+                            fixture.componentInstance.modelChange.emit(
+                                fixture.componentInstance.model)
                             assert.deepEqual(
                                 fixture.componentInstance.model.state, state)
                             assert.deepEqual(
