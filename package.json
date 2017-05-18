@@ -55,6 +55,7 @@
     "@angular/platform-browser": "latest",
     "@angular/platform-browser-dynamic": "latest",
     "@angular/router": "latest",
+    "blob-util": "latest",
     "clientnode": "latest",
     "hammerjs": "latest",
     "pouchdb": "latest",
@@ -96,7 +97,7 @@
           "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'testInBrowser'].includes(self.givenCommandLineArguments[2]) ? [] : './mockup'"
         },
         "vendor": {
-          "__evaluate__": "self.debug && 2 < self.givenCommandLineArguments.length && ['buildDLL', 'serve', 'testInBrowser', 'watchDLL'].includes(self.givenCommandLineArguments[2]) ? ['babel-polyfill', 'hammerjs', 'reflect-metadata', 'zone.js', 'rxjs', '@angular/animations', '@angular/common', '@angular/core', '@angular/http', '@angular/material', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router'].concat(self.givenCommandLineArguments[2] === 'serve' ? [] : ['script!qunitjs', 'weboptimizer/browserAPI', './mockup']) : []"
+          "__evaluate__": "self.debug && 2 < self.givenCommandLineArguments.length && ['buildDLL', 'serve', 'testInBrowser', 'watchDLL'].includes(self.givenCommandLineArguments[2]) ? ['babel-polyfill', 'blob-util', 'hammerjs', 'reflect-metadata', 'zone.js', 'rxjs', '@angular/animations', '@angular/common', '@angular/core', '@angular/http', '@angular/material', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router'].concat(self.givenCommandLineArguments[2] === 'serve' ? [] : ['script!qunitjs', 'weboptimizer/browserAPI', './mockup']) : []"
         }
       }
     },
@@ -132,6 +133,7 @@
         ],
         "normal": {
           "^babel-polyfill$": "babel-polyfill/dist/polyfill.min.js",
+          "^blob-util$": "blob-util/dist/blob-util.min.js",
           "^hammerjs$": "hammerjs/hammer.min.js",
           "^jquery$": "jquery/dist/jquery.min.js",
           "^pouchdb(?:/.+)?$": "pouchdb/dist/pouchdb.min.js",

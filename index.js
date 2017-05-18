@@ -18,6 +18,7 @@
     endregion
 */
 // region imports
+import {dataURLToBlob} from 'blob-util'
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
@@ -1129,6 +1130,15 @@ export class DataService {
         return result
     }
     /**
+     * Retrieves an attachment by given id.
+     * @param parameter - All parameter will be forwarded to the underlining
+     * pouchdb's "get()" method.
+     * @returns Whatever pouchdb's method returns.
+     */
+    getAttachment(...parameter:Array<any>):Promise<PlainObject> {
+        return this.connection.getAttachment(...parameter)
+    }
+    /**
      * Creates or updates given data.
      * @param parameter - All parameter will be forwarded to the underlining
      * pouchdb's "put()" method.
@@ -1136,6 +1146,15 @@ export class DataService {
      */
     put(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.put(...parameter)
+    }
+    /**
+     * Creates or updates given attachment.
+     * @param parameter - All parameter will be forwarded to the underlining
+     * pouchdb's "put()" method.
+     * @returns Whatever pouchdb's method returns.
+     */
+    putAttachment(...parameter:Array<any>):Promise<PlainObject> {
+        return this.connection.putAttachment(...parameter)
     }
     /**
      * Registers a new middleware.
@@ -2718,9 +2737,10 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     }
     /**
      * Initializes file upload handler.
+     * @param changes - Holds informations about changed bound properties.
      * @returns Nothing.
      */
-    ngOnChanges():void {
+    async ngOnChanges(changes:Object):Promise<void> {
         if (this.mapNameToField && !Array.isArray(this.mapNameToField))
             this.mapNameToField = [this.mapNameToField]
         const name:string = this._getFilenameByPrefix(
@@ -2742,24 +2762,37 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
             ].state.errors = {required: true}
         if (this.file) {
             this.file.query = `?version=${this.file.digest}`
-            if (this.revision)
-                this.file.query = `?rev=${this.revision}`
             /*
                 NOTE: Only set new file source if isn't already present to
                 prevent to download an immediately uploaded file and grab and
                 older cached one.
             */
             if (!this.file.source)
-                this.file.source =
-                    this._domSanitizer.bypassSecurityTrustResourceUrl(
-                        this._stringFormat(
-                            this._configuration.database.url, ''
-                        ) + `/${this._configuration.name || 'generic'}/` +
-                        this.model[
+                if (
+                    this.revision &&
+                    changes.revision.currentValue !==
+                    changes.revision.previousValue
+                ) {
+                    this.file.data = dataURLToBlob(
+                        await this._data.getAttachment(this.model[
                             this._configuration.database.model.property.name
                             .special.id
-                        ] + `/${this.file.name}${this.file.query}`
-                    )
+                        ], this.file.name, {rev: this.revision}))
+                    this.file.content_type = this.file.data.type || 'text/plain'
+                    this.file.length = this.file.data.size
+                    this.file.source =
+                        this._domSanitizer.bypassSecurityTrustResourceUrl(
+                            this.file.data)
+                } else
+                    this.file.source =
+                        this._domSanitizer.bypassSecurityTrustResourceUrl(
+                            this._stringFormat(
+                                this._configuration.database.url, ''
+                            ) + `/${this._configuration.name || 'generic'}/` +
+                            this.model[
+                                this._configuration.database.model.property
+                                .name.special.id
+                            ] + `/${this.file.name}${this.file.query}`)
         }
         this.determinePresentationType()
         this.change.emit(this.file)
