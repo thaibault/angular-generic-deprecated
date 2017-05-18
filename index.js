@@ -18,7 +18,7 @@
     endregion
 */
 // region imports
-import {dataURLToBlob} from 'blob-util'
+import {blobToBase64String} from 'blob-util'
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
@@ -2773,15 +2773,17 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     changes.revision.currentValue !==
                     changes.revision.previousValue
                 ) {
-                    this.file.data = dataURLToBlob(
-                        await this._data.getAttachment(this.model[
+                    const image:Object = await this._data.getAttachment(
+                        this.model[
                             this._configuration.database.model.property.name
                             .special.id
-                        ], this.file.name, {rev: this.revision}))
-                    this.file.content_type = this.file.data.type || 'text/plain'
-                    this.file.length = this.file.data.size
+                        ], this.file.name, {rev: this.revision})
+                    this.file.data = await blobToBase64String(image)
+                    this.file.content_type = image.type || 'text/plain'
+                    this.file.length = image.size
                     this.file.source =
                         this._domSanitizer.bypassSecurityTrustResourceUrl(
+                            `data:${this.file.content_type};base64,` +
                             this.file.data)
                 } else
                     this.file.source =
