@@ -347,14 +347,16 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                         ].value
                             if (newDocument[name][fileName].hasOwnProperty(
                                 'data'
-                            ) && !(oldAttachment && newDocument[name][
-                                fileName
-                            ].length === oldAttachment.length && (
-                                oldAttachment.content_type ||
-                                'application/octet-stream'
-                            ) === (newDocument[name][
-                                fileName
-                            ].content_type || 'application/octet-stream'))) {
+                            ) && newDocument[name][fileName].data && !(
+                                oldAttachment && newDocument[name][
+                                    fileName
+                                ].length === oldAttachment.length && (
+                                    oldAttachment.content_type ||
+                                    'application/octet-stream'
+                                ) === (newDocument[name][
+                                    fileName
+                                ].content_type || 'application/octet-stream')
+                            )) {
                                 result[name][fileName] = {
                                     content_type: newDocument[name][
                                         fileName
@@ -362,8 +364,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                     'application/octet-stream',
                                     data: newDocument[name][fileName].data
                                 }
-                                empty
-                             = false
+                                empty = false
                             } else
                                 untouchedAttachments.push(fileName)
                         }
@@ -435,7 +436,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             // Handle attachment removes or replacements.
             if (oldDocument.hasOwnProperty(
                 specialNames.attachment
-            ) && oldDocument[specialNames]) {
+            ) && oldDocument[specialNames.attachment]) {
                 this._handleAttachmentChanges(result, oldDocument[
                     specialNames.attachment
                 ], fileTypeReplacement, untouchedAttachments)
@@ -1206,16 +1207,21 @@ export class DataScopeService {
      * Saves alle needed services as property values.
      * @param data - Injected data service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
+     * pipe instance.
      * @param initialData - Injected initial data service instance.
      * @param tools - Injected tools service instance.
      * @returns Nothing.
      */
     constructor(
         data:DataService, extendObjectPipe:ExtendObjectPipe,
+        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService, tools:ToolsService
     ):void {
         this.configuration = initialData.configuration
         this.data = data
+        this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
+            getFilenameByPrefixPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.tools = tools.tools
     }
@@ -1343,7 +1349,8 @@ export class DataScopeService {
                                         'name', 'models', 'modelConfiguration',
                                         'serialize', 'modelName', 'model',
                                         'propertySpecification', 'now',
-                                        'nowUTCTimestamp', (
+                                        'nowUTCTimestamp',
+                                        'getFilenameByPrefix', (
                                             hookType.endsWith(
                                                 'Expression'
                                             ) ? 'return ' : ''
@@ -1357,7 +1364,9 @@ export class DataScopeService {
                                         ):string => JSON.stringify(
                                             object, null, 4
                                         ), modelName, modelSpecification, now,
-                                        nowUTCTimestamp, result[name][type])
+                                        nowUTCTimestamp,
+                                        this.getFilenameByPrefix,
+                                        result[name][type])
                                     if (result[name][type].hasOwnProperty(
                                         'value'
                                     ) && result[name][type].value === undefined
@@ -1402,7 +1411,7 @@ export class DataScopeService {
                                 'securitySettings', 'name', 'models',
                                 'modelConfiguration', 'serialize', 'modelName',
                                 'model', 'propertySpecification', 'now',
-                                'nowUTCTimestamp', (
+                                'nowUTCTimestamp', 'getFilenameByPrefix', (
                                     type.endsWith('Expression') ? 'return ' :
                                     ''
                                 ) + result[name][type]
@@ -1413,7 +1422,8 @@ export class DataScopeService {
                                 (object:Object):string => JSON.stringify(
                                     object, null, 4
                                 ), modelName, modelSpecification, now,
-                                nowUTCTimestamp, result[name])
+                                nowUTCTimestamp, this.getFilenameByPrefix,
+                                result[name])
                             if (result[name].value === undefined)
                                 result[name].value = null
                         }
@@ -1678,14 +1688,20 @@ export class AbstractInputComponent/* implements OnInit*/ {
     /**
      * Sets needed services as property values.
      * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
+     * pipe instance.
      * @param initialData - Injected initial data service instance.
      * @returns Nothing.
      */
     constructor(
-        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService
+        extendObjectPipe:ExtendObjectPipe,
+        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
+        initialData:InitialDataService
     ):void {
-        this._modelConfiguration = initialData.configuration.database.model
         this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this._getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
+            getFilenameByPrefixPipe)
+        this._modelConfiguration = initialData.configuration.database.model
     }
     /**
      * Triggers after input values have been resolved.
@@ -1712,9 +1728,9 @@ export class AbstractInputComponent/* implements OnInit*/ {
                     'newDocument', 'oldDocument', 'userContext',
                     'securitySettings', 'name', 'models', 'modelConfiguration',
                     'serialize', 'modelName', 'model', 'propertySpecification',
-                    'now', 'nowUTCTimestamp', (hookType.endsWith(
-                        'Expression'
-                    ) ? 'return ' : '') + this.model[hookType])
+                    'now', 'nowUTCTimestamp', 'getFilenameByPrefix', (
+                        hookType.endsWith('Expression') ? 'return ' : ''
+                    ) + this.model[hookType])
     }
     /**
      * Triggers when ever a change to current model happens inside this
@@ -1748,9 +1764,9 @@ export class AbstractInputComponent/* implements OnInit*/ {
                     this._modelConfiguration, (object:Object):string =>
                         JSON.stringify(object, null, 4),
                     'generic', {generic: {[this.model.name]: this.model}},
-                    this.model, now, nowUTCTimestamp, newValue)
+                    this.model, now, nowUTCTimestamp,
+                    this._getFilenameByPrefix, newValue)
         this.model.state = state
-        this.modelChange.emit(this.model)
         return newValue
     }
 }
@@ -2434,13 +2450,17 @@ export class InputComponent extends AbstractInputComponent {
      * Forwards injected service instances to the abstract input component's
      * constructor.
      * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
+     * pipe instance.
      * @param initialData - Injected initial data service instance.
      * @returns Nothing.
      */
     constructor(
-        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService
+        extendObjectPipe:ExtendObjectPipe,
+        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
+        initialData:InitialDataService
     ):void {
-        super(extendObjectPipe, initialData)
+        super(extendObjectPipe, getFilenameByPrefixPipe, initialData)
     }
 }
 // IgnoreTypeCheck
@@ -2467,13 +2487,17 @@ export class TextareaComponent extends AbstractInputComponent {
      * Forwards injected service instances to the abstract input component's
      * constructor.
      * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
+     * pipe instance.
      * @param initialData - Injected initial data service instance.
      * @returns Nothing.
      */
     constructor(
-        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService
+        extendObjectPipe:ExtendObjectPipe,
+        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
+        initialData:InitialDataService
     ):void {
-        super(extendObjectPipe, initialData)
+        super(extendObjectPipe, getFilenameByPrefixPipe, initialData)
     }
 }
 // // endregion
@@ -2595,7 +2619,7 @@ export class TextareaComponent extends AbstractInputComponent {
  * @property deleteButtonText - Text for button to trigger file removing.
  * @property downloadButtonText - Text for button to download current file.
  * @property file - Holds the current selected file object if present.
- * @property fileChange - Event emitter emitting when file changes happen.
+ * @property change - Event emitter emitting when file changes happen.
  * @property headerText - Header text to show instead of property description
  * or name.
  * @property input - Virtual file input dom node.
@@ -2636,7 +2660,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     @Input() deleteButtonText:string = 'delete'
     @Input() downloadButtonText:string = 'download'
     file:any = null
-    @Output() fileChange:EventEmitter = new EventEmitter()
+    @Output() change:EventEmitter = new EventEmitter()
     @ViewChild('input') input:ElementRef
     internalName:string
     @Input() headerText:string = ''
@@ -2729,7 +2753,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     )
         }
         this.determinePresentationType()
-        this.fileChange.emit(this.file)
+        this.change.emit(this.file)
     }
     /**
      * Initializes current file input field. Adds needed event observer.
@@ -2871,7 +2895,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                         `${this.model[idName]}/${this.file.name}` +
                         this.file.query)
                 this.determinePresentationType()
-                this.fileChange.emit(this.file)
+                this.change.emit(this.file)
                 this.modelChange.emit(this.model)
             } else {
                 this.determinePresentationType()
@@ -2884,7 +2908,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     if (this.mapNameToField)
                         for (const name:string of this.mapNameToField)
                             this.model[name] = this.file.name
-                    this.fileChange.emit(this.file)
+                    this.change.emit(this.file)
                     this.modelChange.emit(this.model)
                 }
                 fileReader.readAsDataURL(this.file.data)
@@ -2960,7 +2984,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         if (!this.model[this.attachmentTypeName][this.internalName].nullable)
             this.model[this.attachmentTypeName][this.internalName].state
                 .errors = {required: true}
-        this.fileChange.emit(this.file)
+        this.change.emit(this.file)
         this.modelChange.emit(this.model)
     }
 }
