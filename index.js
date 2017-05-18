@@ -890,6 +890,7 @@ export class DataService {
     remoteConnection:PouchDB
     stringFormat:Function
     synchronisation:?Object
+    tools:Tools
     /**
      * Creates the database constructor applies all plugins instantiates
      * the connection instance and registers all middlewares.
@@ -1049,6 +1050,7 @@ export class DataService {
                 NOTE: We want to allow other services to integrate interception
                 promise.
             */
+            // IgnoreTypeCheck
             this.tools.timeout(async ():Promise<void> => {
                 if (this.interceptSynchronisationPromise)
                     await this.interceptSynchronisationPromise
@@ -1175,7 +1177,8 @@ export class DataService {
         return this.connection.remove(...parameter)
     }
     /**
-     * TODO
+     * Starts synchronisation between a local and remote database.
+     * @returns Nothing.
      */
     startSynchronisation():Object {
         return this.synchronisation = this.connection.sync(
@@ -1196,12 +1199,15 @@ export class DataService {
  * @property data - Holds the data exchange service instance.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
+ * @property getFilenameByPrefix - Holds the get file name by prefix's pipe
+ * transformation method.
  * @property tools - Holds the tools class from the tools service.
  */
 export class DataScopeService {
     configuration:PlainObject
     data:DataService
     extendObject:Function
+    getFilenameByPrefix:Function
     tools:typeof Tools
     /**
      * Saves alle needed services as property values.
@@ -1667,8 +1673,10 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
 // / region abstract
 /**
  * Generic input component.
- * @property _modelConfiguration - All model configurations.
  * @property _extendObject - Holds the extend object's pipe transformation
+ * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
+ * transformation method.
+ * @property _modelConfiguration - All model configurations.
  * @property model - Holds model informations including actual value and
  * metadata.
  * @property modelChange - Model event emitter emitting events on each model
@@ -1678,8 +1686,9 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * component from showing error messages before the user has submit the form.
  */
 export class AbstractInputComponent/* implements OnInit*/ {
-    _modelConfiguration:PlainObject
     _extendObject:Function
+    _getFilenameByPrefix:Function
+    _modelConfiguration:PlainObject
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     parseInt = parseInt
