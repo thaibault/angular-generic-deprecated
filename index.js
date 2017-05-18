@@ -2708,7 +2708,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 this.internalName
             ].state.errors = {required: true}
         if (this.file) {
-            this.file.query = `?version=${this.revision || this.file.digest}`
+            this.file.query = `?version=${this.file.digest}`
+            if (this.revision)
+                this.file.query = `?rev=${this.revision}`
             /*
                 NOTE: Only set new file source if isn't already present to
                 prevent to download an immediately uploaded file and grab and
@@ -2860,7 +2862,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     return
                 }
                 this.file.revision = this.model[revisionName] = result.rev
-                this.file.query = `?version=${result.rev}`
+                this.file.query = `?rev=${result.rev}`
                 this.file.source =
                     this._domSanitizer.bypassSecurityTrustResourceUrl(
                         this._stringFormat(
