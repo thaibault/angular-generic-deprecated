@@ -2645,6 +2645,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() name:?string = null
     @Input() newButtonText:string = 'new'
+    @Input() revision:?string = null
     @Input() showValidationErrorMessages:boolean = false
     @Input() synchronizeImmediately:boolean|PlainObject = false
     /**
@@ -2707,7 +2708,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 this.internalName
             ].state.errors = {required: true}
         if (this.file) {
-            this.file.query = `?version=${this.file.digest}`
+            this.file.query = `?version=${this.revision || this.file.digest}`
             /*
                 NOTE: Only set new file source if isn't already present to
                 prevent to download an immediately uploaded file and grab and
