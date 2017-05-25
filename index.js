@@ -1739,7 +1739,9 @@ export class AbstractInputComponent/* implements OnInit*/ {
         this._extendObject(this.model, this._extendObject({
             disabled: false,
             maximum: Infinity,
-            minimum: this.model.type === 'string' ? 0 : -Infinity,
+            minimum: 0,
+            maximumLength: Infinity,
+            minimumLength: 0,
             nullable: true,
             regularExpressionPattern: '.*',
             state: {},
@@ -2398,8 +2400,8 @@ const propertyGenericContent:string = `
 `
 const propertyInputContent:string = `
     [disabled]="model.disabled || model.mutable === false || model.writable === false"
-    [maxlength]="model.type === 'string' ? model.maximum : null"
-    [minlength]="model.type === 'string' ? model.minimum : null"
+    [maxlength]="model.type === 'string' ? model.maximumLength : null"
+    [minlength]="model.type === 'string' ? model.minimumLength : null"
     [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
 `
 const inputContent:string = `
@@ -2413,10 +2415,10 @@ const inputContent:string = `
             aus.
         </p>
         <p *ngIf="model.state?.errors?.maxlength">
-            Bitte geben Sie maximal {{model.maximum}} Zeichen ein.
+            Bitte geben Sie maximal {{model.maximumLength}} Zeichen ein.
         </p>
         <p *ngIf="model.state?.errors?.minlength">
-            Bitte geben Sie mindestens {{model.minimum}} Zeichen ein.
+            Bitte geben Sie mindestens {{model.minimumLength}} Zeichen ein.
         </p>
         <p *ngIf="model.state?.errors?.max">
             Bitte geben Sie eine Zahl kleiner oder gleich {{model.maximum}}
@@ -2432,8 +2434,8 @@ const inputContent:string = `
     </span>
     <md-hint
         align="end"
-        *ngIf="!model.selection && model.type === 'string' && model.maximum !== null && model.maximum < 100"
-    >{{model.value?.length}} / {{model.maximum}}</md-hint>
+        *ngIf="!model.selection && model.type === 'string' && model.maximumLength !== null && model.maximumLength < 100"
+    >{{model.value?.length}} / {{model.maximumLength}}</md-hint>
 `
 // IgnoreTypeCheck
 @Component({
@@ -2833,6 +2835,13 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
             this.model[this.attachmentTypeName][
                 this.internalName
             ].value = this.file
+            // region determine errors
+            if (this.model[this.attachmentTypeName][
+                this.internalName
+            ].state.errors)
+                this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors = {}
             if (!(new RegExp(this.internalName)).test(this.file.name))
                 this.model[this.attachmentTypeName][
                     this.internalName
@@ -2843,19 +2852,17 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 new RegExp(this.model[this.attachmentTypeName][
                     this.internalName
                 ].contentTypeRegularExpressionPattern)
-            ).test(this.file.content_type))) {
-                if (this.model[this.attachmentTypeName][
+            ).test(this.file.content_type)))
+                this.model[this.attachmentTypeName][
                     this.internalName
-                ].state.errors)
-                    this.model[this.attachmentTypeName][
-                        this.internalName
-                    ].state.errors.contentType = true
-                else
-                    this.model[this.attachmentTypeName][
-                        this.internalName
-                    ].state.errors = {contentType: true}
-                this.determinePresentationType()
-            }
+                ].state.errors.contentType = true
+            if (Object.keys(this.model[this.attachmentTypeName][
+                this.internalName
+            ].state.errors).length === 0)
+                delete this.model[this.attachmentTypeName][this.internalName]
+                    .state.errors
+            // TODO check for size
+            // endregion
             if (this.synchronizeImmediately && !this.model[
                 this.attachmentTypeName
             ][this.internalName].state.errors) {

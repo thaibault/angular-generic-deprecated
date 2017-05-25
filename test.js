@@ -103,7 +103,7 @@ registerAngularTest(function(
                             _attachments: {'.+\\.(?:jpe?g|png)': {
                                 contentTypeRegularExpressionPattern:
                                     '^image/.+',
-                                maximum: 1,
+                                maximumNumber: 1,
                                 onCreateExpression: `{name: 'a.jpg'}`
                             }},
                             _id: {mutable: false},
@@ -111,7 +111,11 @@ registerAngularTest(function(
                             a: {}
                         }},
                         property: {
-                            defaultSpecification: {minimum: 0},
+                            defaultSpecification: {
+                                minimum: 0,
+                                minimumLength: 0,
+                                minimumNumber: 0
+                            },
                             name: {
                                 reserved: [],
                                 special: {
@@ -128,12 +132,12 @@ registerAngularTest(function(
                                     id: '_id',
                                     localSequence: '_local_seq',
                                     revision: '_rev',
-                                    revisionsInformation: '_revs_info',
                                     revisions: '_revisions',
-                                    type: '-type',
-                                    validatedDocumentsCache:
-                                        '_validatedDocuments'
-                                }
+                                    revisionsInformation: '_revs_info',
+                                    strategy: '_updateStrategy',
+                                    type: '-type'
+                                },
+                                validatedDocumentsCache: '_validatedDocuments'
                             }
                         }
                     },
@@ -718,31 +722,45 @@ registerAngularTest(function(
                                     name: '.+\\.(?:jpe?g|png)',
                                     value: {name: 'a.jpg'}
                                 }},
-                                a: {minimum: 0, name: 'a', value: null}
-                            }],
-                            [['Test', ['a']], {a: {
-                                minimum: 0, name: 'a', value: null
-                            }}],
-                            [['Test', ['a'], {a: 2}], {a: {
-                                minimum: 0, name: 'a', value: 2
-                            }}],
-                            [['Test', ['_attachments']], {
-                                _attachments: {
-                                    '.+\\.(?:jpe?g|png)': {
-                                        contentTypeRegularExpressionPattern:
-                                            '^image/.+',
-                                        maximum: 1,
-                                        minimum: 0,
-                                        name: '.+\\.(?:jpe?g|png)',
-                                        onCreateExpression:
-                                            initialData.configuration.database
-                                            .model.entities.Test
-                                            ._attachments['.+\\.(?:jpe?g|png)']
-                                            .onCreateExpression,
-                                        value: {name: 'a.jpg'}
-                                    }
+                                a: {
+                                    minimum: 0,
+                                    minimumLength: 0,
+                                    minimumNumber: 0,
+                                    name: 'a',
+                                    value: null
                                 }
                             }],
+                            [['Test', ['a']], {a: {
+                                minimum: 0,
+                                minimumLength: 0,
+                                minimumNumber: 0,
+                                name: 'a',
+                                value: null
+                            }}],
+                            [['Test', ['a'], {a: 2}], {a: {
+                                minimum: 0,
+                                minimumLength: 0,
+                                minimumNumber: 0,
+                                name: 'a',
+                                value: 2
+                            }}],
+                            [['Test', ['_attachments']], {_attachments: {
+                                '.+\\.(?:jpe?g|png)': {
+                                    contentTypeRegularExpressionPattern:
+                                        '^image/.+',
+                                    maximumNumber: 1,
+                                    minimum: 0,
+                                    minimumLength: 0,
+                                    minimumNumber: 0,
+                                    name: '.+\\.(?:jpe?g|png)',
+                                    onCreateExpression:
+                                        initialData.configuration.database
+                                        .model.entities.Test
+                                        ._attachments['.+\\.(?:jpe?g|png)']
+                                        .onCreateExpression,
+                                    value: {name: 'a.jpg'}
+                                }
+                            }}],
                             [['Test', null, {_attachments: {'b.jpg': {}}}], {
                                 _attachments: {'.+\\.(?:jpe?g|png)': {
                                     name: '.+\\.(?:jpe?g|png)',
@@ -791,7 +809,13 @@ registerAngularTest(function(
                             }},
                             _metaData: {submitted: false},
                             '-type': 'Test',
-                            a: {minimum: 0, name: 'a', value: null}
+                            a: {
+                                minimum: 0,
+                                minimumLength: 0,
+                                minimumNumber: 0,
+                                name: 'a',
+                                value: null
+                            }
                         }, initialData.configuration.database.model.entities
                             .Test))
                         // endregion
@@ -943,7 +967,7 @@ registerAngularTest(function(
                             await fixture.whenStable()
                             assert.strictEqual(
                                 fixture.componentInstance.model.value, 'aa')
-                            fixture.componentInstance.model.maximum = 2
+                            fixture.componentInstance.model.maximumLength = 2
                             fixture.detectChanges()
                             await fixture.whenStable()
                             assert.strictEqual(
