@@ -349,6 +349,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                             if (newDocument[name][fileName].hasOwnProperty(
                                 'data'
                             ) && newDocument[name][fileName].data && !(
+                                // TODO use digest to compare!
                                 oldAttachment && newDocument[name][
                                     fileName
                                 ].length === oldAttachment.length && (
