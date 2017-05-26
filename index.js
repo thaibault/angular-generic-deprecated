@@ -2599,6 +2599,22 @@ export class TextareaComponent extends AbstractInputComponent {
                         "{{model[attachmentTypeName][internalName].contentTypeRegularExpressionPattern}}".
                     </p>
                     <p
+                        *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.minimumSize"
+                    >
+                        Die Datei (Größe {{file.length}} Byte) unterschreitet
+                        die minimal erlaubte Größe von
+                        {{model[attachmentTypeName][internalName].minimumSize}}
+                        Byte.
+                    </p>
+                    <p
+                        *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.maximumSize"
+                    >
+                        Die Datei (Größe {{file.length}} Byte) überschreitet
+                        die maximal erlaubte Größe von
+                        {{model[attachmentTypeName][internalName].maximumSize}}
+                        Byte.
+                    </p>
+                    <p
                         *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.database"
                     >
                         {{model[attachmentTypeName][internalName]?.state?.errors?.database}}
@@ -2836,7 +2852,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 this.internalName
             ].value = this.file
             // region determine errors
-            if (this.model[this.attachmentTypeName][
+            if (!this.model[this.attachmentTypeName][
                 this.internalName
             ].state.errors)
                 this.model[this.attachmentTypeName][
@@ -2856,12 +2872,27 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 this.model[this.attachmentTypeName][
                     this.internalName
                 ].state.errors.contentType = true
+            if (!([undefined, null].includes(this.model[
+                this.attachmentTypeName
+            ][this.internalName].minimumSize) || this.model[
+                this.attachmentTypeName
+            ][this.internalName].minimumSize <= this.file.length))
+                this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors.minimuSize = true
+            if (!([undefined, null].includes(this.model[
+                this.attachmentTypeName
+            ][this.internalName].maximumSize) || this.model[
+                this.attachmentTypeName
+            ][this.internalName].maximumSize >= this.file.length))
+                this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors.maximumSize = true
             if (Object.keys(this.model[this.attachmentTypeName][
                 this.internalName
             ].state.errors).length === 0)
                 delete this.model[this.attachmentTypeName][this.internalName]
                     .state.errors
-            // TODO check for size
             // endregion
             if (this.synchronizeImmediately && !this.model[
                 this.attachmentTypeName
