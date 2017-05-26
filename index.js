@@ -495,6 +495,49 @@ export class GetFilenameByPrefixPipe/* implements PipeTransform*/ {
     }
 }
 // IgnoreTypeCheck
+@Pipe({name: 'attachmentWithPrefixExists'})
+/**
+ * Retrieves if a filename with given prefix exists.
+ * @property attachmentName - Name of attachment property.
+ * @property getFilenameByPrefix - Filename by prefix pipe's transformation
+ * function.
+ */
+export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
+    /*
+     * Gets needed file name by prefix pipe injected.
+     * @param getFilenameByPrefixPipe - Filename by prefix pipe instance.
+     * @param InitialData - Injected initial data service.
+     * @returns Nothing.
+     */
+    constructor(
+        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
+        initialData:InitialDataService
+    ):void {
+        this.attachmentName = initialData.configuration.database.property.name
+            .special.attachment
+        this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
+            getFilenameByPrefixPipe)
+    }
+    /**
+     * Performs the actual transformations process.
+     * @param document - Documents with attachments to analyse.
+     * @param namePrefix - Prefix or nothing to search for. If nothing given
+     * "false" will be returned either.
+     * @returns Boolean indication if given file name prefix exists.
+     */
+    transform(document:PlainObject, namePrefix:?string):boolean {
+        if (document.hasOwnProperty(this.attachmentName)) {
+            const name:string = this.getFilenameByPrefix(
+                document[this.attachmentName], namePrefix)
+            if (name)
+                return newDocument[this.attachmentName][name].hasOwnProperty(
+                    'data'
+                ) && Boolean(newDocument[this.attachmentName][name].data)
+        }
+        return false
+    }
+}
+// IgnoreTypeCheck
 @Pipe({name: 'genericIsDefined'})
 /**
  * Checks if given reference is defined.
@@ -1223,6 +1266,7 @@ export class DataService {
  * @property tools - Holds the tools class from the tools service.
  */
 export class DataScopeService {
+    attachmentWithPrefixExists:Function
     configuration:PlainObject
     data:DataService
     extendObject:Function
@@ -1230,6 +1274,8 @@ export class DataScopeService {
     tools:typeof Tools
     /**
      * Saves alle needed services as property values.
+     * @param attachmentWithPrefixExistsPipe - Attachment by prefix checker
+     * pipe instance.
      * @param data - Injected data service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
@@ -1239,10 +1285,14 @@ export class DataScopeService {
      * @returns Nothing.
      */
     constructor(
+        attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
         data:DataService, extendObjectPipe:ExtendObjectPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService, tools:ToolsService
     ):void {
+        this.attachmentWithPrefixExists =
+            AttachmentWithPrefixExistsPipe.transform.bind(
+                atachmentWithPrefixExistsPipe)
         this.configuration = initialData.configuration
         this.data = data
         this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
@@ -1375,7 +1425,8 @@ export class DataScopeService {
                                         'serialize', 'modelName', 'model',
                                         'propertySpecification', 'now',
                                         'nowUTCTimestamp',
-                                        'getFilenameByPrefix', (
+                                        'getFilenameByPrefix',
+                                        'attachmentWithPrefixExists', (
                                             hookType.endsWith(
                                                 'Expression'
                                             ) ? 'return ' : ''
@@ -1391,7 +1442,9 @@ export class DataScopeService {
                                         ), modelName, modelSpecification, now,
                                         nowUTCTimestamp,
                                         this.getFilenameByPrefix,
-                                        result[name][type])
+                                        this.attachmentWithPrefixExists.bind(
+                                            data, data
+                                        ), result[name][type])
                                     if (result[name][type].hasOwnProperty(
                                         'value'
                                     ) && result[name][type].value === undefined
@@ -1436,7 +1489,8 @@ export class DataScopeService {
                                 'securitySettings', 'name', 'models',
                                 'modelConfiguration', 'serialize', 'modelName',
                                 'model', 'propertySpecification', 'now',
-                                'nowUTCTimestamp', 'getFilenameByPrefix', (
+                                'nowUTCTimestamp', 'getFilenameByPrefix',
+                                'attachmentWithPrefixExists', (
                                     type.endsWith('Expression') ? 'return ' :
                                     ''
                                 ) + result[name][type]
@@ -1448,7 +1502,9 @@ export class DataScopeService {
                                     object, null, 4
                                 ), modelName, modelSpecification, now,
                                 nowUTCTimestamp, this.getFilenameByPrefix,
-                                result[name])
+                                this.attachmentWithPrefixExists.bind(
+                                    data, data
+                                ), result[name])
                             if (result[name].value === undefined)
                                 result[name].value = null
                         }
@@ -1692,6 +1748,8 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
 // / region abstract
 /**
  * Generic input component.
+ * @property _attachmentWithPrefixExists - Holds the attachment by prefix
+ * checker pipe instance
  * @property _extendObject - Holds the extend object's pipe transformation
  * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
  * transformation method.
@@ -1705,6 +1763,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * component from showing error messages before the user has submit the form.
  */
 export class AbstractInputComponent/* implements OnInit*/ {
+    _attachmentWithPrefixExists:Function
     _extendObject:Function
     _getFilenameByPrefix:Function
     _modelConfiguration:PlainObject
@@ -1715,6 +1774,8 @@ export class AbstractInputComponent/* implements OnInit*/ {
     @Input() showValidationErrorMessages:boolean = false
     /**
      * Sets needed services as property values.
+     * @param attachmentWithPrefixExistsPipe - Saves the attachment by prefix
+     * name checker pipe instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
@@ -1722,10 +1783,13 @@ export class AbstractInputComponent/* implements OnInit*/ {
      * @returns Nothing.
      */
     constructor(
+        attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
         extendObjectPipe:ExtendObjectPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService
     ):void {
+        this._attachmentWithPrefixExists = attachmentWithPrefixExistsPipe.bind(
+            attachmentWithPrefixExistsPipe)
         this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this._getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
@@ -1758,7 +1822,8 @@ export class AbstractInputComponent/* implements OnInit*/ {
                     'newDocument', 'oldDocument', 'userContext',
                     'securitySettings', 'name', 'models', 'modelConfiguration',
                     'serialize', 'modelName', 'model', 'propertySpecification',
-                    'now', 'nowUTCTimestamp', 'getFilenameByPrefix', (
+                    'now', 'nowUTCTimestamp', 'getFilenameByPrefix',
+                    'attachmentWithPrefixExists', (
                         hookType.endsWith('Expression') ? 'return ' : ''
                     ) + this.model[hookType])
     }
@@ -1781,6 +1846,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
             now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
             now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
             now.getUTCMilliseconds())
+        const newData:PlainObject = {[this.model.name]: newValue}
         for (const hookType:string of [
             'onUpdateExpression', 'onUpdateExecution'
         ])
@@ -1789,13 +1855,15 @@ export class AbstractInputComponent/* implements OnInit*/ {
                 typeof this.model[hookType] === 'function'
             )
                 newValue = this.model[hookType](
-                    {[this.model.name]: newValue}, null, {}, {},
-                    this.model.name, this._modelConfiguration.entities,
+                    newData, null, {}, {}, this.model.name,
+                    this._modelConfiguration.entities,
                     this._modelConfiguration, (object:Object):string =>
                         JSON.stringify(object, null, 4),
                     'generic', {generic: {[this.model.name]: this.model}},
                     this.model, now, nowUTCTimestamp,
-                    this._getFilenameByPrefix, newValue)
+                    this._getFilenameByPrefix,
+                    this._attachmentWithPrefixExists.bind(newData, newData),
+                    newValue)
         this.model.state = state
         return newValue
     }
@@ -2479,6 +2547,8 @@ export class InputComponent extends AbstractInputComponent {
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
+     * @param attachmentWithPrefixExistsPipe - Saves the attachment by prefix
+     * pipe instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
@@ -2486,11 +2556,14 @@ export class InputComponent extends AbstractInputComponent {
      * @returns Nothing.
      */
     constructor(
+        attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
         extendObjectPipe:ExtendObjectPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService
     ):void {
-        super(extendObjectPipe, getFilenameByPrefixPipe, initialData)
+        super(
+            attachmentWithPrefixExistsPipe, extendObjectPipe,
+            getFilenameByPrefixPipe, initialData)
     }
 }
 // IgnoreTypeCheck
@@ -2516,6 +2589,8 @@ export class TextareaComponent extends AbstractInputComponent {
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
+     * @param attachmentWithPrefixExists - Saves the attachment by prefix
+     * pipe instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
@@ -2523,11 +2598,14 @@ export class TextareaComponent extends AbstractInputComponent {
      * @returns Nothing.
      */
     constructor(
+        attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
         extendObjectPipe:ExtendObjectPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService
     ):void {
-        super(extendObjectPipe, getFilenameByPrefixPipe, initialData)
+        super(
+            attachmentWithPrefixExistsPipe, extendObjectPipe,
+            getFilenameByPrefixPipe, initialData)
     }
 }
 // // endregion
