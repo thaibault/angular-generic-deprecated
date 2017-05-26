@@ -395,6 +395,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         specialNames.extend,
                         specialNames.id,
                         specialNames.localSequence,
+                        specialNames.maximumAggregatedSize,
+                        specialNames.minimumAggregatedSize,
                         specialNames.revision,
                         specialNames.revisionsInformation,
                         specialNames.revisions,
@@ -514,8 +516,8 @@ export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService
     ):void {
-        this.attachmentName = initialData.configuration.database.property.name
-            .special.attachment
+        this.attachmentName = initialData.configuration.database.model.property
+            .name.special.attachment
         this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
     }
@@ -528,12 +530,14 @@ export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
      */
     transform(document:PlainObject, namePrefix:?string):boolean {
         if (document.hasOwnProperty(this.attachmentName)) {
-            const name:string = this.getFilenameByPrefix(
+            const name:?string = this.getFilenameByPrefix(
                 document[this.attachmentName], namePrefix)
             if (name)
-                return newDocument[this.attachmentName][name].hasOwnProperty(
+                return document[this.attachmentName][name].hasOwnProperty(
                     'data'
-                ) && Boolean(newDocument[this.attachmentName][name].data)
+                ) && ![undefined, null].includes(document[this.attachmentName][
+                    name
+                ].data)
         }
         return false
     }
@@ -1258,6 +1262,8 @@ export class DataService {
 @Injectable()
 /**
  * Auto generates a components scope environment for a specified model.
+ * @property attachmentWithPrefixExists - Hold the attachment with prefix
+ * exists pipe transformation method.
  * @property configuration - Holds the configuration service instance.
  * @property data - Holds the data exchange service instance.
  * @property extendObject - Holds the extend object's pipe transformation
@@ -1292,8 +1298,8 @@ export class DataScopeService {
         initialData:InitialDataService, tools:ToolsService
     ):void {
         this.attachmentWithPrefixExists =
-            AttachmentWithPrefixExistsPipe.transform.bind(
-                atachmentWithPrefixExistsPipe)
+            attachmentWithPrefixExistsPipe.transform.bind(
+                attachmentWithPrefixExistsPipe)
         this.configuration = initialData.configuration
         this.data = data
         this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
@@ -1789,8 +1795,9 @@ export class AbstractInputComponent/* implements OnInit*/ {
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService
     ):void {
-        this._attachmentWithPrefixExists = attachmentWithPrefixExistsPipe.bind(
-            attachmentWithPrefixExistsPipe)
+        this._attachmentWithPrefixExists =
+            attachmentWithPrefixExistsPipe.transform.bind(
+                attachmentWithPrefixExistsPipe)
         this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this._getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)

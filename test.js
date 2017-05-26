@@ -148,6 +148,7 @@ registerAngularTest(function(
             }}
             const Module:Object = index.default
             const {
+                AttachmentWithPrefixExistsPipe,
                 AbstractResolver,
                 CanDeactivateRouteLeaveGuard,
                 DataScopeService,
@@ -255,6 +256,7 @@ registerAngularTest(function(
                  */
                 constructor(
                 canDeactivateRouteLeave:CanDeactivateRouteLeaveGuard,
+                attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
                     data:DataService,
                     dataScope:DataScopeService,
                     extractRawDataPipe:ExtractRawDataPipe,
@@ -453,6 +455,23 @@ registerAngularTest(function(
                             assert.strictEqual(
                                 getFilenameByPrefixPipe.transform(...test[0]),
                                 test[1])
+                    })
+                    self.test(`AttachmentWithPrefixExistsPipe (${roundType})`, (
+                        assert:Object
+                    ):void => {
+                        for (const test:Array<any> of [
+                            [{_attachments: {a: {data: ''}}}, 'a'],
+                            [{_attachments: {a: {data: 'a'}}}, 'a']
+                        ])
+                            assert.ok(attachmentWithPrefixExistsPipe.transform(
+                                test[0], test[1]))
+                        for (const test:Array<any> of [
+                            [{}, null],
+                            [{}, 'a'],
+                            [{_attachments: {a: {data: 'a'}}}, 'b']
+                        ])
+                            assert.notOk(attachmentWithPrefixExistsPipe.transform(
+                                test[0], test[1]))
                     })
                     self.test(`LimitToPipe (${roundType})`, (
                         assert:Object
