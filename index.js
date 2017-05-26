@@ -2580,7 +2580,9 @@ export class InputComponent extends AbstractInputComponent {
     template: `
         <md-input-container>
             <textarea
-                mdInput [rows]="rows" ${propertyInputContent}
+                mdInput [mdAutosizeMinRows]="minimumNumberOfRows" [rows]="rows"
+                [mdAutosizeMaxRows]="maximumNumberOfRows"
+                ${propertyInputContent}
                 ${propertyGenericContent}
             ></textarea>
             ${inputContent}
@@ -2593,6 +2595,8 @@ export class InputComponent extends AbstractInputComponent {
  * description support.
  */
 export class TextareaComponent extends AbstractInputComponent {
+    @Input() maximumNumberOfRows:?string
+    @Input() minimumNumberOfRows:?string
     @Input() rows:?string
     /**
      * Forwards injected service instances to the abstract input component's
