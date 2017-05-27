@@ -2580,7 +2580,8 @@ export class InputComponent extends AbstractInputComponent {
     template: `
         <md-input-container>
             <textarea
-                mdInput [mdAutosizeMinRows]="minimumNumberOfRows" [rows]="rows"
+                mdInput mdTextareaAutosize
+                [mdAutosizeMinRows]="minimumNumberOfRows" [rows]="rows"
                 [mdAutosizeMaxRows]="maximumNumberOfRows"
                 ${propertyInputContent}
                 ${propertyGenericContent}
