@@ -320,6 +320,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                 specialNames.deletedConflict,
                 specialNames.extend,
                 specialNames.localSequence,
+                specialNames.maximumAggregatedSize,
+                specialNames.minimumAggregatedSize,
                 specialNames.revisionsInformations,
                 specialNames.revisions,
                 specialNames.validatedDocumentsCache
@@ -400,8 +402,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         specialNames.revision,
                         specialNames.revisionsInformation,
                         specialNames.revisions,
-                        specialNames.type,
-                        specialNames.validatedDocumentsCache
+                        specialNames.type
                     ]).includes(name) || [null, undefined].includes(
                         oldDocument[name].value)
                 ) && (!(
@@ -506,10 +507,12 @@ export class GetFilenameByPrefixPipe/* implements PipeTransform*/ {
  * function.
  */
 export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
-    /*
+    attachmentName:string
+    getFilenameByPrefix:Function
+    /**
      * Gets needed file name by prefix pipe injected.
      * @param getFilenameByPrefixPipe - Filename by prefix pipe instance.
-     * @param InitialData - Injected initial data service.
+     * @param initialData - Injected initial data service.
      * @returns Nothing.
      */
     constructor(
@@ -991,9 +994,7 @@ export class DataService {
                         if (['latest', 'upsert'].includes(item[revisionName]))
                             try {
                                 item[revisionName] = (
-                                    await self.connection.get(item[
-                                        self.configuration.database.model
-                                        .property.name.special.id])
+                                    await self.connection.get(item[idName])
                                 )[revisionName]
                             } catch (error) {
                                 if (error.name === 'not_found')
@@ -1371,6 +1372,16 @@ export class DataScopeService {
             this.configuration.database.model.entities[modelName]
         const specialNames:PlainObject =
             this.configuration.database.model.property.name.special
+        const reservedNames:Array<string> =
+            this.configuration.database.model.property.name.reserved.concat(
+                specialNames.conflict,
+                specialNames.deleted,
+                specialNames.deletedConflict,
+                specialNames.localSequence,
+                specialNames.revision,
+                specialNames.revisionsInformation,
+                specialNames.revisions,
+                specialNames.type)
         for (const name:string in modelSpecification)
             if (modelSpecification.hasOwnProperty(name))
                 if (name === specialNames.attachment) {
@@ -1382,32 +1393,35 @@ export class DataScopeService {
                                         this.configuration.database.model
                                             .property.defaultSpecification
                                     ), modelSpecification[name][fileName])
-                } else
+                } else if (![
+                    specialNames.allowedRoles,
+                    specialNames.constraint.execution,
+                    specialNames.constraint.expression,
+                    specialNames.extend,
+                    specialNames.maximumAggregatedSize,
+                    specialNames.minimumAggregatedSize
+                ].concat(reservedNames).includes(name))
                     modelSpecification[name] = this.extendObject(
                         true, this.tools.copyLimitedRecursively(
                             this.configuration.database.model.property
                                 .defaultSpecification,
                         ), modelSpecification[name])
-        if (!propertyNames)
+        if (!propertyNames) {
             propertyNames = Object.keys(modelSpecification)
-        const reservedNames:Array<string> =
-            this.configuration.database.model.property.name.reserved.concat(
-                specialNames.conflict,
-                specialNames.deleted,
-                specialNames.deletedConflict,
-                specialNames.id,
-                specialNames.localSequence,
-                specialNames.revision,
-                specialNames.revisionsInformation,
-                specialNames.revisions,
-                specialNames.type)
+            propertyNames = propertyNames.concat(Object.keys(data).filter((
+                name:string
+            // IgnoreTypeCheck
+            ):boolean => !propertyNames.concat(reservedNames).includes(name)))
+        }
         const result:PlainObject = {}
         for (const name:string of propertyNames) {
             if (modelSpecification.hasOwnProperty(name))
                 result[name] = this.tools.copyLimitedRecursively(
                     modelSpecification[name])
             else
-                result[name] = {}
+                result[name] = this.tools.copyLimitedRecursively(
+                    'additional' in specialNames && specialNames.additional ?
+                    modelSpecification[specialNames.additional] : {})
             const now:Date = new Date()
             const nowUTCTimestamp:number = Date.UTC(
                 now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
@@ -1436,7 +1450,7 @@ export class DataScopeService {
                                         'attachmentWithPrefixExists', (
                                             hookType.endsWith(
                                                 'Expression'
-                                            ) ? 'return ' : ''
+                                     ) ? 'return ' : ''
                                         ) + result[name][type][hookType]
                                     ))(
                                         data, null, {}, {}, type,
@@ -1481,7 +1495,7 @@ export class DataScopeService {
                                 type
                             ].default
                     }
-            } else if (!reservedNames.includes(name)) {
+            } else {
                 result[name].name = name
                 result[name].value = null
                 if (Object.keys(data).length === 0)
@@ -2396,7 +2410,7 @@ export class IntervalInputComponent {
  * Represents an editable list of intervals.
  * @property _extendObject - Holds the extend object pipe instance's transform
  * method.
- * @property _typeNameDescription - Saves current configured type name.
+ * @property _typeName - Saves current configured type name.
  * @property additionalObjectData - Additional object data to save with current
  * interval object.
  * @property model - Saves current list of intervals.
@@ -2404,7 +2418,7 @@ export class IntervalInputComponent {
  */
 export class IntervalsInputComponent {
     _extendObject:Function
-    _typeNameDescription:string
+    _typeName:string
     @Input() additionalObjectData:PlainObject
     @Input() model:PlainObject = {value: []}
     @Output() modelChange:EventEmitter<Array<PlainObject>> = new EventEmitter()
@@ -2418,7 +2432,7 @@ export class IntervalsInputComponent {
         extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService
     ):void {
         this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
-        this._typeNameDescription =
+        this._typeName =
             initialData.configuration.database.model.property.name.special.type
     }
     /**
@@ -2428,7 +2442,7 @@ export class IntervalsInputComponent {
     ngOnInit():void {
         if (!this.additionalObjectData)
             this.additionalObjectData = {
-                [this._typeNameDescription]: '_interval'
+                [this._typeName]: '_interval'
             }
     }
     /**
@@ -2605,7 +2619,7 @@ export class TextareaComponent extends AbstractInputComponent {
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
-     * @param attachmentWithPrefixExists - Saves the attachment by prefix
+     * @param attachmentWithPrefixExistsPipe - Saves the attachment by prefix
      * pipe instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever

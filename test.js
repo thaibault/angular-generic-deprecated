@@ -218,6 +218,8 @@ registerAngularTest(function(
                 /**
                  * Dummy constructor to inject needed service instances and
                  * perform various tests.
+                 * @param attachmentWithPrefixExistsPipe - Injected attachment
+                 * with prefix exists pipe instance.
                  * @param canDeactivateRouteLeave - Injected can deactivate
                  * route leave guard instance.
                  * @param data - Injected data service instance.
@@ -255,8 +257,8 @@ registerAngularTest(function(
                  * @returns Nothing.
                  */
                 constructor(
-                canDeactivateRouteLeave:CanDeactivateRouteLeaveGuard,
                 attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
+                canDeactivateRouteLeave:CanDeactivateRouteLeaveGuard,
                     data:DataService,
                     dataScope:DataScopeService,
                     extractRawDataPipe:ExtractRawDataPipe,
@@ -456,23 +458,26 @@ registerAngularTest(function(
                                 getFilenameByPrefixPipe.transform(...test[0]),
                                 test[1])
                     })
-                    self.test(`AttachmentWithPrefixExistsPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:Array<any> of [
-                            [{_attachments: {a: {data: ''}}}, 'a'],
-                            [{_attachments: {a: {data: 'a'}}}, 'a']
-                        ])
-                            assert.ok(attachmentWithPrefixExistsPipe.transform(
-                                test[0], test[1]))
-                        for (const test:Array<any> of [
-                            [{}, null],
-                            [{}, 'a'],
-                            [{_attachments: {a: {data: 'a'}}}, 'b']
-                        ])
-                            assert.notOk(attachmentWithPrefixExistsPipe.transform(
-                                test[0], test[1]))
-                    })
+                    self.test(
+                        `AttachmentWithPrefixExistsPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                [{_attachments: {a: {data: ''}}}, 'a'],
+                                [{_attachments: {a: {data: 'a'}}}, 'a']
+                            ])
+                                assert.ok(
+                                    attachmentWithPrefixExistsPipe.transform(
+                                        test[0], test[1]))
+                            for (const test:Array<any> of [
+                                [{}, null],
+                                [{}, 'a'],
+                                [{_attachments: {a: {data: 'a'}}}, 'b']
+                            ])
+                                assert.notOk(
+                                    attachmentWithPrefixExistsPipe.transform(
+                                        test[0], test[1]))
+                        })
                     self.test(`LimitToPipe (${roundType})`, (
                         assert:Object
                     ):void => {
@@ -741,6 +746,14 @@ registerAngularTest(function(
                                     name: '.+\\.(?:jpe?g|png)',
                                     value: {name: 'a.jpg'}
                                 }},
+                                _id: {
+                                    name: '_id',
+                                    value: null
+                                },
+                                _rev: {
+                                    name: '_rev',
+                                    value: null
+                                },
                                 a: {
                                     minimum: 0,
                                     minimumLength: 0,
@@ -785,6 +798,14 @@ registerAngularTest(function(
                                     name: '.+\\.(?:jpe?g|png)',
                                     value: {name: 'b.jpg'}
                                 }},
+                                _id: {
+                                    name: '_id',
+                                    value: null
+                                },
+                                _rev: {
+                                    name: '_rev',
+                                    value: null
+                                },
                                 a: {minimum: 0, name: 'a', value: null}
                             }],
                             [['Test', null, {_attachments: {}}], {
@@ -792,6 +813,14 @@ registerAngularTest(function(
                                     name: '.+\\.(?:jpe?g|png)',
                                     value: null
                                 }},
+                                _id: {
+                                    name: '_id',
+                                    value: null
+                                },
+                                _rev: {
+                                    name: '_rev',
+                                    value: null
+                                },
                                 a: {minimum: 0, name: 'a', value: null}
                             }],
                             [['Test', null, {_attachments: {
@@ -804,6 +833,14 @@ registerAngularTest(function(
                                         test: 2
                                     }
                                 }},
+                                _id: {
+                                    name: '_id',
+                                    value: null
+                                },
+                                _rev: {
+                                    name: '_rev',
+                                    value: null
+                                },
                                 a: {minimum: 0, name: 'a', value: null}
                             }]
                         ])
@@ -826,6 +863,14 @@ registerAngularTest(function(
                                 name: '.+\\.(?:jpe?g|png)',
                                 value: {name: 'a.jpg'}
                             }},
+                            _id: {
+                                name: '_id',
+                                value: null
+                            },
+                            _rev: {
+                                name: '_rev',
+                                value: null
+                            },
                             _metaData: {submitted: false},
                             '-type': 'Test',
                             a: {
