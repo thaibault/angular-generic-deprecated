@@ -2483,8 +2483,11 @@ const propertyInputContent:string = `
 const inputContent:string = `
     <md-hint
         align="start" (click)="showDeclaration = !showDeclaration" title="info"
-        *ngIf="model.declaration"
-    >[i]<span *ngIf="showDeclaration"> {{model.declaration}}</span></md-hint>
+        *ngIf="model.declaration" [class.activ]="showDeclaration"
+    >
+        <span>[i]</span>
+        <span *ngIf="showDeclaration"> {{model.declaration}}</span>
+    </md-hint>
     <span generic-error *ngIf="showValidationErrorMessages">
         <p *ngIf="model.state?.errors?.required">
             Bitte füllen Sie das Feld "{{model.description || model.name}}"
@@ -2634,11 +2637,12 @@ export class TextareaComponent extends AbstractInputComponent {
                     {{headerText || file?.name || name || model[attachmentTypeName][internalName]?.description}}
                 </md-card-title>
                 <md-card-subtitle
+                    [class.activ]="showDeclaration"
                     (click)="showDeclaration = !showDeclaration"
                     title="info"
                     *ngIf="model[attachmentTypeName][internalName]?.declaration"
                 >
-                    [i]
+                    <span>[i]</span>
                     <span *ngIf="showDeclaration">
                         {{model[attachmentTypeName][internalName].declaration}}
                     </span>
@@ -2672,7 +2676,7 @@ export class TextareaComponent extends AbstractInputComponent {
             </div>
             <md-card-content>
                 <ng-content></ng-content>
-                <div *ngIf="showValidationErrorMessages">
+                <div generic-error *ngIf="showValidationErrorMessages">
                     <p
                         *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.required"
                     >Bitte wählen Sie eine Datei aus.</p>
