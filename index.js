@@ -2665,14 +2665,10 @@ export class TextareaComponent extends AbstractInputComponent {
                 style="border:none;width:100%;max-height:150px"
             ></iframe>
             <div md-card-image>
-                <ng-container
+                <p
                     *ngIf="!file?.type && (file?.source || (file?.source | genericType) === 'string')"
-                >
-                    Keine Vorschau möglich.
-                </ng-container>
-                <ng-container *ngIf="!file">
-                    Keine Datei ausgewählt.
-                </ng-container>
+                >Keine Vorschau möglich.</p>
+                <p *ngIf="!file">Keine Datei ausgewählt.</p>
             </div>
             <md-card-content>
                 <ng-content></ng-content>
