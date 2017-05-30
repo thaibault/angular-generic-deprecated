@@ -1382,32 +1382,33 @@ export class DataScopeService {
                 specialNames.revisionsInformation,
                 specialNames.revisions,
                 specialNames.type)
+        const specification:PlainObject = {}
         for (const name:string in modelSpecification)
             if (modelSpecification.hasOwnProperty(name))
                 if (name === specialNames.attachment) {
+                    specification[name] = {}
                     for (const fileName:string in modelSpecification[name])
                         if (modelSpecification[name].hasOwnProperty(fileName))
-                            modelSpecification[name][fileName] =
-                                this.extendObject(
-                                    true, this.tools.copyLimitedRecursively(
-                                        this.configuration.database.model
-                                            .property.defaultSpecification
-                                    ), modelSpecification[name][fileName])
+                            specification[name][fileName] = this.extendObject(
+                                true, this.tools.copyLimitedRecursively(
+                                    this.configuration.database.model
+                                        .property.defaultSpecification
+                                ), modelSpecification[name][fileName])
                 } else if (![
-                    specialNames.allowedRoles,
+                    specialNames.allowedRole,
                     specialNames.constraint.execution,
                     specialNames.constraint.expression,
                     specialNames.extend,
                     specialNames.maximumAggregatedSize,
                     specialNames.minimumAggregatedSize
                 ].concat(reservedNames).includes(name))
-                    modelSpecification[name] = this.extendObject(
+                    specification[name] = this.extendObject(
                         true, this.tools.copyLimitedRecursively(
                             this.configuration.database.model.property
                                 .defaultSpecification,
                         ), modelSpecification[name])
         if (!propertyNames) {
-            propertyNames = Object.keys(modelSpecification)
+            propertyNames = Object.keys(specification)
             propertyNames = propertyNames.concat(Object.keys(data).filter((
                 name:string
             // IgnoreTypeCheck
@@ -1415,21 +1416,21 @@ export class DataScopeService {
         }
         const result:PlainObject = {}
         for (const name:string of propertyNames) {
-            if (modelSpecification.hasOwnProperty(name))
+            if (specification.hasOwnProperty(name))
                 result[name] = this.tools.copyLimitedRecursively(
-                    modelSpecification[name])
+                    specification[name])
             else
                 result[name] = this.tools.copyLimitedRecursively(
                     'additional' in specialNames && specialNames.additional ?
-                    modelSpecification[specialNames.additional] : {})
+                    specification[specialNames.additional] : {})
             const now:Date = new Date()
             const nowUTCTimestamp:number = Date.UTC(
                 now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
                 now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
                 now.getUTCMilliseconds())
             if (name === specialNames.attachment) {
-                for (const type:string in modelSpecification[name])
-                    if (modelSpecification[name].hasOwnProperty(type)) {
+                for (const type:string in specification[name])
+                    if (specification[name].hasOwnProperty(type)) {
                         result[name][type].name = type
                         result[name][type].value = null
                         if (Object.keys(data).length === 0)
@@ -2890,17 +2891,19 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 prevent to download an immediately uploaded file and grab and
                 older cached one.
             */
-            if (!this.file.source)
+            if (!this.file.source) {
+                const id:any = this.model[
+                    this._configuration.database.model.property.name.special.id
+                ]
+                if (typeof id === 'object')
+                    id = id.value
                 if (
                     this.revision &&
                     changes.revision.currentValue !==
                     changes.revision.previousValue
                 ) {
                     const image:Object = await this._data.getAttachment(
-                        this.model[
-                            this._configuration.database.model.property.name
-                            .special.id
-                        ], this.file.name, {rev: this.revision})
+                        id, this.file.name, {rev: this.revision})
                     this.file.data = await blobToBase64String(image)
                     this.file.content_type = image.type || 'text/plain'
                     this.file.length = image.size
@@ -2914,10 +2917,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                             this._stringFormat(
                                 this._configuration.database.url, ''
                             ) + `/${this._configuration.name || 'generic'}/` +
-                            this.model[
-                                this._configuration.database.model.property
-                                .name.special.id
-                            ] + `/${this.file.name}${this.file.query}`)
+                            `${id}/${this.file.name}${this.file.query}`)
+            }
         }
         this.determinePresentationType()
         this.change.emit(this.file)
