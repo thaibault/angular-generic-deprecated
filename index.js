@@ -2755,15 +2755,21 @@ export class TextareaComponent extends AbstractInputComponent {
  * @property static:videoMimeTypeRegularExpression - Regular expression which
  * should match to each known video mime type.
  * @property _data - Holds the data service instance.
+ * @property _deletedName - Holds the deleted model field name.
  * @property _domSanitizer - Holds the dom sanitizer service instance.
  * @property _extendObject - Holds the extend object pipe instance's transform
  * method.
  * @property _getFilenameByPrefix - Holds the file name by prefix getter pipe
  * instance's transform method.
+ * @property _idIsObject - Indicates whether the model document specific id is
+ * provided as object and "value" named property or directly.
+ * @property _idName - Name if id field.
  * @property _representObject - Holds the represent object pipe instance's
  * transform method.
+ * @property _revisionName - Name if revision field.
  * @property _stringFormat - Saves the string formatting pips transformation
  * function.
+ * @property _typeName - Name of type field.
  * @property _prefixMatch - Holds the prefix match pipe instance's transform
  * method.
  * @property delete - Event emitter which triggers its handler when current
@@ -2801,11 +2807,16 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         '(?:application/(?:x-)?shockwave-flash)$')
     _configuration:PlainObject
     _data:DataService
+    _deletedName:string
     _domSanitizer:DomSanitizer
     _extendObject:Function
     _getFilenameByPrefix:Function
+    _idIsObject:boolean = false
+    _idName:string
     _representObject:Function
+    _revisionName:string
     _stringFormat:Function
+    _typeName:string
     _prefixMatch:boolean = false
     attachmentTypeName:string
     @Output() delete:EventEmitter = new EventEmitter()
@@ -2847,11 +2858,19 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     ):void {
         this._configuration = initialData.configuration
         this._data = data
+        this._deletedName =
+            this._configuration.database.model.property.name.special.deleted
         this._domSanitizer = domSanitizer
         this._extendObject = extendObjectPipe.transform.bind(
             extendObjectPipe)
         this._getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
+        this._idName =
+            this._configuration.database.model.property.name.special.id
+        this._revisionName =
+            this._configuration.database.model.property.name.special.revision
+        this._typeName =
+            this._configuration.database.model.property.name.special.type
         this._representObject = representObjectPipe.transform.bind(
             representObjectPipe)
         this._stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
@@ -2865,6 +2884,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      * @returns Nothing.
      */
     async ngOnChanges(changes:Object):Promise<void> {
+        if (typeof this.model[this._idName] === 'object')
+           this._idIsObject = true
         if (this.mapNameToField && !Array.isArray(this.mapNameToField))
             this.mapNameToField = [this.mapNameToField]
         const name:string = this._getFilenameByPrefix(
@@ -2892,11 +2913,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 older cached one.
             */
             if (!this.file.source) {
-                let id:any = this.model[
-                    this._configuration.database.model.property.name.special.id
-                ]
-                if (typeof id === 'object')
-                    id = id.value
+                const id:any = this._idIsObject ? this.model[
+                    this._idName
+                ].value : this.model[this._idName]
                 if (
                     this.revision &&
                     changes.revision.currentValue !==
@@ -3003,21 +3022,12 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
             if (this.synchronizeImmediately && !this.model[
                 this.attachmentTypeName
             ][this.internalName].state.errors) {
-                const deletedName:string =
-                    this._configuration.database.model.property.name.special
-                    .deleted
-                const idName:string =
-                    this._configuration.database.model.property.name.special.id
-                const revisionName:string =
-                    this._configuration.database.model.property.name.special
-                    .revision
-                const typeName:string =
-                    this._configuration.database.model.property.name.special
-                    .type
                 let result:PlainObject
                 const newData:PlainObject = {
-                    [typeName]: this.model[typeName],
-                    [idName]: this.model[idName],
+                    [this._typeName]: this.model[this._typeName],
+                    [this._idName]: this._idIsObject ? this.model[
+                        this._idName
+                    ].value : this.model[this._idName],
                     [this.attachmentTypeName]: {
                         [this.file.name]: {
                             content_type: this.file.content_type,
@@ -3028,20 +3038,24 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 if (this.synchronizeImmediately !== true)
                     this._extendObject(
                         true, newData, this.synchronizeImmediately)
+                const id:any = this._idIsObject ? this.model[
+                    this._idName
+                ].value : this.model[this._idName]
                 // NOTE: We want to replace old medium.
                 if (oldFileName && oldFileName !== this.file.name && !(
-                    this.mapNameToField && this.model[idName] &&
-                    this.mapNameToField.includes(idName)
+                    this.mapNameToField && id &&
+                    this.mapNameToField.includes(this._idName)
                 ))
                     newData[this.attachmentTypeName][oldFileName] = {
                         data: null}
-                if (![undefined, null].includes(this.model[revisionName]))
-                    newData[revisionName] = this.model[revisionName]
+                if (![undefined, null].includes(
+                    this.model[this._revisionName]
+                ))
+                    newData[this._revisionName] = this.model[
+                        this._revisionName]
                 if (this.mapNameToField) {
-                    if (this.model[idName] && this.mapNameToField.includes(
-                        idName
-                    )) {
-                        newData[deletedName] = true
+                    if (id && this.mapNameToField.includes(this._idName)) {
+                        newData[this._deletedName] = true
                         try {
                             result = await this._data.put(newData)
                         } catch (error) {
@@ -3053,15 +3067,15 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                             }
                             return
                         }
-                        delete newData[deletedName]
-                        delete newData[revisionName]
+                        delete newData[this._deletedName]
+                        delete newData[this._revisionName]
                     }
                     for (const name:string of this.mapNameToField) {
                         newData[name] = this.file.name
                         this.model[name] = this.file.name
                     }
                 }
-                newData[revisionName] = 'upsert'
+                newData[this._revisionName] = 'upsert'
                 try {
                     result = await this._data.put(newData)
                 } catch (error) {
@@ -3073,15 +3087,15 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     }
                     return
                 }
-                this.file.revision = this.model[revisionName] = result.rev
+                this.file.revision = this.model[this._revisionName] =
+                    result.rev
                 this.file.query = `?rev=${result.rev}`
                 this.file.source =
                     this._domSanitizer.bypassSecurityTrustResourceUrl(
                         this._stringFormat(
                             this._configuration.database.url, ''
-                        ) + `/${this._configuration.name}/` +
-                        `${this.model[idName]}/${this.file.name}` +
-                        this.file.query)
+                        ) + `/${this._configuration.name}/${id}/` +
+                        `${this.file.name}${this.file.query}`)
                 this.determinePresentationType()
                 this.change.emit(this.file)
                 this.modelChange.emit(this.model)
@@ -3131,28 +3145,22 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      */
     async remove():Promise<void> {
         if (this.synchronizeImmediately && this.file) {
-            const deletedName:string =
-                this._configuration.database.model.property.name.special
-                .deleted
-            const idName:string =
-                this._configuration.database.model.property.name.special.id
-            const revisionName:string =
-                this._configuration.database.model.property.name.special
-                .revision
-            const typeName:string =
-                this._configuration.database.model.property.name.special.type
             let result:PlainObject
             const update:PlainObject = {
-                [typeName]: this.model[typeName],
-                [idName]: this.model[idName],
-                [revisionName]: this.model[revisionName],
+                [this._typeName]: this.model[this._typeName],
+                [this._idName]: this._idIsObject ? this.model[
+                    this._idName
+                ].value : this.model[this._idName],
+                [this._revisionName]: this.model[this._revisionName],
                 [this.attachmentTypeName]: {[this.file.name]: {
                     content_type: 'text/plain',
                     data: null
                 }}
             }
-            if (this.mapNameToField && this.mapNameToField.includes(idName))
-                update[deletedName] = true
+            if (this.mapNameToField && this.mapNameToField.includes(
+                this._idName
+            ))
+                update[this._deletedName] = true
             try {
                 result = await this._data.put(update)
             } catch (error) {
@@ -3161,10 +3169,12 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 ].state.errors = {database: this._representObject(error)}
                 return
             }
-            if (this.mapNameToField && this.mapNameToField.includes(idName))
+            if (this.mapNameToField && this.mapNameToField.includes(
+                this._idName
+            ))
                 this.delete.emit(result)
             else
-                this.model[revisionName] = result.rev
+                this.model[this._revisionName] = result.rev
         }
         this.model[this.attachmentTypeName][this.internalName].state.errors =
             this.model[this.attachmentTypeName][this.internalName].value =

@@ -104,11 +104,25 @@ registerAngularTest(function(
                                 contentTypeRegularExpressionPattern:
                                     '^image/.+',
                                 maximumNumber: 1,
+                                minimum: 0,
+                                minimumLength: 0,
+                                minimumNumber: 0,
+                                name: '.+\\.(?:jpe?g|png)',
                                 onCreateExpression: `{name: 'a.jpg'}`
                             }},
-                            _id: {mutable: false},
-                            _rev: {mutable: false},
-                            a: {}
+                            _id: {
+                                minimum: 0,
+                                minimumLength: 0,
+                                minimumNumber: 0,
+                                name: '_id',
+                                mutable: false
+                            },
+                            a: {
+                                minimum: 0,
+                                minimumLength: 0,
+                                minimumNumber: 0,
+                                name: 'a'
+                           }
                         }},
                         property: {
                             defaultSpecification: {
@@ -131,6 +145,10 @@ registerAngularTest(function(
                                     extend: '_extends',
                                     id: '_id',
                                     localSequence: '_local_seq',
+                                    maximumAggregatedSize:
+                                        '_maximumAggregatedSize',
+                                    minimumAggregatedSize:
+                                        '_minimumAggregatedSize',
                                     revision: '_rev',
                                     revisions: '_revisions',
                                     revisionsInformation: '_revs_info',
@@ -258,7 +276,7 @@ registerAngularTest(function(
                  */
                 constructor(
                 attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
-                canDeactivateRouteLeave:CanDeactivateRouteLeaveGuard,
+                    canDeactivateRouteLeave:CanDeactivateRouteLeaveGuard,
                     data:DataService,
                     dataScope:DataScopeService,
                     extractRawDataPipe:ExtractRawDataPipe,
@@ -743,24 +761,10 @@ registerAngularTest(function(
                         for (const test:Array<any> of [
                             [['Test'], {
                                 _attachments: {'.+\\.(?:jpe?g|png)': {
-                                    name: '.+\\.(?:jpe?g|png)',
                                     value: {name: 'a.jpg'}
                                 }},
-                                _id: {
-                                    name: '_id',
-                                    value: null
-                                },
-                                _rev: {
-                                    name: '_rev',
-                                    value: null
-                                },
-                                a: {
-                                    minimum: 0,
-                                    minimumLength: 0,
-                                    minimumNumber: 0,
-                                    name: 'a',
-                                    value: null
-                                }
+                                _id: {value: null},
+                                a: {value: null}
                             }],
                             [['Test', ['a']], {a: {
                                 minimum: 0,
@@ -795,53 +799,29 @@ registerAngularTest(function(
                             }}],
                             [['Test', null, {_attachments: {'b.jpg': {}}}], {
                                 _attachments: {'.+\\.(?:jpe?g|png)': {
-                                    name: '.+\\.(?:jpe?g|png)',
                                     value: {name: 'b.jpg'}
                                 }},
-                                _id: {
-                                    name: '_id',
-                                    value: null
-                                },
-                                _rev: {
-                                    name: '_rev',
-                                    value: null
-                                },
-                                a: {minimum: 0, name: 'a', value: null}
+                                _id: {value: null},
+                                a: {value: null}
                             }],
                             [['Test', null, {_attachments: {}}], {
                                 _attachments: {'.+\\.(?:jpe?g|png)': {
-                                    name: '.+\\.(?:jpe?g|png)',
                                     value: null
                                 }},
-                                _id: {
-                                    name: '_id',
-                                    value: null
-                                },
-                                _rev: {
-                                    name: '_rev',
-                                    value: null
-                                },
-                                a: {minimum: 0, name: 'a', value: null}
+                                _id: {value: null},
+                                a: {value: null}
                             }],
                             [['Test', null, {_attachments: {
                                 'b.jpg': {test: 2}
                             }}], {
                                 _attachments: {'.+\\.(?:jpe?g|png)': {
-                                    name: '.+\\.(?:jpe?g|png)',
                                     value: {
                                         name: 'b.jpg',
                                         test: 2
                                     }
                                 }},
-                                _id: {
-                                    name: '_id',
-                                    value: null
-                                },
-                                _rev: {
-                                    name: '_rev',
-                                    value: null
-                                },
-                                a: {minimum: 0, name: 'a', value: null}
+                                _id: {value: null},
+                                a: {value: null}
                             }]
                         ])
                             assert.deepEqual(dataScope.generate(
@@ -865,10 +845,6 @@ registerAngularTest(function(
                             }},
                             _id: {
                                 name: '_id',
-                                value: null
-                            },
-                            _rev: {
-                                name: '_rev',
                                 value: null
                             },
                             _metaData: {submitted: false},
