@@ -2892,7 +2892,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 older cached one.
             */
             if (!this.file.source) {
-                const id:any = this.model[
+                let id:any = this.model[
                     this._configuration.database.model.property.name.special.id
                 ]
                 if (typeof id === 'object')
