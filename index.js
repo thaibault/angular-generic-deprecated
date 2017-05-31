@@ -3223,7 +3223,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
             } catch (error) {
                 this.model[this.attachmentTypeName][
                     this.internalName
-                ].state.errors = {database: this._representObject(error)}
+                ].state.errors = {database: (
+                    'message' in error
+                ) ? error.message : this._representObject(error)}
                 return
             }
             if (this.mapNameToField && this.mapNameToField.includes(
