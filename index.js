@@ -2647,7 +2647,9 @@ export class TextareaComponent extends AbstractInputComponent {
     selector: 'generic-file-input',
     template: `
         <md-card>
-            <md-card-header>
+            <md-card-header
+                *ngIf="headerText || file?.name || name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description"
+            >
                 <md-card-title>
                     {{headerText || file?.name || name || model[attachmentTypeName][internalName]?.description}}
                 </md-card-title>
@@ -2679,15 +2681,16 @@ export class TextareaComponent extends AbstractInputComponent {
                 *ngIf="file?.type === 'text' && file?.source"
                 style="border:none;width:100%;max-height:150px"
             ></iframe>
-            <div md-card-image>
-                <p
-                    *ngIf="!file?.type && (file?.source || (file?.source | genericType) === 'string')"
-                >Keine Vorschau möglich.</p>
-                <p *ngIf="!file">Keine Datei ausgewählt.</p>
-            </div>
+            <div
+                md-card-image
+                *ngIf="(!file?.type && (file?.source || (file?.source | genericType) === 'string') ? noPreviewText : noFileText) as text"
+            ><p>{{text}}</p></div>
             <md-card-content>
                 <ng-content></ng-content>
-                <div generic-error *ngIf="showValidationErrorMessages">
+                <div
+                    generic-error
+                    *ngIf="showValidationErrorMessages && model[attachmentTypeName][internalName]?.state?.errors"
+                >
                     <p
                         *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.required"
                     >Bitte wählen Sie eine Datei aus.</p>
@@ -2730,16 +2733,16 @@ export class TextareaComponent extends AbstractInputComponent {
             <md-card-actions>
                 <input #input type="file" style="display:none" />
                 <button
-                    *ngIf="newButtonText" md-button (click)="input.click()"
+                    *ngIf="newButtonText" md-raised-button
+                    (click)="input.click()"
                 >{{newButtonText}}</button>
                 <button
-                    *ngIf="deleteButtonText && file" md-button
-                    (click)="remove()"
+                    (click)="remove()" md-raised-button
+                    *ngIf="deleteButtonText && file"
                 >{{deleteButtonText}}</button>
-                <a
-                    *ngIf="downloadButtonText && file" [download]="file.name"
-                    [href]="file.source"
-                ><button md-button>{{downloadButtonText}}</button></a>
+                <button md-raised-button *ngIf="downloadButtonText && file"><a
+                    [download]="file.name" [href]="file.source"
+                >{{downloadButtonText}}</a></button>
             </md-card-actions>
         </md-card>
     `
@@ -2777,7 +2780,7 @@ export class TextareaComponent extends AbstractInputComponent {
  * @property deleteButtonText - Text for button to trigger file removing.
  * @property downloadButtonText - Text for button to download current file.
  * @property file - Holds the current selected file object if present.
- * @property change - Event emitter emitting when file changes happen.
+ * @property change - Event emitter triggering when file changes happen.
  * @property headerText - Header text to show instead of property description
  * or name.
  * @property input - Virtual file input dom node.
@@ -2785,7 +2788,7 @@ export class TextareaComponent extends AbstractInputComponent {
  * @property mapNameToField - Indicates whether current file name should be
  * mapped to a specific model property.
  * @property model - File property specification.
- * @property modelChange -
+ * @property modelChange - Event emitter triggering when model changes happen.
  * @property name - Name of currently active file.
  * @property newButtonText - Text for button to trigger new file upload.
  * @property showValidationErrorMessages - Indicates whether validation errors
@@ -2832,6 +2835,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     @Output() modelChange:EventEmitter = new EventEmitter()
     @Input() name:?string = null
     @Input() newButtonText:string = 'new'
+    @Input() noFileText:string = ''
+    @Input() noPreviewText:string = ''
     @Input() revision:?string = null
     @Input() showValidationErrorMessages:boolean = false
     @Input() synchronizeImmediately:boolean|PlainObject = false
@@ -2874,8 +2879,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         this._representObject = representObjectPipe.transform.bind(
             representObjectPipe)
         this._stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
-        this.attachmentTypeName = this._configuration.database.model.property
-            .name.special.attachment
+        this.attachmentTypeName =
+            this._configuration.database.model.property.name.special.attachment
         this.model = {[this.attachmentTypeName]: [], id: null}
     }
     /**
@@ -2888,6 +2893,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
            this._idIsObject = true
         if (this.mapNameToField && !Array.isArray(this.mapNameToField))
             this.mapNameToField = [this.mapNameToField]
+        this.name = null
         const name:string = this._getFilenameByPrefix(
             this.model[this.attachmentTypeName], this.name)
         if (this.name && name !== this.name)
@@ -3022,23 +3028,16 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
             if (this.synchronizeImmediately && !this.model[
                 this.attachmentTypeName
             ][this.internalName].state.errors) {
-                let result:PlainObject
-                const newData:PlainObject = {
+                let newData:PlainObject = {
                     [this._typeName]: this.model[this._typeName],
                     [this._idName]: this._idIsObject ? this.model[
                         this._idName
-                    ].value : this.model[this._idName],
-                    [this.attachmentTypeName]: {
-                        [this.file.name]: {
-                            content_type: this.file.content_type,
-                            data: this.file.data
-                        }
-                    }
+                    ].value : this.model[this._idName]
                 }
                 if (this.synchronizeImmediately !== true)
                     this._extendObject(
                         true, newData, this.synchronizeImmediately)
-                const id:any = this._idIsObject ? this.model[
+                let id:any = this._idIsObject ? this.model[
                     this._idName
                 ].value : this.model[this._idName]
                 // NOTE: We want to replace old medium.
@@ -3046,38 +3045,43 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     this.mapNameToField && id &&
                     this.mapNameToField.includes(this._idName)
                 ))
-                    newData[this.attachmentTypeName][oldFileName] = {
-                        data: null}
+                    newData[this.attachmentTypeName] =  {[oldFileName]: {
+                        data: null
+                    }}
                 if (![undefined, null].includes(
                     this.model[this._revisionName]
                 ))
                     newData[this._revisionName] = this.model[
                         this._revisionName]
+                const tasks:Array<PlainObject> = []
                 if (this.mapNameToField) {
-                    if (id && this.mapNameToField.includes(this._idName)) {
+                    if (
+                        id && id !== this.file.name &&
+                        this.mapNameToField.includes(this._idName)
+                    ) {
                         newData[this._deletedName] = true
-                        try {
-                            result = await this._data.put(newData)
-                        } catch (error) {
-                            this.model[this.attachmentTypeName][
-                                this.internalName
-                            ].state.errors = {
-                                database: 'message' in error ? error.message :
-                                    this._representObject(error)
-                            }
-                            return
-                        }
-                        delete newData[this._deletedName]
-                        delete newData[this._revisionName]
+                        tasks.unshift(newData)
+                        newData = this._extendObject(true, {}, newData, {[
+                            this._deletedName
+                        ]: false})
                     }
                     for (const name:string of this.mapNameToField) {
                         newData[name] = this.file.name
-                        this.model[name] = this.file.name
+                        if (name === this._idName && this._idIsObject)
+                            this.model[name].value = this.file.name
+                        else
+                            this.model[name] = this.file.name
                     }
                 }
                 newData[this._revisionName] = 'upsert'
+                newData[this.attachmentTypeName] = {[this.file.name]: {
+                    content_type: this.file.content_type,
+                    data: this.file.data
+                }}
+                tasks.unshift(newData)
+                let result:Array<PlainObject>
                 try {
-                    result = await this._data.put(newData)
+                    result = await this._data.bulkDocs(tasks)
                 } catch (error) {
                     this.model[this.attachmentTypeName][
                         this.internalName
@@ -3087,17 +3091,30 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     }
                     return
                 }
-                this.file.revision = this.model[this._revisionName] =
-                    result.rev
-                this.file.query = `?rev=${result.rev}`
-                this.file.source =
-                    this._domSanitizer.bypassSecurityTrustResourceUrl(
-                        this._stringFormat(
-                            this._configuration.database.url, ''
-                        ) + `/${this._configuration.name}/${id}/` +
-                        `${this.file.name}${this.file.query}`)
-                this.determinePresentationType()
-                this.change.emit(this.file)
+                id = newData[this._idName]
+                let revision:string
+                for (const item:PlainObject of result) {
+                    if (item.error) {
+                        this.model[this.attachmentTypeName][
+                            this.internalName
+                        ].state.errors = {database: item.message}
+                        return
+                    }
+                    if (item.id === id)
+                        revision = item.rev
+                }
+                if (this.file) {
+                    this.file.revision = this.model[this._revisionName] = revision
+                    this.file.query = `?rev=${revision}`
+                    this.file.source =
+                        this._domSanitizer.bypassSecurityTrustResourceUrl(
+                            this._stringFormat(
+                                this._configuration.database.url, ''
+                            ) + `/${this._configuration.name}/${id}/` +
+                            `${this.file.name}${this.file.query}`)
+                    this.determinePresentationType()
+                    this.change.emit(this.file)
+                }
                 this.modelChange.emit(this.model)
             } else {
                 this.determinePresentationType()
@@ -3151,16 +3168,17 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 [this._idName]: this._idIsObject ? this.model[
                     this._idName
                 ].value : this.model[this._idName],
-                [this._revisionName]: this.model[this._revisionName],
-                [this.attachmentTypeName]: {[this.file.name]: {
-                    content_type: 'text/plain',
-                    data: null
-                }}
+                [this._revisionName]: this.model[this._revisionName]
             }
             if (this.mapNameToField && this.mapNameToField.includes(
                 this._idName
             ))
                 update[this._deletedName] = true
+            else
+                update[this.attachmentTypeName] = {[this.file.name]: {
+                    content_type: 'text/plain',
+                    data: null
+                }}
             try {
                 result = await this._data.put(update)
             } catch (error) {
