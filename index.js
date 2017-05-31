@@ -23,7 +23,7 @@ import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
     /* AfterViewInit,*/ ChangeDetectorRef, Component, Directive, ElementRef,
-    EventEmitter, forwardRef, Injectable, Injector, Input, NgModule,
+    EventEmitter, forwardRef, Injectable, Inject, Injector, Input, NgModule,
     /* OnChanges, OnInit,*/ Output, Pipe, PipeTransform, ReflectiveInjector,
     Renderer, ViewChild
 } from '@angular/core'
@@ -904,7 +904,7 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
     selector: 'generic-confirm',
     template: `
         <h2 md-dialog-title *ngIf="title">{{title}}</h2>
-        <md-dialog-content>{{message}}</md-dialog-content>
+        <md-dialog-content *ngIf="message">{{message}}</md-dialog-content>
         <md-dialog-actions>
             <button md-raised-button (click)="dialogReference.close(true)">
                 {{okText}}
@@ -923,12 +923,14 @@ export class ConfirmComponent {
     @Input() okText:string = 'OK'
     dialogReference:MdDialogRef<ConfirmComponent>
     constructor(
-        data:MD_DIALOG_DATA, dialogReference:MdDialogRef<ConfirmComponent>
+        @Inject(MD_DIALOG_DATA) data:any,
+        dialogReference:MdDialogRef<ConfirmComponent>
     ):void {
         this.dialogReference = dialogReference
-        for (const key:string in data)
-            if (data.hasOwnProperty(key))
-                this.key = data[key]
+        if (typeof data === 'object' && data !== null)
+            for (const key:string in data)
+                if (data.hasOwnProperty(key))
+                    this[key] = data[key]
     }
 }
 // IgnoreTypeCheck
@@ -938,10 +940,15 @@ export class AlertService {
     constructor(dialog:MdDialog) {
         this.dialog = dialog
     }
-    async confirm(data:string|{[key:string]:any}):Promise<boolean> {
+    confirm(data:string|{[key:string]:any}):Promise<boolean> {
         if (typeof data === 'string')
-            data = {message: data}
-        return await this.dialog.open(ConfirmComponent, data).afterClosed(
+            data = {data: {message: data}}
+        else if (
+            typeof data !== 'object' || data === null || !data.hasOwnProperty(
+                'data')
+        )
+            data = {data}
+        return this.dialog.open(ConfirmComponent, data).afterClosed(
         ).toPromise()
     }
 }
