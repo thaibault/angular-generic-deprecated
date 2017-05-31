@@ -31,8 +31,8 @@ import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
 import {
-    MdButtonModule, MdCardModule, MD_DIALOG_DATA, MdDialog, MdDialogModule,
-    MdInputModule, MdSelectModule
+    MdButtonModule, MdCardModule, MD_DIALOG_DATA, MdDialog, MdDialogRef,
+    MdDialogModule, MdInputModule, MdSelectModule
 } from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {
@@ -906,8 +906,12 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
         <h2 md-dialog-title *ngIf="title">{{title}}</h2>
         <md-dialog-content>{{message}}</md-dialog-content>
         <md-dialog-actions>
-            <button md-dialog-close>OK</button>
-            <button md-dialog-close>Cancel</button>
+            <button md-raised-button (click)="dialogReference.close(true)">
+                {{okText}}
+            </button>
+            <button md-raised-button (click)="dialogReference.close(false)">
+                {{cancelText}}
+            </button>
         </md-dialog-actions>
     `
 })
@@ -915,7 +919,13 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
  * Provides a generic confirmation component.
  */
 export class ConfirmComponent {
-    constructor(data:MD_DIALOG_DATA):void {
+    @Input() cancelText:string = 'Cancel'
+    @Input() okText:string = 'OK'
+    dialogReference:MdDialogRef<ConfirmComponent>
+    constructor(
+        data:MD_DIALOG_DATA, dialogReference:MdDialogRef<ConfirmComponent>
+    ):void {
+        this.dialogReference = dialogReference
         for (const key:string in data)
             if (data.hasOwnProperty(key))
                 this.key = data[key]
@@ -928,11 +938,11 @@ export class AlertService {
     constructor(dialog:MdDialog) {
         this.dialog = dialog
     }
-    confirm(data:string|{[key:string]:any}):Promise<boolean> {
-        if (typeof question === 'string')
-            this.dialog(ConfirmComponent, {message: data})
-        else
-            this.dialog(ConfirmComponent, data)
+    async confirm(data:string|{[key:string]:any}):Promise<boolean> {
+        if (typeof data === 'string')
+            data = {message: data}
+        return await this.dialog.open(ConfirmComponent, data).afterClosed(
+        ).toPromise()
     }
 }
 // / endregion
@@ -3385,6 +3395,7 @@ const modules:Array<Object> = [
 // IgnoreTypeCheck
 @NgModule({
     declarations,
+    entryComponents: [ConfirmComponent],
     exports: declarations,
     imports: modules,
     providers
