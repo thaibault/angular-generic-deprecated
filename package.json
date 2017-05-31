@@ -65,8 +65,6 @@
     "zone.js": "^0.8.4"
   },
   "devDependencies": {
-    "@angular/compiler-cli": "latest",
-    "@angular/platform-server": "latest",
     "babel-plugin-angular2-annotations": "latest",
     "babel-plugin-transform-decorators-legacy": "latest",
     "documentation-website": "latest",
