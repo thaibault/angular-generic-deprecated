@@ -26,7 +26,6 @@
     "url": "https://github.com/thaibault/angularGeneric"
   },
   "scripts": {
-    "buildAOT": "npm run build && mv index.compiled.js index.compiled.ts && ngc --allowJs --newLine LF --skipLibCheck --project aheadOfTimeCompilation.json",
     "buildTest": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types --presets modern-browsers,es2017,stage-0 --source-maps inline --out-file testRunner.compiled.js testRunner.js",
     "build": "webOptimizer build && npm run buildTest",
     "buildDLL": "webOptimizer buildDLL",
@@ -62,9 +61,8 @@
     "pouchdb-find": "latest",
     "pouchdb-validation": "latest",
     "reflect-metadata": "^0.1.8",
-    "rxjs": "5.0.0-beta.12",
-    "typescript": "latest",
-    "zone.js": "0.7.6"
+    "rxjs": "5.0.1",
+    "zone.js": "^0.8.4"
   },
   "devDependencies": {
     "@angular/compiler-cli": "latest",

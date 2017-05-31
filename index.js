@@ -31,7 +31,8 @@ import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
 import {
-    MdButtonModule, MdCardModule, MdInputModule, MdSelectModule
+    MdButtonModule, MdCardModule, MD_DIALOG_DATA, MdDialog, MdDialogModule,
+    MdInputModule, MdSelectModule
 } from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {
@@ -896,6 +897,44 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
         return 'canDeactivate' in component ? component.canDeactivate() : true
     }
 }
+// / region confirm
+// TODO
+// IgnoreTypeCheck
+@Component({
+    selector: 'generic-confirm',
+    template: `
+        <h2 md-dialog-title *ngIf="title">{{title}}</h2>
+        <md-dialog-content>{{message}}</md-dialog-content>
+        <md-dialog-actions>
+            <button md-dialog-close>OK</button>
+            <button md-dialog-close>Cancel</button>
+        </md-dialog-actions>
+    `
+})
+/**
+ * Provides a generic confirmation component.
+ */
+export class ConfirmComponent {
+    constructor(data:MD_DIALOG_DATA):void {
+        for (const key:string in data)
+            if (data.hasOwnProperty(key))
+                this.key = data[key]
+    }
+}
+@Injectable()
+export class Alert {
+    dialog:MdDialog
+    constructor(dialog:MdDialog) {
+        this.dialog = dialog
+    }
+    confirm(data:string|{[key:string]:any}):Promise<boolean> {
+        if (typeof question === 'string')
+            this.dialog(ConfirmComponent, {message: data})
+        else
+            this.dialog(ConfirmComponent, data)
+    }
+}
+// / endregion
 // IgnoreTypeCheck
 @Injectable()
 /**
@@ -3334,6 +3373,7 @@ const modules:Array<Object> = [
     FormsModule,
     MdButtonModule,
     MdCardModule,
+    MdDialogModule,
     MdInputModule,
     MdSelectModule
 ]
