@@ -921,8 +921,9 @@ export class ConfirmComponent {
                 this.key = data[key]
     }
 }
+// IgnoreTypeCheck
 @Injectable()
-export class Alert {
+export class AlertService {
     dialog:MdDialog
     constructor(dialog:MdDialog) {
         this.dialog = dialog
@@ -1628,8 +1629,9 @@ export class DataScopeService {
             } catch (error) {
                 throw new Error(
                     `Document with given id "${id}" and revision "` +
-                    `${revision}" isn't available: ` +
-                    this.tools.representObject(error))
+                    `${revision}" isn't available: ` + (
+                        'message' in error
+                    ) ? error.message : this.tools.representObject(error))
             }
             if (revisionHistory) {
                 const revisionsInformationName:string =
@@ -1645,8 +1647,10 @@ export class DataScopeService {
                     } catch (error) {
                         throw new Error(
                             `Document with given id "${id}" and revision "` +
-                            `${revision}" isn't available: ` +
-                            this.tools.representObject(error))
+                            `${revision}" isn't available: ` + (
+                                'message' in error
+                            ) ? error.message : this.tools.representObject(
+                                error))
                     }
                     revisions = latestData[revisionsInformationName]
                     delete latestData[revisionsInformationName]
@@ -3124,10 +3128,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 } catch (error) {
                     this.model[this.attachmentTypeName][
                         this.internalName
-                    ].state.errors = {
-                        database: 'message' in error ? error.message :
-                            this._representObject(error)
-                    }
+                    ].state.errors = {database: (
+                        'message' in error
+                    ) ? error.message : this._representObject(error)}
                     return
                 }
                 id = newData[this._idName]
