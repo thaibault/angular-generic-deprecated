@@ -2151,7 +2151,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
                 this._currentParameter.searchTerm)
             if (match) {
                 this.regularExpression = match[1] === 'regex'
-                this.searchTerm = match[2]
+                this.searchTerm = decodeURIComponent(match[2])
             }
         })
         this._route.data.subscribe((data:PlainObject):void => {
