@@ -1646,9 +1646,9 @@ export class DataScopeService {
             } catch (error) {
                 throw new Error(
                     `Document with given id "${id}" and revision "` +
-                    `${revision}" isn't available: ` + (
+                    `${revision}" isn't available: ` + ((
                         'message' in error
-                    ) ? error.message : this.tools.representObject(error))
+                    ) ? error.message : this.tools.representObject(error)))
             }
             if (revisionHistory) {
                 const revisionsInformationName:string =
@@ -1664,10 +1664,10 @@ export class DataScopeService {
                     } catch (error) {
                         throw new Error(
                             `Document with given id "${id}" and revision "` +
-                            `${revision}" isn't available: ` + (
+                            `${revision}" isn't available: ` + ((
                                 'message' in error
                             ) ? error.message : this.tools.representObject(
-                                error))
+                                error)))
                     }
                     revisions = latestData[revisionsInformationName]
                     delete latestData[revisionsInformationName]
