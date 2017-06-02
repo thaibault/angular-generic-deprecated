@@ -2723,14 +2723,23 @@ export class TextareaComponent extends AbstractInputComponent {
                     <span *ngIf="headerText || !file?.name; else editable">
                         {{headerText || model[attachmentTypeName][internalName]?.description || name}}
                     </span>
-                    <ng-container #editiable >
+                    <ng-container #editiable>
                         <span
-                            contenteditable (focus)="show = true"
-                            (blur)="show = false"
-                        >{{file?.name}}</span>
-                        <ng-container *ngIf="show">
-                            <span>OK</span>
-                            <span>X</span>
+                            [class.dirty]="currentName && currentName !== file.name"
+                            title="Focus to edit." contenteditable #input
+                            (input)="currentName = $event.target.textContent"
+                        >{{file.name}}</span>
+                        <ng-container
+                            *ngIf="currentName && currentName !== file.name"
+                        >
+                            <a
+                                (click)="$event.preventDefault();rename(currentName)"
+                                href=""
+                            >✓</a>
+                            <a
+                                (click)="$event.preventDefault();currentName = input.textContent = file.name"
+                                href=""
+                            >✕</a>
                         </ng-container>
                     </ng-container>
                 </md-card-title>
@@ -2964,6 +2973,27 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         this.attachmentTypeName =
             this._configuration.database.model.property.name.special.attachment
         this.model = {[this.attachmentTypeName]: {}, id: null}
+    }
+    /**
+     * Determines which type of file we have to present.
+     * @returns Nothing.
+     */
+    determinePresentationType():void {
+        if (this.file && this.file.content_type)
+            if (this.constructor.textMimeTypeRegularExpression.test(
+                this.file.content_type
+            ))
+                this.file.type = 'text'
+            else if (this.constructor.imageMimeTypeRegularExpression.test(
+                this.file.content_type
+            ))
+                this.file.type = 'image'
+            else if (this.constructor.videoMimeTypeRegularExpression.test(
+                this.file.content_type
+            ))
+                this.file.type = 'video'
+            else
+                this.file.type = 'binary'
     }
     /**
      * Initializes file upload handler.
@@ -3228,27 +3258,6 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         })
     }
     /**
-     * Determines which type of file we have to present.
-     * @returns Nothing.
-     */
-    determinePresentationType():void {
-        if (this.file && this.file.content_type)
-            if (this.constructor.textMimeTypeRegularExpression.test(
-                this.file.content_type
-            ))
-                this.file.type = 'text'
-            else if (this.constructor.imageMimeTypeRegularExpression.test(
-                this.file.content_type
-            ))
-                this.file.type = 'image'
-            else if (this.constructor.videoMimeTypeRegularExpression.test(
-                this.file.content_type
-            ))
-                this.file.type = 'video'
-            else
-                this.file.type = 'binary'
-    }
-    /**
      * Removes current file.
      * @returns A Promise which will be resolved after current file will be
      * removed.
@@ -3297,6 +3306,15 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 .errors = {required: true}
         this.change.emit(this.file)
         this.modelChange.emit(this.model)
+    }
+    /**
+     * Renames current file.
+     * @param newName - New name to rename current file to.
+     * @returns A Promise which will be resolved after current file will be
+     * renamed.
+     */
+    async rename(newName:string):Promise<void> {
+        console.log('TODO', newName)
     }
 }
 // / endregion
