@@ -1371,44 +1371,51 @@ export class DataScopeService {
      * @returns Resolved data.
      */
     get(scope:Object):PlainObject {
-        const result:PlainObject = {}
-        for (const key:string in scope)
-            if (
-                scope.hasOwnProperty(key) && !key.startsWith('_') &&
-                typeof scope[key] === 'object' && scope[key] !== null &&
-                'hasOwnProperty' in scope && scope[key].hasOwnProperty('value')
-            )
-                result[key] = scope[key].value
         const specialNames:PlainObject =
             this.configuration.database.model.property.name.special
-        const attachmentName:string = specialNames.attachment
-        if (scope.hasOwnProperty(attachmentName) && scope[attachmentName])
-            for (const key:string in scope[attachmentName])
-                if (scope[attachmentName].hasOwnProperty(key) && typeof scope[
-                    attachmentName
-                ][key] === 'object' && scope[attachmentName][
-                    key
-                ] !== null && 'hasOwnProperty' in scope[
-                    attachmentName
-                ] && scope[attachmentName][key].hasOwnProperty(
-                    'value'
-                ) && scope[attachmentName][key].value) {
-                    if (!result[attachmentName])
-                        result[attachmentName] = {}
-                    result[attachmentName][scope[attachmentName][
-                        key
-                    ].value.name] = scope[attachmentName][key].value
-                }
-        for (const name:string of this.configuration.database.model.property
-            .name.reserved.concat(
-                specialNames.deleted,
-                specialNames.id,
-                specialNames.revision,
+        const result:PlainObject = {}
+        for (const key:string in scope)
+            if (scope.hasOwnProperty(
+                key
+            ) && this.configuration.database.model.entities[scope[
                 specialNames.type
-            )
-        )
-            if (scope.hasOwnProperty(name))
-                result[name] = scope[name]
+            ]].hasOwnProperty(key) && ![
+                specialNames.additional,
+                specialNames.allowedRole,
+                specialNames.conflict,
+                specialNames.deletedConflict,
+                specialNames.localSequence,
+                specialNames.revisions,
+                specialNames.revisionsInformations
+            ].includes(key))
+                if (
+                    typeof scope[key] === 'object' &&
+                    scope[key] !== null && 'hasOwnProperty' in scope &&
+                    scope[key].hasOwnProperty('value')
+                )
+                    result[key] = scope[key].value
+                else
+                    result[key] = scope[key]
+        if (scope.hasOwnProperty(
+            specialNames.attachment
+        ) && scope[specialNames.attachment])
+            for (const key:string in scope[specialNames.attachment])
+                if (scope[specialNames.attachment].hasOwnProperty(
+                    key
+                ) && typeof scope[specialNames.attachment][key] === 'object' &&
+                scope[specialNames.attachment][key] !== null &&
+                'hasOwnProperty' in scope[specialNames.attachment] &&
+                scope[specialNames.attachment][key].hasOwnProperty(
+                    'value'
+                ) && scope[specialNames.attachment][key].value) {
+                    if (!result[specialNames.attachment])
+                        result[specialNames.attachment] = {}
+                    result[specialNames.attachment][scope[
+                        specialNames.attachment
+                    ][key].value.name] = scope[specialNames.attachment][
+                        key
+                    ].value
+                }
         return result
     }
     /**
