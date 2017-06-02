@@ -1381,6 +1381,8 @@ export class DataScopeService {
                 specialNames.type
             ]].hasOwnProperty(key) && ![
                 specialNames.additional,
+                // NOTE: Will be handled later.
+                specialNames.attachment,
                 specialNames.allowedRole,
                 specialNames.conflict,
                 specialNames.deletedConflict,
@@ -1451,13 +1453,13 @@ export class DataScopeService {
             if (modelSpecification.hasOwnProperty(name))
                 if (name === specialNames.attachment) {
                     specification[name] = {}
-                    for (const fileName:string in modelSpecification[name])
-                        if (modelSpecification[name].hasOwnProperty(fileName))
-                            specification[name][fileName] = this.extendObject(
+                    for (const fileType:string in modelSpecification[name])
+                        if (modelSpecification[name].hasOwnProperty(fileType))
+                            specification[name][fileType] = this.extendObject(
                                 true, this.tools.copyLimitedRecursively(
                                     this.configuration.database.model
                                         .property.defaultSpecification
-                                ), modelSpecification[name][fileName])
+                                ), modelSpecification[name][fileType])
                 } else if (![
                     specialNames.allowedRole,
                     specialNames.constraint.execution,
@@ -2715,10 +2717,22 @@ export class TextareaComponent extends AbstractInputComponent {
     template: `
         <md-card>
             <md-card-header
-                *ngIf="headerText || file?.name || name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description"
+                *ngIf="headerText || file?.name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description || name"
             >
                 <md-card-title>
-                    {{headerText || file?.name || name || model[attachmentTypeName][internalName]?.description}}
+                    <span *ngIf="headerText || !file?.name; else editable">
+                        {{headerText || model[attachmentTypeName][internalName]?.description || name}}
+                    </span>
+                    <ng-container #editiable >
+                        <span
+                            contenteditable (focus)="show = true"
+                            (blur)="show = false"
+                        >{{file?.name}}</span>
+                        <ng-container *ngIf="show">
+                            <span>OK</span>
+                            <span>X</span>
+                        </ng-container>
+                    </ng-container>
                 </md-card-title>
                 <md-card-subtitle
                     [class.activ]="showDeclaration"
@@ -2759,23 +2773,23 @@ export class TextareaComponent extends AbstractInputComponent {
                     *ngIf="showValidationErrorMessages && model[attachmentTypeName][internalName]?.state?.errors"
                 >
                     <p
-                        *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.required"
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.required"
                     >Bitte wählen Sie eine Datei aus.</p>
                     <p
-                        *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.name"
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.name"
                     >
                         Der Dateiname "{{file.name}}" entspricht nicht dem
                         vorgegebenen Muster "{{this.internalName}}".
                     </p>
                     <p
-                        *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.contentType"
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.contentType"
                     >
                         Der Daten-Typ "{{file.content_type}}" entspricht
                         nicht dem vorgegebenen Muster
                         "{{model[attachmentTypeName][internalName].contentTypeRegularExpressionPattern}}".
                     </p>
                     <p
-                        *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.minimumSize"
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.minimumSize"
                     >
                         Die Datei (Größe {{file.length}} Byte) unterschreitet
                         die minimal erlaubte Größe von
@@ -2783,7 +2797,7 @@ export class TextareaComponent extends AbstractInputComponent {
                         Byte.
                     </p>
                     <p
-                        *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.maximumSize"
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.maximumSize"
                     >
                         Die Datei (Größe {{file.length}} Byte) überschreitet
                         die maximal erlaubte Größe von
@@ -2791,9 +2805,9 @@ export class TextareaComponent extends AbstractInputComponent {
                         Byte.
                     </p>
                     <p
-                        *ngIf="model[attachmentTypeName][internalName]?.state?.errors?.database"
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.database"
                     >
-                        {{model[attachmentTypeName][internalName]?.state?.errors?.database}}
+                        {{model[attachmentTypeName][internalName].state.errors.database}}
                     </p>
                 </div>
             </md-card-content>
@@ -2842,6 +2856,7 @@ export class TextareaComponent extends AbstractInputComponent {
  * @property _typeName - Name of type field.
  * @property _prefixMatch - Holds the prefix match pipe instance's transform
  * method.
+ * @property attachmentTypeName - Current attachment type name.
  * @property delete - Event emitter which triggers its handler when current
  * file should be removed.
  * @property deleteButtonText - Text for button to trigger file removing.
@@ -2856,7 +2871,7 @@ export class TextareaComponent extends AbstractInputComponent {
  * mapped to a specific model property.
  * @property model - File property specification.
  * @property modelChange - Event emitter triggering when model changes happen.
- * @property name - Name of currently active file.
+ * @property name - Name or prefix of currently active file.
  * @property newButtonText - Text for button to trigger new file upload.
  * @property showValidationErrorMessages - Indicates whether validation errors
  * should be displayed. Useful to hide error messages until user tries to
@@ -2948,7 +2963,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         this._stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.attachmentTypeName =
             this._configuration.database.model.property.name.special.attachment
-        this.model = {[this.attachmentTypeName]: [], id: null}
+        this.model = {[this.attachmentTypeName]: {}, id: null}
     }
     /**
      * Initializes file upload handler.
@@ -2958,62 +2973,75 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     async ngOnChanges(changes:Object):Promise<void> {
         if (typeof this.model[this._idName] === 'object')
            this._idIsObject = true
-        if (this.mapNameToField && !Array.isArray(this.mapNameToField))
+        if (changes.hasOwnProperty(
+            'mapNameToField'
+        ) && this.mapNameToField && !Array.isArray(this.mapNameToField))
             this.mapNameToField = [this.mapNameToField]
-        this.name = null
-        const name:string = this._getFilenameByPrefix(
-            this.model[this.attachmentTypeName], this.name)
-        if (this.name && name !== this.name)
-            this._prefixMatch = true
-        this.internalName = name
-        this.model[this.attachmentTypeName][this.internalName].state = {}
-        this.file = this.model[this.attachmentTypeName][
-            this.internalName
-        ].value
-        if (this.file)
-            this.file.descriptionName = this.name
-        else if (!this.model[this.attachmentTypeName][
-            this.internalName
-        ].nullable)
-            this.model[this.attachmentTypeName][
+        if (changes.hasOwnProperty('model') || changes.hasOwnProperty(
+            'name'
+        )) {
+            this.internalName = this._getFilenameByPrefix(
+                this.model[this.attachmentTypeName], this.name)
+            if (
+                this.name && this.internalName &&
+                this.internalName !== this.name
+            )
+                this._prefixMatch = true
+            this.model[this.attachmentTypeName][this.internalName].state = {}
+            this.file = this.model[this.attachmentTypeName][
                 this.internalName
-            ].state.errors = {required: true}
-        if (this.file) {
-            this.file.query = `?version=${this.file.digest}`
-            /*
-                NOTE: Only set new file source if isn't already present to
-                prevent to download an immediately uploaded file and grab and
-                older cached one.
-            */
-            if (!this.file.source) {
-                const id:any = this._idIsObject ? this.model[
-                    this._idName
-                ].value : this.model[this._idName]
-                if (
-                    this.revision &&
-                    changes.revision.currentValue !==
-                    changes.revision.previousValue
-                ) {
-                    const image:Object = await this._data.getAttachment(
-                        id, this.file.name, {rev: this.revision})
-                    this.file.data = await blobToBase64String(image)
-                    this.file.content_type = image.type || 'text/plain'
-                    this.file.length = image.size
-                    this.file.source =
-                        this._domSanitizer.bypassSecurityTrustResourceUrl(
-                            `data:${this.file.content_type};base64,` +
-                            this.file.data)
-                } else
-                    this.file.source =
-                        this._domSanitizer.bypassSecurityTrustResourceUrl(
-                            this._stringFormat(
-                                this._configuration.database.url, ''
-                            ) + `/${this._configuration.name || 'generic'}/` +
-                            `${id}/${this.file.name}${this.file.query}`)
-            }
+            ].value
+            if (this.file)
+                this.file.descriptionName = this.name
+            else if (!this.model[this.attachmentTypeName][
+                this.internalName
+            ].nullable)
+                this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors = {required: true}
         }
-        this.determinePresentationType()
-        this.change.emit(this.file)
+        if (changes.hasOwnProperty('model') || changes.hasOwnProperty(
+            'name'
+        ) || changes.hasOwnProperty('revision')) {
+            if (this.file) {
+                this.file.query = `?version=${this.file.digest}`
+                /*
+                    NOTE: Only set new file source if isn't already present to
+                    prevent to download an immediately uploaded file and grab
+                    and older cached one.
+                */
+                if (!this.file.source) {
+                    const id:any = this._idIsObject ? this.model[
+                        this._idName
+                    ].value : this.model[this._idName]
+                    if (
+                        this.revision &&
+                        changes.revision.currentValue !==
+                        changes.revision.previousValue
+                    ) {
+                        const image:Object = await this._data.getAttachment(
+                            id, this.file.name, {rev: this.revision})
+                        this.file.data = await blobToBase64String(image)
+                        this.file.content_type = image.type || 'text/plain'
+                        this.file.length = image.size
+                        this.file.source =
+                            this._domSanitizer.bypassSecurityTrustResourceUrl(
+                                `data:${this.file.content_type};base64,` +
+                                this.file.data)
+                    } else
+                        this.file.source =
+                            this._domSanitizer.bypassSecurityTrustResourceUrl(
+                                this._stringFormat(
+                                    this._configuration.database.url, ''
+                                ) + '/' + (
+                                    this._configuration.name || 'generic'
+                                ) + `/${id}/${this.file.name}` +
+                                `${this.file.query}`)
+                }
+            }
+            this.determinePresentationType()
+            this.change.emit(this.file)
+        }
     }
     /**
      * Initializes current file input field. Adds needed event observer.
@@ -3030,9 +3058,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 descriptionName: this.name,
                 name: this.input.nativeElement.files[0].name
             }
-            if (!this.name)
-                this.name = this.file.name
-            else if (this._prefixMatch) {
+            if (this._prefixMatch) {
                 const lastIndex:number = this.file.name.lastIndexOf('.')
                 if ([0, -1].includes(lastIndex))
                     this.file.name = this.name
@@ -3170,7 +3196,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                         revision = item.rev
                 }
                 if (this.file) {
-                    this.file.revision = this.model[this._revisionName] = revision
+                    this.file.revision = this.model[this._revisionName] =
+                        revision
                     this.file.query = `?rev=${revision}`
                     this.file.source =
                         this._domSanitizer.bypassSecurityTrustResourceUrl(
