@@ -2725,6 +2725,7 @@ export class TextareaComponent extends AbstractInputComponent {
                     </span>
                     <ng-container #editiable>
                         <span
+                            (keydown)="$event.keyCode === keyCode.ENTER ? $event.preventDefault() || $event.stopPropagation() : null"
                             [class.dirty]="currentName && currentName !== file.name"
                             title="Focus to edit." contenteditable #input
                             (input)="currentName = $event.target.textContent"
@@ -2857,6 +2858,7 @@ export class TextareaComponent extends AbstractInputComponent {
  * @property _idIsObject - Indicates whether the model document specific id is
  * provided as object and "value" named property or directly.
  * @property _idName - Name if id field.
+ * @property keyCode - Mapping from key code to their description.
  * @property _representObject - Holds the represent object pipe instance's
  * transform method.
  * @property _revisionName - Name if revision field.
@@ -2921,6 +2923,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     @ViewChild('input') input:ElementRef
     internalName:string
     @Input() headerText:string = ''
+    keyCode:{[key:string]:number}
     @Input() mapNameToField:?string|?Array<string> = null
     @Input() model:{id:?string;[key:string]:any;}
     @Output() modelChange:EventEmitter = new EventEmitter()
@@ -2942,6 +2945,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      * @param representObjectPipe - Saves the object to string representation
      * pipe instance.
      * @param stringFormatPipe - Saves the string formation pipe instance.
+     * @param tools - Tools service instance.
      * @returns Nothing.
      */
     constructor(
@@ -2950,8 +2954,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService,
         representObjectPipe:RepresentObjectPipe,
-        stringFormatPipe:StringFormatPipe
+        stringFormatPipe:StringFormatPipe, tools:ToolsService
     ):void {
+        this.keyCode = tools.tools.keyCode
         this._configuration = initialData.configuration
         this._data = data
         this._deletedName =
