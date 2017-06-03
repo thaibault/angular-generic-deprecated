@@ -2723,22 +2723,23 @@ export class TextareaComponent extends AbstractInputComponent {
                     <span *ngIf="headerText || !file?.name; else editable">
                         {{headerText || model[attachmentTypeName][internalName]?.description || name}}
                     </span>
-                    <ng-container #editiable>
-                        <span
-                            (keydown)="$event.keyCode === keyCode.ENTER ? $event.preventDefault() || $event.stopPropagation() : null"
-                            [class.dirty]="currentName && currentName !== file.name"
-                            title="Focus to edit." contenteditable #input
-                            (input)="currentName = $event.target.textContent"
-                        >{{file.name}}</span>
+                    <ng-container #editiable *ngIf="file?.name">
+                        <md-input-container
+                            [class.dirty]="file.editedName && file.editedName !== file.name"
+                            title="Focus to edit."
+                        ><input
+                            mdInput [ngModel]="file.editedName || file.name"
+                            (ngModelChange)="file.editedName = $event"
+                        /></md-input-container>
                         <ng-container
-                            *ngIf="currentName && currentName !== file.name"
+                            *ngIf="synchronizeImmediately && file.editedName && file.editedName !== file.name"
                         >
                             <a
                                 (click)="$event.preventDefault();rename(currentName)"
                                 href=""
                             >✓</a>
                             <a
-                                (click)="$event.preventDefault();currentName = input.textContent = file.name"
+                                (click)="$event.preventDefault();file.editedName = file.name"
                                 href=""
                             >✕</a>
                         </ng-container>
