@@ -2747,8 +2747,7 @@ export class TextareaComponent extends AbstractInputComponent {
                 </md-card-title>
                 <md-card-subtitle
                     [class.activ]="showDeclaration"
-                    (click)="showDeclaration = !showDeclaration"
-                    title="info"
+                    (click)="showDeclaration = !showDeclaration" title="info"
                     *ngIf="model[attachmentTypeName][internalName]?.declaration"
                 >
                     <span>[i]</span>
