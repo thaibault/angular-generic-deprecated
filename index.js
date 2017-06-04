@@ -2724,12 +2724,14 @@ export class TextareaComponent extends AbstractInputComponent {
                         {{headerText || model[attachmentTypeName][internalName]?.description || name}}
                     </span>
                     <ng-container #editiable *ngIf="file?.name">
+                        <!-- TODO if synchronis imitiadly isn activated use file.name directy as model -->
                         <md-input-container
                             [class.dirty]="file.editedName && file.editedName !== file.name"
                             title="Focus to edit."
                         ><input
                             mdInput [ngModel]="file.editedName || file.name"
                             (ngModelChange)="file.editedName = $event"
+                            (blur)="rename(file.editedName)"
                         /></md-input-container>
                         <ng-container
                             *ngIf="synchronizeImmediately && file.editedName && file.editedName !== file.name"
@@ -3319,7 +3321,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      * renamed.
      */
     async rename(newName:string):Promise<void> {
-        console.log('TODO', newName)
+        if (this.synchronizeImmediately)
+            console.log('TODO', newName)
     }
 }
 // / endregion
