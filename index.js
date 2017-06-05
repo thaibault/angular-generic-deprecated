@@ -173,20 +173,26 @@ const StringFormatPipe:PipeTransform = module.exports.StringFormatPipe
  * Removes all meta data from documents.
  * @property configuration - Initial given configuration object.
  * @property equals - Equals pipe transform function.
+ * @property tools - Holds the tools class from the tools service.
  */
 export class ExtractRawDataPipe/* implements PipeTransform*/ {
     configuration:PlainObject
     equals:Function
+    tools:Tools
     /**
      * Gets injected services.
      * @param equalsPipe - Equals pipe service instance.
      * @param initialData - Initial data service instance.
+     * @param tools - Injected tools service instance.
+     * @returns Nothing.
      */
     constructor(
-        equalsPipe:EqualsPipe, initialData:InitialDataService
+        equalsPipe:EqualsPipe, initialData:InitialDataService,
+        tools:ToolsService
     ):void {
         this.configuration = initialData.configuration
         this.equals = equalsPipe.transform.bind(equalsPipe)
+        this.tools = tools.tools
     }
     /**
      * Converts all (nested) date object in given data structure to their
@@ -341,19 +347,26 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                 name
                             ))
                                 for (const type:string in oldDocument[name])
-                                    if (oldDocument[name][
+                                    if (oldDocument[name][type].value && [
+                                        fileName,
+                                        newDocument[name][fileName].initialName
+                                    ].includes(oldDocument[name][
                                         type
-                                    ].value && oldDocument[name][
-                                        type
-                                    ].value.name === fileName)
+                                    ].value.name))
                                         oldAttachment = oldDocument[name][
                                             type
                                         ].value
-                            if (newDocument[name][fileName].hasOwnProperty(
+                            if ((newDocument[name][fileName].hasOwnProperty(
                                 'data'
-                            ) && newDocument[name][fileName].data && !(
+                            ) && newDocument[name][fileName].data ||
+                            newDocument[name][fileName].hasOwnProperty(
+                                'stub'
+                            ) && newDocument[name][fileName].stub &&
+                            oldAttachment) && !(
+                                oldAttachment &&
+                                oldAttachment.name === fileName &&
                                 // TODO use digest to compare!
-                                oldAttachment && newDocument[name][
+                                newDocument[name][
                                     fileName
                                 ].length === oldAttachment.length && (
                                     oldAttachment.content_type ||
@@ -362,12 +375,21 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                     fileName
                                 ].content_type || 'application/octet-stream')
                             )) {
-                                result[name][fileName] = {
-                                    content_type: newDocument[name][
-                                        fileName
-                                    ].content_type ||
-                                    'application/octet-stream',
-                                    data: newDocument[name][fileName].data
+                                if (newDocument[name][fileName].hasOwnProperty(
+                                    'data'
+                                ) && newDocument[name][fileName].data)
+                                    result[name][fileName] = {
+                                        content_type: newDocument[name][
+                                            fileName
+                                        ].content_type ||
+                                        'application/octet-stream',
+                                        data: newDocument[name][fileName].data
+                                    }
+                                else {
+                                    result[name][fileName] =
+                                        this.tools.copyLimitedRecursively(
+                                            oldAttachment)
+                                    result[name][fileName].name = fileName
                                 }
                                 empty = false
                             } else
@@ -443,6 +465,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             if (oldDocument.hasOwnProperty(
                 specialNames.attachment
             ) && oldDocument[specialNames.attachment]) {
+                console.log('A', oldDocument[specialNames.attachment])
                 this._handleAttachmentChanges(result, oldDocument[
                     specialNames.attachment
                 ], fileTypeReplacement, untouchedAttachments)
@@ -2724,27 +2747,37 @@ export class TextareaComponent extends AbstractInputComponent {
                         {{headerText || model[attachmentTypeName][internalName]?.description || name}}
                     </span>
                     <ng-container #editiable *ngIf="file?.name">
-                        <!-- TODO if synchronis imitiadly isn activated use file.name directy as model -->
-                        <md-input-container
-                            [class.dirty]="file.editedName && file.editedName !== file.name"
-                            title="Focus to edit."
-                        ><input
-                            mdInput [ngModel]="file.editedName || file.name"
-                            (ngModelChange)="file.editedName = $event"
-                            (blur)="rename(file.editedName)"
-                        /></md-input-container>
-                        <ng-container
-                            *ngIf="synchronizeImmediately && file.editedName && file.editedName !== file.name"
-                        >
-                            <a
-                                (click)="$event.preventDefault();rename(currentName)"
-                                href=""
-                            >✓</a>
-                            <a
-                                (click)="$event.preventDefault();file.editedName = file.name"
-                                href=""
-                            >✕</a>
+                        <!-- NOTE: NgIfElse doesnt work here. -->
+                        <ng-container *ngIf="synchronizeImmediately">
+                            <md-input-container
+                                [class.dirty]="file.editedName && file.editedName !== file.name"
+                                title="Focus to edit."
+                            ><input
+                                mdInput
+                                [ngModel]="file.editedName || file.name"
+                                (ngModelChange)="file.editedName = $event"
+                            /></md-input-container>
+                            <ng-container
+                                *ngIf="file.editedName && file.editedName !== file.name"
+                            >
+                                <a
+                                    (click)="$event.preventDefault();rename(currentName)"
+                                    href=""
+                                >✓</a>
+                                <a
+                                    (click)="$event.preventDefault();file.editedName = file.name"
+                                    href=""
+                                >✕</a>
+                            </ng-container>
                         </ng-container>
+                        <md-input-container
+                            [class.dirty]="file.initialName !== file.name"
+                            title="Focus to edit."
+                            *ngIf="!synchronizeImmediately"
+                        ><input
+                            mdInput [ngModel]="file.name"
+                            (ngModelChange)="file.name = $event;modelChange.emit(this.model);fileChange.emit(file)"
+                        /></md-input-container>
                     </ng-container>
                 </md-card-title>
                 <md-card-subtitle
@@ -2860,7 +2893,6 @@ export class TextareaComponent extends AbstractInputComponent {
  * @property _idIsObject - Indicates whether the model document specific id is
  * provided as object and "value" named property or directly.
  * @property _idName - Name if id field.
- * @property keyCode - Mapping from key code to their description.
  * @property _representObject - Holds the represent object pipe instance's
  * transform method.
  * @property _revisionName - Name if revision field.
@@ -2870,22 +2902,26 @@ export class TextareaComponent extends AbstractInputComponent {
  * @property _prefixMatch - Holds the prefix match pipe instance's transform
  * method.
  * @property attachmentTypeName - Current attachment type name.
+ * @property change - File change event emitter.
  * @property delete - Event emitter which triggers its handler when current
  * file should be removed.
  * @property deleteButtonText - Text for button to trigger file removing.
  * @property downloadButtonText - Text for button to download current file.
  * @property file - Holds the current selected file object if present.
- * @property change - Event emitter triggering when file changes happen.
  * @property headerText - Header text to show instead of property description
  * or name.
  * @property input - Virtual file input dom node.
  * @property internalName - Technical regular expression style file type.
+ * @property keyCode - Mapping from key code to their description.
  * @property mapNameToField - Indicates whether current file name should be
  * mapped to a specific model property.
  * @property model - File property specification.
  * @property modelChange - Event emitter triggering when model changes happen.
  * @property name - Name or prefix of currently active file.
  * @property newButtonText - Text for button to trigger new file upload.
+ * @property noFileText - Text to show if now file is selected.
+ * @property noPreviewText - Text to show if no preview is available.
+ * @property revision - Revision of given model to show.
  * @property showValidationErrorMessages - Indicates whether validation errors
  * should be displayed. Useful to hide error messages until user tries to
  * submit a form.
@@ -2921,10 +2957,10 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     @Input() deleteButtonText:string = 'delete'
     @Input() downloadButtonText:string = 'download'
     file:any = null
-    @Output() change:EventEmitter = new EventEmitter()
+    @Output() fileChange:EventEmitter = new EventEmitter()
+    @Input() headerText:string = ''
     @ViewChild('input') input:ElementRef
     internalName:string
-    @Input() headerText:string = ''
     keyCode:{[key:string]:number}
     @Input() mapNameToField:?string|?Array<string> = null
     @Input() model:{id:?string;[key:string]:any;}
@@ -3029,7 +3065,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 this.internalName
             ].value
             if (this.file)
-                this.file.descriptionName = this.name
+                this.file.initialName = this.file.name
             else if (!this.model[this.attachmentTypeName][
                 this.internalName
             ].nullable)
@@ -3077,7 +3113,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 }
             }
             this.determinePresentationType()
-            this.change.emit(this.file)
+            this.modelChange.emit(this.model)
+            this.fileChange.emit(this.file)
         }
     }
     /**
@@ -3092,7 +3129,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
             this.model[this.attachmentTypeName][this.internalName].state = {}
             const oldFileName:?string = this.file ? this.file.name : null
             this.file = {
-                descriptionName: this.name,
+                initialName: this.input.nativeElement.files[0].name,
                 name: this.input.nativeElement.files[0].name
             }
             if (this._prefixMatch) {
@@ -3243,9 +3280,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                             ) + `/${this._configuration.name}/${id}/` +
                             `${this.file.name}${this.file.query}`)
                     this.determinePresentationType()
-                    this.change.emit(this.file)
                 }
                 this.modelChange.emit(this.model)
+                this.fileChange.emit(this.file)
             } else {
                 this.determinePresentationType()
                 const fileReader:FileReader = new FileReader()
@@ -3257,8 +3294,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     if (this.mapNameToField)
                         for (const name:string of this.mapNameToField)
                             this.model[name] = this.file.name
-                    this.change.emit(this.file)
                     this.modelChange.emit(this.model)
+                    this.fileChange.emit(this.file)
                 }
                 fileReader.readAsDataURL(this.file.data)
             }
@@ -3311,8 +3348,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         if (!this.model[this.attachmentTypeName][this.internalName].nullable)
             this.model[this.attachmentTypeName][this.internalName].state
                 .errors = {required: true}
-        this.change.emit(this.file)
         this.modelChange.emit(this.model)
+        this.fileChange.emit(this.file)
     }
     /**
      * Renames current file.
@@ -3321,8 +3358,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      * renamed.
      */
     async rename(newName:string):Promise<void> {
-        if (this.synchronizeImmediately)
-            console.log('TODO', newName)
+        console.log('TODO', newName)
     }
 }
 // / endregion
