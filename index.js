@@ -1867,6 +1867,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
  * transformation method.
  * @property _modelConfiguration - All model configurations.
+ * @property infoText - Info text to click for more informations.
  * @property model - Holds model informations including actual value and
  * metadata.
  * @property modelChange - Model event emitter emitting events on each model
@@ -1880,6 +1881,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
     _extendObject:Function
     _getFilenameByPrefix:Function
     _modelConfiguration:PlainObject
+    @Input() infoText:string = 'ℹ'
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
     parseInt = parseInt
@@ -2591,7 +2593,9 @@ const inputContent:string = `
         align="start" (click)="showDeclaration = !showDeclaration" title="info"
         *ngIf="model.declaration" [class.activ]="showDeclaration"
     >
-        <span>[i]</span>
+        <a (click)="$event.preventDefault()" href="" *ngIf="infoText">
+            {{infoText}}
+        </a>
         <span *ngIf="showDeclaration"> {{model.declaration}}</span>
     </md-hint>
     <span generic-error *ngIf="showValidationErrorMessages">
@@ -2743,7 +2747,7 @@ export class TextareaComponent extends AbstractInputComponent {
             >
                 <md-card-title>
                     <span *ngIf="revision || headerText || !file?.name; else editable">
-                        {{headerText || !file?.name || model[attachmentTypeName][internalName]?.description || name}}
+                        {{headerText || file?.name || model[attachmentTypeName][internalName]?.description || name}}
                     </span>
                     <ng-container #editiable *ngIf="file?.name">
                         <!-- NOTE: NgIfElse doesnt work here. -->
@@ -2784,7 +2788,10 @@ export class TextareaComponent extends AbstractInputComponent {
                     (click)="showDeclaration = !showDeclaration" title="info"
                     *ngIf="model[attachmentTypeName][internalName]?.declaration"
                 >
-                    <span>[i]</span>
+                    <a
+                        (click)="$event.preventDefault()" href=""
+                        *ngIf="infoText"
+                    >{{infoText}}</a>
                     <span *ngIf="showDeclaration">
                         {{model[attachmentTypeName][internalName].declaration}}
                     </span>
@@ -2909,6 +2916,7 @@ export class TextareaComponent extends AbstractInputComponent {
  * @property file - Holds the current selected file object if present.
  * @property headerText - Header text to show instead of property description
  * or name.
+ * @property infoText - Info text to click for more informations.
  * @property input - Virtual file input dom node.
  * @property internalName - Technical regular expression style file type.
  * @property keyCode - Mapping from key code to their description.
@@ -2958,6 +2966,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     file:any = null
     @Output() fileChange:EventEmitter = new EventEmitter()
     @Input() headerText:string = ''
+    @Input() infoText:string = 'ℹ'
     @ViewChild('input') input:ElementRef
     internalName:string
     keyCode:{[key:string]:number}
