@@ -465,7 +465,6 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             if (oldDocument.hasOwnProperty(
                 specialNames.attachment
             ) && oldDocument[specialNames.attachment]) {
-                console.log('A', oldDocument[specialNames.attachment])
                 this._handleAttachmentChanges(result, oldDocument[
                     specialNames.attachment
                 ], fileTypeReplacement, untouchedAttachments)
@@ -2743,29 +2742,29 @@ export class TextareaComponent extends AbstractInputComponent {
                 *ngIf="headerText || file?.name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description || name"
             >
                 <md-card-title>
-                    <span *ngIf="headerText || !file?.name; else editable">
-                        {{headerText || model[attachmentTypeName][internalName]?.description || name}}
+                    <span *ngIf="revision || headerText || !file?.name; else editable">
+                        {{headerText || !file?.name || model[attachmentTypeName][internalName]?.description || name}}
                     </span>
                     <ng-container #editiable *ngIf="file?.name">
                         <!-- NOTE: NgIfElse doesnt work here. -->
                         <ng-container *ngIf="synchronizeImmediately">
                             <md-input-container
-                                [class.dirty]="file.editedName && file.editedName !== file.name"
+                                [class.dirty]="editedName && editedName !== file.name"
                                 title="Focus to edit."
                             ><input
                                 mdInput
-                                [ngModel]="file.editedName || file.name"
-                                (ngModelChange)="file.editedName = $event"
+                                [ngModel]="editedName || file.name"
+                                (ngModelChange)="editedName = $event"
                             /></md-input-container>
                             <ng-container
-                                *ngIf="file.editedName && file.editedName !== file.name"
+                                *ngIf="editedName && editedName !== file.name"
                             >
                                 <a
-                                    (click)="$event.preventDefault();rename(currentName)"
+                                    (click)="$event.preventDefault();rename(editedName)"
                                     href=""
                                 >✓</a>
                                 <a
-                                    (click)="$event.preventDefault();file.editedName = file.name"
+                                    (click)="$event.preventDefault();editedName = file.name"
                                     href=""
                                 >✕</a>
                             </ng-container>
@@ -3091,17 +3090,19 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                         this.revision &&
                         changes.revision.currentValue !==
                         changes.revision.previousValue
-                    ) {
-                        const image:Object = await this._data.getAttachment(
-                            id, this.file.name, {rev: this.revision})
-                        this.file.data = await blobToBase64String(image)
-                        this.file.content_type = image.type || 'text/plain'
-                        this.file.length = image.size
-                        this.file.source =
-                            this._domSanitizer.bypassSecurityTrustResourceUrl(
-                                `data:${this.file.content_type};base64,` +
-                                this.file.data)
-                    } else
+                    )
+                        try {
+                            await this.retrieveAttachment(
+                                id, {rev: this.revision})
+                        } catch (error) {
+                            model[attachmentTypeName][
+                                internalName
+                            ].state.errors.database = (
+                                'message' in error
+                            ) ? error.message : this._representObject(error)
+                            return
+                        }
+                    else
                         this.file.source =
                             this._domSanitizer.bypassSecurityTrustResourceUrl(
                                 this._stringFormat(
@@ -3122,182 +3123,20 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      * @returns Nothing.
      */
     ngAfterViewInit():void {
-        this.input.nativeElement.addEventListener('change', async (
-        ):Promise<void> => {
-            if (this.input.nativeElement.files.length < 1)
-                return
-            this.model[this.attachmentTypeName][this.internalName].state = {}
-            const oldFileName:?string = this.file ? this.file.name : null
-            this.file = {
-                initialName: this.input.nativeElement.files[0].name,
-                name: this.input.nativeElement.files[0].name
-            }
-            if (this._prefixMatch) {
-                const lastIndex:number = this.file.name.lastIndexOf('.')
-                if ([0, -1].includes(lastIndex))
-                    this.file.name = this.name
-                else
-                    this.file.name = this.name + this.file.name.substring(
-                        lastIndex)
-            }
-            // IgnoreTypeCheck
-            this.file.data = this.input.nativeElement.files[0]
-            // IgnoreTypeCheck
-            this.file.content_type = this.file.data.type || 'text/plain'
-            // IgnoreTypeCheck
-            this.file.length = this.file.data.size
-            this.model[this.attachmentTypeName][
-                this.internalName
-            ].value = this.file
-            // region determine errors
-            if (!this.model[this.attachmentTypeName][
-                this.internalName
-            ].state.errors)
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors = {}
-            if (!(new RegExp(this.internalName)).test(this.file.name))
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors = {name: true}
-            if (!([undefined, null].includes(this.model[
-                this.attachmentTypeName
-            ][this.internalName].contentTypeRegularExpressionPattern) || (
-                new RegExp(this.model[this.attachmentTypeName][
-                    this.internalName
-                ].contentTypeRegularExpressionPattern)
-            ).test(this.file.content_type)))
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors.contentType = true
-            if (!([undefined, null].includes(this.model[
-                this.attachmentTypeName
-            ][this.internalName].minimumSize) || this.model[
-                this.attachmentTypeName
-            ][this.internalName].minimumSize <= this.file.length))
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors.minimuSize = true
-            if (!([undefined, null].includes(this.model[
-                this.attachmentTypeName
-            ][this.internalName].maximumSize) || this.model[
-                this.attachmentTypeName
-            ][this.internalName].maximumSize >= this.file.length))
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors.maximumSize = true
-            if (Object.keys(this.model[this.attachmentTypeName][
-                this.internalName
-            ].state.errors).length === 0)
-                delete this.model[this.attachmentTypeName][this.internalName]
-                    .state.errors
-            // endregion
-            if (this.synchronizeImmediately && !this.model[
-                this.attachmentTypeName
-            ][this.internalName].state.errors) {
-                let newData:PlainObject = {
-                    [this._typeName]: this.model[this._typeName],
-                    [this._idName]: this._idIsObject ? this.model[
-                        this._idName
-                    ].value : this.model[this._idName]
+        this.input.nativeElement.addEventListener('change', ():void => {
+            if (this.input.nativeElement.files.length > 0) {
+                this.file = {
+                    // IgnoreTypeCheck
+                    content_type: this.input.nativeElement.files[0].type ||
+                        'text/plain',
+                    // IgnoreTypeCheck
+                    data: this.input.nativeElement.files[0],
+                    initialName: this.input.nativeElement.files[0].name,
+                    // IgnoreTypeCheck
+                    length: this.input.nativeElement.files[0].size,
+                    name: this.input.nativeElement.files[0].name
                 }
-                if (this.synchronizeImmediately !== true)
-                    this._extendObject(
-                        true, newData, this.synchronizeImmediately)
-                let id:any = this._idIsObject ? this.model[
-                    this._idName
-                ].value : this.model[this._idName]
-                // NOTE: We want to replace old medium.
-                if (oldFileName && oldFileName !== this.file.name && !(
-                    this.mapNameToField && id &&
-                    this.mapNameToField.includes(this._idName)
-                ))
-                    newData[this.attachmentTypeName] =  {[oldFileName]: {
-                        data: null
-                    }}
-                if (![undefined, null].includes(
-                    this.model[this._revisionName]
-                ))
-                    newData[this._revisionName] = this.model[
-                        this._revisionName]
-                const tasks:Array<PlainObject> = []
-                if (this.mapNameToField) {
-                    if (
-                        id && id !== this.file.name &&
-                        this.mapNameToField.includes(this._idName)
-                    ) {
-                        newData[this._deletedName] = true
-                        tasks.unshift(newData)
-                        newData = this._extendObject(true, {}, newData, {[
-                            this._deletedName
-                        ]: false})
-                    }
-                    for (const name:string of this.mapNameToField) {
-                        newData[name] = this.file.name
-                        if (name === this._idName && this._idIsObject)
-                            this.model[name].value = this.file.name
-                        else
-                            this.model[name] = this.file.name
-                    }
-                }
-                newData[this._revisionName] = 'upsert'
-                newData[this.attachmentTypeName] = {[this.file.name]: {
-                    content_type: this.file.content_type,
-                    data: this.file.data
-                }}
-                tasks.unshift(newData)
-                let result:Array<PlainObject>
-                try {
-                    result = await this._data.bulkDocs(tasks)
-                } catch (error) {
-                    this.model[this.attachmentTypeName][
-                        this.internalName
-                    ].state.errors = {database: (
-                        'message' in error
-                    ) ? error.message : this._representObject(error)}
-                    return
-                }
-                id = newData[this._idName]
-                let revision:string
-                for (const item:PlainObject of result) {
-                    if (item.error) {
-                        this.model[this.attachmentTypeName][
-                            this.internalName
-                        ].state.errors = {database: item.message}
-                        return
-                    }
-                    if (item.id === id)
-                        revision = item.rev
-                }
-                if (this.file) {
-                    this.file.revision = this.model[this._revisionName] =
-                        revision
-                    this.file.query = `?rev=${revision}`
-                    this.file.source =
-                        this._domSanitizer.bypassSecurityTrustResourceUrl(
-                            this._stringFormat(
-                                this._configuration.database.url, ''
-                            ) + `/${this._configuration.name}/${id}/` +
-                            `${this.file.name}${this.file.query}`)
-                    this.determinePresentationType()
-                }
-                this.modelChange.emit(this.model)
-                this.fileChange.emit(this.file)
-            } else {
-                this.determinePresentationType()
-                const fileReader:FileReader = new FileReader()
-                fileReader.onload = (event:Object):void => {
-                    this.file.digest = (new Date()).getTime()
-                    this.file.source =
-                        this._domSanitizer.bypassSecurityTrustResourceUrl(
-                            event.target.result)
-                    if (this.mapNameToField)
-                        for (const name:string of this.mapNameToField)
-                            this.model[name] = this.file.name
-                    this.modelChange.emit(this.model)
-                    this.fileChange.emit(this.file)
-                }
-                fileReader.readAsDataURL(this.file.data)
+                this.update(this.file ? this.file.name : null)
             }
         })
     }
@@ -3353,12 +3192,210 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     }
     /**
      * Renames current file.
-     * @param newName - New name to rename current file to.
+     * @param name - New name to rename current file to.
      * @returns A Promise which will be resolved after current file will be
      * renamed.
      */
-    async rename(newName:string):Promise<void> {
-        console.log('TODO', newName)
+    async rename(name:string):Promise<void> {
+        const id:any = this._idIsObject ? this.model[
+            this._idName
+        ].value : this.model[this._idName]
+        const oldName:string = this.file.name
+        if (
+            this.file.stub && this.mapNameToField && id &&
+            this.mapNameToField.includes(this._idName)
+        )
+            try {
+                await this.retrieveAttachment(id)
+            } catch (error) {
+                this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors = {database: (
+                    'message' in error
+                ) ? error.message : this._representObject(error)}
+                return
+            }
+        this.file.name = name
+        return this.update(oldName)
+    }
+    // TODO
+    async retrieveAttachment(id: any, options:PlainObject = {}):Promise<void> {
+        const file:Object = await this._data.getAttachment(
+            id, this.file.name, options)
+        this.file = {
+            data: await blobToBase64String(file),
+            content_type: file.type || 'text/plain',
+            length: file.size
+        }
+        this.file.source = this._domSanitizer.bypassSecurityTrustResourceUrl(
+            `data:${this.file.content_type};base64,${this.file.data}`)
+    }
+    // TODO test
+    /**
+     * Updates given current file into database (replaces if old name is
+     * given).
+     * @param oldName - Name of saved file to update or replace.
+     * @returns A Promise which will be resolved after current file will be
+     * synchronized.
+     */
+    async update(oldName:?string):Promise<void> {
+        this.model[this.attachmentTypeName][this.internalName].state = {}
+        if (this._prefixMatch) {
+            const lastIndex:number = this.file.name.lastIndexOf('.')
+            if ([0, -1].includes(lastIndex))
+                this.file.name = this.name
+            else
+                this.file.name = this.name + this.file.name.substring(
+                    lastIndex)
+        }
+        this.model[this.attachmentTypeName][
+            this.internalName
+        ].value = this.file
+        // region determine errors
+        if (!this.model[this.attachmentTypeName][
+            this.internalName
+        ].state.errors)
+            this.model[this.attachmentTypeName][
+                this.internalName
+            ].state.errors = {}
+        if (!(new RegExp(this.internalName)).test(this.file.name))
+            this.model[this.attachmentTypeName][
+                this.internalName
+            ].state.errors = {name: true}
+        if (!([undefined, null].includes(this.model[
+            this.attachmentTypeName
+        ][this.internalName].contentTypeRegularExpressionPattern) || (
+            new RegExp(this.model[this.attachmentTypeName][
+                this.internalName
+            ].contentTypeRegularExpressionPattern)
+        ).test(this.file.content_type)))
+            this.model[this.attachmentTypeName][
+                this.internalName
+            ].state.errors.contentType = true
+        if (!([undefined, null].includes(this.model[
+            this.attachmentTypeName
+        ][this.internalName].minimumSize) || this.model[
+            this.attachmentTypeName
+        ][this.internalName].minimumSize <= this.file.length))
+            this.model[this.attachmentTypeName][
+                this.internalName
+            ].state.errors.minimuSize = true
+        if (!([undefined, null].includes(this.model[
+            this.attachmentTypeName
+        ][this.internalName].maximumSize) || this.model[
+            this.attachmentTypeName
+        ][this.internalName].maximumSize >= this.file.length))
+            this.model[this.attachmentTypeName][
+                this.internalName
+            ].state.errors.maximumSize = true
+        if (Object.keys(this.model[this.attachmentTypeName][
+            this.internalName
+        ].state.errors).length === 0)
+            delete this.model[this.attachmentTypeName][this.internalName]
+                .state.errors
+        // endregion
+        if (this.synchronizeImmediately && !this.model[
+            this.attachmentTypeName
+        ][this.internalName].state.errors) {
+            let newData:PlainObject = {
+                [this._typeName]: this.model[this._typeName],
+                [this._idName]: this._idIsObject ? this.model[
+                    this._idName
+                ].value : this.model[this._idName]
+            }
+            if (this.synchronizeImmediately !== true)
+                this._extendObject(
+                    true, newData, this.synchronizeImmediately)
+            let id:any = this._idIsObject ? this.model[
+                this._idName
+            ].value : this.model[this._idName]
+            // NOTE: We want to replace old medium.
+            if (oldName && oldName !== this.file.name && !(
+                this.mapNameToField && id &&
+                this.mapNameToField.includes(this._idName)
+            ))
+                newData[this.attachmentTypeName] =  {[oldName]: {data: null}}
+            if (![undefined, null].includes(this.model[this._revisionName]))
+                newData[this._revisionName] = this.model[
+                    this._revisionName]
+            const tasks:Array<PlainObject> = []
+            if (this.mapNameToField) {
+                if (
+                    id && id !== this.file.name &&
+                    this.mapNameToField.includes(this._idName)
+                ) {
+                    newData[this._deletedName] = true
+                    tasks.unshift(newData)
+                    newData = this._extendObject(true, {}, newData, {[
+                        this._deletedName
+                    ]: false})
+                }
+                for (const name:string of this.mapNameToField) {
+                    newData[name] = this.file.name
+                    if (name === this._idName && this._idIsObject)
+                        this.model[name].value = this.file.name
+                    else
+                        this.model[name] = this.file.name
+                }
+            }
+            newData[this._revisionName] = 'upsert'
+            newData[this.attachmentTypeName] = {[this.file.name]: {
+                content_type: this.file.content_type,
+                data: this.file.data
+            }}
+            tasks.unshift(newData)
+            let result:Array<PlainObject>
+            try {
+                result = await this._data.bulkDocs(tasks)
+            } catch (error) {
+                this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors = {database: (
+                    'message' in error
+                ) ? error.message : this._representObject(error)}
+                return
+            }
+            id = newData[this._idName]
+            let revision:string
+            for (const item:PlainObject of result) {
+                if (item.error) {
+                    this.model[this.attachmentTypeName][
+                        this.internalName
+                    ].state.errors = {database: item.message}
+                    return
+                }
+                if (item.id === id)
+                    revision = item.rev
+            }
+            if (this.file) {
+                this.file.revision = this.model[this._revisionName] = revision
+                this.file.query = `?rev=${revision}`
+                this.file.source =
+                    this._domSanitizer.bypassSecurityTrustResourceUrl(
+                        this._stringFormat(
+                            this._configuration.database.url, ''
+                        ) + `/${this._configuration.name}/${id}/` +
+                        `${this.file.name}${this.file.query}`)
+                this.determinePresentationType()
+            }
+            this.modelChange.emit(this.model)
+            this.fileChange.emit(this.file)
+        } else if (this.file.data) {
+            this.determinePresentationType()
+            const fileReader:FileReader = new FileReader()
+            fileReader.onload = (event:Object):void => {
+                this.file.digest = (new Date()).getTime()
+                this.file.source =
+                    this._domSanitizer.bypassSecurityTrustResourceUrl(
+                        event.target.result)
+                if (this.mapNameToField)
+                    for (const name:string of this.mapNameToField)
+                        this.model[name] = this.file.name
+                this.modelChange.emit(this.model)
+                this.fileChange.emit(this.file)
+            }
+            fileReader.readAsDataURL(this.file.data)
+        }
     }
 }
 // / endregion
