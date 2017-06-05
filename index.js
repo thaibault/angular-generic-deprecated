@@ -1238,6 +1238,7 @@ export class DataService {
      * @returns Whatever pouchdb's method returns.
      */
     async get(...parameter:Array<any>):Promise<PlainObject> {
+        // TODO only if all parameter are equal!
         const idName:string =
             this.configuration.database.model.property.name.special.id
         const revisionName:string =
@@ -1549,7 +1550,8 @@ export class DataScopeService {
                                             object:Object
                                         ):string => JSON.stringify(
                                             object, null, 4
-                                        ), modelName, modelSpecification, now,
+                                        ), modelName, modelSpecification,
+                                        result[name][type], now,
                                         nowUTCTimestamp,
                                         this.getFilenameByPrefix,
                                         this.attachmentWithPrefixExists.bind(
@@ -1610,8 +1612,8 @@ export class DataScopeService {
                                 this.configuration.database.model,
                                 (object:Object):string => JSON.stringify(
                                     object, null, 4
-                                ), modelName, modelSpecification, now,
-                                nowUTCTimestamp, this.getFilenameByPrefix,
+                                ), modelName, modelSpecification, result[name],
+                                now, nowUTCTimestamp, this.getFilenameByPrefix,
                                 this.attachmentWithPrefixExists.bind(
                                     data, data
                                 ), result[name])
