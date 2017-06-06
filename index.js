@@ -22,10 +22,10 @@ import {blobToBase64String} from 'blob-util'
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
-    /* AfterViewInit,*/ ChangeDetectorRef, Component, Directive, ElementRef,
-    EventEmitter, forwardRef, Injectable, Inject, Injector, Input, NgModule,
-    /* OnChanges, OnInit,*/ Output, Pipe, PipeTransform, ReflectiveInjector,
-    Renderer, ViewChild
+    /* AfterViewInit,*/ animate, ChangeDetectorRef, Component, Directive,
+    ElementRef, EventEmitter, forwardRef, Injectable, Inject, Injector, Input,
+    NgModule, /* OnChanges, OnInit,*/ Output, Pipe, PipeTransform,
+    ReflectiveInjector, Renderer, style, transition, trigger, ViewChild
 } from '@angular/core'
 import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
@@ -898,6 +898,15 @@ export class NumberPercentPipe/* implements PipeTransform*/ {
     }
 }
 // / endregion
+// endregion
+// region animations
+/*
+ * TODO
+ */
+export const fadeInAnimation:Function = (duration:string = '.3s') => trigger(
+    'fadeInAnimation', [transition(':enter', [
+        style({opacity: 0}), animate('.3s', style({opacity: 1}))
+    ])])
 // endregion
 // region services
 // IgnoreTypeCheck
