@@ -2003,7 +2003,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
  * @property actions - Array if actions which have happen.
  * @property _canceled - Indicates whether current view has been destroyed and
  * data observation should bee canceled.
- * @property _changeDetectorRef - Current views change detector reference
+ * @property _changeDetectorReference - Current views change detector reference
  * service instance.
  * @property _changesStream - Database observation representation.
  * @property _data - Data service instance.
@@ -2016,7 +2016,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
         heartbeat: 3000, include_docs: true, live: true, timeout: false}
     actions:Array<PlainObject> = []
     _canceled:boolean = false
-    _changeDetectorRef:ChangeDetectorRef
+    _changeDetectorReference:ChangeDetectorRef
     _changesStream:Object
     _data:DataService
     _liveUpdateOptions:PlainObject = {}
@@ -2024,17 +2024,17 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     _tools:typeof Tools
     /**
      * Saves injected service instances as instance properties.
-     * @param changeDetectorRef - Model dirty checking service.
+     * @param changeDetectorReference - Model dirty checking service.
      * @param data - Data stream service.
      * @param stringCapitalizePipe - The string capitalize pipe instance.
      * @param tools - The injected tools service instance.
      * @returns Nothing.
      */
     constructor(
-        changeDetectorRef:ChangeDetectorRef, data:DataService,
+        changeDetectorReference:ChangeDetectorRef, data:DataService,
         stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
     ):void {
-        this._changeDetectorRef = changeDetectorRef
+        this._changeDetectorReference = changeDetectorReference
         this._data = data
         this._stringCapitalize = stringCapitalizePipe.transform.bind(
             stringCapitalizePipe)
@@ -2073,7 +2073,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
                 )
                     result = await result
                 if (result)
-                    this._changeDetectorRef.detectChanges()
+                    this._changeDetectorReference.detectChanges()
             })
     }
     /**
@@ -2158,7 +2158,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     sort:PlainObject = {_id: 'asc'}
     /**
      * Saves injected service instances as instance properties.
-     * @param changeDetectorRef - Model dirty checking service.
+     * @param changeDetectorReference - Model dirty checking service.
      * @param data - Data stream service.
      * @param route - Current route configuration.
      * @param router - Injected router service instance.
@@ -2167,11 +2167,11 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * @returns Nothing.
      */
     constructor(
-        changeDetectorRef:ChangeDetectorRef, data:DataService,
+        changeDetectorReference:ChangeDetectorRef, data:DataService,
         route:ActivatedRoute, router:Router,
         stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
     ):void {
-        super(changeDetectorRef, data, stringCapitalizePipe, tools)
+        super(changeDetectorReference, data, stringCapitalizePipe, tools)
         this._route = route
         this._router = router
         // IgnoreTypeCheck
