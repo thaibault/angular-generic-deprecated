@@ -1745,6 +1745,7 @@ export class DataScopeService {
  * specification.
  * @property relevantKeys - Saves a list of relevant key names to take into
  * account during resolving.
+ * @property specialNames - mapping of special database field names.
  * @property type - Model name to handle. Should be overwritten in concrete
  * implementations.
  */
@@ -1754,8 +1755,8 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     extendObject:Function
     models:PlainObject
     relevantKeys:?Array<string> = null
+    specialNames:{[key:string]:string}
     type:string = 'Item'
-    typeName:string
     /**
      * Sets all needed injected services as instance properties.
      * @param data - Injected data service instance.
@@ -1776,8 +1777,8 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
                 escapeRegularExpressionsPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.models = initialData.configuration.database.model.entities
-        this.typeName = initialData.configuration.database.model.property.name
-            .special.type
+        this.specialNames = initialData.configuration.database.model.property.name
+            .special
     }
     /**
      * List items which matches given filter criteria.
@@ -1796,16 +1797,41 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         if (!this.relevantKeys)
             this.relevantKeys = Object.keys(this.models[this.type]).filter((
                 name:string
-            ):boolean => !name.startsWith('_') && [
-                undefined, 'string'
-            ].includes(this.models[this.type][name].type))
-        const selector:PlainObject = {[this.typeName]: this.type}
+            ):boolean => ![
+                this.specialNames.additional,
+                this.specialNames.allowedRole,
+                this.specialNames.attachment,
+                this.specialNames.constraint.execution,
+                this.specialNames.constraint.expression,
+                this.specialNames.deleted,
+                this.specialNames.extend,
+                this.specialNames.id,
+                this.specialNames.maximumAggregatedSize,
+                this.specialNames.minimumAggregatedSize,
+                this.specialNames.revision,
+                this.specialNames.type
+            ].includes(name) && [undefined, 'string'].includes(
+                this.models[this.type][name].type))
+        const selector:PlainObject = {[this.specialNames.type]: this.type}
         if (searchTerm || Object.keys(additionalSelectors).length) {
             if (sort.length)
                 selector[Object.keys(sort[0])[0]] = {$gt: null}
             selector.$or = []
             for (const name:string of this.relevantKeys)
                 selector.$or.push({[name]: {$regex: searchTerm}})
+            if (additionalSelectors.hasOwnProperty(
+                '$or'
+            ) && additionalSelectors.$or.length) {
+                /*
+                    NOTE: We have to integrate search expression into existing
+                    selector.
+                */
+                for (const item:PlainObject of additionalSelectors.$or)
+                    this.extendObject(true, selector.$or, item)
+                delete additionalSelectors.$or
+            } else
+                selector.$or = $or
+            console.log(selector.$or)
         }
         /*
             NOTE: We can't use "limit" here since we want to provide total data
@@ -1815,7 +1841,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         if (options.skip === 0)
             delete options.skip
         if (sort.length)
-            options.sort = [{[this.typeName]: 'asc'}].concat(sort)
+            options.sort = [{[this.specialNames.type]: 'asc'}].concat(sort)
         return this.data.find(this.extendObject(
             true, selector, additionalSelectors
         ), options)
