@@ -1829,9 +1829,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
                 for (const item:PlainObject of additionalSelectors.$or)
                     this.extendObject(true, selector.$or, item)
                 delete additionalSelectors.$or
-            } else
-                selector.$or = $or
-            console.log(selector.$or)
+            }
         }
         /*
             NOTE: We can't use "limit" here since we want to provide total data
