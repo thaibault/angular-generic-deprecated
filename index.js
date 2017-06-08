@@ -903,10 +903,17 @@ export class NumberPercentPipe/* implements PipeTransform*/ {
 /*
  * TODO
  */
-export const fadeInAnimation:Function = (duration:string = '.3s') => trigger(
-    'fadeInAnimation', [transition(':enter', [
-        style({opacity: 0}), animate('.3s', style({opacity: 1}))
-    ])])
+export const fadeAnimation:Function = (
+    duration:string = '.3s', enterState:string = ':enter',
+    leaveState:string = ':leave'
+) => trigger('fadeAnimation', [
+    transition(enterState, [
+        style({opacity: 0}), animate(duration, style({opacity: 1}))
+    ]),
+    transition(leaveState, [
+        style({opacity: 1}), animate(duration, style({opacity: 0}))
+    ])
+])
 // endregion
 // region services
 // IgnoreTypeCheck
