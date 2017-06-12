@@ -22,16 +22,23 @@ import {blobToBase64String} from 'blob-util'
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
-    /* AfterViewInit,*/ animate, ChangeDetectorRef, Component, Directive,
-    ElementRef, EventEmitter, forwardRef, Injectable, Inject, Injector, Input,
-    NgModule, /* OnChanges, OnInit,*/ Output, Pipe, PipeTransform,
-    ReflectiveInjector, Renderer, style, transition, trigger, ViewChild
+    /* AfterViewInit,*/ animate, AnimationTriggerMetadata, ChangeDetectorRef,
+    Component, Directive, ElementRef, EventEmitter, forwardRef, Injectable,
+    /* eslint-disable no-unused-vars */
+    // IgnoreTypeCheck
+    Inject, Injector, Input, NgModule, /* OnChanges, OnInit,*/ Output, Pipe,
+    /* eslint-enable no-unused-vars */
+    PipeTransform, ReflectiveInjector, Renderer, style, transition, trigger,
+    ViewChild
 } from '@angular/core'
 import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
 import {
+    /* eslint-disable no-unused-vars */
+    // IgnoreTypeCheck
     MdButtonModule, MdCardModule, MD_DIALOG_DATA, MdDialog, MdDialogRef,
+    /* eslint-enable no-unused-vars */
     MdDialogModule, MdInputModule, MdSelectModule
 } from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
@@ -906,7 +913,7 @@ export class NumberPercentPipe/* implements PipeTransform*/ {
 export const fadeAnimation:Function = (
     duration:string = '.3s', enterState:string = ':enter',
     leaveState:string = ':leave'
-) => trigger('fadeAnimation', [
+):AnimationTriggerMetadata => trigger('fadeAnimation', [
     transition(enterState, [
         style({opacity: 0}), animate(duration, style({opacity: 1}))
     ]),
@@ -975,7 +982,7 @@ export class ConfirmComponent {
 @Injectable()
 export class AlertService {
     dialog:MdDialog
-    constructor(dialog:MdDialog) {
+    constructor(dialog:MdDialog):void {
         this.dialog = dialog
     }
     confirm(data:string|{[key:string]:any}):Promise<boolean> {
@@ -1024,7 +1031,7 @@ export class DataService {
         'putAttachment', 'query', 'remove', 'removeAttachment', 'sync']
     connection:PouchDB
     configuration:PlainObject
-    database:PouchDB
+    database:typeof PouchDB
     extendObject:Function
     interceptSynchronisationPromise:?Promise<any> = null
     middlewares:{
@@ -1784,8 +1791,8 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
                 escapeRegularExpressionsPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.models = initialData.configuration.database.model.entities
-        this.specialNames = initialData.configuration.database.model.property.name
-            .special
+        this.specialNames = initialData.configuration.database.model.property
+            .name.special
     }
     /**
      * List items which matches given filter criteria.
@@ -3270,7 +3277,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         return this.update(oldName)
     }
     // TODO
-    async retrieveAttachment(id: any, options:PlainObject = {}):Promise<void> {
+    async retrieveAttachment(id:any, options:PlainObject = {}):Promise<void> {
         const file:Object = await this._data.getAttachment(
             id, this.file.name, options)
         this.file = {
@@ -3365,7 +3372,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 this.mapNameToField && id &&
                 this.mapNameToField.includes(this._idName)
             ))
-                newData[this.attachmentTypeName] =  {[oldName]: {data: null}}
+                newData[this.attachmentTypeName] = {[oldName]: {data: null}}
             if (![undefined, null].includes(this.model[this._revisionName]))
                 newData[this._revisionName] = this.model[
                     this._revisionName]
