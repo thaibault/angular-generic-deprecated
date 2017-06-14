@@ -1160,6 +1160,7 @@ export class DataService {
             true, {skip_setup: true},
             this.configuration.database.connector || {})
         const databaseName:string = this.configuration.name || 'generic'
+        // TODO mock database in pre-rendering mode??
         this.remoteConnection = new this.database(this.stringFormat(
             this.configuration.database.url, ''
         ) + `/${databaseName}`, options)
