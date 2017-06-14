@@ -11,6 +11,7 @@
     endregion
 */
 // region imports
+import type {Window} from 'clientnode'
 import {default as Tools, globalContext} from 'clientnode'
 import {enableProdMode, NgModule} from '@angular/core'
 import {APP_BASE_HREF} from '@angular/common'
@@ -64,7 +65,8 @@ export function determinePaths(
  * Pre-renders given application routes to given target directory structure.
  * @param ApplicationComponent - Application component to pre-render.
  * @param ApplicationModule - Application module to pre-render.
- * @param routes - Routes configuration object or array of paths to pre-render.
+ * @param routes - Route or routes configuration object or array of paths to
+ * pre-render.
  * @param globalVariableNamesToInject - Global variable names to inject into
  * the node context evaluated from given index html file.
  * @param htmlFilePath - HTML file path to use as index.
@@ -78,17 +80,18 @@ export function determinePaths(
 export default function(
     ApplicationComponent:Object, ApplicationModule:Object,
     // IgnoreTypeCheck
-    routes:Array<string>|Routes = [],
+    routes:string|Array<string>|Routes = [],
     globalVariableNamesToInject:string|Array<string> = 'genericInitialData',
     htmlFilePath:string = './build/index.html',
     targetDirectoryPath:string = './build/pre-rendered',
     globalVariables:Object = {}, encoding:string = 'utf-8'
 ):Promise<Array<string>> {
     globalVariableNamesToInject = [].concat(globalVariableNamesToInject)
+    routes = [].concat(routes)
     return new Promise((resolve:Function, reject:Function):void => {
-        fileSystem.readFile(htmlFilePath, {encoding}, (
+        fileSystem.readFile(htmlFilePath, {encoding}, async (
             error:?Error, data:string
-        ):void => {
+        ):Promise<void> => {
             if (error)
                 return reject(error)
             // region prepare environment
@@ -98,11 +101,12 @@ export default function(
                 'trace', 'warn'
             ])
                 virtualConsole.on(name, console[name].bind(console))
-            const {document, window} = (new JSDOM(data, {
-                runScripts: 'dangerously', virtualConsole}))
-            const basePath:string = document.getElementsByTagName('base')[
-                0
-            ].href
+            const window:Window = (new JSDOM(data, {
+                runScripts: 'dangerously', virtualConsole
+            })).window
+            const basePath:string = window.document.getElementsByTagName(
+                'base'
+            )[0].href
             for (const name:string in window)
                 if (window.hasOwnProperty(
                     name
@@ -123,12 +127,13 @@ export default function(
             let urls:Array<string>
             if (routes.length)
                 urls = typeof routes[0] === 'string' ? routes : Array.from(
-                    determinePaths(basePath, routes))
+                    determinePaths(basePath, routes)
+                ).sort()
             else
                 urls = [basePath]
             // endregion
             console.info(`Found ${urls.length} pre-renderable urls.`)
-            // region create server renderable module
+            // region create server pre-renderable module
             // IgnoreTypeCheck
             @NgModule({
                 bootstrap: [ApplicationComponent],
@@ -141,18 +146,18 @@ export default function(
             class ApplicationServerModule {}
             // endregion
             enableProdMode()
-            // region generate prerendered html files
-            const promises:Array<Promise<string>> = []
-            for (const url:string of urls.sort())
-                promises.push(new Promise((
-                    resolve:Function, reject:Function
-                ):void => {
-                    const filePath:string = path.join(targetDirectoryPath, (
-                        url === basePath
-                    ) ? '/' : url.substring(basePath.length).replace(
-                        /^\/+(.+)/, '$1'
-                    )) + '.html'
-                    makeDirectoryPath(path.dirname(filePath), async (
+            // region generate pre-rendered html files
+            const results:Array<string> = []
+            for (const url:string of urls) {
+                const filePath:string = path.join(targetDirectoryPath, (
+                    url === basePath
+                ) ? '/' : url.substring(basePath.length).replace(
+                    /^\/+(.+)/, '$1'
+                )) + '.html'
+                try {
+                    await new Promise((
+                        resolve:Function, reject:Function
+                    ):void => makeDirectoryPath(path.dirname(filePath), async (
                         error:?Error
                     ):Promise<void> => {
                         if (error)
@@ -167,13 +172,18 @@ export default function(
                                 'Error occurred during pre-rendering path "' +
                                 `${url}": ${Tools.representObject(error)}`)
                         }
+                        results.push(result)
                         console.info(`Write file "${filePath}".`)
                         fileSystem.writeFile(filePath, result, ((
                             error:?Error
                         ):void => error ? reject(error) : resolve(result)))
-                    })
-                }))
-            Promise.all(promises).then(resolve).catch(reject)
+                    }))
+                } catch (error) {
+                    reject(error)
+                    return
+                }
+            }
+            resolve(results)
             // endregion
         })
     })
