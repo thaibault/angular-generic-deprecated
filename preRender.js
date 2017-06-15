@@ -21,6 +21,7 @@ import fileSystem from 'fs'
 import {JSDOM, VirtualConsole} from 'jsdom'
 import makeDirectoryPath from 'mkdirp'
 import path from 'path'
+import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 import 'zone.js/dist/zone-node'
 // endregion
 /**
@@ -84,7 +85,10 @@ export default function(
     globalVariableNamesToInject:string|Array<string> = 'genericInitialData',
     htmlFilePath:string = './build/index.html',
     targetDirectoryPath:string = './build/pre-rendered',
-    globalVariables:Object = {}, encoding:string = 'utf-8'
+    globalVariables:Object = {genericInitialData: {configuration: {database: {
+        connector: {adapter: 'memory'},
+        plugins: [PouchDBAdapterMemory]
+    }}}}, encoding:string = 'utf-8'
 ):Promise<Array<string>> {
     globalVariableNamesToInject = [].concat(globalVariableNamesToInject)
     routes = [].concat(routes)
@@ -117,11 +121,7 @@ export default function(
                     console.info(`Inject variable "${name}".`)
                     globalContext[name] = window[name]
                 }
-            for (const name:string in globalVariables)
-                if (globalVariables.hasOwnProperty(
-                    name
-                ) && !globalContext.hasOwnProperty(name))
-                    globalContext[name] = globalVariables[name]
+            Tools.extendObject(true, globalContext, globalVariables)
             // endregion
             // region determine prerenderable paths
             let urls:Array<string>

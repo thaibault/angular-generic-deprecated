@@ -16,12 +16,13 @@
 */
 // region imports
 import type {DomNode, PlainObject} from 'clientnode'
-import registerAngularTest from './testRunner'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 // NOTE: Only needed for debugging this file.
 try {
     module.require('source-map-support/register')
 } catch (error) {}
+
+import registerAngularTest from './testRunner'
 // endregion
 // region tests
 registerAngularTest(function(
