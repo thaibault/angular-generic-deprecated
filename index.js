@@ -28,9 +28,10 @@ import {
     // IgnoreTypeCheck
     Inject, Injector, Input, NgModule, /* OnChanges, OnInit,*/ Output, Pipe,
     /* eslint-enable no-unused-vars */
-    PipeTransform, ReflectiveInjector, Renderer, style, transition, trigger,
-    ViewChild
+    PipeTransform, PLATFORM_ID, ReflectiveInjector, Renderer, style,
+    transition, trigger, ViewChild
 } from '@angular/core'
+import {isPlatformServer} from '@angular/common'
 import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
@@ -1014,6 +1015,7 @@ export class AlertService {
  * resolved before synchronisation for local database starts.
  * @property middlewares - Mapping of post and pre callback arrays to trigger
  * before or after each database transaction.
+ * @property platformID - Platform identification string.
  * @property remoteConnection - The current remote database connection
  * instance.
  * @property stringFormat - Holds the string format's pipe transformation
@@ -1041,6 +1043,7 @@ export class DataService {
         post: {},
         pre: {}
     }
+    platformID:string
     remoteConnection:PouchDB
     stringFormat:Function
     synchronisation:?Object
@@ -1048,14 +1051,18 @@ export class DataService {
     /**
      * Creates the database constructor applies all plugins instantiates
      * the connection instance and registers all middlewares.
+     * @param equalsPipe - Equals pipe service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
+     * @param platformID - Platform identification string.
      * @param stringFormatPipe - Injected string format pipe instance.
      * @param tools - Injected tools service instance.
      * @returns Nothing.
      */
     constructor(
-        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService,
+        equalsPipe:EqualsPipe, extendObjectPipe:ExtendObjectPipe,
+        initialData:InitialDataService,
+        @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe, tools:ToolsService
     ):void {
         this.configuration = initialData.configuration
@@ -1063,7 +1070,9 @@ export class DataService {
             this.configuration.database.url =
                 this.configuration.database.publicURL
         this.database = PouchDB
+        this.equalsPipe = equalsPipe
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.tools = tools.tools
         const nativeBulkDocs:Function = this.database.prototype.bulkDocs
@@ -1160,7 +1169,6 @@ export class DataService {
             true, {skip_setup: true},
             this.configuration.database.connector || {})
         const databaseName:string = this.configuration.name || 'generic'
-        // TODO mock database in pre-rendering mode??
         this.remoteConnection = new this.database(this.stringFormat(
             this.configuration.database.url, ''
         ) + `/${databaseName}`, options)
@@ -1262,23 +1270,22 @@ export class DataService {
      * @returns Whatever pouchdb's method returns.
      */
     async get(...parameter:Array<any>):Promise<PlainObject> {
-        // TODO only if all parameter are equal!
         const idName:string =
             this.configuration.database.model.property.name.special.id
         const revisionName:string =
             this.configuration.database.model.property.name.special.revision
         const result:PlainObject = await this.connection.get(...parameter)
-        if (parameter.length > 1 && typeof parameter[
-            1
-        ] === 'object' && parameter[1] !== null && parameter[1].hasOwnProperty(
-            'rev'
-        ) && parameter[1].rev === 'latest' &&
-        LAST_KNOWN_DATA.data.hasOwnProperty(result[idName]) && parseInt(
-            result[revisionName].match(
-                this.constructor.revisionNumberRegularExpression)[1]
-        ) < parseInt(LAST_KNOWN_DATA.data[result[idName]][revisionName].match(
+        if (LAST_KNOWN_DATA.data.hasOwnProperty(
+            result[idName]
+        ) && parameter.length > 1 && (
+            this.equalsPipe(parameter[1], {rev: 'latest'}) ||
+            this.equalsPipe(parameter[1], {latest: true}) ||
+            this.equalsPipe(parameter[1], {latest: true, rev: 'latest'}) ||
+        ) && parseInt(result[revisionName].match(
             this.constructor.revisionNumberRegularExpression
-        )[1]))
+        )[1]) < parseInt(LAST_KNOWN_DATA.data[result[idName]][
+            revisionName
+        ].match(this.constructor.revisionNumberRegularExpression)[1]))
             return LAST_KNOWN_DATA.data[result[idName]]
         return result
     }
