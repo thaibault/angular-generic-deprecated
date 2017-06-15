@@ -1238,85 +1238,86 @@ export class DataService {
                 }
             }
         this.connection.installValidationMethods()
-        if (this.configuration.database.local)
-            if (this.remoteConnection)
-                /*
-                    NOTE: We want to allow other services to integrate
-                    an interception promise.
-                */
-                // IgnoreTypeCheck
-                this.tools.timeout(async ():Promise<void> => {
-                    if (this.interceptSynchronisationPromise)
-                        await this.interceptSynchronisationPromise
-                    this.startSynchronisation()
-                })
-            else if (this.configuration.database.createGenericFlatIndex) {
-                // region create/remove needed/unneeded generic indexes
-                for (
-                    const modelName:string in
-                    this.configuration.database.model.entities
+        if (this.configuration.database.local && this.remoteConnection)
+            /*
+                NOTE: We want to allow other services to integrate
+                an interception promise.
+            */
+            // IgnoreTypeCheck
+            this.tools.timeout(async ():Promise<void> => {
+                if (this.interceptSynchronisationPromise)
+                    await this.interceptSynchronisationPromise
+                this.startSynchronisation()
+            })
+        if (isPlatformServer(
+            this.platformID
+        ) && this.configuration.database.createGenericFlatIndex) {
+            // region create/remove needed/unneeded generic indexes
+            for (
+                const modelName:string in
+                this.configuration.database.model.entities
+            )
+                if (this.configuration.database.model.entities
+                    .hasOwnProperty(modelName) && (new RegExp(
+                        this.configuration.database.model.property.name
+                            .typeRegularExpressionPattern.public
+                    )).test(modelName)
                 )
-                    if (this.configuration.database.model.entities
-                        .hasOwnProperty(modelName) && (new RegExp(
-                            this.configuration.database.model.property.name
-                                .typeRegularExpressionPattern.public
-                        )).test(modelName)
+                    for (
+                        const name:string of
+                        DataService.determineGenericIndexablePropertyNames(
+                            this.configuration.database.model,
+                            this.configuration.database.model.entites[
+                                modelName])
                     )
-                        for (
-                            const name:string of
-                            DataService.determineGenericIndexablePropertyNames(
-                                this.configuration.database.model,
-                                this.configuration.database.model.entites[
-                                    modelName])
-                        )
-                            try {
-                                await this.connection.createIndex({index: {
-                                    ddoc: `${modelName}-${name}-GenericIndex`,
-                                    fields: [
-                                        this.configuration.database.model
-                                            .property.name.special.type,
-                                        name
-                                    ],
-                                    name: `${modelName}-${name}-GenericIndex`
-                                }})
-                            } catch (error) {
-                                throw error
-                            }
-                let indexes:Array<PlainObject>
-                try {
-                    indexes = (await this.connection.getIndexes()).indexes
-                } catch (error) {
-                    throw error
-                }
-                for (const index:PlainObject of indexes)
-                    if (index.name.endsWith('-GenericIndex')) {
-                        let exists:boolean = false
-                        for (
-                            const modelName:string in
-                            this.configuration.database.model.entities
-                        )
-                            if (index.name.startsWith(`${modelName}-`)) {
-                                for (const name:string of DataService
-                                    .determineGenericIndexablePropertyNames(
-                                        this.configuration.database.model,
-                                        this.configuration.database.model
-                                            .entities[modelName])
-                                )
-                                    if (index.name ===
-                                        `${modelName}-${name}-GenericIndex`
-                                    )
-                                        exists = true
-                                break
-                            }
-                        if (!exists)
-                            try {
-                                await this.connection.deleteIndex(index)
-                            } catch (error) {
-                                throw error
-                            }
-                    }
+                        try {
+                            await this.connection.createIndex({index: {
+                                ddoc: `${modelName}-${name}-GenericIndex`,
+                                fields: [
+                                    this.configuration.database.model
+                                        .property.name.special.type,
+                                    name
+                                ],
+                                name: `${modelName}-${name}-GenericIndex`
+                            }})
+                        } catch (error) {
+                            throw error
+                        }
+            let indexes:Array<PlainObject>
+            try {
+                indexes = (await this.connection.getIndexes()).indexes
+            } catch (error) {
+                throw error
             }
-            // endregion
+            for (const index:PlainObject of indexes)
+                if (index.name.endsWith('-GenericIndex')) {
+                    let exists:boolean = false
+                    for (
+                        const modelName:string in
+                        this.configuration.database.model.entities
+                    )
+                        if (index.name.startsWith(`${modelName}-`)) {
+                            for (const name:string of DataService
+                                .determineGenericIndexablePropertyNames(
+                                    this.configuration.database.model,
+                                    this.configuration.database.model
+                                        .entities[modelName])
+                            )
+                                if (index.name ===
+                                    `${modelName}-${name}-GenericIndex`
+                                )
+                                    exists = true
+                            break
+                        }
+                    if (!exists)
+                        try {
+                            await this.connection.deleteIndex(index)
+                        } catch (error) {
+                            throw error
+                        }
+                }
+        }
+        // endregion
     }
     /**
      * Creates a database index.
