@@ -1044,7 +1044,7 @@ export class DataService {
         pre: {}
     }
     platformID:string
-    remoteConnection:PouchDB
+    remoteConnection:?PouchDB = null
     stringFormat:Function
     synchronisation:?Object
     tools:Tools
@@ -1169,10 +1169,13 @@ export class DataService {
             true, {skip_setup: true},
             this.configuration.database.connector || {})
         const databaseName:string = this.configuration.name || 'generic'
-        this.remoteConnection = new this.database(this.stringFormat(
-            this.configuration.database.url, ''
-        ) + `/${databaseName}`, options)
-        if (this.configuration.database.local)
+        if (!isPlatformServer(this.platformID))
+            this.remoteConnection = new this.database(this.stringFormat(
+                this.configuration.database.url, ''
+            ) + `/${databaseName}`, options)
+        if (this.configuration.database.local || isPlatformServer(
+            this.platformID
+        ))
             this.connection = new this.database(databaseName, options)
         else
             this.connection = this.remoteConnection
@@ -1206,7 +1209,7 @@ export class DataService {
                 }
             }
         this.connection.installValidationMethods()
-        if (this.configuration.database.local)
+        if (this.configuration.database.local && this.remoteConnection)
             /*
                 NOTE: We want to allow other services to integrate interception
                 promise.
