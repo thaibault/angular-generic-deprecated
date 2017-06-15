@@ -64,6 +64,7 @@
     "jsdom": "latest",
     "mkdirp": "latest",
     "pouchdb": "latest",
+    "pouchdb-adapter-memory": "latest",
     "pouchdb-find": "latest",
     "pouchdb-validation": "latest",
     "reflect-metadata": "^0.1.8",
@@ -74,7 +75,6 @@
     "babel-plugin-angular2-annotations": "latest",
     "babel-plugin-transform-decorators-legacy": "latest",
     "documentation-website": "latest",
-    "pouchdb-adapter-memory": "latest",
     "source-map-support": "latest",
     "weboptimizer": "latest"
   },
