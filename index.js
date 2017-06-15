@@ -1283,7 +1283,7 @@ export class DataService {
         ) && parameter.length > 1 && (
             this.equalsPipe(parameter[1], {rev: 'latest'}) ||
             this.equalsPipe(parameter[1], {latest: true}) ||
-            this.equalsPipe(parameter[1], {latest: true, rev: 'latest'}) ||
+            this.equalsPipe(parameter[1], {latest: true, rev: 'latest'})
         ) && parseInt(result[revisionName].match(
             this.constructor.revisionNumberRegularExpression
         )[1]) < parseInt(LAST_KNOWN_DATA.data[result[idName]][
