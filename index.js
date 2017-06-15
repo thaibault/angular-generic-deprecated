@@ -1061,8 +1061,7 @@ export class DataService {
      */
     constructor(
         equalsPipe:EqualsPipe, extendObjectPipe:ExtendObjectPipe,
-        initialData:InitialDataService,
-        @Inject(PLATFORM_ID) platformID:string,
+        initialData:InitialDataService, @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe, tools:ToolsService
     ):void {
         this.configuration = initialData.configuration
@@ -1161,10 +1160,40 @@ export class DataService {
         this.initialize()
     }
     /**
-     * Initializes database connection and synchronisation if needed.
-     * @returns Nothing.
+     * Determines all property names which are indexable in a generic manner.
+     * @param modelConfiguration - Model specification object.
+     * @param model - Model to determine property names from.
+     * @returns The mapping object.
      */
-    initialize():void {
+    static determineGenericIndexablePropertyNames(
+        modelConfiguration:ModelConfiguration, model:Model
+    ):Array<string> {
+        const specialNames:PlainObject =
+            modelConfiguration.property.name.special
+        return Object.keys(model).filter((name:string):boolean => !(
+            modelConfiguration.property.name.reserved.concat(
+                specialNames.attachment,
+                specialNames.conflict,
+                specialNames.deleted,
+                specialNames.deleted_conflict,
+                specialNames.id,
+                specialNames.revision,
+                specialNames.revisions,
+                specialNames.revisions_info,
+                specialNames.type
+            ).includes(name) || model[name].type && (
+                typeof model[name].type === 'string' &&
+                model[name].type.endsWith('[]') ||
+                Array.isArray(model[name].type) && model[name].type.length &&
+                Array.isArray(model[name].type[0]) ||
+                modelConfiguration.entities.hasOwnProperty(model[name].type))
+        )).concat(specialNames.id, specialNames.revision)
+    }
+    /**
+     * Initializes database connection and synchronisation if needed.
+     * @returns A promise resolving when initialisation has finished.
+     */
+    async initialize():Promise<void> {
         const options:PlainObject = this.extendObject(
             true, {skip_setup: true},
             this.configuration.database.connector || {})
@@ -1209,17 +1238,85 @@ export class DataService {
                 }
             }
         this.connection.installValidationMethods()
-        if (this.configuration.database.local && this.remoteConnection)
-            /*
-                NOTE: We want to allow other services to integrate interception
-                promise.
-            */
-            // IgnoreTypeCheck
-            this.tools.timeout(async ():Promise<void> => {
-                if (this.interceptSynchronisationPromise)
-                    await this.interceptSynchronisationPromise
-                this.startSynchronisation()
-            })
+        if (this.configuration.database.local)
+            if (this.remoteConnection)
+                /*
+                    NOTE: We want to allow other services to integrate
+                    an interception promise.
+                */
+                // IgnoreTypeCheck
+                this.tools.timeout(async ():Promise<void> => {
+                    if (this.interceptSynchronisationPromise)
+                        await this.interceptSynchronisationPromise
+                    this.startSynchronisation()
+                })
+            else if (this.configuration.database.createGenericFlatIndex) {
+                // region create/remove needed/unneeded generic indexes
+                for (
+                    const modelName:string in
+                    this.configuration.database.model.entities
+                )
+                    if (this.configuration.database.model.entities
+                        .hasOwnProperty(modelName) && (new RegExp(
+                            this.configuration.database.model.property.name
+                                .typeRegularExpressionPattern.public
+                        )).test(modelName)
+                    )
+                        for (
+                            const name:string of
+                            DataService.determineGenericIndexablePropertyNames(
+                                this.configuration.database.model,
+                                this.configuration.database.model.entites[
+                                    modelName])
+                        )
+                            try {
+                                await this.connection.createIndex({index: {
+                                    ddoc: `${modelName}-${name}-GenericIndex`,
+                                    fields: [
+                                        this.configuration.database.model
+                                            .property.name.special.type,
+                                        name
+                                    ],
+                                    name: `${modelName}-${name}-GenericIndex`
+                                }})
+                            } catch (error) {
+                                throw error
+                            }
+                let indexes:Array<PlainObject>
+                try {
+                    indexes = (await this.connection.getIndexes()).indexes
+                } catch (error) {
+                    throw error
+                }
+                for (const index:PlainObject of indexes)
+                    if (index.name.endsWith('-GenericIndex')) {
+                        let exists:boolean = false
+                        for (
+                            const modelName:string in
+                            this.configuration.database.model.entities
+                        )
+                            if (index.name.startsWith(`${modelName}-`)) {
+                                for (const name:string of DataService
+                                    .determineGenericIndexablePropertyNames(
+                                        this.configuration.database.model,
+                                        this.configuration.database.model
+                                            .entities[modelName])
+                                )
+                                    if (index.name ===
+                                        `${modelName}-${name}-GenericIndex`
+                                    )
+                                        exists = true
+                                break
+                            }
+                        if (!exists)
+                            try {
+                                await this.connection.deleteIndex(index)
+                            } catch (error) {
+                                throw error
+                            }
+                    }
+            }
+            // endregion
     }
     /**
      * Creates a database index.

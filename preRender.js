@@ -73,8 +73,8 @@ export function determinePaths(
  * @param htmlFilePath - HTML file path to use as index.
  * @param targetDirectoryPath - Target directory path to generate pre-rendered
  * html files in.
- * @param globalVariables - Object to inject into the global scope before
- * running pre-rendering.
+ * @param scope - Object to inject into the global scope before running
+ * pre-rendering.
  * @param encoding - Encoding to use for reading given html file reference.
  * @returns A promise which resolves to a list of pre-rendered html strings.
  */
@@ -85,7 +85,7 @@ export default function(
     globalVariableNamesToInject:string|Array<string> = 'genericInitialData',
     htmlFilePath:string = './build/index.html',
     targetDirectoryPath:string = './build/pre-rendered',
-    globalVariables:Object = {genericInitialData: {configuration: {database: {
+    scope:Object = {genericInitialData: {configuration: {database: {
         connector: {adapter: 'memory'},
         plugins: [PouchDBAdapterMemory]
     }}}}, encoding:string = 'utf-8'
@@ -121,7 +121,11 @@ export default function(
                     console.info(`Inject variable "${name}".`)
                     globalContext[name] = window[name]
                 }
-            Tools.extendObject(true, globalContext, globalVariables)
+            Tools.plainObjectPrototypes = Tools.plainObjectPrototypes.concat(
+                window.Object.prototype)
+            for (const name:string in scope)
+                if (scope.hasOwnProperty(name))
+                    Tools.extendObject(true, globalContext[name], scope[name])
             // endregion
             // region determine prerenderable paths
             let urls:Array<string>
