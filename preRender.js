@@ -84,7 +84,7 @@ export default function(
     routes:string|Array<string>|Routes = [],
     globalVariableNamesToInject:string|Array<string> = 'genericInitialData',
     htmlFilePath:string = './build/index.html',
-    targetDirectoryPath:string = './build/pre-rendered',
+    targetDirectoryPath:string = './build/preRendered',
     scope:Object = {genericInitialData: {configuration: {database: {
         connector: {adapter: 'memory'},
         plugins: [PouchDBAdapterMemory]
