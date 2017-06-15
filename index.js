@@ -1172,14 +1172,21 @@ export class DataService {
             modelConfiguration.property.name.special
         return Object.keys(model).filter((name:string):boolean => !(
             modelConfiguration.property.name.reserved.concat(
+                specialNames.additional,
+                specialNames.allowedRole,
                 specialNames.attachment,
                 specialNames.conflict,
+                specialNames.constraint.execution,
+                specialNames.constraint.expression,
                 specialNames.deleted,
                 specialNames.deleted_conflict,
+                specialNames.extend,
                 specialNames.id,
+                specialNames.maximumAggregatedSize,
+                specialNames.minimumAggregatedSize,
                 specialNames.revision,
                 specialNames.revisions,
-                specialNames.revisions_info,
+                specialNames.revisionsInformation,
                 specialNames.type
             ).includes(name) || model[name].type && (
                 typeof model[name].type === 'string' &&
@@ -1257,17 +1264,16 @@ export class DataService {
                 const modelName:string in
                 this.configuration.database.model.entities
             )
-                if (this.configuration.database.model.entities
-                    .hasOwnProperty(modelName) && (new RegExp(
-                        this.configuration.database.model.property.name
-                            .typeRegularExpressionPattern.public
-                    )).test(modelName)
-                )
+                if (this.configuration.database.model.entities.hasOwnProperty(
+                    modelName
+                ) && (new RegExp(this.configuration.database.model.property
+                    .name.typeRegularExpressionPattern.public
+                )).test(modelName))
                     for (
                         const name:string of
                         DataService.determineGenericIndexablePropertyNames(
                             this.configuration.database.model,
-                            this.configuration.database.model.entites[
+                            this.configuration.database.model.entities[
                                 modelName])
                     )
                         try {
@@ -1300,8 +1306,8 @@ export class DataService {
                             for (const name:string of DataService
                                 .determineGenericIndexablePropertyNames(
                                     this.configuration.database.model,
-                                    this.configuration.database.model
-                                        .entities[modelName])
+                                    this.configuration.database.model.entities[
+                                        modelName])
                             )
                                 if (index.name ===
                                     `${modelName}-${name}-GenericIndex`
