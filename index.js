@@ -22,14 +22,14 @@ import {blobToBase64String} from 'blob-util'
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
-    /* AfterViewInit,*/ animate, AnimationTriggerMetadata, ChangeDetectorRef,
-    Component, Directive, ElementRef, EventEmitter, forwardRef, Injectable,
+    /* AfterViewInit,*/ animate, AnimationTriggerMetadata, APP_INITIALIZER,
+    ChangeDetectorRef, Component, Directive, ElementRef, EventEmitter,
     /* eslint-disable no-unused-vars */
+    forwardRef, Injectable, Inject, Injector, Input, NgModule,
     // IgnoreTypeCheck
-    Inject, Injector, Input, NgModule, /* OnChanges, OnInit,*/ Output, Pipe,
+    /* OnChanges, OnInit,*/ Output, Pipe, PipeTransform, PLATFORM_ID,
     /* eslint-enable no-unused-vars */
-    PipeTransform, PLATFORM_ID, ReflectiveInjector, Renderer, style,
-    transition, trigger, ViewChild
+    ReflectiveInjector, Renderer, style, transition, trigger, ViewChild
 } from '@angular/core'
 import {isPlatformServer} from '@angular/common'
 import {
@@ -1157,7 +1157,6 @@ export class DataService {
                      .plugin(PouchDBValidationPlugin)
         for (const plugin:Object of this.configuration.database.plugins || [])
             this.database.plugin(plugin)
-        this.initialize()
     }
     /**
      * Determines all property names which are indexable in a generic manner.
@@ -3711,7 +3710,13 @@ const modules:Array<Object> = [
     entryComponents: [ConfirmComponent],
     exports: declarations,
     imports: modules,
-    providers
+    providers: providers.concat({
+        deps: [DataService],
+        multi: true,
+        provide: APP_INITIALIZER,
+        useFactory: (data:DataService):Function => ():Promise<void> =>
+            data.initialize()
+    })
 })
 /**
  * Represents the importable angular module.

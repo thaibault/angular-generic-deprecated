@@ -92,105 +92,108 @@ export default function(
 ):Promise<Array<string>> {
     globalVariableNamesToInject = [].concat(globalVariableNamesToInject)
     routes = [].concat(routes)
-    return new Promise((resolve:Function, reject:Function):void => {
-        fileSystem.readFile(htmlFilePath, {encoding}, async (
-            error:?Error, data:string
-        ):Promise<void> => {
-            if (error)
-                return reject(error)
-            // region prepare environment
-            const virtualConsole:Object = new VirtualConsole()
-            for (const name:string of [
-                'assert', 'dir', 'error', 'info', 'log', 'time', 'timeEnd',
-                'trace', 'warn'
-            ])
-                virtualConsole.on(name, console[name].bind(console))
-            const window:Window = (new JSDOM(data, {
-                runScripts: 'dangerously', virtualConsole
-            })).window
-            const basePath:string = window.document.getElementsByTagName(
-                'base'
-            )[0].href
-            for (const name:string in window)
-                if (window.hasOwnProperty(
-                    name
-                ) && !globalContext.hasOwnProperty(name) && (
-                    globalVariableNamesToInject.length === 0 ||
-                    globalVariableNamesToInject.includes(name)
-                )) {
-                    console.info(`Inject variable "${name}".`)
-                    globalContext[name] = window[name]
-                }
-            Tools.plainObjectPrototypes = Tools.plainObjectPrototypes.concat(
-                window.Object.prototype)
-            for (const name:string in scope)
-                if (scope.hasOwnProperty(name))
-                    Tools.extendObject(true, globalContext[name], scope[name])
-            // endregion
-            // region determine prerenderable paths
-            let urls:Array<string>
-            if (routes.length)
-                urls = typeof routes[0] === 'string' ? routes : Array.from(
-                    determinePaths(basePath, routes)
-                ).sort()
-            else
-                urls = [basePath]
-            // endregion
-            console.info(`Found ${urls.length} pre-renderable urls.`)
-            // region create server pre-renderable module
-            // IgnoreTypeCheck
-            @NgModule({
-                bootstrap: [ApplicationComponent],
-                imports: [ApplicationModule, ServerModule],
-                providers: [{provide: APP_BASE_HREF, useValue: basePath}]
-            })
-            /**
-             * Dummy server compatible root application module to pre-render.
-             */
-            class ApplicationServerModule {}
-            // endregion
-            enableProdMode()
-            // region generate pre-rendered html files
-            const results:Array<string> = []
-            for (const url:string of urls) {
-                const filePath:string = path.join(targetDirectoryPath, (
-                    url === basePath
-                ) ? '/' : url.substring(basePath.length).replace(
-                    /^\/+(.+)/, '$1'
-                )) + '.html'
-                try {
-                    await new Promise((
-                        resolve:Function, reject:Function
-                    ):void => makeDirectoryPath(path.dirname(filePath), async (
-                        error:?Error
-                    ):Promise<void> => {
-                        if (error)
-                            return reject(error)
-                        console.info(`Pre-render url "${url}".`)
-                        let result:string = ''
-                        try {
-                            result = await renderModule(
-                                ApplicationServerModule, {document: data, url})
-                        } catch (error) {
-                            console.warn(
-                                'Error occurred during pre-rendering path "' +
-                                `${url}": ${Tools.representObject(error)}`)
-                        }
-                        results.push(result)
-                        console.info(`Write file "${filePath}".`)
-                        fileSystem.writeFile(filePath, result, ((
-                            error:?Error
-                        ):void => error ? reject(error) : resolve(result)))
-                    }))
-                } catch (error) {
-                    reject(error)
-                    return
-                }
+    return new Promise((
+        resolve:Function, reject:Function
+    // IgnoreTypeCheck
+    ):void => fileSystem.readFile(htmlFilePath, {encoding}, async (
+        error:?Error, data:string
+    ):Promise<void> => {
+        if (error)
+            return reject(error)
+        // region prepare environment
+        const virtualConsole:Object = new VirtualConsole()
+        for (const name:string of [
+            'assert', 'dir', 'error', 'info', 'log', 'time', 'timeEnd',
+            'trace', 'warn'
+        ])
+            virtualConsole.on(name, console[name].bind(console))
+        const window:Window = (new JSDOM(data, {
+            runScripts: 'dangerously', virtualConsole
+        })).window
+        const basePath:string = window.document.getElementsByTagName(
+            'base'
+        )[0].href
+        for (const name:string in window)
+            if (window.hasOwnProperty(
+                name
+            ) && !globalContext.hasOwnProperty(name) && (
+                globalVariableNamesToInject.length === 0 ||
+                globalVariableNamesToInject.includes(name)
+            )) {
+                console.info(`Inject variable "${name}".`)
+                globalContext[name] = window[name]
             }
-            resolve(results)
-            // endregion
+        Tools.plainObjectPrototypes = Tools.plainObjectPrototypes.concat(
+            // IgnoreTypeCheck
+            window.Object.prototype)
+        for (const name:string in scope)
+            if (scope.hasOwnProperty(name))
+                Tools.extendObject(true, globalContext[name], scope[name])
+        // endregion
+        // region determine prerenderable paths
+        let urls:Array<string>
+        if (routes.length)
+            // IgnoreTypeCheck
+            urls = typeof routes[0] === 'string' ? routes : Array.from(
+                determinePaths(basePath, routes)
+            ).sort()
+        else
+            urls = [basePath]
+        // endregion
+        console.info(`Found ${urls.length} pre-renderable urls.`)
+        // region create server pre-renderable module
+        // IgnoreTypeCheck
+        @NgModule({
+            bootstrap: [ApplicationComponent],
+            imports: [ApplicationModule, ServerModule],
+            providers: [{provide: APP_BASE_HREF, useValue: basePath}]
         })
-    })
+        /**
+         * Dummy server compatible root application module to pre-render.
+         */
+        class ApplicationServerModule {}
+        // endregion
+        enableProdMode()
+        // region generate pre-rendered html files
+        const results:Array<string> = []
+        for (const url:string of urls) {
+            const filePath:string = path.join(targetDirectoryPath, (
+                url === basePath
+            ) ? '/' : url.substring(basePath.length).replace(
+                /^\/+(.+)/, '$1'
+            )) + '.html'
+            try {
+                await new Promise((
+                    resolve:Function, reject:Function
+                ):void => makeDirectoryPath(path.dirname(filePath), async (
+                    error:?Error
+                ):Promise<void> => {
+                    if (error)
+                        return reject(error)
+                    console.info(`Pre-render url "${url}".`)
+                    let result:string = ''
+                    try {
+                        result = await renderModule(
+                            ApplicationServerModule, {document: data, url})
+                    } catch (error) {
+                        console.warn(
+                            'Error occurred during pre-rendering path "' +
+                            `${url}": ${Tools.representObject(error)}`)
+                    }
+                    results.push(result)
+                    console.info(`Write file "${filePath}".`)
+                    fileSystem.writeFile(filePath, result, ((
+                        error:?Error
+                    ):void => error ? reject(error) : resolve(result)))
+                }))
+            } catch (error) {
+                reject(error)
+                return
+            }
+        }
+        resolve(results)
+        // endregion
+    }))
 }
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
