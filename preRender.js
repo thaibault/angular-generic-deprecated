@@ -83,7 +83,7 @@ export default function(
     // IgnoreTypeCheck
     routes:string|Array<string>|Routes = [],
     globalVariableNamesToInject:string|Array<string> = 'genericInitialData',
-    htmlFilePath:string = './build/index.html',
+    htmlFilePath:string = path.join(__dirname, 'index.html'),
     targetDirectoryPath:string = './build/preRendered',
     scope:Object = {genericInitialData: {configuration: {database: {
         connector: {adapter: 'memory'},
