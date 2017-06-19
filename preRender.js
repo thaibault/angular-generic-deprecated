@@ -31,36 +31,51 @@ import 'zone.js/dist/zone-node'
  * @param routes - Routes configuration object to analyze.
  * @param root - Current components root path (usually only needed for
  * recursive function calls).
- * @returns Set of distinct paths.
+ * @returns Set of distinct paths and linkes representing redirects.
  */
 export function determinePaths(
     basePath:string = '/', routes:Routes = [], root:string = ''
-):Set<string> {
+):{links:{[key:string]:string};paths:Set<string>} {
+    let links:{[key:string]:string} = {}
     let paths:Set<string> = new Set()
     routes.reverse()
-    let defaultParameter:string = ''
+    let defaultPath:string = ''
     for (const route:Object of routes)
         if (route.hasOwnProperty('path')) {
             if (route.hasOwnProperty('redirectTo'))
-                defaultParameter = route.redirectTo
+                if (route.path === '**')
+                    defaultPath = route.redirectTo
+                else
+                    links[route.path] = route.path.redirectTo
             else if (route.path.includes(':')) {
-                if (defaultParameter)
-                    if (defaultParameter.startsWith('/'))
-                        paths.add(path.join(basePath, defaultParameter))
+                if (defaultPath)
+                    if (defaultPath.startsWith('/'))
+                        paths.add(path.join(basePath, defaultPath))
                     else
-                        paths.add(path.join(basePath, root, defaultParameter))
+                        paths.add(path.join(basePath, root, defaultPath))
                 continue
             } else if (route.path !== '**' && !(route.hasOwnProperty(
                 'children'
             ) && route.children[route.children.length - 1].path === '**'))
                 paths.add(path.join(basePath, root, route.path))
-            if (route.hasOwnProperty('children'))
-                paths = new Set([...paths, ...determinePaths(
-                    basePath, route.children, path.join(root, route.path))])
-        } else if (route.hasOwnProperty('children'))
-            paths = new Set([...paths, ...determinePaths(
-                basePath, route.children, root)])
-    return paths
+            if (route.hasOwnProperty('children')) {
+                const result:{
+                    links:{[key:string]:string};
+                    paths:Set<string>;
+                } = determinePaths(basePath, route.children, path.join(
+                    root, route.path))
+                Tools.extendObject(links, result.links)
+                paths = new Set([...paths, ...result.paths])
+            }
+        } else if (route.hasOwnProperty('children')) {
+            const result:{
+                links:{[key:string]:string};
+                paths:Set<string>;
+            } = determinePaths(basePath, route.children, root)
+            Tools.extendObject(links, result.links)
+            paths = new Set([...paths, ...result.paths])
+        }
+    return {links, paths}
 }
 /**
  * Pre-renders given application routes to given target directory structure.
@@ -135,10 +150,19 @@ export default function(
         // region determine prerenderable paths
         let urls:Array<string>
         if (routes.length)
-            // IgnoreTypeCheck
-            urls = typeof routes[0] === 'string' ? routes : Array.from(
-                determinePaths(basePath, routes)
-            ).sort()
+            if (typeof routes[0] === 'string')
+                // IgnoreTypeCheck
+                urls = routes
+            else {
+                const result:{
+                    links:{[key:string]:string};
+                    paths:Set<string>;
+                } = determinePaths(basePath, routes)
+                for (const sourcePath:string in result.links)
+                    if (result.links.hasOwnProperty(sourcePath))
+                        console.log(sourcePath, '->', result.links[sourcePath])
+                urls = Array.from(result.paths).sort()
+            }
         else
             urls = [basePath]
         // endregion
