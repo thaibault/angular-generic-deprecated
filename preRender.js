@@ -253,7 +253,6 @@ export default function(
             targetDirectoryPath)
         files.reverse()
         let currentFile:?File = null
-        console.log('LINKS', links)
         for (const file:File of files)
             if (filePaths.includes(file.path) || links.includes(file.path))
                 currentFile = file
