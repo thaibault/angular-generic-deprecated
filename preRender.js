@@ -78,13 +78,15 @@ export function determinePaths(
  * @param encoding - Encoding to use for reading given html file reference.
  * @returns A promise which resolves to a list of pre-rendered html strings.
  */
+console.log('A', )
 export default function(
     ApplicationComponent:Object, ApplicationModule:Object,
     // IgnoreTypeCheck
     routes:string|Array<string>|Routes = [],
     globalVariableNamesToInject:string|Array<string> = 'genericInitialData',
     htmlFilePath:string = path.join(__dirname, 'index.html'),
-    targetDirectoryPath:string = './build/preRendered',
+    targetDirectoryPath:string = path.resolve(
+        path.dirname(process.argv[1]), 'preRendered'),
     scope:Object = {genericInitialData: {configuration: {database: {
         connector: {adapter: 'memory'},
         plugins: [PouchDBAdapterMemory]
