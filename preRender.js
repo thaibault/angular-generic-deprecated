@@ -22,6 +22,7 @@ import {JSDOM, VirtualConsole} from 'jsdom'
 import makeDirectoryPath from 'mkdirp'
 import path from 'path'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
+import removeDirectoryRecursively from 'rimraf'
 import 'zone.js/dist/zone-node'
 // endregion
 /**
@@ -42,17 +43,17 @@ export function determinePaths(
     let defaultPath:string = ''
     for (const route:Object of routes)
         if (route.hasOwnProperty('path')) {
-            if (route.hasOwnProperty('redirectTo'))
+            if (route.hasOwnProperty('redirectTo')) {
                 if (route.path === '**')
-                    defaultPath = route.redirectTo
-                else
-                    links[route.path] = route.path.redirectTo
-            else if (route.path.includes(':')) {
-                if (defaultPath)
-                    if (defaultPath.startsWith('/'))
-                        paths.add(path.join(basePath, defaultPath))
+                    if (route.redirectTo.startsWith('/'))
+                        defaultPath = path.join(basePath, route.redirectTo)
                     else
-                        paths.add(path.join(basePath, root, defaultPath))
+                        defaultPath = path.join(
+                            basePath, root, route.redirectTo)
+                links[path.join(basePath, root, route.path)] = defaultPath
+            } else if (route.path.includes(':')) {
+                if (defaultPath)
+                    paths.add(defaultPath)
                 continue
             } else if (route.path !== '**' && !(route.hasOwnProperty(
                 'children'
@@ -147,7 +148,8 @@ export default function(
             if (scope.hasOwnProperty(name))
                 Tools.extendObject(true, globalContext[name], scope[name])
         // endregion
-        // region determine prerenderable paths
+        // region determine pre-renderable paths
+        const links:Array<string> = []
         let urls:Array<string>
         if (routes.length)
             if (typeof routes[0] === 'string')
@@ -159,8 +161,34 @@ export default function(
                     paths:Set<string>;
                 } = determinePaths(basePath, routes)
                 for (const sourcePath:string in result.links)
-                    if (result.links.hasOwnProperty(sourcePath))
-                        console.log(sourcePath, '->', result.links[sourcePath])
+                    if (result.links.hasOwnProperty(sourcePath)) {
+                        const realSourcePath:string = path.join(
+                            targetDirectoryPath, sourcePath.substring(
+                                basePath.length
+                            ).replace(/^\/+(.+)/, '$1'))
+                        links.push(realSourcePath)
+                        const targetPath:string = path.join(
+                            targetDirectoryPath,
+                            result.links[sourcePath].substring(
+                                basePath.length
+                            ).replace(/^\/+(.+)/, '$1')) + '.html'
+                        await makeDirectoryPath(path.dirname(
+                            realSourcePath
+                        ), async (error:?Error):Promise<void> => {
+                            if (error)
+                                return reject(error)
+                            if (await Tools.isFile(realSourcePath))
+                                await new Promise((
+                                    resolve:Function, reject:Function
+                                ):void => removeDirectoryRecursively(
+                                    realSourcePath, (error:?Error):void =>
+                                        error ? reject(error) : resolve()))
+                            fileSystem.symlink(
+                                targetPath, realSourcePath, (
+                                    error:?Error
+                                ):void => error ? reject(error) : resolve())
+                        })
+                    }
                 urls = Array.from(result.paths).sort()
             }
         else
@@ -182,12 +210,14 @@ export default function(
         enableProdMode()
         // region generate pre-rendered html files
         const results:Array<string> = []
+        const filePaths:Array<string> = []
         for (const url:string of urls) {
             const filePath:string = path.join(targetDirectoryPath, (
                 url === basePath
             ) ? '/' : url.substring(basePath.length).replace(
                 /^\/+(.+)/, '$1'
             )) + '.html'
+            filePaths.push(filePath)
             try {
                 await new Promise((
                     resolve:Function, reject:Function
@@ -217,8 +247,23 @@ export default function(
                 return
             }
         }
-        resolve(results)
         // endregion
+        // region tidy up
+        const files:Array<File> = await Tools.walkDirectoryRecursively(
+            targetDirectoryPath)
+        files.reverse()
+        let currentFile:?File = null
+        console.log('LINKS', links)
+        for (const file:File of files)
+            if (filePaths.includes(file.path) || links.includes(file.path))
+                currentFile = file
+            else if (!(currentFile && currentFile.path.startsWith(file.path)))
+                await new Promise((resolve:Function, reject:Function):void =>
+                    removeDirectoryRecursively(file.path, (
+                        error:?Error
+                    ):void => error ? reject(error) : resolve()))
+        // endregion
+        resolve(results)
     }))
 }
 // region vim modline
