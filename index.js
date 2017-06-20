@@ -791,6 +791,35 @@ export class StringMatchPipe/* implements PipeTransform*/ {
     }
 }
 // IgnoreTypeCheck
+@Pipe({name: 'genericStringMaximumLength'})
+/**
+ * Trims given string if it is longer then given length.
+ */
+export class StringMaximumLengthPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual indicator method.
+     * @param string - To check.
+     * @param maximumLength - Maximum number of symbols in given string.
+     * @param suffix - Suffix to append if given string has to bee trimmed.
+     * @returns The potentially trimmed given string.
+     */
+    transform(
+        string:?string, maximumLength:number = 100, suffix:string = '...'
+    ):string {
+        if (string) {
+            if (
+                string.length > maximumLength &&
+                string.length - 1 > suffix.length
+            )
+                string = string.substring(0, Math.max(
+                    1, maximumLength - suffix.length
+                )) + suffix
+            return string
+        }
+        return ''
+    }
+}
+// IgnoreTypeCheck
 @Pipe({name: 'genericStringReplace'})
 /**
  * Provides javascript's native string replacement method as pipe.

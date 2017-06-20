@@ -187,6 +187,7 @@ registerAngularTest(function(
                 StringStartsWithPipe,
                 StringEndsWithPipe,
                 StringMatchPipe,
+                StringMaximumLengthPipe,
                 StringSliceMatchPipe,
                 StringHasTimeSuffixPipe,
                 TypePipe
@@ -293,6 +294,7 @@ registerAngularTest(function(
                     stringEndsWithPipe:StringEndsWithPipe,
                     stringHasTimeSuffixPipe:StringHasTimeSuffixPipe,
                     stringMatchPipe:StringMatchPipe,
+                    stringMaximumLengthPipe:StringMaximumLengthPipe,
                     stringMD5Pipe:StringMD5Pipe,
                     stringReplacePipe:StringReplacePipe,
                 stringShowIfPatternMatchesPipe:StringShowIfPatternMatchesPipe,
@@ -584,7 +586,7 @@ registerAngularTest(function(
                             assert.notOk(stringHasTimeSuffixPipe.transform(
                                 test))
                     })
-                    self.test(`GericStringMatchPipe (${roundType})`, (
+                    self.test(`stringMatchPipe (${roundType})`, (
                         assert:Object
                     ):void => {
                         for (const test:Array<any> of [
@@ -603,6 +605,28 @@ registerAngularTest(function(
                             [/^[ab]$/, 'AA', 'i']
                         ])
                             assert.notOk(stringMatchPipe.transform(...test))
+                    })
+                    self.test(`stringMaximumLengthPipe (${roundType})`, (
+                        assert:Object
+                    ):void => {
+                        for (const test:Array<any> of [
+                            [[null], ''],
+                            [[''], ''],
+                            [['a'], 'a'],
+                            [['ab', 1], 'ab'],
+                            [['abc', 1], 'abc'],
+                            [['abc', 3], 'abc'],
+                            [['abcd', 3], 'abcd'],
+                            [['abcd', 3, '..'], 'a..'],
+                            [['abcde', 3], 'a...'],
+                            [['abcdef', 3], 'a...'],
+                            [['abcdef', 4], 'a...'],
+                            [['abcdef', 5], 'ab...'],
+                            [['abcde', 5], 'abcde']
+                        ])
+                            assert.strictEqual(
+                                stringMaximumLengthPipe.transform(...test[0]),
+                                test[1])
                     })
                     self.test(`StringReplacePipe (${roundType})`, (
                         assert:Object
