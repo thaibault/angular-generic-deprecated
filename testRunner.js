@@ -46,7 +46,7 @@ export default function(
 ):any {
     return registerTest(async function(
         roundType:string, targetTechnology:?string, $:any,
-        ...parameter:Array<any>
+        ...extraParameter:Array<any>
     ):Promise<void> {
         // region mocking angular environment
         $('head').append('<base href="/">')
@@ -81,7 +81,10 @@ export default function(
             assumptions about the global scope, so mocking and initializing
             that environment after a working browser environment is present.
         */
-        if (TARGET_TECHNOLOGY === 'node') {
+        if (
+            typeof TARGET_TECHNOLOGY === 'string' &&
+            TARGET_TECHNOLOGY === 'node'
+        ) {
             global.window.Reflect = global.Reflect
             if (!('matchMedia' in global.window))
                 global.window.matchMedia = (mediaQuery:string):{
@@ -90,6 +93,10 @@ export default function(
                     media:string;
                     removeListener:Function;
                 } => {
+                    /*
+                        NOTE: It is syntactically impossible to return an
+                        object literal in functional style.
+                    */
                     return {
                         addListener: ():void => {},
                         matches: true,
@@ -102,10 +109,6 @@ export default function(
         require('hammerjs')
         const {Component, enableProdMode} = require('@angular/core')
         const {TestBed} = require('@angular/core/testing')
-        const {platformBrowserDynamic} = require(
-            '@angular/platform-browser-dynamic')
-        const {BrowserDynamicTestingModule, platformBrowserDynamicTesting} =
-            require('@angular/platform-browser-dynamic/testing')
         // IgnoreTypeCheck
         @Component({selector: '#qunit-fixture', template})
         /**
@@ -117,24 +120,31 @@ export default function(
         if (typeof callback === 'function')
             callback = callback.call(
                 this, ApplicationComponent, roundType, targetTechnology, $,
-                ...parameter)
+                ...extraParameter)
         if ('then' in callback)
             callback = await callback
         let result:any = callback.bootstrap.call(
             this, ApplicationComponent, roundType, targetTechnology, $,
-            ...parameter)
+            ...extraParameter)
         if ('then' in result)
             result = await result
         if (!Array.isArray(result))
             result = [result]
         // / region bootstrap test application
-        if (!DEBUG && productionMode)
+        if (!(typeof DEBUG === 'boolean' && DEBUG) && productionMode)
             enableProdMode()
         let platform:Object
         let module:Object
         if (result[0]) {
             try {
-                platform = platformBrowserDynamic()
+                platform = ((
+                    typeof TARGET_TECHNOLOGY === 'string' &&
+                    TARGET_TECHNOLOGY === 'node'
+                ) ? require(
+                    '@angular/platform-server'
+                ).platformServer : require(
+                    '@angular/platform-browser-dynamic'
+                ).platformBrowserDynamic)()
                 module = await platform.bootstrapModule(result[0])
             } catch (error) {
                 throw error
@@ -157,9 +167,23 @@ export default function(
         // region test components
         if (result.length < 2)
             return
-        TestBed.initTestEnvironment(
-            BrowserDynamicTestingModule, platformBrowserDynamicTesting()
-        ).configureTestingModule(...result.slice(1))
+        let parameter:Array<Object>
+        if (
+            typeof TARGET_TECHNOLOGY === 'string' &&
+            TARGET_TECHNOLOGY === 'node'
+        ) {
+            const {ServerTestingModule, platformServerTesting} = require(
+                '@angular/platform-server/testing')
+            parameter = [ServerTestingModule, platformServerTesting()]
+        } else {
+            const {
+                BrowserDynamicTestingModule, platformBrowserDynamicTesting
+            } = require('@angular/platform-browser-dynamic/testing')
+            parameter = [
+                BrowserDynamicTestingModule, platformBrowserDynamicTesting()]
+        }
+        TestBed.initTestEnvironment(...parameter).configureTestingModule(
+            result[1])
         await TestBed.compileComponents()
         await callback.component.call(
             this, TestBed, roundType, targetTechnology, $, ...parameter)

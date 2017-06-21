@@ -24,6 +24,9 @@ try {
 
 import registerAngularTest from './testRunner'
 // endregion
+// region declarations
+declare var TARGET_TECHNOLOGY:string
+// endregion
 // region tests
 registerAngularTest(function(
     ApplicationComponent:Object, roundType:string, targetTechnology:?string,
@@ -33,7 +36,9 @@ registerAngularTest(function(
     component:Function;
 } {
     // region imports
-    const {ChangeDetectorRef, Component, Injectable, NgModule} = require(
+    const {
+        ChangeDetectorRef, Component, Injectable, NgModule, SimpleChange
+    } = require(
         '@angular/core')
     const {ComponentFixture} = require('@angular/core/testing')
     const {By} = require('@angular/platform-browser')
@@ -221,11 +226,12 @@ registerAngularTest(function(
                 }
             }
             const self:Object = this
+            const moduleImports:Array<Object> = [Module, NoopAnimationsModule]
             // IgnoreTypeCheck
             @NgModule({
                 bootstrap: [ApplicationComponent],
                 declarations: [ApplicationComponent, ItemsComponent],
-                imports: [Module, NoopAnimationsModule],
+                imports: moduleImports,
                 providers: [Resolver]
             })
             // endregion
@@ -303,665 +309,673 @@ registerAngularTest(function(
                     tools:ToolsService,
                     typePipe:TypePipe
                 ):void {
-                    // region basic services
-                    self.test(`ToolsService (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        assert.ok(tools.$)
-                        assert.ok(tools.globalContext)
-                        assert.strictEqual(tools.tools.stringMD5(
-                            'test'
-                        ), '098f6bcd4621d373cade4e832627b4f6')
-                    })
-                    self.test(`InitialDataService (${roundType})`, (
-                        assert:Object
-                    ):void => assert.strictEqual(
-                        initialData.configuration.test, true))
-                    // endregion
-                    // region pipes
-                    // / region forwarded
-                    self.test(`StringMD5Pipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        assert.strictEqual(stringMD5Pipe.transform(
-                            ''
-                        ), 'd41d8cd98f00b204e9800998ecf8427e')
-                        assert.strictEqual(stringMD5Pipe.transform(
-                            'test'
-                        ), '098f6bcd4621d373cade4e832627b4f6')
-                    })
-                    // / endregion
-                    // / region object
-                    self.test(`ExtractRawDataPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        // region _convertDateToTimestampRecursively
-                        for (const test:Array<any> of [
-                            [{}, {}],
-                            [null, null],
-                            [true, true],
-                            [2, 2],
-                            [0, 0],
-                            [[], []],
-                            [[1], [1]],
-                            [[1, 2], [1, 2]],
-                            [[1, new Date(0)], [1, 0]],
-                            [{a: 1, b: true}, {a: 1, b: true}],
-                            [{a: new Date(Date.UTC(1970, 0, 1))}, {a: 0}],
-                            [{a: new Date(0)}, {a: 0}],
-                            [{a: new Date(0), b: [2, 3]}, {a: 0, b: [2, 3]}],
-                            [{a: [new Date(90)]}, {a: [90]}]
-                        ])
-                            assert.deepEqual(
-                                extractRawDataPipe.constructor
-                                    ._convertDateToTimestampRecursively(
-                                        test[0]),
-                                test[1])
+                    (async ():Promise<void> => {
+                        await data.initialize()
+                        // region basic services
+                        self.test(`ToolsService (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            assert.ok(tools.$)
+                            assert.ok(tools.globalContext)
+                            assert.strictEqual(tools.tools.stringMD5(
+                                'test'
+                            ), '098f6bcd4621d373cade4e832627b4f6')
+                        })
+                        self.test(`InitialDataService (${roundType})`, (
+                            assert:Object
+                        ):void => assert.strictEqual(
+                            initialData.configuration.test, true))
                         // endregion
-                        // region _handleAttachmentChanges
-                        for (const test:Array<any> of [
-                            [{}, {}, true, [], {}],
-                            [
-                                {}, {a: {value: {name: 'a'}}}, true, [],
-                                {_attachments: {a: {data: null}}}
-                            ],
-                            [{}, {a: {value: {name: 'a'}}}, true, ['a'], {}],
-                            [
-                                {_attachments: {a: {}}},
-                                {'[ab]': {value: {name: 'b'}}}, true, [],
-                                {_attachments: {a: {}, b: {data: null}}}
-                            ],
-                            [
-                                {_attachments: {a: {}}},
-                                {'[ab]': {value: {name: 'b'}}}, false, [],
-                                {_attachments: {a: {}}}
-                            ]
-                        ])
-                            assert.deepEqual(
-                                extractRawDataPipe._handleAttachmentChanges(
-                                    test[0], test[1], test[2], test[3]
-                                ), test[4])
-                        // endregion
-                        // region transform
-                        for (const test:Array<any> of [
-                            [[{}], null],
-                            [[{}, {}], null],
-                            [[{}, {}, false], null],
-                            [[{a: 2}, {}, false], {a: 2}],
-                            [[{a: undefined, b: null, c: ''}, {}, false], null],
-                            [[{a: undefined, b: null, c: '', d: {}}], {d: {}}],
-                            [[{a: undefined, b: 3}], {b: 3}],
-                            [[{a: undefined, _revisions: 3}], null],
-                            [[{_attachments: undefined}], null],
-                            [[{_attachments: {a: {}}}], null],
-                            [[{_attachments: {a: {data: 2}}}], {_attachments: {
-                                a: {
+                        // region pipes
+                        // / region forwarded
+                        self.test(`StringMD5Pipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            assert.strictEqual(stringMD5Pipe.transform(
+                                ''
+                            ), 'd41d8cd98f00b204e9800998ecf8427e')
+                            assert.strictEqual(stringMD5Pipe.transform(
+                                'test'
+                            ), '098f6bcd4621d373cade4e832627b4f6')
+                        })
+                        // / endregion
+                        // / region object
+                        self.test(`ExtractRawDataPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            // region _convertDateToTimestampRecursively
+                            for (const test:Array<any> of [
+                                [{}, {}],
+                                [null, null],
+                                [true, true],
+                                [2, 2],
+                                [0, 0],
+                                [[], []],
+                                [[1], [1]],
+                                [[1, 2], [1, 2]],
+                                [[1, new Date(0)], [1, 0]],
+                                [{a: 1, b: true}, {a: 1, b: true}],
+                                [{a: new Date(Date.UTC(1970, 0, 1))}, {a: 0}],
+                                [{a: new Date(0)}, {a: 0}],
+                                [{a: new Date(0), b: [2, 3]}, {a: 0, b: [2, 3]}],
+                                [{a: [new Date(90)]}, {a: [90]}]
+                            ])
+                                assert.deepEqual(
+                                    extractRawDataPipe.constructor
+                                        ._convertDateToTimestampRecursively(
+                                            test[0]),
+                                    test[1])
+                            // endregion
+                            // region _handleAttachmentChanges
+                            for (const test:Array<any> of [
+                                [{}, {}, true, [], {}],
+                                [
+                                    {}, {a: {value: {name: 'a'}}}, true, [],
+                                    {_attachments: {a: {data: null}}}
+                                ],
+                                [{}, {a: {value: {name: 'a'}}}, true, ['a'], {}],
+                                [
+                                    {_attachments: {a: {}}},
+                                    {'[ab]': {value: {name: 'b'}}}, true, [],
+                                    {_attachments: {a: {}, b: {data: null}}}
+                                ],
+                                [
+                                    {_attachments: {a: {}}},
+                                    {'[ab]': {value: {name: 'b'}}}, false, [],
+                                    {_attachments: {a: {}}}
+                                ]
+                            ])
+                                assert.deepEqual(
+                                    extractRawDataPipe._handleAttachmentChanges(
+                                        test[0], test[1], test[2], test[3]
+                                    ), test[4])
+                            // endregion
+                            // region transform
+                            for (const test:Array<any> of [
+                                [[{}], null],
+                                [[{}, {}], null],
+                                [[{}, {}, false], null],
+                                [[{a: 2}, {}, false], {a: 2}],
+                                [[{a: undefined, b: null, c: ''}, {}, false], null],
+                                [[{a: undefined, b: null, c: '', d: {}}], {d: {}}],
+                                [[{a: undefined, b: 3}], {b: 3}],
+                                [[{a: undefined, _revisions: 3}], null],
+                                [[{_attachments: undefined}], null],
+                                [[{_attachments: {a: {}}}], null],
+                                [[{_attachments: {a: {data: 2}}}], {_attachments: {
+                                    a: {
+                                        content_type: 'application/octet-stream',
+                                        data: 2
+                                    }
+                                }}],
+                                [[{_attachments: {a: {
+                                    content_type: 'a/b', data: 2
+                                }}}], {_attachments: {a: {
+                                    content_type: 'a/b', data: 2
+                                }}}],
+                                [[{_attachments: {a: {data: 2, length: 2}}}, {
+                                    _attachments: {a: {value: {
+                                        name: 'a', length: 2
+                                    }}}
+                                }], null],
+                                [[{_attachments: {a: {
+                                    content_type: 'a/b', data: 2, length: 2
+                                }}}, {_attachments: {a: {value: {
+                                    content_type: 'a/b', length: 2, name: 'a'
+                                }}}}], null],
+                                // 34.
+                                [[{_attachments: {a: {data: 2, length: 2}}}, {
+                                    _attachments: {a: {value: {
+                                        content_type: 'application/octet-stream',
+                                        length: 2, name: 'a'
+                                    }}}
+                                }], null],
+                                [[{_attachments: {a: {data: 2, length: 2}}}, {
+                                    _attachments: {a: {value: {
+                                        length: 3, name: 'a'
+                                    }}}
+                                }], {_attachments: {a: {
                                     content_type: 'application/octet-stream',
                                     data: 2
-                                }
-                            }}],
-                            [[{_attachments: {a: {
-                                content_type: 'a/b', data: 2
-                            }}}], {_attachments: {a: {
-                                content_type: 'a/b', data: 2
-                            }}}],
-                            [[{_attachments: {a: {data: 2, length: 2}}}, {
-                                _attachments: {a: {value: {
-                                    name: 'a', length: 2
-                                }}}
-                            }], null],
-                            [[{_attachments: {a: {
-                                content_type: 'a/b', data: 2, length: 2
-                            }}}, {_attachments: {a: {value: {
-                                content_type: 'a/b', length: 2, name: 'a'
-                            }}}}], null],
-                            // 34.
-                            [[{_attachments: {a: {data: 2, length: 2}}}, {
-                                _attachments: {a: {value: {
-                                    content_type: 'application/octet-stream',
+                                }}}],
+                                [[{_attachments: {a: {
+                                    content_type: 'a/b', data: 2, length: 2
+                                }}}, {_attachments: {a: {value: {
                                     length: 2, name: 'a'
-                                }}}
-                            }], null],
-                            [[{_attachments: {a: {data: 2, length: 2}}}, {
-                                _attachments: {a: {value: {
-                                    length: 3, name: 'a'
-                                }}}
-                            }], {_attachments: {a: {
-                                content_type: 'application/octet-stream',
-                                data: 2
-                            }}}],
-                            [[{_attachments: {a: {
-                                content_type: 'a/b', data: 2, length: 2
-                            }}}, {_attachments: {a: {value: {
-                                length: 2, name: 'a'
-                            }}}}], {_attachments: {a: {
-                                content_type: 'a/b', data: 2
-                            }}}],
-                            [
-                                [{}, {a: {value: {length: 2, name: 'a'}}}],
-                                {a: null}
-                            ],
-                            [[{'-type': 'Test', b: 2}], null],
-                            [
-                                [{'-type': 'Test', a: '2', b: 2}],
-                                {'-type': 'Test', a: '2'}
-                            ],
-                            [[{'-type': 'Test', a: '2', b: 2}, {
-                                '-type': 'Test', a: {value: '2'}
-                            }], null]
-                        ])
-                            assert.deepEqual(
-                                extractRawDataPipe.transform(...test[0]),
-                                test[1])
-                        // endregion
-                    })
-                    self.test(`IsDefinedPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:any of [
-                            2, true, {}, null, new Error('a'), Object, []
-                        ])
-                            assert.ok(isDefinedPipe.transform(test))
-                        assert.notOk(isDefinedPipe.transform(null, true))
-                        assert.notOk(isDefinedPipe.transform(undefined))
-                        assert.notOk(isDefinedPipe.transform(undefined, true))
-                    })
-                    self.test(`GetFilenameByPrefixPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:Array<any> of [
-                            [[{}], null],
-                            [[{a: 2}], 'a'],
-                            [[{a: 2, b: 3}, 'b'], 'b'],
-                            [[{a: 2, b: 3}, 'c'], null]
-                        ])
-                            assert.strictEqual(
-                                getFilenameByPrefixPipe.transform(...test[0]),
-                                test[1])
-                    })
-                    self.test(
-                        `AttachmentWithPrefixExistsPipe (${roundType})`, (
+                                }}}}], {_attachments: {a: {
+                                    content_type: 'a/b', data: 2
+                                }}}],
+                                [
+                                    [{}, {a: {value: {length: 2, name: 'a'}}}],
+                                    {a: null}
+                                ],
+                                [[{'-type': 'Test', b: 2}], null],
+                                [
+                                    [{'-type': 'Test', a: '2', b: 2}],
+                                    {'-type': 'Test', a: '2'}
+                                ],
+                                [[{'-type': 'Test', a: '2', b: 2}, {
+                                    '-type': 'Test', a: {value: '2'}
+                                }], null]
+                            ])
+                                assert.deepEqual(
+                                    extractRawDataPipe.transform(...test[0]),
+                                    test[1])
+                            // endregion
+                        })
+                        self.test(`IsDefinedPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:any of [
+                                2, true, {}, null, new Error('a'), Object, []
+                            ])
+                                assert.ok(isDefinedPipe.transform(test))
+                            assert.notOk(isDefinedPipe.transform(null, true))
+                            assert.notOk(isDefinedPipe.transform(undefined))
+                            assert.notOk(isDefinedPipe.transform(undefined, true))
+                        })
+                        self.test(`GetFilenameByPrefixPipe (${roundType})`, (
                             assert:Object
                         ):void => {
                             for (const test:Array<any> of [
-                                [{_attachments: {a: {data: ''}}}, 'a'],
-                                [{_attachments: {a: {data: 'a'}}}, 'a']
-                            ])
-                                assert.ok(
-                                    attachmentWithPrefixExistsPipe.transform(
-                                        test[0], test[1]))
-                            for (const test:Array<any> of [
-                                [{}, null],
-                                [{}, 'a'],
-                                [{_attachments: {a: {data: 'a'}}}, 'b']
-                            ])
-                                assert.notOk(
-                                    attachmentWithPrefixExistsPipe.transform(
-                                        test[0], test[1]))
-                        })
-                    self.test(`LimitToPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:Array<any> of [
-                            [[{}], {}],
-                            [[2], 2],
-                            [[2, 1], '2'],
-                            [[{}, 1], []],
-                            [[{a: 2}, 1], ['a']],
-                            [[{a: 2}, 0], []],
-                            [[{a: 2}, 2], ['a']],
-                            [[{b: 1, a: 2}, 2], ['a', 'b']],
-                            [[[1, 2]], [1, 2]],
-                            [[[1, 2], 1, 1], [2]],
-                            [[[1, 2, 3], 1, -1], [3]],
-                            [[[1, 2, 3], -2, 0], [2, 3]],
-                            [[null], null],
-                            [[2], 2],
-                            [[[1, 2, 3], 2], [1, 2]]
-                        ])
-                            assert.deepEqual(
-                                limitToPipe.transform(...test[0]), test[1])
-                    })
-                    self.test(`MapPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        assert.deepEqual(mapPipe.transform(
-                            ['a', 'b', 'ab'], StringEndsWithPipe, 'b'
-                        ), [false, true, true])
-                    })
-                    self.test(`ObjectKeysPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:Array<any> of [
-                            [[{}], []],
-                            [[null], []],
-                            [[2], []],
-                            [[[2]], ['0']],
-                            [[{a: 2}], ['a']],
-                            [[{b: 3, a: 2}, true], ['a', 'b']],
-                            [[{b: 3, a: 2}, true, true], ['b', 'a']],
-                            [[{
-                                '2-a': 3, '1-b': 2, '3-c': 3
-                            }, true, true, true], ['3-c', '2-a', '1-b']],
-                            [[{
-                                '2-a': 3, '1-b': 2, a: 4, '3-c': 3
-                            }, true, true, true], ['a', '3-c', '2-a', '1-b']]
-                        ])
-                            assert.deepEqual(
-                                objectKeysPipe.transform(...test[0]), test[1])
-                    })
-                    self.test(`TypePipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:Array<any> of [
-                            [null, 'object'],
-                            [true, 'boolean'],
-                            [false, 'boolean'],
-                            [2, 'number'],
-                            [{}, 'object'],
-                            [[], 'object']
-                        ])
-                            assert.strictEqual(
-                                typePipe.transform(test[0]), test[1])
-                    })
-                    // / endregion
-                    // / region string
-                    self.test(`StringEndsWithPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        assert.ok(stringEndsWithPipe.transform('aab', 'b'))
-                        assert.notOk(stringEndsWithPipe.transform('aab', 'a'))
-                    })
-                    self.test(`StringHasTimeSuffixPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:string of [
-                            'aDate', 'aTime', 'aDateTime', 'timestamp'
-                        ])
-                            assert.ok(stringHasTimeSuffixPipe.transform(test))
-                        for (const test:any of [
-                            'a', 'atime', 'aDatetime', 'timestamptime',
-                            false, null, {}
-                        ])
-                            assert.notOk(stringHasTimeSuffixPipe.transform(
-                                test))
-                    })
-                    self.test(`stringMatchPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:Array<any> of [
-                            ['a', 'a'],
-                            ['[ab]', 'a'],
-                            ['^[ab]$', 'a', 'g'],
-                            [/^[ab]$/, 'a', 'g'],
-                            [/a/, 'A', 'i']
-                        ])
-                            assert.ok(stringMatchPipe.transform(...test))
-                        for (const test:Array<any> of [
-                            ['a', 'b'],
-                            ['[ab]', 'c'],
-                            ['^[ab]$', 'aa', 'g'],
-                            [/^[ab]$/, 'aa', 'g'],
-                            [/^[ab]$/, 'AA', 'i']
-                        ])
-                            assert.notOk(stringMatchPipe.transform(...test))
-                    })
-                    self.test(`stringMaximumLengthPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:Array<any> of [
-                            [[null], ''],
-                            [[''], ''],
-                            [['a'], 'a'],
-                            [['ab', 1], 'ab'],
-                            [['abc', 1], 'abc'],
-                            [['abc', 3], 'abc'],
-                            [['abcd', 3], 'abcd'],
-                            [['abcd', 3, '..'], 'a..'],
-                            [['abcde', 3], 'a...'],
-                            [['abcdef', 3], 'a...'],
-                            [['abcdef', 4], 'a...'],
-                            [['abcdef', 5], 'ab...'],
-                            [['abcde', 5], 'abcde']
-                        ])
-                            assert.strictEqual(
-                                stringMaximumLengthPipe.transform(...test[0]),
-                                test[1])
-                    })
-                    self.test(`StringReplacePipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:Array<any> of [
-                            [['a', 'a'], ''],
-                            [['a', 'a', 'b'], 'b'],
-                            [['aa', 'a', 'b', ''], 'ba'],
-                            [['aa', 'a', 'b', 'g'], 'bb']
-                        ])
-                            assert.strictEqual(
-                                stringReplacePipe.transform(...test[0]),
-                                test[1])
-                    })
-                    self.test(
-                        `StringShowIfPatternMatchesPipe (${roundType})`,
-                        (assert:Object):void => {
-                            for (const test:Array<any> of [
-                                [['a', 'a'], 'a'],
-                                [['a', 'b'], ''],
-                                [['aa', 'a'], 'aa'],
-                                [['aa', /a/], 'aa'],
-                                [['aa', 'a', true], ''],
-                                [['aa', 'A', false, 'i'], 'aa']
+                                [[{}], null],
+                                [[{a: 2}], 'a'],
+                                [[{a: 2, b: 3}, 'b'], 'b'],
+                                [[{a: 2, b: 3}, 'c'], null]
                             ])
                                 assert.strictEqual(
-                                    stringShowIfPatternMatchesPipe.transform(
-                                        ...test[0]
+                                    getFilenameByPrefixPipe.transform(...test[0]),
+                                    test[1])
+                        })
+                        self.test(
+                            `AttachmentWithPrefixExistsPipe (${roundType})`, (
+                                assert:Object
+                            ):void => {
+                                for (const test:Array<any> of [
+                                    [{_attachments: {a: {data: ''}}}, 'a'],
+                                    [{_attachments: {a: {data: 'a'}}}, 'a']
+                                ])
+                                    assert.ok(
+                                        attachmentWithPrefixExistsPipe.transform(
+                                            test[0], test[1]))
+                                for (const test:Array<any> of [
+                                    [{}, null],
+                                    [{}, 'a'],
+                                    [{_attachments: {a: {data: 'a'}}}, 'b']
+                                ])
+                                    assert.notOk(
+                                        attachmentWithPrefixExistsPipe.transform(
+                                            test[0], test[1]))
+                            })
+                        self.test(`LimitToPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                [[{}], {}],
+                                [[2], 2],
+                                [[2, 1], '2'],
+                                [[{}, 1], []],
+                                [[{a: 2}, 1], ['a']],
+                                [[{a: 2}, 0], []],
+                                [[{a: 2}, 2], ['a']],
+                                [[{b: 1, a: 2}, 2], ['a', 'b']],
+                                [[[1, 2]], [1, 2]],
+                                [[[1, 2], 1, 1], [2]],
+                                [[[1, 2, 3], 1, -1], [3]],
+                                [[[1, 2, 3], -2, 0], [2, 3]],
+                                [[null], null],
+                                [[2], 2],
+                                [[[1, 2, 3], 2], [1, 2]]
+                            ])
+                                assert.deepEqual(
+                                    limitToPipe.transform(...test[0]), test[1])
+                        })
+                        self.test(`MapPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            assert.deepEqual(mapPipe.transform(
+                                ['a', 'b', 'ab'], StringEndsWithPipe, 'b'
+                            ), [false, true, true])
+                        })
+                        self.test(`ObjectKeysPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                [[{}], []],
+                                [[null], []],
+                                [[2], []],
+                                [[[2]], ['0']],
+                                [[{a: 2}], ['a']],
+                                [[{b: 3, a: 2}, true], ['a', 'b']],
+                                [[{b: 3, a: 2}, true, true], ['b', 'a']],
+                                [[{
+                                    '2-a': 3, '1-b': 2, '3-c': 3
+                                }, true, true, true], ['3-c', '2-a', '1-b']],
+                                [[{
+                                    '2-a': 3, '1-b': 2, a: 4, '3-c': 3
+                                }, true, true, true], ['a', '3-c', '2-a', '1-b']]
+                            ])
+                                assert.deepEqual(
+                                    objectKeysPipe.transform(...test[0]), test[1])
+                        })
+                        self.test(`TypePipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                [null, 'object'],
+                                [true, 'boolean'],
+                                [false, 'boolean'],
+                                [2, 'number'],
+                                [{}, 'object'],
+                                [[], 'object']
+                            ])
+                                assert.strictEqual(
+                                    typePipe.transform(test[0]), test[1])
+                        })
+                        // / endregion
+                        // / region string
+                        self.test(`StringEndsWithPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            assert.ok(stringEndsWithPipe.transform('aab', 'b'))
+                            assert.notOk(stringEndsWithPipe.transform('aab', 'a'))
+                        })
+                        self.test(`StringHasTimeSuffixPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:string of [
+                                'aDate', 'aTime', 'aDateTime', 'timestamp'
+                            ])
+                                assert.ok(stringHasTimeSuffixPipe.transform(test))
+                            for (const test:any of [
+                                'a', 'atime', 'aDatetime', 'timestamptime',
+                                false, null, {}
+                            ])
+                                assert.notOk(stringHasTimeSuffixPipe.transform(
+                                    test))
+                        })
+                        self.test(`stringMatchPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                ['a', 'a'],
+                                ['[ab]', 'a'],
+                                ['^[ab]$', 'a', 'g'],
+                                [/^[ab]$/, 'a', 'g'],
+                                [/a/, 'A', 'i']
+                            ])
+                                assert.ok(stringMatchPipe.transform(...test))
+                            for (const test:Array<any> of [
+                                ['a', 'b'],
+                                ['[ab]', 'c'],
+                                ['^[ab]$', 'aa', 'g'],
+                                [/^[ab]$/, 'aa', 'g'],
+                                [/^[ab]$/, 'AA', 'i']
+                            ])
+                                assert.notOk(stringMatchPipe.transform(...test))
+                        })
+                        self.test(`stringMaximumLengthPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                [[null], ''],
+                                [[''], ''],
+                                [['a'], 'a'],
+                                [['ab', 1], 'ab'],
+                                [['abc', 1], 'abc'],
+                                [['abc', 3], 'abc'],
+                                [['abcd', 3], 'abcd'],
+                                [['abcd', 3, '..'], 'a..'],
+                                [['abcde', 3], 'a...'],
+                                [['abcdef', 3], 'a...'],
+                                [['abcdef', 4], 'a...'],
+                                [['abcdef', 5], 'ab...'],
+                                [['abcde', 5], 'abcde']
+                            ])
+                                assert.strictEqual(
+                                    stringMaximumLengthPipe.transform(...test[0]),
+                                    test[1])
+                        })
+                        self.test(`StringReplacePipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                [['a', 'a'], ''],
+                                [['a', 'a', 'b'], 'b'],
+                                [['aa', 'a', 'b', ''], 'ba'],
+                                [['aa', 'a', 'b', 'g'], 'bb']
+                            ])
+                                assert.strictEqual(
+                                    stringReplacePipe.transform(...test[0]),
+                                    test[1])
+                        })
+                        self.test(
+                            `StringShowIfPatternMatchesPipe (${roundType})`,
+                            (assert:Object):void => {
+                                for (const test:Array<any> of [
+                                    [['a', 'a'], 'a'],
+                                    [['a', 'b'], ''],
+                                    [['aa', 'a'], 'aa'],
+                                    [['aa', /a/], 'aa'],
+                                    [['aa', 'a', true], ''],
+                                    [['aa', 'A', false, 'i'], 'aa']
+                                ])
+                                    assert.strictEqual(
+                                        stringShowIfPatternMatchesPipe.transform(
+                                            ...test[0]
+                                        ), test[1])
+                            })
+                        self.test(`StringStartsWithPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            assert.ok(stringStartsWithPipe.transform('baa', 'b'))
+                            assert.notOk(
+                                stringStartsWithPipe.transform('baa', 'a'))
+                        })
+                        self.test(`StringSliceMatchPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                [['a', 'a'], 'a'],
+                                [['a', 'a', 0], 'a'],
+                                [['a', 'A', 0, 'i'], 'a'],
+                                [['ab', '.(.)', 1, ''], 'b']
+                            ])
+                                assert.strictEqual(
+                                    stringSliceMatchPipe.transform(...test[0]),
+                                    test[1])
+                        })
+                        // / endregion
+                        self.test(`NumberPercentPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<number> of [
+                                [1, 1, 100],
+                                [1, 2, 50],
+                                [0, 3, 0],
+                                [.3, 1, 30],
+                                [9, 10, 90]
+                            ])
+                                assert.strictEqual(
+                                    numberPercentPipe.transform(test[0], test[1]),
+                                    test[2])
+                        })
+                        // endregion
+                        // region services
+                        self.test(`CanDeactivateRouteLeaveGuard (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                [{}, true],
+                                [{canDeactivate: ():false => false}, false]
+                            ])
+                                assert.strictEqual(
+                                    canDeactivateRouteLeave.canDeactivate(
+                                        test[0]
                                     ), test[1])
                         })
-                    self.test(`StringStartsWithPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        assert.ok(stringStartsWithPipe.transform('baa', 'b'))
-                        assert.notOk(
-                            stringStartsWithPipe.transform('baa', 'a'))
-                    })
-                    self.test(`StringSliceMatchPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:Array<any> of [
-                            [['a', 'a'], 'a'],
-                            [['a', 'a', 0], 'a'],
-                            [['a', 'A', 0, 'i'], 'a'],
-                            [['ab', '.(.)', 1, ''], 'b']
-                        ])
-                            assert.strictEqual(
-                                stringSliceMatchPipe.transform(...test[0]),
-                                test[1])
-                    })
-                    // / endregion
-                    self.test(`NumberPercentPipe (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:Array<number> of [
-                            [1, 1, 100],
-                            [1, 2, 50],
-                            [0, 3, 0],
-                            [.3, 1, 30],
-                            [9, 10, 90]
-                        ])
-                            assert.strictEqual(
-                                numberPercentPipe.transform(test[0], test[1]),
-                                test[2])
-                    })
-                    // endregion
-                    // region services
-                    self.test(`CanDeactivateRouteLeaveGuard (${roundType})`, (
-                        assert:Object
-                    ):void => {
-                        for (const test:Array<any> of [
-                            [{}, true],
-                            [{canDeactivate: ():false => false}, false]
-                        ])
-                            assert.strictEqual(
-                                canDeactivateRouteLeave.canDeactivate(
-                                    test[0]
-                                ), test[1])
-                    })
-                    self.test(`DataService (${roundType})`, async (
-                        assert:Object
-                    ):Promise<void> => {
-                        const done:Function = assert.async()
-                        try {
-                            const item:PlainObject = {
-                                _id: 'a', _rev: 'upsert', '-type': 'Test',
-                                a: 'test'}
-                            item._rev = (await data.put(item)).rev
-                            assert.deepEqual(await data.get('a'), item)
-                            item.a = 'a'
-                            item._rev = (await data.bulkDocs([item]))[0].rev
-                            item._rev = 'upsert'
-                            item._rev = (await data.bulkDocs([item]))[0].rev
-                            item._rev = 'latest'
-                            item._rev = (await data.bulkDocs([item]))[0].rev
-                            item._rev = 'upsert'
-                            item._rev = (await data.put(item)).rev
-                            item._rev = 'latest'
-                            item._rev = (await data.put(item)).rev
-                            assert.deepEqual(await data.get('a'), item)
-                            let test:boolean = false
-                            const deregister:Function = data.register(
-                                'get', async (
-                                    result:Promise<PlainObject>
-                                ):Promise<PlainObject> => {
-                                    test = true
-                                    const data:PlainObject = await result
-                                    data.test = 2
-                                    return data
-                                })
-                            assert.ok('get' in data.middlewares.post)
-                            assert.strictEqual((await data.get('a')).test, 2)
-                            assert.ok(test)
-                            deregister()
-                            assert.notOk('get' in data.middlewares.post)
-                            assert.notOk((await data.get('a')).test)
-                            await data.destroy()
-                            await data.initialize()
-                        } catch (error) {
-                            console.error(error)
-                        }
-                        assert.ok(true)
-                        done()
-                    })
-                    self.test(`DataScopeService (${roundType})`, async (
-                        assert:Object
-                    ):Promise<void> => {
-                        const done:Function = assert.async()
-                        // region get
-                        for (const test:Array<PlainObject> of [
-                            [{}, {}],
-                            [{a: {value: 2}}, {a: 2}],
-                            [{a: {value: 2}, b: 3, _c: {value: 4}}, {a: 2}],
-                            [{a: {value: 2}, b: 3, _c: {value: 4},
-                                _attachments: null
-                            }, {a: 2}],
-                            [{
-                                a: {value: 2}, b: 3, _c: {value: 4},
-                                _attachments: 2
-                            }, {a: 2}],
-                            [{
-                                a: {value: 2}, b: 3, _c: {value: 4},
-                                _attachments: {}
-                            }, {a: 2}],
-                            [{
-                                a: {value: 2}, b: 3, _c: {value: 4},
-                                _attachments: {a: {value: {name: 'a'}}}
-                            }, {a: 2, _attachments: {a: {name: 'a'}}}],
-                            [{
-                                a: {value: 2}, b: 3, _c: {value: 4}, _id: 2,
-                                _attachments: {a: {value: {name: 'a'}}}
-                            }, {a: 2, _attachments: {a: {name: 'a'}}, _id: 2}]
-                        ])
-                            assert.deepEqual(dataScope.get(test[0]), test[1])
-                        // endregion
-                        // region generate
-                        for (const test:Array<any> of [
-                            [['Test'], {
-                                _attachments: {'.+\\.(?:jpe?g|png)': {
-                                    value: {name: 'a.jpg'}
-                                }},
-                                _id: {value: null},
-                                a: {value: null}
-                            }],
-                            [['Test', ['a']], {a: {
-                                minimum: 0,
-                                minimumLength: 0,
-                                minimumNumber: 0,
-                                name: 'a',
-                                value: null
-                            }}],
-                            [['Test', ['a'], {a: 2}], {a: {
-                                minimum: 0,
-                                minimumLength: 0,
-                                minimumNumber: 0,
-                                name: 'a',
-                                value: 2
-                            }}],
-                            [['Test', ['_attachments']], {_attachments: {
-                                '.+\\.(?:jpe?g|png)': {
-                                    contentTypeRegularExpressionPattern:
-                                        '^image/.+',
-                                    maximumNumber: 1,
-                                    minimum: 0,
-                                    minimumLength: 0,
-                                    minimumNumber: 0,
-                                    name: '.+\\.(?:jpe?g|png)',
-                                    onCreateExpression:
-                                        initialData.configuration.database
-                                        .model.entities.Test
-                                        ._attachments['.+\\.(?:jpe?g|png)']
-                                        .onCreateExpression,
-                                    value: {name: 'a.jpg'}
-                                }
-                            }}],
-                            [['Test', null, {_attachments: {'b.jpg': {}}}], {
-                                _attachments: {'.+\\.(?:jpe?g|png)': {
-                                    value: {name: 'b.jpg'}
-                                }},
-                                _id: {value: null},
-                                a: {value: null}
-                            }],
-                            [['Test', null, {_attachments: {}}], {
-                                _attachments: {'.+\\.(?:jpe?g|png)': {
-                                    value: null
-                                }},
-                                _id: {value: null},
-                                a: {value: null}
-                            }],
-                            [['Test', null, {_attachments: {
-                                'b.jpg': {test: 2}
-                            }}], {
-                                _attachments: {'.+\\.(?:jpe?g|png)': {
-                                    value: {
-                                        name: 'b.jpg',
-                                        test: 2
-                                    }
-                                }},
-                                _id: {value: null},
-                                a: {value: null}
-                            }]
-                        ])
-                            assert.deepEqual(dataScope.generate(
-                                ...test[0]
-                            ), extendObjectPipe.transform(true, {
-                                _metaData: {submitted: false},
-                                '-type': 'Test'
-                            }, (
-                                test[0].length < 2 || test[0][1] === null ?
-                                initialData.configuration.database.model
-                                    .entities.Test : {}
-                            ), test[1]))
-                        // endregion
-                        // region set
-                        assert.deepEqual(await dataScope.determine(
-                            'Test'
-                        ), extendObjectPipe.transform(true, {
-                            _attachments: {'.+\\.(?:jpe?g|png)': {
-                                name: '.+\\.(?:jpe?g|png)',
-                                value: {name: 'a.jpg'}
-                            }},
-                            _id: {
-                                name: '_id',
-                                value: null
-                            },
-                            _metaData: {submitted: false},
-                            '-type': 'Test',
-                            a: {
-                                minimum: 0,
-                                minimumLength: 0,
-                                minimumNumber: 0,
-                                name: 'a',
-                                value: null
+                        self.test(`DataService (${roundType})`, async (
+                            assert:Object
+                        ):Promise<void> => {
+                            const done:Function = assert.async()
+                            try {
+                                const item:PlainObject = {
+                                    _id: 'a', _rev: 'upsert', '-type': 'Test',
+                                    a: 'test'}
+                                item._rev = (await data.put(item)).rev
+                                assert.deepEqual(await data.get('a'), item)
+                                item.a = 'a'
+                                item._rev = (await data.bulkDocs([item]))[0].rev
+                                item._rev = 'upsert'
+                                item._rev = (await data.bulkDocs([item]))[0].rev
+                                item._rev = 'latest'
+                                item._rev = (await data.bulkDocs([item]))[0].rev
+                                item._rev = 'upsert'
+                                item._rev = (await data.put(item)).rev
+                                item._rev = 'latest'
+                                item._rev = (await data.put(item)).rev
+                                assert.deepEqual(await data.get('a'), item)
+                                let test:boolean = false
+                                const deregister:Function = data.register(
+                                    'get', async (
+                                        result:Promise<PlainObject>
+                                    ):Promise<PlainObject> => {
+                                        test = true
+                                        const data:PlainObject = await result
+                                        data.test = 2
+                                        return data
+                                    })
+                                assert.ok('get' in data.middlewares.post)
+                                assert.strictEqual((await data.get('a')).test, 2)
+                                assert.ok(test)
+                                deregister()
+                                assert.notOk('get' in data.middlewares.post)
+                                assert.notOk((await data.get('a')).test)
+                                await data.destroy()
+                                await data.initialize()
+                            } catch (error) {
+                                console.error(error)
+                                assert.ok(false)
                             }
-                        }, initialData.configuration.database.model.entities
-                            .Test))
-                        // endregion
-                        done()
-                    })
-                    // / region abstract
-                    self.test(`AbstractResolver (${roundType})`, async (
-                        assert:Object
-                    ):Promise<void> => {
-                        const done:Function = assert.async()
-                        try {
-                            for (const name:string of ['_id', 'a'])
-                                await data.createIndex({index: {
-                                    ddoc: `Test-${name}-GenericIndex`,
-                                    fields: ['-type', name],
-                                    name: `Test-${name}-GenericIndex`
-                                }})
-                            const item:PlainObject = {
-                                _id: 'a', _rev: 'upsert', '-type': 'Test',
-                                a: 'test'}
-                            item._rev = (await data.put(item)).rev
-                            // region list
-                            assert.deepEqual(
-                                (await resolver.list([{a: 'asc'}]))[0], item)
-                            assert.deepEqual((await resolver.list())[0], item)
-                            assert.deepEqual(
-                                (await resolver.list([]))[0], item)
-                            assert.deepEqual((await resolver.list(
-                                [{_id: 'asc'}], 1, 1, 'es'
-                            ))[0], item)
-                            assert.strictEqual((await resolver.list(
-                                [{_id: 'asc'}], 2
-                            )).length, 0)
-                            assert.strictEqual((await resolver.list(
-                                [{_id: 'asc'}], 1, 1, 'a'
-                            )).length, 0)
-                            // endregion
-                            // region resolve
-                            for (const test:PlainObject of [
-                                {},
-                                {searchTerm: 'exact-es'},
-                                {page: 1},
-                                {searchTerm: 'exact-test', page: 1},
-                                {searchTerm: 'exact-test', page: 1, limit: 2},
-                                {
-                                    searchTerm: 'regex-t[ea]+st', page: 1,
-                                    limit: 2
-                                },
-                                {
-                                    searchTerm: 'exact-test', page: 1,
-                                    limit: 2, sort: 'a-desc'
-                                }
-                            ])
-                                assert.deepEqual((await resolver.resolve({
-                                    params: test
-                                }))[0], item)
-                            for (const test:PlainObject of [
-                                {searchTerm: 'exact-a'},
-                                {page: 2},
-                                {searchTerm: 'exact-testa', page: 1},
-                                {searchTerm: 'regex-aa', page: 1, limit: 2},
-                                {
-                                    searchTerm: 'exact-test', page: 2,
-                                    limit: 1, sort: 'a-asc'
-                                }
-                            ])
-                                assert.strictEqual((await resolver.resolve({
-                                    params: test
-                                })).length, 0)
-                            // endregion
-                            await data.destroy()
-                            await data.initialize()
                             assert.ok(true)
-                        } catch (error) {
-                            console.error(error)
-                            assert.ok(false)
-                        }
-                        done()
-                    })
-                    // / endregion
-                    // endregion
+                            done()
+                        })
+                        self.test(`DataScopeService (${roundType})`, async (
+                            assert:Object
+                        ):Promise<void> => {
+                            const done:Function = assert.async()
+                            try {
+                                // region get
+                                for (const test:Array<PlainObject> of [
+                                    [{}, {}],
+                                    [{a: {value: 2}}, {a: 2}],
+                                    [{a: {value: 2}, b: 3, _c: {value: 4}}, {a: 2, b: 3, _c: 4}],
+                                    [{
+                                        a: {value: 2}, b: 3, _c: {value: 4},
+                                        _attachments: null, '-type': 'Test'
+                                    }, {a: 2}],
+                                    [{
+                                        a: {value: 2}, b: 3, _c: {value: 4},
+                                        _attachments: {}
+                                    }, {a: 2, b: 3, _c: 4}],
+                                    [{a: {value: 2}, b: 3, _attachments: {a: {
+                                        value: {name: 'a'}
+                                    }}}, {a: 2, b: 3, _attachments: {a: {
+                                        name: 'a'
+                                    }}}],
+                                    [{
+                                        a: {value: 2}, b: 3, _c: {value: 4}, _id: 2,
+                                        _attachments: {a: {value: {name: 'a'}}},
+                                        '-type': 'Test'
+                                    }, {a: 2, _attachments: {a: {name: 'a'}}, _id: 2}]
+                                ])
+                                    assert.deepEqual(dataScope.get(test[0]), test[1])
+                                // endregion
+                                // region generate
+                                for (const test:Array<any> of [
+                                    [['Test'], {
+                                        _attachments: {'.+\\.(?:jpe?g|png)': {
+                                            value: {name: 'a.jpg'}
+                                        }},
+                                        _id: {value: null},
+                                        a: {value: null}
+                                    }],
+                                    [['Test', ['a']], {a: {
+                                        minimum: 0,
+                                        minimumLength: 0,
+                                        minimumNumber: 0,
+                                        name: 'a',
+                                        value: null
+                                    }}],
+                                    [['Test', ['a'], {a: 2}], {a: {
+                                        minimum: 0,
+                                        minimumLength: 0,
+                                        minimumNumber: 0,
+                                        name: 'a',
+                                        value: 2
+                                    }}],
+                                    [['Test', ['_attachments']], {_attachments: {
+                                        '.+\\.(?:jpe?g|png)': {
+                                            contentTypeRegularExpressionPattern:
+                                                '^image/.+',
+                                            maximumNumber: 1,
+                                            minimum: 0,
+                                            minimumLength: 0,
+                                            minimumNumber: 0,
+                                            name: '.+\\.(?:jpe?g|png)',
+                                            onCreateExpression:
+                                                initialData.configuration.database
+                                                .model.entities.Test
+                                                ._attachments['.+\\.(?:jpe?g|png)']
+                                                .onCreateExpression,
+                                            value: {name: 'a.jpg'}
+                                        }
+                                    }}],
+                                    [['Test', null, {_attachments: {'b.jpg': {}}}], {
+                                        _attachments: {'.+\\.(?:jpe?g|png)': {
+                                            value: {name: 'b.jpg'}
+                                        }},
+                                        _id: {value: null},
+                                        a: {value: null}
+                                    }],
+                                    [['Test', null, {_attachments: {}}], {
+                                        _attachments: {'.+\\.(?:jpe?g|png)': {
+                                            value: null
+                                        }},
+                                        _id: {value: null},
+                                        a: {value: null}
+                                    }],
+                                    [['Test', null, {_attachments: {
+                                        'b.jpg': {test: 2}
+                                    }}], {
+                                        _attachments: {'.+\\.(?:jpe?g|png)': {
+                                            value: {
+                                                name: 'b.jpg',
+                                                test: 2
+                                            }
+                                        }},
+                                        _id: {value: null},
+                                        a: {value: null}
+                                    }]
+                                ])
+                                    assert.deepEqual(dataScope.generate(
+                                        ...test[0]
+                                    ), extendObjectPipe.transform(true, {
+                                        _metaData: {submitted: false},
+                                        '-type': 'Test'
+                                    }, (
+                                        test[0].length < 2 || test[0][1] === null ?
+                                        initialData.configuration.database.model
+                                            .entities.Test : {}
+                                    ), test[1]))
+                                // endregion
+                                // region set
+                                assert.deepEqual(await dataScope.determine(
+                                    'Test'
+                                ), extendObjectPipe.transform(true, {
+                                    _attachments: {'.+\\.(?:jpe?g|png)': {
+                                        name: '.+\\.(?:jpe?g|png)',
+                                        value: {name: 'a.jpg'}
+                                    }},
+                                    _id: {
+                                        name: '_id',
+                                        value: null
+                                    },
+                                    _metaData: {submitted: false},
+                                    '-type': 'Test',
+                                    a: {
+                                        minimum: 0,
+                                        minimumLength: 0,
+                                        minimumNumber: 0,
+                                        name: 'a',
+                                        value: null
+                                    }
+                                }, initialData.configuration.database.model.entities
+                                    .Test))
+                                // endregion
+                            } catch (error) {
+                                console.error(error)
+                                assert.ok(false)
+                            }
+                            done()
+                        })
+                        // / region abstract
+                        self.test(`AbstractResolver (${roundType})`, async (
+                            assert:Object
+                        ):Promise<void> => {
+                            const done:Function = assert.async()
+                            try {
+                                for (const name:string of ['_id', 'a'])
+                                    await data.createIndex({index: {
+                                        ddoc: `Test-${name}-GenericIndex`,
+                                        fields: ['-type', name],
+                                        name: `Test-${name}-GenericIndex`
+                                    }})
+                                const item:PlainObject = {
+                                    _id: 'a', _rev: 'upsert', '-type': 'Test',
+                                    a: 'test'}
+                                item._rev = (await data.put(item)).rev
+                                // region list
+                                assert.deepEqual(
+                                    (await resolver.list([{a: 'asc'}]))[0], item)
+                                assert.deepEqual((await resolver.list())[0], item)
+                                assert.deepEqual(
+                                    (await resolver.list([]))[0], item)
+                                assert.deepEqual((await resolver.list(
+                                    [{_id: 'asc'}], 1, 1, 'es'
+                                ))[0], item)
+                                assert.strictEqual((await resolver.list(
+                                    [{_id: 'asc'}], 2
+                                )).length, 0)
+                                assert.strictEqual((await resolver.list(
+                                    [{_id: 'asc'}], 1, 1, 'a'
+                                )).length, 0)
+                                // endregion
+                                // region resolve
+                                for (const test:PlainObject of [
+                                    {},
+                                    {searchTerm: 'exact-es'},
+                                    {page: 1},
+                                    {searchTerm: 'exact-test', page: 1},
+                                    {searchTerm: 'exact-test', page: 1, limit: 2},
+                                    {
+                                        searchTerm: 'regex-t[ea]+st', page: 1,
+                                        limit: 2
+                                    },
+                                    {
+                                        searchTerm: 'exact-test', page: 1,
+                                        limit: 2, sort: 'a-desc'
+                                    }
+                                ])
+                                    assert.deepEqual((await resolver.resolve({
+                                        params: test
+                                    }))[0], item)
+                                for (const test:PlainObject of [
+                                    {searchTerm: 'exact-a'},
+                                    {page: 2},
+                                    {searchTerm: 'exact-testa', page: 1},
+                                    {searchTerm: 'regex-aa', page: 1, limit: 2},
+                                    {
+                                        searchTerm: 'exact-test', page: 2,
+                                        limit: 1, sort: 'a-asc'
+                                    }
+                                ])
+                                    assert.strictEqual((await resolver.resolve({
+                                        params: test
+                                    })).length, 0)
+                                // endregion
+                                await data.destroy()
+                                await data.initialize()
+                                assert.ok(true)
+                            } catch (error) {
+                                console.error(error)
+                                assert.ok(false)
+                            }
+                            done()
+                        })
+                        // / endregion
+                        // endregion
+                    })()
                 }
             }
             this.module(`Module.services (${roundType})`)
@@ -970,7 +984,7 @@ registerAngularTest(function(
                     ItemsComponent,
                     RouterOutletStubComponent
                 ],
-                imports: [Module, NoopAnimationsModule],
+                imports: moduleImports,
                 providers: [
                     {provide: ActivatedRoute, useClass: ActivatedRouteStub},
                     {provide: Router, useClass: RouterStub}
@@ -982,10 +996,10 @@ registerAngularTest(function(
             // region prepare components
             const {
                 AbstractInputComponent,
-                InputComponent,
-                TextareaComponent,
                 FileInputComponent,
-                PaginationComponent
+                InputComponent,
+                PaginationComponent,
+                TextareaComponent
             } = index
             // endregion
             // region test components
@@ -1093,6 +1107,7 @@ registerAngularTest(function(
                             }
                         } catch (error) {
                             console.error(error)
+                            assert.ok(false)
                         }
                         done()
                     })
@@ -1223,6 +1238,7 @@ registerAngularTest(function(
                     // endregion
                 } catch (error) {
                     console.error(error)
+                    assert.ok(false)
                 }
                 done()
             })
@@ -1248,7 +1264,9 @@ registerAngularTest(function(
                         }},
                         name: 'name'
                     }
-                    fixture.componentInstance.ngOnChanges()
+                    await fixture.componentInstance.ngOnChanges({
+                        model: new SimpleChange(
+                            null, fixture.componentInstance.model, true)})
                     await fixture.whenStable()
                     assert.strictEqual(
                         fixture.componentInstance.file.type, 'text')
@@ -1262,7 +1280,6 @@ registerAngularTest(function(
                         {})
                     fixture.componentInstance.input.nativeElement
                         .dispatchEvent(getNativeEvent('change'))
-                    fixture.componentInstance.ngOnChanges()
                     await fixture.whenStable()
                     fixture.componentInstance.file.content_type = 'image/png'
                     fixture.componentInstance.determinePresentationType()
@@ -1299,7 +1316,9 @@ registerAngularTest(function(
                         '-type': 'Test',
                         name: 'name'
                     }
-                    fixture.componentInstance.ngOnChanges()
+                    await fixture.componentInstance.ngOnChanges({
+                        model: new SimpleChange(
+                            null, fixture.componentInstance.model, true)})
                     fixture.componentInstance.ngAfterViewInit()
                     await fixture.componentInstance.remove()
                     assert.ok(
@@ -1307,6 +1326,7 @@ registerAngularTest(function(
                             .errors.database)
                 } catch (error) {
                     console.error(error)
+                    assert.ok(false)
                 }
                 done()
             })
@@ -1335,11 +1355,12 @@ registerAngularTest(function(
                     assert.strictEqual(
                         fixture.componentInstance.previousPage, 1)
                     assert.strictEqual(fixture.componentInstance.nextPage, 2)
-                    assert.deepEqual(
-                        fixture.debugElement.query(By.css(
-                            '.current'
-                        )).nativeElement.className.split(' ').sort(),
-                        ['current', 'even', 'page-1', 'previous'])
+                    assert.deepEqual(fixture.debugElement.query(By.css(
+                        '.current'
+                    )).nativeElement.className.split(' ').filter((
+                        name:string
+                    ):boolean => !name.startsWith('ng-')).sort(),
+                    ['current', 'even', 'page-1', 'previous'])
                     fixture.componentInstance.change(dummyEvent, 3)
                     assert.strictEqual(
                         fixture.componentInstance.previousPage, 2)
@@ -1348,19 +1369,27 @@ registerAngularTest(function(
                     await fixture.whenStable()
                     assert.deepEqual(fixture.debugElement.query(By.css(
                         '.current'
-                    )).nativeElement.className.split(' ').sort(),
+                    )).nativeElement.className.split(' ').filter((
+                        name:string
+                    ):boolean => !name.startsWith('ng-')).sort(),
                     ['current', 'even', 'page-3'])
                     assert.deepEqual(fixture.debugElement.query(By.css(
                         '.previous'
-                    )).nativeElement.className.split(' ').sort(),
+                    )).nativeElement.className.split(' ').filter((
+                        name:string
+                    ):boolean => !name.startsWith('ng-')).sort(),
                     ['even-page', 'page-2', 'previous'])
                     assert.deepEqual(fixture.debugElement.query(By.css(
                         '.next'
-                    )).nativeElement.className.split(' ').sort(),
+                    )).nativeElement.className.split(' ').filter((
+                        name:string
+                    ):boolean => !name.startsWith('ng-')).sort(),
                     ['even-page', 'next', 'page-4'])
                     assert.deepEqual(fixture.debugElement.query(By.css(
                         '.last'
-                    )).nativeElement.className.split(' ').sort(),
+                    )).nativeElement.className.split(' ').filter((
+                        name:string
+                    ):boolean => !name.startsWith('ng-')).sort(),
                     ['even', 'last', 'page-5'])
                     fixture.debugElement.query(By.css(
                         '.next'
@@ -1369,10 +1398,13 @@ registerAngularTest(function(
                     await fixture.whenStable()
                     assert.deepEqual(fixture.debugElement.query(By.css(
                         '.current'
-                    )).nativeElement.className.split(' ').sort(),
+                    )).nativeElement.className.split(' ').filter((
+                        name:string
+                    ):boolean => !name.startsWith('ng-')).sort(),
                     ['current', 'even-page', 'page-4'])
                 } catch (error) {
                     console.error(error)
+                    assert.ok(false)
                 }
                 done()
             })

@@ -22,14 +22,15 @@ import {blobToBase64String} from 'blob-util'
 import type {PlainObject} from 'clientnode'
 import {$, globalContext, default as Tools} from 'clientnode'
 import {
-    /* AfterViewInit,*/ animate, AnimationTriggerMetadata, APP_INITIALIZER,
-    ChangeDetectorRef, Component, Directive, ElementRef, EventEmitter,
+    animate, AnimationTriggerMetadata, style, transition, trigger
+} from '@angular/animations'
     /* eslint-disable no-unused-vars */
-    forwardRef, Injectable, Inject, Injector, Input, NgModule,
-    // IgnoreTypeCheck
-    /* OnChanges, OnInit,*/ Output, Pipe, PipeTransform, PLATFORM_ID,
     /* eslint-enable no-unused-vars */
-    ReflectiveInjector, Renderer, style, transition, trigger, ViewChild
+import {
+    /* AfterViewInit,*/ APP_INITIALIZER, ChangeDetectorRef, Component,
+    Directive, ElementRef, EventEmitter, forwardRef, Injectable, Inject,
+    Injector, Input, NgModule, /* OnChanges, OnInit,*/ Output, Pipe,
+    PipeTransform, PLATFORM_ID, ReflectiveInjector, Renderer, ViewChild
 } from '@angular/core'
 import {isPlatformServer} from '@angular/common'
 import {
@@ -938,12 +939,16 @@ export class NumberPercentPipe/* implements PipeTransform*/ {
 // endregion
 // region animations
 /*
- * TODO
+ * Fade in/out animation factory.
+ * @param duration - Duration if animation.
+ * @param enterState - State triggering animation fade in animation.
+ * @param leaveState - State triggering animation fade out animation.
+ * @returns
  */
 export const fadeAnimation:Function = (
     duration:string = '.3s', enterState:string = ':enter',
     leaveState:string = ':leave'
-):AnimationTriggerMetadata => trigger('fadeAnimation', [
+):AnimationTriggerMetadata => trigger('defaultAnimation', [
     transition(enterState, [
         style({opacity: 0}), animate(duration, style({opacity: 1}))
     ]),
@@ -951,6 +956,7 @@ export const fadeAnimation:Function = (
         style({opacity: 1}), animate(duration, style({opacity: 0}))
     ])
 ])
+export const defaultAnimation:Function = fadeAnimation
 // endregion
 // region services
 // IgnoreTypeCheck
@@ -976,10 +982,13 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
 // TODO
 // IgnoreTypeCheck
 @Component({
+    animations: [defaultAnimation()],
     selector: 'generic-confirm',
     template: `
-        <h2 md-dialog-title *ngIf="title">{{title}}</h2>
-        <md-dialog-content *ngIf="message">{{message}}</md-dialog-content>
+        <h2 @defaultAnimation md-dialog-title *ngIf="title">{{title}}</h2>
+        <md-dialog-content @defaultAnimation *ngIf="message">
+            {{message}}
+        </md-dialog-content>
         <md-dialog-actions>
             <button md-raised-button (click)="dialogReference.close(true)">
                 {{okText}}
@@ -1277,8 +1286,8 @@ export class DataService {
         this.connection.installValidationMethods()
         if (this.configuration.database.local && this.remoteConnection)
             /*
-                NOTE: We want to allow other services to integrate
-                an interception promise.
+                NOTE: We want to allow other services to integrate an
+                interception promise.
             */
             // IgnoreTypeCheck
             this.tools.timeout(async ():Promise<void> => {
@@ -1566,11 +1575,11 @@ export class DataScopeService {
             this.configuration.database.model.property.name.special
         const result:PlainObject = {}
         for (const key:string in scope)
-            if (scope.hasOwnProperty(
-                key
-            ) && this.configuration.database.model.entities[scope[
+            if (scope.hasOwnProperty(key) && (!(
+                specialNames.type in scope
+            ) || this.configuration.database.model.entities[scope[
                 specialNames.type
-            ]].hasOwnProperty(key) && ![
+            ]].hasOwnProperty(key)) && ![
                 specialNames.additional,
                 // NOTE: Will be handled later.
                 specialNames.attachment,
@@ -1582,9 +1591,9 @@ export class DataScopeService {
                 specialNames.revisionsInformations
             ].includes(key))
                 if (
-                    typeof scope[key] === 'object' &&
-                    scope[key] !== null && 'hasOwnProperty' in scope &&
-                    scope[key].hasOwnProperty('value')
+                    typeof scope[key] === 'object' && scope[key] !== null &&
+                    'hasOwnProperty' in scope && scope[key].hasOwnProperty(
+                        'value')
                 )
                     result[key] = scope[key].value
                 else
@@ -2784,47 +2793,52 @@ const propertyInputContent:string = `
 `
 const inputContent:string = `
     <md-hint
-        align="start" (click)="showDeclaration = !showDeclaration" title="info"
+        @defaultAnimation align="start"
+        (click)="showDeclaration = !showDeclaration" title="info"
         *ngIf="model.declaration" [class.activ]="showDeclaration"
     >
-        <a (click)="$event.preventDefault()" href="" *ngIf="infoText">
-            {{infoText}}
-        </a>
-        <span *ngIf="showDeclaration"> {{model.declaration}}</span>
+        <a
+            @defaultAnimation (click)="$event.preventDefault()" href=""
+            *ngIf="infoText"
+        >{{infoText}}</a>
+        <span @defaultAnimation *ngIf="showDeclaration">
+            {{model.declaration}}
+        </span>
     </md-hint>
-    <span generic-error *ngIf="showValidationErrorMessages">
-        <p *ngIf="model.state?.errors?.required">
+    <span @defaultAnimation generic-error *ngIf="showValidationErrorMessages">
+        <p @defaultAnimation *ngIf="model.state?.errors?.required">
             Bitte füllen Sie das Feld "{{model.description || model.name}}"
             aus.
         </p>
-        <p *ngIf="model.state?.errors?.maxlength">
+        <p @defaultAnimation *ngIf="model.state?.errors?.maxlength">
             Bitte geben Sie maximal {{model.maximumLength}} Zeichen ein.
         </p>
-        <p *ngIf="model.state?.errors?.minlength">
+        <p @defaultAnimation *ngIf="model.state?.errors?.minlength">
             Bitte geben Sie mindestens {{model.minimumLength}} Zeichen ein.
         </p>
-        <p *ngIf="model.state?.errors?.max">
+        <p @defaultAnimation *ngIf="model.state?.errors?.max">
             Bitte geben Sie eine Zahl kleiner oder gleich {{model.maximum}}
             ein.
         </p>
-        <p *ngIf="model.state?.errors?.min">
+        <p @defaultAnimation *ngIf="model.state?.errors?.min">
             Bitte geben Sie eine Zahl größer oder gleich {{model.minimum}} ein.
         </p>
-        <p *ngIf="model.state?.errors?.pattern">
+        <p @defaultAnimation *ngIf="model.state?.errors?.pattern">
             Bitte geben Sie eine Zeinefolge ein die dem regulären Ausdruck
             "{{model.regularExpressionPattern}}" entspricht.
         </p>
     </span>
     <md-hint
-        align="end"
+        @defaultAnimation align="end"
         *ngIf="!model.selection && model.type === 'string' && model.maximumLength !== null && model.maximumLength < 100"
     >{{model.value?.length}} / {{model.maximumLength}}</md-hint>
 `
 // IgnoreTypeCheck
 @Component({
+    animations: [defaultAnimation()],
     selector: 'generic-input',
     template: `
-        <ng-container *ngIf="model.selection; else textInput">
+        <ng-container @defaultAnimation *ngIf="model.selection; else textInput">
             <md-select [(ngModel)]="model.value" ${propertyGenericContent}>
                 <md-option
                     *ngFor="let value of model.selection" [value]="value"
@@ -2883,6 +2897,7 @@ export class InputComponent extends AbstractInputComponent {
 }
 // IgnoreTypeCheck
 @Component({
+    animations: [defaultAnimation()],
     selector: 'generic-textarea',
     template: `
         <md-input-container>
@@ -2933,19 +2948,24 @@ export class TextareaComponent extends AbstractInputComponent {
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
+    animations: [defaultAnimation()],
     selector: 'generic-file-input',
     template: `
         <md-card>
             <md-card-header
+                @fadeAnimation
                 *ngIf="headerText || file?.name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description || name"
             >
                 <md-card-title>
-                    <span *ngIf="revision || headerText || !file?.name; else editable">
+                    <span
+                        @defaultAnimation
+                        *ngIf="revision || headerText || !file?.name; else editable"
+                    >
                         {{headerText || file?.name || model[attachmentTypeName][internalName]?.description || name}}
                     </span>
-                    <ng-container #editiable *ngIf="file?.name">
+                    <ng-container @defaultAnimation #editiable *ngIf="file?.name">
                         <!-- NOTE: NgIfElse doesnt work here. -->
-                        <ng-container *ngIf="synchronizeImmediately">
+                        <ng-container @defaultAnimation *ngIf="synchronizeImmediately">
                             <md-input-container
                                 [class.dirty]="editedName && editedName !== file.name"
                                 title="Focus to edit."
@@ -2955,6 +2975,7 @@ export class TextareaComponent extends AbstractInputComponent {
                                 (ngModelChange)="editedName = $event"
                             /></md-input-container>
                             <ng-container
+                                @defaultAnimation
                                 *ngIf="editedName && editedName !== file.name"
                             >
                                 <a
@@ -2968,34 +2989,42 @@ export class TextareaComponent extends AbstractInputComponent {
                             </ng-container>
                         </ng-container>
                         <md-input-container
+                            @defaultAnimation
                             [class.dirty]="file.initialName !== file.name"
                             title="Focus to edit."
                             *ngIf="!synchronizeImmediately"
-                        ><input
-                            mdInput [ngModel]="file.name"
-                            (ngModelChange)="file.name = $event;modelChange.emit(this.model);fileChange.emit(file)"
-                        /></md-input-container>
+                        >
+                            <input
+                                mdInput [ngModel]="file.name"
+                                (ngModelChange)="file.name = $event;modelChange.emit(this.model);fileChange.emit(file)"
+                            />
+                            <md-hint
+                                @defaultAnimation
+                                [class.activ]="showDeclaration"
+                                (click)="showDeclaration = !showDeclaration"
+                                title="info"
+                                *ngIf="model[attachmentTypeName][internalName]?.declaration"
+                            >
+                                <a
+                                    @defaultAnimation
+                                    (click)="$event.preventDefault()" href=""
+                                    *ngIf="infoText"
+                                >{{infoText}}</a>
+                                <span @defaultAnimation *ngIf="showDeclaration">
+                                    {{model[attachmentTypeName][internalName].declaration}}
+                                </span>
+                            </md-hint>
+                        </md-input-container>
                     </ng-container>
                 </md-card-title>
-                <md-card-subtitle
-                    [class.activ]="showDeclaration"
-                    (click)="showDeclaration = !showDeclaration" title="info"
-                    *ngIf="model[attachmentTypeName][internalName]?.declaration"
-                >
-                    <a
-                        (click)="$event.preventDefault()" href=""
-                        *ngIf="infoText"
-                    >{{infoText}}</a>
-                    <span *ngIf="showDeclaration">
-                        {{model[attachmentTypeName][internalName].declaration}}
-                    </span>
-                </md-card-subtitle>
             </md-card-header>
             <img md-card-image
+                @defaultAnimation
                 *ngIf="file?.type === 'image' && file?.source"
                 [attr.alt]="name" [attr.src]="file.source"
             >
             <video
+                @defaultAnimation
                 md-card-image autoplay muted loop
                 *ngIf="file?.type === 'video' && file?.source"
             >
@@ -3003,30 +3032,36 @@ export class TextareaComponent extends AbstractInputComponent {
                 Keine Vorschau möglich.
             </video>
             <iframe
+                @defaultAnimation
                 [src]="file.source"
                 *ngIf="file?.type === 'text' && file?.source"
                 style="border:none;width:100%;max-height:150px"
             ></iframe>
             <div
+                @defaultAnimation
                 md-card-image
                 *ngIf="(!file?.type && (file?.source || (file?.source | genericType) === 'string') ? noPreviewText : noFileText) as text"
             ><p>{{text}}</p></div>
             <md-card-content>
                 <ng-content></ng-content>
                 <div
+                    @defaultAnimation
                     generic-error
                     *ngIf="showValidationErrorMessages && model[attachmentTypeName][internalName]?.state?.errors"
                 >
                     <p
+                        @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.required"
                     >Bitte wählen Sie eine Datei aus.</p>
                     <p
+                        @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.name"
                     >
                         Der Dateiname "{{file.name}}" entspricht nicht dem
                         vorgegebenen Muster "{{this.internalName}}".
                     </p>
                     <p
+                        @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.contentType"
                     >
                         Der Daten-Typ "{{file.content_type}}" entspricht
@@ -3034,6 +3069,7 @@ export class TextareaComponent extends AbstractInputComponent {
                         "{{model[attachmentTypeName][internalName].contentTypeRegularExpressionPattern}}".
                     </p>
                     <p
+                        @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.minimumSize"
                     >
                         Die Datei (Größe {{file.length}} Byte) unterschreitet
@@ -3042,6 +3078,7 @@ export class TextareaComponent extends AbstractInputComponent {
                         Byte.
                     </p>
                     <p
+                        @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.maximumSize"
                     >
                         Die Datei (Größe {{file.length}} Byte) überschreitet
@@ -3050,6 +3087,7 @@ export class TextareaComponent extends AbstractInputComponent {
                         Byte.
                     </p>
                     <p
+                        @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.database"
                     >
                         {{model[attachmentTypeName][internalName].state.errors.database}}
@@ -3059,16 +3097,18 @@ export class TextareaComponent extends AbstractInputComponent {
             <md-card-actions>
                 <input #input type="file" style="display:none" />
                 <button
-                    *ngIf="newButtonText" md-raised-button
-                    (click)="input.click()"
+                    @defaultAnimation (click)="input.click()"
+                    md-raised-button *ngIf="newButtonText"
                 >{{newButtonText}}</button>
                 <button
-                    (click)="remove()" md-raised-button
+                    @defaultAnimation (click)="remove()" md-raised-button
                     *ngIf="deleteButtonText && file"
                 >{{deleteButtonText}}</button>
-                <button md-raised-button *ngIf="downloadButtonText && file"><a
-                    [download]="file.name" [href]="file.source"
-                >{{downloadButtonText}}</a></button>
+                <button md-raised-button
+                    @defaultAnimation *ngIf="downloadButtonText && file"
+                ><a [download]="file.name" [href]="file.source">
+                    {{downloadButtonText}}
+                </a></button>
             </md-card-actions>
         </md-card>
     `
@@ -3606,13 +3646,14 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
+    animations: [defaultAnimation()],
     selector: 'generic-pagination',
     template: `
-        <ul *ngIf="lastPage > 1">
-            <li *ngIf="page > 2">
+        <ul @defaultAnimation *ngIf="lastPage > 1">
+            <li @defaultAnimation *ngIf="page > 2">
                 <a href="" (click)="change($event, 1)">--</a>
             </li>
-            <li *ngIf="page > 1">
+            <li @defaultAnimation *ngIf="page > 1">
                 <a href="" (click)="change($event, previousPage)">-</a>
             </li>
             <li *ngFor="let currentPage of pagesRange;let even = even">
@@ -3622,10 +3663,10 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     (click)="change($event, currentPage)"
                 >{{currentPage}}</a>
             </li>
-            <li *ngIf="lastPage > page">
+            <li @defaultAnimation *ngIf="lastPage > page">
                 <a href="" (click)="change($event, nextPage)">+</a>
             </li>
-            <li *ngIf="lastPage > page + 1">
+            <li @defaultAnimation *ngIf="lastPage > page + 1">
                 <a href="" (click)="change($event, lastPage)">++</a>
             </li>
         </ul>
@@ -3727,7 +3768,7 @@ const providers:Array<Object> = Object.keys(module.exports).filter((
     name.endsWith('Guard') || name.endsWith('Service')
 )).map((name:string):Object => module.exports[name])
 const modules:Array<Object> = [
-    BrowserModule,
+    BrowserModule.withServerTransition({appId: 'generic-universal'}),
     FormsModule,
     MdButtonModule,
     MdCardModule,
