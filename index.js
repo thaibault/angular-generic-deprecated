@@ -1992,13 +1992,13 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
      * @param page - Page to show.
      * @param limit - Maximal number of entities to retrieve.
      * @param searchTerm - String query to search for.
-     * @param additionalSelectors - Custom filter criteria.
+     * @param additionalSelector - Custom filter criteria.
      * @returns A promise wrapping retrieved data.
      */
     list(
         sort:Array<PlainObject> = [{_id: 'asc'}], page:number = 1,
         limit:number = 10, searchTerm:string = '',
-        additionalSelectors:PlainObject = {}
+        additionalSelector:PlainObject = {}
     ):Promise<Array<PlainObject>> {
         if (!this.relevantKeys)
             this.relevantKeys = Object.keys(this.models[this.type]).filter((
@@ -2019,22 +2019,22 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
             ].includes(name) && [undefined, 'string'].includes(
                 this.models[this.type][name].type))
         const selector:PlainObject = {[this.specialNames.type]: this.type}
-        if (searchTerm || Object.keys(additionalSelectors).length) {
+        if (searchTerm || Object.keys(additionalSelector).length) {
             if (sort.length)
                 selector[Object.keys(sort[0])[0]] = {$gt: null}
             selector.$or = []
             for (const name:string of this.relevantKeys)
                 selector.$or.push({[name]: {$regex: searchTerm}})
-            if (additionalSelectors.hasOwnProperty(
+            if (additionalSelector.hasOwnProperty(
                 '$or'
-            ) && additionalSelectors.$or.length) {
+            ) && additionalSelector.$or.length) {
                 /*
                     NOTE: We have to integrate search expression into existing
                     selector.
                 */
-                for (const item:PlainObject of additionalSelectors.$or)
-                    this.extendObject(true, selector.$or, item)
-                delete additionalSelectors.$or
+                for (const item:PlainObject of selector.$or)
+                    item.$or = additionalSelector.$or
+                delete additionalSelector.$or
             }
         }
         /*
@@ -2047,7 +2047,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         if (sort.length)
             options.sort = [{[this.specialNames.type]: 'asc'}].concat(sort)
         return this.data.find(this.extendObject(
-            true, selector, additionalSelectors
+            true, selector, additionalSelector
         ), options)
     }
     /* eslint-disable no-unused-vars */
