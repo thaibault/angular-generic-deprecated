@@ -940,23 +940,28 @@ export class NumberPercentPipe/* implements PipeTransform*/ {
 // region animations
 /*
  * Fade in/out animation factory.
- * @param duration - Duration if animation.
- * @param enterState - State triggering animation fade in animation.
- * @param leaveState - State triggering animation fade out animation.
- * @returns
+ * @param options - Animations meta data options.
+ * @returns Animations meta data object.
  */
-export const fadeAnimation:Function = (
-    duration:string = '.3s', enterState:string = ':enter',
-    leaveState:string = ':leave'
-):AnimationTriggerMetadata => trigger('defaultAnimation', [
-    transition(enterState, [
-        style({opacity: 0}), animate(duration, style({opacity: 1}))
-    ]),
-    transition(leaveState, [
-        style({opacity: 1}), animate(duration, style({opacity: 0}))
+export const fadeAnimation:Function = (options:PlainObject = {
+}):AnimationTriggerMetadata => {
+    options = Tools.extendObject({
+        duration: '.3s',
+        enterState: ':enter',
+        leaveState: ':leave',
+        name: 'fadeAnimation'
+    }, options)
+    return trigger(options.name, [
+        transition(options.enterState, [
+            style({opacity: 0}), animate(options.duration, style({opacity: 1}))
+        ]),
+        transition(options.leaveState, [
+            style({opacity: 1}), animate(options.duration, style({opacity: 0}))
+        ])
     ])
-])
-export const defaultAnimation:Function = fadeAnimation
+}
+export const defaultAnimation:Function = (options:PlainObject = {}) =>
+    fadeAnimation(Tools.extendObject({name: 'defaultAnimation'}, options))
 // endregion
 // region services
 // IgnoreTypeCheck
@@ -2953,7 +2958,7 @@ export class TextareaComponent extends AbstractInputComponent {
     template: `
         <md-card>
             <md-card-header
-                @fadeAnimation
+                @defaultAnimation
                 *ngIf="headerText || file?.name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description || name"
             >
                 <md-card-title>
