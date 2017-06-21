@@ -772,7 +772,8 @@ registerAngularTest(function(
                                         return data
                                     })
                                 assert.ok('get' in data.middlewares.post)
-                                assert.strictEqual((await data.get('a')).test, 2)
+                                assert.strictEqual(
+                                    (await data.get('a')).test, 2)
                                 assert.ok(test)
                                 deregister()
                                 assert.notOk('get' in data.middlewares.post)
@@ -795,7 +796,10 @@ registerAngularTest(function(
                                 for (const test:Array<PlainObject> of [
                                     [{}, {}],
                                     [{a: {value: 2}}, {a: 2}],
-                                    [{a: {value: 2}, b: 3, _c: {value: 4}}, {a: 2, b: 3, _c: 4}],
+                                    [
+                                        {a: {value: 2}, b: 3, _c: {value: 4}},
+                                        {a: 2, b: 3, _c: 4}
+                                    ],
                                     [{
                                         a: {value: 2}, b: 3, _c: {value: 4},
                                         _attachments: null, '-type': 'Test'
@@ -810,12 +814,20 @@ registerAngularTest(function(
                                         name: 'a'
                                     }}}],
                                     [{
-                                        a: {value: 2}, b: 3, _c: {value: 4}, _id: 2,
-                                        _attachments: {a: {value: {name: 'a'}}},
+                                        a: {value: 2}, b: 3, _c: {value: 4},
+                                        _id: 2,
+                                        _attachments: {a: {value: {
+                                            name: 'a'
+                                        }}},
                                         '-type': 'Test'
-                                    }, {a: 2, _attachments: {a: {name: 'a'}}, _id: 2}]
+                                    }, {
+                                        a: 2,
+                                        _attachments: {a: {name: 'a'}},
+                                        _id: 2
+                                    }]
                                 ])
-                                    assert.deepEqual(dataScope.get(test[0]), test[1])
+                                    assert.deepEqual(
+                                        dataScope.get(test[0]), test[1])
                                 // endregion
                                 // region generate
                                 for (const test:Array<any> of [
@@ -840,9 +852,11 @@ registerAngularTest(function(
                                         name: 'a',
                                         value: 2
                                     }}],
-                                    [['Test', ['_attachments']], {_attachments: {
+                                    [['Test', [
+                                        '_attachments'
+                                    ]], {_attachments: {
                                         '.+\\.(?:jpe?g|png)': {
-                                            contentTypeRegularExpressionPattern:
+                                        contentTypeRegularExpressionPattern:
                                                 '^image/.+',
                                             maximumNumber: 1,
                                             minimum: 0,
@@ -850,14 +864,16 @@ registerAngularTest(function(
                                             minimumNumber: 0,
                                             name: '.+\\.(?:jpe?g|png)',
                                             onCreateExpression:
-                                                initialData.configuration.database
-                                                .model.entities.Test
-                                                ._attachments['.+\\.(?:jpe?g|png)']
-                                                .onCreateExpression,
+                                                initialData.configuration
+                                                .database.model.entities.Test
+                                                ._attachments[
+                                                    '.+\\.(?:jpe?g|png)'
+                                                ].onCreateExpression,
                                             value: {name: 'a.jpg'}
                                         }
                                     }}],
-                                    [['Test', null, {_attachments: {'b.jpg': {}}}], {
+                                    [['Test', null, {_attachments: {'b.jpg': {
+                                    }}}], {
                                         _attachments: {'.+\\.(?:jpe?g|png)': {
                                             value: {name: 'b.jpg'}
                                         }},
@@ -890,10 +906,10 @@ registerAngularTest(function(
                                         _metaData: {submitted: false},
                                         '-type': 'Test'
                                     }, (
-                                        test[0].length < 2 || test[0][1] === null ?
-                                        initialData.configuration.database.model
-                                            .entities.Test : {}
-                                    ), test[1]))
+                                        test[0].length < 2 ||
+                                        test[0][1] === null
+                                    ) ? initialData.configuration.database
+                                        .model.entities.Test : {}, test[1]))
                                 // endregion
                                 // region set
                                 assert.deepEqual(await dataScope.determine(
@@ -916,8 +932,8 @@ registerAngularTest(function(
                                         name: 'a',
                                         value: null
                                     }
-                                }, initialData.configuration.database.model.entities
-                                    .Test))
+                                }, initialData.configuration.database.model
+                                    .entities.Test))
                                 // endregion
                             } catch (error) {
                                 console.error(error)
@@ -943,8 +959,10 @@ registerAngularTest(function(
                                 item._rev = (await data.put(item)).rev
                                 // region list
                                 assert.deepEqual(
-                                    (await resolver.list([{a: 'asc'}]))[0], item)
-                                assert.deepEqual((await resolver.list())[0], item)
+                                    (await resolver.list([{a: 'asc'}]))[0],
+                                    item)
+                                assert.deepEqual(
+                                    (await resolver.list())[0], item)
                                 assert.deepEqual(
                                     (await resolver.list([]))[0], item)
                                 assert.deepEqual((await resolver.list(
@@ -963,7 +981,10 @@ registerAngularTest(function(
                                     {searchTerm: 'exact-es'},
                                     {page: 1},
                                     {searchTerm: 'exact-test', page: 1},
-                                    {searchTerm: 'exact-test', page: 1, limit: 2},
+                                    {
+                                        searchTerm: 'exact-test', page: 1,
+                                        limit: 2
+                                    },
                                     {
                                         searchTerm: 'regex-t[ea]+st', page: 1,
                                         limit: 2
