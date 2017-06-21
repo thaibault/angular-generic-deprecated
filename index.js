@@ -24,13 +24,15 @@ import {$, globalContext, default as Tools} from 'clientnode'
 import {
     animate, AnimationTriggerMetadata, style, transition, trigger
 } from '@angular/animations'
-    /* eslint-disable no-unused-vars */
-    /* eslint-enable no-unused-vars */
 import {
     /* AfterViewInit,*/ APP_INITIALIZER, ChangeDetectorRef, Component,
+    /* eslint-disable no-unused-vars */
     Directive, ElementRef, EventEmitter, forwardRef, Injectable, Inject,
+    /* eslint-enable no-unused-vars */
     Injector, Input, NgModule, /* OnChanges, OnInit,*/ Output, Pipe,
+    /* eslint-disable no-unused-vars */
     PipeTransform, PLATFORM_ID, ReflectiveInjector, Renderer, ViewChild
+    /* eslint-enable no-unused-vars */
 } from '@angular/core'
 import {isPlatformServer} from '@angular/common'
 import {
@@ -960,8 +962,14 @@ export const fadeAnimation:Function = (options:PlainObject = {
         ])
     ])
 }
-export const defaultAnimation:Function = (options:PlainObject = {}) =>
-    fadeAnimation(Tools.extendObject({name: 'defaultAnimation'}, options))
+/*
+ * Fade in/out animation factory.
+ * @param options - Animations meta data options.
+ * @returns Animations meta data object.
+ */
+export const defaultAnimation:Function = (options:PlainObject = {
+}):AnimationTriggerMetadata => fadeAnimation(Tools.extendObject(
+    {name: 'defaultAnimation'}, options))
 // endregion
 // region services
 // IgnoreTypeCheck

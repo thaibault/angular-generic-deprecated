@@ -11,7 +11,7 @@
     endregion
 */
 // region imports
-import type {Window} from 'clientnode'
+import type {File, Window} from 'clientnode'
 import {default as Tools, globalContext} from 'clientnode'
 import {enableProdMode, NgModule} from '@angular/core'
 import {APP_BASE_HREF} from '@angular/common'
@@ -183,10 +183,10 @@ export default function(
                                 ):void => removeDirectoryRecursively(
                                     realSourcePath, (error:?Error):void =>
                                         error ? reject(error) : resolve()))
-                            fileSystem.symlink(
-                                targetPath, realSourcePath, (
-                                    error:?Error
-                                ):void => error ? reject(error) : resolve())
+                            // IgnoreTypeCheck
+                            fileSystem.symlink(targetPath, realSourcePath, (
+                                error:?Error
+                            ):void => error ? reject(error) : resolve())
                         })
                     }
                 urls = Array.from(result.paths).sort()

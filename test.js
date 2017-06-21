@@ -24,9 +24,6 @@ try {
 
 import registerAngularTest from './testRunner'
 // endregion
-// region declarations
-declare var TARGET_TECHNOLOGY:string
-// endregion
 // region tests
 registerAngularTest(function(
     ApplicationComponent:Object, roundType:string, targetTechnology:?string,
@@ -269,6 +266,8 @@ registerAngularTest(function(
                  * suffix pipe instance.
                  * @param stringMatchPipe - Injected string match pipe
                  * instance.
+                 * @param stringMaximumLengthPipe - Inject string prefix
+                 * description pipe instance.
                  * @param stringMD5Pipe - Injected md5 pipe instance.
                  * @param stringReplacePipe - Injected string replace pipe
                  * instance.
@@ -357,7 +356,10 @@ registerAngularTest(function(
                                 [{a: 1, b: true}, {a: 1, b: true}],
                                 [{a: new Date(Date.UTC(1970, 0, 1))}, {a: 0}],
                                 [{a: new Date(0)}, {a: 0}],
-                                [{a: new Date(0), b: [2, 3]}, {a: 0, b: [2, 3]}],
+                                [
+                                    {a: new Date(0), b: [2, 3]},
+                                    {a: 0, b: [2, 3]}
+                                ],
                                 [{a: [new Date(90)]}, {a: [90]}]
                             ])
                                 assert.deepEqual(
@@ -373,7 +375,10 @@ registerAngularTest(function(
                                     {}, {a: {value: {name: 'a'}}}, true, [],
                                     {_attachments: {a: {data: null}}}
                                 ],
-                                [{}, {a: {value: {name: 'a'}}}, true, ['a'], {}],
+                                [
+                                    {}, {a: {value: {name: 'a'}}}, true, ['a'],
+                                    {}
+                                ],
                                 [
                                     {_attachments: {a: {}}},
                                     {'[ab]': {value: {name: 'b'}}}, true, [],
@@ -386,7 +391,8 @@ registerAngularTest(function(
                                 ]
                             ])
                                 assert.deepEqual(
-                                    extractRawDataPipe._handleAttachmentChanges(
+                                    extractRawDataPipe
+                                    ._handleAttachmentChanges(
                                         test[0], test[1], test[2], test[3]
                                     ), test[4])
                             // endregion
@@ -396,18 +402,20 @@ registerAngularTest(function(
                                 [[{}, {}], null],
                                 [[{}, {}, false], null],
                                 [[{a: 2}, {}, false], {a: 2}],
-                                [[{a: undefined, b: null, c: ''}, {}, false], null],
-                                [[{a: undefined, b: null, c: '', d: {}}], {d: {}}],
+                                [[{a: undefined, b: null, c: ''}, {
+                                }, false], null],
+                                [[{a: undefined, b: null, c: '', d: {
+                                }}], {d: {}}],
                                 [[{a: undefined, b: 3}], {b: 3}],
                                 [[{a: undefined, _revisions: 3}], null],
                                 [[{_attachments: undefined}], null],
                                 [[{_attachments: {a: {}}}], null],
-                                [[{_attachments: {a: {data: 2}}}], {_attachments: {
-                                    a: {
+                                [[{_attachments: {a: {data: 2}}}], {
+                                    _attachments: {a: {
                                         content_type: 'application/octet-stream',
                                         data: 2
-                                    }
-                                }}],
+                                    }}
+                                }],
                                 [[{_attachments: {a: {
                                     content_type: 'a/b', data: 2
                                 }}}], {_attachments: {a: {
@@ -472,7 +480,8 @@ registerAngularTest(function(
                                 assert.ok(isDefinedPipe.transform(test))
                             assert.notOk(isDefinedPipe.transform(null, true))
                             assert.notOk(isDefinedPipe.transform(undefined))
-                            assert.notOk(isDefinedPipe.transform(undefined, true))
+                            assert.notOk(isDefinedPipe.transform(
+                                undefined, true))
                         })
                         self.test(`GetFilenameByPrefixPipe (${roundType})`, (
                             assert:Object
@@ -484,7 +493,8 @@ registerAngularTest(function(
                                 [[{a: 2, b: 3}, 'c'], null]
                             ])
                                 assert.strictEqual(
-                                    getFilenameByPrefixPipe.transform(...test[0]),
+                                    getFilenameByPrefixPipe.transform(
+                                        ...test[0]),
                                     test[1])
                         })
                         self.test(
@@ -496,16 +506,16 @@ registerAngularTest(function(
                                     [{_attachments: {a: {data: 'a'}}}, 'a']
                                 ])
                                     assert.ok(
-                                        attachmentWithPrefixExistsPipe.transform(
-                                            test[0], test[1]))
+                                        attachmentWithPrefixExistsPipe
+                                        .transform(test[0], test[1]))
                                 for (const test:Array<any> of [
                                     [{}, null],
                                     [{}, 'a'],
                                     [{_attachments: {a: {data: 'a'}}}, 'b']
                                 ])
                                     assert.notOk(
-                                        attachmentWithPrefixExistsPipe.transform(
-                                            test[0], test[1]))
+                                        attachmentWithPrefixExistsPipe
+                                        .transform(test[0], test[1]))
                             })
                         self.test(`LimitToPipe (${roundType})`, (
                             assert:Object
@@ -553,10 +563,12 @@ registerAngularTest(function(
                                 }, true, true, true], ['3-c', '2-a', '1-b']],
                                 [[{
                                     '2-a': 3, '1-b': 2, a: 4, '3-c': 3
-                                }, true, true, true], ['a', '3-c', '2-a', '1-b']]
+                                }, true, true, true], [
+                                    'a', '3-c', '2-a', '1-b']]
                             ])
-                                assert.deepEqual(
-                                    objectKeysPipe.transform(...test[0]), test[1])
+                                assert.deepEqual(objectKeysPipe.transform(
+                                    ...test[0]
+                                ), test[1])
                         })
                         self.test(`TypePipe (${roundType})`, (
                             assert:Object
@@ -578,7 +590,8 @@ registerAngularTest(function(
                             assert:Object
                         ):void => {
                             assert.ok(stringEndsWithPipe.transform('aab', 'b'))
-                            assert.notOk(stringEndsWithPipe.transform('aab', 'a'))
+                            assert.notOk(stringEndsWithPipe.transform(
+                                'aab', 'a'))
                         })
                         self.test(`StringHasTimeSuffixPipe (${roundType})`, (
                             assert:Object
@@ -586,7 +599,8 @@ registerAngularTest(function(
                             for (const test:string of [
                                 'aDate', 'aTime', 'aDateTime', 'timestamp'
                             ])
-                                assert.ok(stringHasTimeSuffixPipe.transform(test))
+                                assert.ok(stringHasTimeSuffixPipe.transform(
+                                    test))
                             for (const test:any of [
                                 'a', 'atime', 'aDatetime', 'timestamptime',
                                 false, null, {}
@@ -612,7 +626,8 @@ registerAngularTest(function(
                                 [/^[ab]$/, 'aa', 'g'],
                                 [/^[ab]$/, 'AA', 'i']
                             ])
-                                assert.notOk(stringMatchPipe.transform(...test))
+                                assert.notOk(stringMatchPipe.transform(
+                                    ...test))
                         })
                         self.test(`stringMaximumLengthPipe (${roundType})`, (
                             assert:Object
@@ -633,7 +648,8 @@ registerAngularTest(function(
                                 [['abcde', 5], 'abcde']
                             ])
                                 assert.strictEqual(
-                                    stringMaximumLengthPipe.transform(...test[0]),
+                                    stringMaximumLengthPipe.transform(
+                                        ...test[0]),
                                     test[1])
                         })
                         self.test(`StringReplacePipe (${roundType})`, (
@@ -661,14 +677,14 @@ registerAngularTest(function(
                                     [['aa', 'A', false, 'i'], 'aa']
                                 ])
                                     assert.strictEqual(
-                                        stringShowIfPatternMatchesPipe.transform(
-                                            ...test[0]
-                                        ), test[1])
+                                        stringShowIfPatternMatchesPipe
+                                        .transform(...test[0]), test[1])
                             })
                         self.test(`StringStartsWithPipe (${roundType})`, (
                             assert:Object
                         ):void => {
-                            assert.ok(stringStartsWithPipe.transform('baa', 'b'))
+                            assert.ok(stringStartsWithPipe.transform(
+                                'baa', 'b'))
                             assert.notOk(
                                 stringStartsWithPipe.transform('baa', 'a'))
                         })
@@ -697,7 +713,8 @@ registerAngularTest(function(
                                 [9, 10, 90]
                             ])
                                 assert.strictEqual(
-                                    numberPercentPipe.transform(test[0], test[1]),
+                                    numberPercentPipe.transform(
+                                        test[0], test[1]),
                                     test[2])
                         })
                         // endregion
@@ -1303,7 +1320,6 @@ registerAngularTest(function(
                         true)
                     fixture.componentInstance.synchronizeImmediately = true
                     fixture.componentInstance.model = {
-                        _id: 'id',
                         _attachments: {name: {
                             nullable: true,
                             value: {
@@ -1312,6 +1328,7 @@ registerAngularTest(function(
                                 name: 'name'
                             }
                         }},
+                        _id: 'id',
                         _rev: '1-a',
                         '-type': 'Test',
                         name: 'name'
