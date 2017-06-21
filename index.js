@@ -1014,11 +1014,20 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
 })
 /**
  * Provides a generic confirmation component.
+ * @property cancelText - Text to use as cancel button label.
+ * @property dialogReference - Reference to the dialog component instance.
+ * @property okText - Text to use as confirm button label.
  */
 export class ConfirmComponent {
     @Input() cancelText:string = 'Cancel'
-    @Input() okText:string = 'OK'
     dialogReference:MdDialogRef<ConfirmComponent>
+    @Input() okText:string = 'OK'
+    /**
+     * Gets needed component data injected.
+     * @param data - Data to provide for the dialog component instance.
+     * @param dialogReference - Dialog component instance.
+     * @returns Nothing.
+     */
     constructor(
         @Inject(MD_DIALOG_DATA) data:any,
         dialogReference:MdDialogRef<ConfirmComponent>
@@ -1032,11 +1041,27 @@ export class ConfirmComponent {
 }
 // IgnoreTypeCheck
 @Injectable()
+/**
+ * Alert service to trigger a dialog window which can be confirmed.
+ * @property dialog - Reference to the dialog component instance.
+ */
 export class AlertService {
     dialog:MdDialog
+    /**
+     * Gets needed component dialog service instance injected.
+     * @param dialog - Reference to the dialog component instance.
+     * @returns Nothing.
+     */
     constructor(dialog:MdDialog):void {
         this.dialog = dialog
     }
+    /**
+     * Triggers a confirmation dialog to show.
+     * @param data - Data to provide for the confirmations component instance.
+     * @returns A promise resolving when confirmation window where confirmed or
+     * rejected due to user interaction. A promised wrapped boolean indicates
+     * which decision was made.
+     */
     confirm(data:string|{[key:string]:any}):Promise<boolean> {
         if (typeof data === 'string')
             data = {data: {message: data}}
@@ -3493,7 +3518,14 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         this.file.name = name
         return this.update(oldName)
     }
-    // TODO
+    // TODO test
+    /**
+     * Retrieves current attachment with given document id and converts them
+     * into a base 64 string which will be set as file source.
+     * @param id - Document id which should hold needed attachment.
+     * @param options - Options to use for the attachment retrieving.
+     * @returns A promise which resolves if requested attachment was retrieved.
+     */
     async retrieveAttachment(id:any, options:PlainObject = {}):Promise<void> {
         const file:Object = await this._data.getAttachment(
             id, this.file.name, options)
