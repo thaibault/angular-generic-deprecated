@@ -2851,7 +2851,7 @@ const inputContent:string = `
     animations: [defaultAnimation()],
     selector: 'generic-input',
     template: `
-        <ng-container @defaultAnimation *ngIf="model.selection; else textInput">
+        <ng-container *ngIf="model.selection; else textInput">
             <md-select [(ngModel)]="model.value" ${propertyGenericContent}>
                 <md-option
                     *ngFor="let value of model.selection" [value]="value"
@@ -2976,9 +2976,9 @@ export class TextareaComponent extends AbstractInputComponent {
                     >
                         {{headerText || file?.name || model[attachmentTypeName][internalName]?.description || name}}
                     </span>
-                    <ng-container @defaultAnimation #editiable *ngIf="file?.name">
+                    <ng-container #editiable *ngIf="file?.name">
                         <!-- NOTE: NgIfElse doesnt work here. -->
-                        <ng-container @defaultAnimation *ngIf="synchronizeImmediately">
+                        <ng-container *ngIf="synchronizeImmediately">
                             <md-input-container
                                 [class.dirty]="editedName && editedName !== file.name"
                                 title="Focus to edit."
@@ -2988,14 +2988,15 @@ export class TextareaComponent extends AbstractInputComponent {
                                 (ngModelChange)="editedName = $event"
                             /></md-input-container>
                             <ng-container
-                                @defaultAnimation
                                 *ngIf="editedName && editedName !== file.name"
                             >
                                 <a
+                                    @defaultAnimation
                                     (click)="$event.preventDefault();rename(editedName)"
                                     href=""
                                 >✓</a>
                                 <a
+                                    @defaultAnimation
                                     (click)="$event.preventDefault();editedName = file.name"
                                     href=""
                                 >✕</a>
