@@ -2729,10 +2729,11 @@ export class IntervalInputComponent {
 // TODO test
 // IgnoreTypeCheck
 @Component({
+    animations: [defaultAnimation()],
     selector: 'generic-intervals-input',
     template: `
         <div>{{model.description || model.name}}</div>
-        <div *ngFor="let interval of model.value">
+        <div @defaultAnimation *ngFor="let interval of model.value">
             <generic-interval-input [model]="interval">
                 <ng-content></ng-content>
             </generic-interval-input>
@@ -3720,7 +3721,10 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
             <li @defaultAnimation *ngIf="page > 1">
                 <a href="" (click)="change($event, previousPage)">-</a>
             </li>
-            <li *ngFor="let currentPage of pagesRange;let even = even">
+            <li
+                @defaultAnimation
+                *ngFor="let currentPage of pagesRange;let even = even"
+            >
                 <a
                     href="" class="page-{{currentPage}}"
                     [ngClass]="{current: currentPage === page, previous: currentPage === previousPage, next: currentPage === nextPage, even: even, 'even-page': currentPage % 2 === 0, first: currentPage === firstPage, last: currentPage === lastPage}"
