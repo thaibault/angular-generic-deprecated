@@ -412,7 +412,8 @@ registerAngularTest(function(
                                 [[{_attachments: {a: {}}}], null],
                                 [[{_attachments: {a: {data: 2}}}], {
                                     _attachments: {a: {
-                                        content_type: 'application/octet-stream',
+                                        content_type:
+                                            'application/octet-stream',
                                         data: 2
                                     }}
                                 }],
@@ -434,7 +435,8 @@ registerAngularTest(function(
                                 // 34.
                                 [[{_attachments: {a: {data: 2, length: 2}}}, {
                                     _attachments: {a: {value: {
-                                        content_type: 'application/octet-stream',
+                                        content_type:
+                                            'application/octet-stream',
                                         length: 2, name: 'a'
                                     }}}
                                 }], null],
@@ -719,18 +721,19 @@ registerAngularTest(function(
                         })
                         // endregion
                         // region services
-                        self.test(`CanDeactivateRouteLeaveGuard (${roundType})`, (
-                            assert:Object
-                        ):void => {
-                            for (const test:Array<any> of [
-                                [{}, true],
-                                [{canDeactivate: ():false => false}, false]
-                            ])
-                                assert.strictEqual(
-                                    canDeactivateRouteLeave.canDeactivate(
-                                        test[0]
-                                    ), test[1])
-                        })
+                        self.test(
+                            `CanDeactivateRouteLeaveGuard (${roundType})`, (
+                                assert:Object
+                            ):void => {
+                                for (const test:Array<any> of [
+                                    [{}, true],
+                                    [{canDeactivate: ():false => false}, false]
+                                ])
+                                    assert.strictEqual(
+                                        canDeactivateRouteLeave.canDeactivate(
+                                            test[0]
+                                        ), test[1])
+                            })
                         self.test(`DataService (${roundType})`, async (
                             assert:Object
                         ):Promise<void> => {
@@ -742,11 +745,17 @@ registerAngularTest(function(
                                 item._rev = (await data.put(item)).rev
                                 assert.deepEqual(await data.get('a'), item)
                                 item.a = 'a'
-                                item._rev = (await data.bulkDocs([item]))[0].rev
+                                item._rev = (await data.bulkDocs([item]))[
+                                    0
+                                ].rev
                                 item._rev = 'upsert'
-                                item._rev = (await data.bulkDocs([item]))[0].rev
+                                item._rev = (await data.bulkDocs([item]))[
+                                    0
+                                ].rev
                                 item._rev = 'latest'
-                                item._rev = (await data.bulkDocs([item]))[0].rev
+                                item._rev = (await data.bulkDocs([item]))[
+                                    0
+                                ].rev
                                 item._rev = 'upsert'
                                 item._rev = (await data.put(item)).rev
                                 item._rev = 'latest'
