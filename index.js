@@ -2982,11 +2982,29 @@ export class TextareaComponent extends AbstractInputComponent {
                             <md-input-container
                                 [class.dirty]="editedName && editedName !== file.name"
                                 title="Focus to edit."
-                            ><input
-                                mdInput
-                                [ngModel]="editedName || file.name"
-                                (ngModelChange)="editedName = $event"
-                            /></md-input-container>
+                            >
+                                <input
+                                    mdInput
+                                    [ngModel]="editedName || file.name"
+                                    (ngModelChange)="editedName = $event"
+                                />
+                                <md-hint
+                                    @defaultAnimation
+                                    [class.activ]="showDeclaration"
+                                    (click)="showDeclaration = !showDeclaration"
+                                    title="info"
+                                    *ngIf="model[attachmentTypeName][internalName]?.declaration"
+                                >
+                                    <a
+                                        @defaultAnimation
+                                        (click)="$event.preventDefault()" href=""
+                                        *ngIf="infoText"
+                                    >{{infoText}}</a>
+                                    <span @defaultAnimation *ngIf="showDeclaration">
+                                        {{model[attachmentTypeName][internalName].declaration}}
+                                    </span>
+                                </md-hint>
+                            </md-input-container>
                             <ng-container
                                 *ngIf="editedName && editedName !== file.name"
                             >
