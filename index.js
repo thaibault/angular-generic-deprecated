@@ -1604,59 +1604,77 @@ export class DataScopeService {
         this.tools = tools.tools
     }
     /**
-     * Retrieves needed data for given scope.
-     * @param scope - Scope to use to determine which data is needed.
-     * @returns Resolved data.
+     * Useful to sets route specific data in a resolver.
+     * @param modelName - Name of model to retrieve data from.
+     * @param id - ID of an entity to retrieve data from.
+     * @param propertyNames - List of property names to retrieve data from.
+     * @param revision - Revision to use for retrieving needed data from data
+     * service.
+     * @param revisionHistory - Indicates whether the revision history should
+     * be included.
+     * @returns A promise wrapping requested data.
      */
-    get(scope:Object):PlainObject {
-        const specialNames:PlainObject =
-            this.configuration.database.model.property.name.special
-        const result:PlainObject = {}
-        for (const key:string in scope)
-            if (scope.hasOwnProperty(key) && (!(
-                specialNames.type in scope
-            ) || this.configuration.database.model.entities[scope[
-                specialNames.type
-            ]].hasOwnProperty(key)) && ![
-                specialNames.additional,
-                // NOTE: Will be handled later.
-                specialNames.attachment,
-                specialNames.allowedRole,
-                specialNames.conflict,
-                specialNames.deletedConflict,
-                specialNames.localSequence,
-                specialNames.revisions,
-                specialNames.revisionsInformations
-            ].includes(key))
-                if (
-                    typeof scope[key] === 'object' && scope[key] !== null &&
-                    'hasOwnProperty' in scope && scope[key].hasOwnProperty(
-                        'value')
-                )
-                    result[key] = scope[key].value
-                else
-                    result[key] = scope[key]
-        if (scope.hasOwnProperty(
-            specialNames.attachment
-        ) && scope[specialNames.attachment])
-            for (const key:string in scope[specialNames.attachment])
-                if (scope[specialNames.attachment].hasOwnProperty(
-                    key
-                ) && typeof scope[specialNames.attachment][key] === 'object' &&
-                scope[specialNames.attachment][key] !== null &&
-                'hasOwnProperty' in scope[specialNames.attachment] &&
-                scope[specialNames.attachment][key].hasOwnProperty(
-                    'value'
-                ) && scope[specialNames.attachment][key].value) {
-                    if (!result[specialNames.attachment])
-                        result[specialNames.attachment] = {}
-                    result[specialNames.attachment][scope[
-                        specialNames.attachment
-                    ][key].value.name] = scope[specialNames.attachment][
-                        key
-                    ].value
-                }
-        return result
+    async determine(
+        modelName:string, id:?string = null,
+        propertyNames:?Array<string> = null, revision:string = 'latest',
+        revisionHistory:boolean = false
+    ):Promise<PlainObject> {
+        let data:PlainObject = {}
+        if (id) {
+            const options:PlainObject = {}
+            if (revision === 'latest') {
+                options.latest = true
+                if (revisionHistory)
+                    options.revs_info = true
+            } else
+                options.rev = revision
+            try {
+                data = await this.data.get(id, options)
+            } catch (error) {
+                throw new Error(
+                    `Document with given id "${id}" and revision "` +
+                    `${revision}" isn't available: ` + ((
+                        'message' in error
+                    ) ? error.message : this.tools.representObject(error)))
+            }
+            if (revisionHistory) {
+                const revisionsInformationName:string =
+                    this.configuration.database.model.property.name.special
+                    .revisionsInformation
+                let revisions:Array<PlainObject>
+                let latestData:?PlainObject
+                if (revision !== 'latest') {
+                    delete options.rev
+                    options.revs_info = true
+                    try {
+                        latestData = await this.data.get(id, options)
+                    } catch (error) {
+                        throw new Error(
+                            `Document with given id "${id}" and revision "` +
+                            `${revision}" isn't available: ` + ((
+                                'message' in error
+                            ) ? error.message : this.tools.representObject(
+                                error)))
+                    }
+                    revisions = latestData[revisionsInformationName]
+                    delete latestData[revisionsInformationName]
+                } else
+                    revisions = data[revisionsInformationName]
+                data[revisionsInformationName] = {}
+                let first:boolean = true
+                for (const item:PlainObject of revisions)
+                    if (item.status === 'available') {
+                        data[revisionsInformationName][
+                            first ? 'latest' : item.rev
+                        ] = {revision: item.rev}
+                        first = false
+                    }
+                if (latestData)
+                    data[revisionsInformationName].latest.scope =
+                        this.generate(modelName, propertyNames, latestData)
+            }
+        }
+        return this.generate(modelName, propertyNames, data)
     }
     /**
      * Generates a scope object for given model with given property names and
@@ -1865,77 +1883,59 @@ export class DataScopeService {
         return result
     }
     /**
-     * Useful to sets route specific data in a resolver.
-     * @param modelName - Name of model to retrieve data from.
-     * @param id - ID of an entity to retrieve data from.
-     * @param propertyNames - List of property names to retrieve data from.
-     * @param revision - Revision to use for retrieving needed data from data
-     * service.
-     * @param revisionHistory - Indicates whether the revision history should
-     * be included.
-     * @returns A promise wrapping requested data.
+     * Retrieves needed data for given scope.
+     * @param scope - Scope to use to determine which data is needed.
+     * @returns Resolved data.
      */
-    async determine(
-        modelName:string, id:?string = null,
-        propertyNames:?Array<string> = null, revision:string = 'latest',
-        revisionHistory:boolean = false
-    ):Promise<PlainObject> {
-        let data:PlainObject = {}
-        if (id) {
-            const options:PlainObject = {}
-            if (revision === 'latest') {
-                options.latest = true
-                if (revisionHistory)
-                    options.revs_info = true
-            } else
-                options.rev = revision
-            try {
-                data = await this.data.get(id, options)
-            } catch (error) {
-                throw new Error(
-                    `Document with given id "${id}" and revision "` +
-                    `${revision}" isn't available: ` + ((
-                        'message' in error
-                    ) ? error.message : this.tools.representObject(error)))
-            }
-            if (revisionHistory) {
-                const revisionsInformationName:string =
-                    this.configuration.database.model.property.name.special
-                    .revisionsInformation
-                let revisions:Array<PlainObject>
-                let latestData:?PlainObject
-                if (revision !== 'latest') {
-                    delete options.rev
-                    options.revs_info = true
-                    try {
-                        latestData = await this.data.get(id, options)
-                    } catch (error) {
-                        throw new Error(
-                            `Document with given id "${id}" and revision "` +
-                            `${revision}" isn't available: ` + ((
-                                'message' in error
-                            ) ? error.message : this.tools.representObject(
-                                error)))
-                    }
-                    revisions = latestData[revisionsInformationName]
-                    delete latestData[revisionsInformationName]
-                } else
-                    revisions = data[revisionsInformationName]
-                data[revisionsInformationName] = {}
-                let first:boolean = true
-                for (const item:PlainObject of revisions)
-                    if (item.status === 'available') {
-                        data[revisionsInformationName][
-                            first ? 'latest' : item.rev
-                        ] = {revision: item.rev}
-                        first = false
-                    }
-                if (latestData)
-                    data[revisionsInformationName].latest.scope =
-                        this.generate(modelName, propertyNames, latestData)
-            }
-        }
-        return this.generate(modelName, propertyNames, data)
+    get(scope:Object):PlainObject {
+        const specialNames:PlainObject =
+            this.configuration.database.model.property.name.special
+        const result:PlainObject = {}
+        for (const key:string in scope)
+            if (scope.hasOwnProperty(key) && (!(
+                specialNames.type in scope
+            ) || this.configuration.database.model.entities[scope[
+                specialNames.type
+            ]].hasOwnProperty(key)) && ![
+                specialNames.additional,
+                // NOTE: Will be handled later.
+                specialNames.attachment,
+                specialNames.allowedRole,
+                specialNames.conflict,
+                specialNames.deletedConflict,
+                specialNames.localSequence,
+                specialNames.revisions,
+                specialNames.revisionsInformations
+            ].includes(key))
+                if (
+                    typeof scope[key] === 'object' && scope[key] !== null &&
+                    'hasOwnProperty' in scope && scope[key].hasOwnProperty(
+                        'value')
+                )
+                    result[key] = scope[key].value
+                else
+                    result[key] = scope[key]
+        if (scope.hasOwnProperty(
+            specialNames.attachment
+        ) && scope[specialNames.attachment])
+            for (const key:string in scope[specialNames.attachment])
+                if (scope[specialNames.attachment].hasOwnProperty(
+                    key
+                ) && typeof scope[specialNames.attachment][key] === 'object' &&
+                scope[specialNames.attachment][key] !== null &&
+                'hasOwnProperty' in scope[specialNames.attachment] &&
+                scope[specialNames.attachment][key].hasOwnProperty(
+                    'value'
+                ) && scope[specialNames.attachment][key].value) {
+                    if (!result[specialNames.attachment])
+                        result[specialNames.attachment] = {}
+                    result[specialNames.attachment][scope[
+                        specialNames.attachment
+                    ][key].value.name] = scope[specialNames.attachment][
+                        key
+                    ].value
+                }
+        return result
     }
 }
 // / region abstract
