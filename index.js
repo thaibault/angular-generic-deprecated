@@ -1038,6 +1038,7 @@ export class AlertService {
  * can be intercepted.
  * @property connection - The current database connection instance.
  * @property database - The entire database constructor.
+ * @property equals - Hilds the equals pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
  * @property interceptSynchronisationPromise - Promise which have to be
@@ -1063,6 +1064,7 @@ export class DataService {
     connection:PouchDB
     configuration:PlainObject
     database:typeof PouchDB
+    equals:Function
     extendObject:Function
     interceptSynchronisationPromise:?Promise<any> = null
     middlewares:{
@@ -1098,7 +1100,7 @@ export class DataService {
             this.configuration.database.url =
                 this.configuration.database.publicURL
         this.database = PouchDB
-        this.equalsPipe = equalsPipe
+        this.equals = equalsPipe.transform.bind(equalsPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
@@ -1413,9 +1415,9 @@ export class DataService {
         if (LAST_KNOWN_DATA.data.hasOwnProperty(
             result[idName]
         ) && parameter.length > 1 && (
-            this.equalsPipe(parameter[1], {rev: 'latest'}) ||
-            this.equalsPipe(parameter[1], {latest: true}) ||
-            this.equalsPipe(parameter[1], {latest: true, rev: 'latest'})
+            this.equals(parameter[1], {rev: 'latest'}) ||
+            this.equals(parameter[1], {latest: true}) ||
+            this.equals(parameter[1], {latest: true, rev: 'latest'})
         ) && parseInt(result[revisionName].match(
             this.constructor.revisionNumberRegularExpression
         )[1]) < parseInt(LAST_KNOWN_DATA.data[result[idName]][
