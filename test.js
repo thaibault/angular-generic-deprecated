@@ -24,6 +24,7 @@ try {
 
 import registerAngularTest from './testRunner'
 // endregion
+// TODO check if all needed tests exists.
 // region tests
 registerAngularTest(function(
     ApplicationComponent:Object, roundType:string, targetTechnology:?string,
