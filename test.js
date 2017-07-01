@@ -339,6 +339,26 @@ registerAngularTest(function(
                         })
                         // / endregion
                         // / region object
+                        self.test(
+                            `AttachmentWithPrefixExistsPipe (${roundType})`, (
+                                assert:Object
+                            ):void => {
+                                for (const test:Array<any> of [
+                                    [{_attachments: {a: {data: ''}}}, 'a'],
+                                    [{_attachments: {a: {data: 'a'}}}, 'a']
+                                ])
+                                    assert.ok(
+                                        attachmentWithPrefixExistsPipe
+                                        .transform(test[0], test[1]))
+                                for (const test:Array<any> of [
+                                    [{}, null],
+                                    [{}, 'a'],
+                                    [{_attachments: {a: {data: 'a'}}}, 'b']
+                                ])
+                                    assert.notOk(
+                                        attachmentWithPrefixExistsPipe
+                                        .transform(test[0], test[1]))
+                            })
                         self.test(`ExtractRawDataPipe (${roundType})`, (
                             assert:Object
                         ):void => {
@@ -473,18 +493,6 @@ registerAngularTest(function(
                                     test[1])
                             // endregion
                         })
-                        self.test(`IsDefinedPipe (${roundType})`, (
-                            assert:Object
-                        ):void => {
-                            for (const test:any of [
-                                2, true, {}, null, new Error('a'), Object, []
-                            ])
-                                assert.ok(isDefinedPipe.transform(test))
-                            assert.notOk(isDefinedPipe.transform(null, true))
-                            assert.notOk(isDefinedPipe.transform(undefined))
-                            assert.notOk(isDefinedPipe.transform(
-                                undefined, true))
-                        })
                         self.test(`GetFilenameByPrefixPipe (${roundType})`, (
                             assert:Object
                         ):void => {
@@ -499,26 +507,19 @@ registerAngularTest(function(
                                         ...test[0]),
                                     test[1])
                         })
-                        self.test(
-                            `AttachmentWithPrefixExistsPipe (${roundType})`, (
-                                assert:Object
-                            ):void => {
-                                for (const test:Array<any> of [
-                                    [{_attachments: {a: {data: ''}}}, 'a'],
-                                    [{_attachments: {a: {data: 'a'}}}, 'a']
-                                ])
-                                    assert.ok(
-                                        attachmentWithPrefixExistsPipe
-                                        .transform(test[0], test[1]))
-                                for (const test:Array<any> of [
-                                    [{}, null],
-                                    [{}, 'a'],
-                                    [{_attachments: {a: {data: 'a'}}}, 'b']
-                                ])
-                                    assert.notOk(
-                                        attachmentWithPrefixExistsPipe
-                                        .transform(test[0], test[1]))
-                            })
+
+                        self.test(`IsDefinedPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:any of [
+                                2, true, {}, null, new Error('a'), Object, []
+                            ])
+                                assert.ok(isDefinedPipe.transform(test))
+                            assert.notOk(isDefinedPipe.transform(null, true))
+                            assert.notOk(isDefinedPipe.transform(undefined))
+                            assert.notOk(isDefinedPipe.transform(
+                                undefined, true))
+                        })
                         self.test(`LimitToPipe (${roundType})`, (
                             assert:Object
                         ):void => {
@@ -704,6 +705,7 @@ registerAngularTest(function(
                                     test[1])
                         })
                         // / endregion
+                        // / region number
                         self.test(`NumberPercentPipe (${roundType})`, (
                             assert:Object
                         ):void => {
@@ -719,6 +721,7 @@ registerAngularTest(function(
                                         test[0], test[1]),
                                     test[2])
                         })
+                        // / endregion
                         // endregion
                         // region services
                         self.test(

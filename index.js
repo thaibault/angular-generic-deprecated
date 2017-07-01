@@ -533,7 +533,7 @@ export class GetFilenameByPrefixPipe/* implements PipeTransform*/ {
     }
 }
 // IgnoreTypeCheck
-@Pipe({name: 'attachmentWithPrefixExists'})
+@Pipe({name: 'genericAttachmentWithPrefixExists'})
 /**
  * Retrieves if a filename with given prefix exists.
  * @property attachmentName - Name of attachment property.
@@ -992,7 +992,6 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
     }
 }
 // / region confirm
-// TODO
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
@@ -2497,7 +2496,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     goToItem(itemID:string, itemVersion:string):Promise<boolean> {
         return this._router.navigate([this._itemPath, itemID, itemVersion])
     }
-    // TODO test
     /**
      * Checks if selection has changed.
      * @returns Nothing.
@@ -2513,7 +2511,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * reload will be triggered.
      */
     onDataChange(...parameter:Array<any>):false {
-        // TODO test
         if (this.selectedItems.size)
             this.preventedDataUpdate = parameter
         else {
@@ -2522,7 +2519,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
         }
         /*
             NOTE: We want to avoid another reload if page is already violating
-            page constraints which indicates a page reload workaround.
+            page constraints which indicates a page reload.
         */
         return false
     }
@@ -2582,7 +2579,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
  * @property type - Saves current input type.
  */
 export class AbstractValueAccessor extends DefaultValueAccessor {
-    // TODO check tests
     @Input() type:?string
     /**
      * Manipulates editable value representation.
@@ -2638,7 +2634,6 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
  * Time value accessor with "ngModel" support.
  */
 export class DateTimeValueAccessor extends AbstractValueAccessor {
-    // TODO check tests
     /**
      * Initializes and forwards needed services to the default value accesor
      * constructor.
@@ -2701,7 +2696,6 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
     }
 }
 // // / region intervall
-// TODO test
 // IgnoreTypeCheck
 @Component({
     selector: 'generic-interval-input',
@@ -2726,7 +2720,6 @@ export class IntervalInputComponent {
         start: (new Date(1970, 0, 1)).getTime()
     }
 }
-// TODO test
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
@@ -3519,7 +3512,6 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         this.file.name = name
         return this.update(oldName)
     }
-    // TODO test
     /**
      * Retrieves current attachment with given document id and converts them
      * into a base 64 string which will be set as file source.
@@ -3538,7 +3530,6 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         this.file.source = this._domSanitizer.bypassSecurityTrustResourceUrl(
             `data:${this.file.content_type};base64,${this.file.data}`)
     }
-    // TODO test
     /**
      * Updates given current file into database (replaces if old name is
      * given).
