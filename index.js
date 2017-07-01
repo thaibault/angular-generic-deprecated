@@ -29,7 +29,7 @@ import {
     /* eslint-disable no-unused-vars */
     Directive, ElementRef, EventEmitter, forwardRef, Injectable, Inject,
     /* eslint-enable no-unused-vars */
-    Injector, Input, NgModule, /* OnChanges, OnInit,*/ Output, Pipe,
+    Injector, Input, NgModule, /* OnChanges, OnInit,*/ Optional, Output, Pipe,
     /* eslint-disable no-unused-vars */
     PipeTransform, PLATFORM_ID, ReflectiveInjector, Renderer, ViewChild
     /* eslint-enable no-unused-vars */
@@ -178,6 +178,82 @@ const StringEscapeRegularExpressionsPipe:PipeTransform =
 const StringFormatPipe:PipeTransform = module.exports.StringFormatPipe
 // / endregion
 // / region object
+// IgnoreTypeCheck
+@Pipe({name: 'genericGetFilenameByPrefix'})
+/**
+ * Retrieves a matching filename by given filename prefix.
+ */
+export class GetFilenameByPrefixPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual transformations process.
+     * @param attachments - Documents attachments object to determine file with
+     * matching file name prefix.
+     * @param prefix - Prefix or nothing to search for. If nothing given first
+     * file name will be returned.
+     * @returns Matching file name or null if no file matches.
+     */
+    transform(attachments:PlainObject, prefix:?string):?string {
+        if (prefix) {
+            for (const name:string in attachments)
+                if (attachments.hasOwnProperty(name) && name.startsWith(
+                    prefix
+                ))
+                    return name
+        } else {
+            const keys:Array<string> = Object.keys(attachments)
+            if (keys.length)
+                return keys[0]
+        }
+        return null
+    }
+}
+// IgnoreTypeCheck
+@Pipe({name: 'genericAttachmentWithPrefixExists'})
+/**
+ * Retrieves if a filename with given prefix exists.
+ * @property attachmentName - Name of attachment property.
+ * @property getFilenameByPrefix - Filename by prefix pipe's transformation
+ * function.
+ */
+export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
+    attachmentName:string
+    getFilenameByPrefix:Function
+    /**
+     * Gets needed file name by prefix pipe injected.
+     * @param getFilenameByPrefixPipe - Filename by prefix pipe instance.
+     * @param initialData - Injected initial data service.
+     * @returns Nothing.
+     */
+    constructor(
+        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
+        initialData:InitialDataService
+    ):void {
+        this.attachmentName = initialData.configuration.database.model.property
+            .name.special.attachment
+        this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
+            getFilenameByPrefixPipe)
+    }
+    /**
+     * Performs the actual transformations process.
+     * @param document - Documents with attachments to analyse.
+     * @param namePrefix - Prefix or nothing to search for. If nothing given
+     * "false" will be returned either.
+     * @returns Boolean indication if given file name prefix exists.
+     */
+    transform(document:PlainObject, namePrefix:?string):boolean {
+        if (document.hasOwnProperty(this.attachmentName)) {
+            const name:?string = this.getFilenameByPrefix(
+                document[this.attachmentName], namePrefix)
+            if (name)
+                return document[this.attachmentName][name].hasOwnProperty(
+                    'data'
+                ) && ![undefined, null].includes(document[this.attachmentName][
+                    name
+                ].data)
+        }
+        return false
+    }
+}
 // IgnoreTypeCheck
 @Pipe({name: 'genericExtractRawData'})
 /**
@@ -501,82 +577,6 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     break
                 }
         return payloadExists ? result : null
-    }
-}
-// IgnoreTypeCheck
-@Pipe({name: 'genericGetFilenameByPrefix'})
-/**
- * Retrieves a matching filename by given filename prefix.
- */
-export class GetFilenameByPrefixPipe/* implements PipeTransform*/ {
-    /**
-     * Performs the actual transformations process.
-     * @param attachments - Documents attachments object to determine file with
-     * matching file name prefix.
-     * @param prefix - Prefix or nothing to search for. If nothing given first
-     * file name will be returned.
-     * @returns Matching file name or null if no file matches.
-     */
-    transform(attachments:PlainObject, prefix:?string):?string {
-        if (prefix) {
-            for (const name:string in attachments)
-                if (attachments.hasOwnProperty(name) && name.startsWith(
-                    prefix
-                ))
-                    return name
-        } else {
-            const keys:Array<string> = Object.keys(attachments)
-            if (keys.length)
-                return keys[0]
-        }
-        return null
-    }
-}
-// IgnoreTypeCheck
-@Pipe({name: 'genericAttachmentWithPrefixExists'})
-/**
- * Retrieves if a filename with given prefix exists.
- * @property attachmentName - Name of attachment property.
- * @property getFilenameByPrefix - Filename by prefix pipe's transformation
- * function.
- */
-export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
-    attachmentName:string
-    getFilenameByPrefix:Function
-    /**
-     * Gets needed file name by prefix pipe injected.
-     * @param getFilenameByPrefixPipe - Filename by prefix pipe instance.
-     * @param initialData - Injected initial data service.
-     * @returns Nothing.
-     */
-    constructor(
-        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-        initialData:InitialDataService
-    ):void {
-        this.attachmentName = initialData.configuration.database.model.property
-            .name.special.attachment
-        this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
-            getFilenameByPrefixPipe)
-    }
-    /**
-     * Performs the actual transformations process.
-     * @param document - Documents with attachments to analyse.
-     * @param namePrefix - Prefix or nothing to search for. If nothing given
-     * "false" will be returned either.
-     * @returns Boolean indication if given file name prefix exists.
-     */
-    transform(document:PlainObject, namePrefix:?string):boolean {
-        if (document.hasOwnProperty(this.attachmentName)) {
-            const name:?string = this.getFilenameByPrefix(
-                document[this.attachmentName], namePrefix)
-            if (name)
-                return document[this.attachmentName][name].hasOwnProperty(
-                    'data'
-                ) && ![undefined, null].includes(document[this.attachmentName][
-                    name
-                ].data)
-        }
-        return false
     }
 }
 // IgnoreTypeCheck
@@ -1019,7 +1019,7 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
  */
 export class ConfirmComponent {
     @Input() cancelText:string = 'Cancel'
-    dialogReference:MdDialogRef<ConfirmComponent>
+    dialogReference:?MdDialogRef<ConfirmComponent> = null
     @Input() okText:string = 'OK'
     /**
      * Gets needed component data injected.
@@ -1028,8 +1028,8 @@ export class ConfirmComponent {
      * @returns Nothing.
      */
     constructor(
-        @Inject(MD_DIALOG_DATA) data:any,
-        dialogReference:MdDialogRef<ConfirmComponent>
+        @Optional() @Inject(MD_DIALOG_DATA) data:any = null,
+        @Optional() dialogReference:?MdDialogRef<ConfirmComponent> = null
     ):void {
         this.dialogReference = dialogReference
         if (typeof data === 'object' && data !== null)
@@ -1043,9 +1043,11 @@ export class ConfirmComponent {
 /**
  * Alert service to trigger a dialog window which can be confirmed.
  * @property dialog - Reference to the dialog component instance.
+ * @property dialogReference - Reference to the dialog service instance.
  */
 export class AlertService {
     dialog:MdDialog
+    dialogReference:MdDialogRef<any>
     /**
      * Gets needed component dialog service instance injected.
      * @param dialog - Reference to the dialog component instance.
@@ -1069,8 +1071,8 @@ export class AlertService {
                 'data')
         )
             data = {data}
-        return this.dialog.open(ConfirmComponent, data).afterClosed(
-        ).toPromise()
+        this.dialogReference = this.dialog.open(ConfirmComponent, data)
+        return this.dialogReference.afterClosed().toPromise()
     }
 }
 // / endregion

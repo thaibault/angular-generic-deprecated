@@ -169,8 +169,9 @@ registerAngularTest(function(
             }}
             const Module:Object = index.default
             const {
-                AttachmentWithPrefixExistsPipe,
                 AbstractResolver,
+                AlertService,
+                AttachmentWithPrefixExistsPipe,
                 CanDeactivateRouteLeaveGuard,
                 DataScopeService,
                 ExtendObjectPipe,
@@ -192,7 +193,9 @@ registerAngularTest(function(
                 StringMaximumLengthPipe,
                 StringSliceMatchPipe,
                 StringHasTimeSuffixPipe,
-                TypePipe
+                TypePipe,
+                defaultAnimation,
+                fadeAnimation
             } = index
             // IgnoreTypeCheck
             @Injectable()
@@ -282,6 +285,7 @@ registerAngularTest(function(
                  * @returns Nothing.
                  */
                 constructor(
+                    alert:AlertService,
                 attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
                     canDeactivateRouteLeave:CanDeactivateRouteLeaveGuard,
                     data:DataService,
@@ -611,7 +615,7 @@ registerAngularTest(function(
                                 assert.notOk(stringHasTimeSuffixPipe.transform(
                                     test))
                         })
-                        self.test(`stringMatchPipe (${roundType})`, (
+                        self.test(`StringMatchPipe (${roundType})`, (
                             assert:Object
                         ):void => {
                             for (const test:Array<any> of [
@@ -632,7 +636,7 @@ registerAngularTest(function(
                                 assert.notOk(stringMatchPipe.transform(
                                     ...test))
                         })
-                        self.test(`stringMaximumLengthPipe (${roundType})`, (
+                        self.test(`StringMaximumLengthPipe (${roundType})`, (
                             assert:Object
                         ):void => {
                             for (const test:Array<any> of [
@@ -723,6 +727,16 @@ registerAngularTest(function(
                         })
                         // / endregion
                         // endregion
+                        // region animations
+                        self.test(`fadeAnimation (${roundType})`, (
+                            assert:Object
+                        ):void => assert.strictEqual(
+                            typeof fadeAnimation(), 'object'))
+                        self.test(`defaultAnimation (${roundType})`, (
+                            assert:Object
+                        ):void => assert.strictEqual(
+                            typeof defaultAnimation(), 'object'))
+                        // endregion
                         // region services
                         self.test(
                             `CanDeactivateRouteLeaveGuard (${roundType})`, (
@@ -737,6 +751,21 @@ registerAngularTest(function(
                                             test[0]
                                         ), test[1])
                             })
+                        // / region confirm
+                        self.test(`AlertService (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            const done:Function = assert.async()
+                            alert.confirm('test').then((result:true):void =>
+                                assert.ok(result))
+                            alert.dialogReference.close(true)
+                            alert.confirm('test').then((result:true):void => {
+                                assert.notOk(result)
+                                done()
+                            })
+                            alert.dialogReference.close(false)
+                        })
+                        // / endregion
                         self.test(`DataService (${roundType})`, async (
                             assert:Object
                         ):Promise<void> => {
@@ -1029,6 +1058,7 @@ registerAngularTest(function(
                 }
             }
             this.module(`Module.services (${roundType})`)
+            // endregion
             return [TestModule, {
                 declarations: [
                     ItemsComponent,
@@ -1040,12 +1070,12 @@ registerAngularTest(function(
                     {provide: Router, useClass: RouterStub}
                 ]
             }]
-            // endregion
         },
         component: function(TestBed:Object, roundType:string):void {
             // region prepare components
             const {
                 AbstractInputComponent,
+                ConfirmComponent,
                 FileInputComponent,
                 InputComponent,
                 PaginationComponent,
@@ -1054,6 +1084,28 @@ registerAngularTest(function(
             // endregion
             // region test components
             this.module(`Module.components (${roundType})`)
+            // /  region confirm
+            this.test(`ConfirmComponent (${roundType})`, async (
+                assert:Object
+            ):Promise<void> => {
+                const done:Function = assert.async()
+                try {
+                    const fixture:ComponentFixture<ConfirmComponent> =
+                        TestBed.createComponent(ConfirmComponent)
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.strictEqual(
+                        fixture.componentInstance.cancelText, 'Cancel')
+                    assert.strictEqual(
+                        fixture.componentInstance.dialogReference, null)
+                    assert.strictEqual(fixture.componentInstance.okText, 'OK')
+                } catch (error) {
+                    console.error(error)
+                    assert.ok(false)
+                }
+                done()
+            })
+            // / endregion
             // / region input/textarea
             for (const component:AbstractInputComponent of [
                 InputComponent, TextareaComponent
