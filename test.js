@@ -1504,7 +1504,7 @@ registerAngularTest(function(
                     )).nativeElement.className.split(' ').filter((
                         name:string
                     ):boolean => !name.startsWith('ng-')).sort(),
-                    ['current', 'even-page', 'page-4'])
+                    ['current', 'even', 'page-3'])
                 } catch (error) {
                     console.error(error)
                     assert.ok(false)

@@ -3715,14 +3715,14 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 <a href="" (click)="change($event, previousPage)">-</a>
             </li>
             <li
+                class="page-{{currentPage}}"
                 @defaultAnimation
                 [ngClass]="{current: currentPage === page, previous: currentPage === previousPage, next: currentPage === nextPage, even: even, 'even-page': currentPage % 2 === 0, first: currentPage === firstPage, last: currentPage === lastPage}"
                 *ngFor="let currentPage of pagesRange;let even = even"
             >
-                <a
-                    href="" class="page-{{currentPage}}"
-                    (click)="change($event, currentPage)"
-                >{{currentPage}}</a>
+                <a href="" (click)="change($event, currentPage)">
+                    {{currentPage}}
+                </a>
             </li>
             <li @defaultAnimation *ngIf="lastPage > page">
                 <a href="" (click)="change($event, nextPage)">+</a>
