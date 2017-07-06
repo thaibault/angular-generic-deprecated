@@ -91,7 +91,7 @@ export class InitialDataService {
     /**
      * Sets all properties of given initial data as properties to this
      * initializing instance.
-     * @param tools - Saves the generic tools service.
+     * @param tools - Saves the generic tools service instance.
      * @returns Nothing.
      */
     constructor(tools:ToolsService):void {
@@ -3034,6 +3034,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
         </md-input-container></ng-template>
     `
 })
+/* eslint-disable brace-style */
 /**
  * A generic form textarea component with validation, labeling and info
  * description support.
@@ -3044,7 +3045,8 @@ export class SimpleInputComponent extends AbstractInputComponent {
  * @property rows - Number of rows to show.
  */
 export class TextareaComponent extends AbstractInputComponent
-/* implements OnChanges */{
+/* implements OnChanges, OnInit*/{
+/* eslint-enable brace-style */
     @Input() editorOptions:?PlainObject = {}
     @Input() editorType:string = ''
     @Input() maximumNumberOfRows:?string
@@ -3059,28 +3061,40 @@ export class TextareaComponent extends AbstractInputComponent
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
      * @param initialData - Injected initial data service instance.
+     * @param tools - Saves the generic tools service instance.
      * @returns Nothing.
      */
     constructor(
         attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
         extendObjectPipe:ExtendObjectPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-        initialData:InitialDataService
+        initialData:InitialDataService, tools:ToolsService
     ):void {
         super(
             attachmentWithPrefixExistsPipe, extendObjectPipe,
             getFilenameByPrefixPipe, initialData)
+        this._tools = tools
+        if (this.editorOptions && Object.keys(
+            this.editorOptions
+        ).length === 0 && initialData.configuration.editorOptions)
+            this.editorOptions = this._tools.copyLimitedRecursively(
+                initialData.configuration.editorOptions)
     }
     /**
-     * Initializes textarea editor options.
-     * @param changes - Holds informations about changed bound properties.
+     * Triggers after input values have been resolved.
      * @returns Nothing.
      */
-    ngOnChanges(changes:Object):void {
-        if (changes.hasOwnProperty('editorOptions') && this.editorOptions) {
-            if (Object.keys(this.editorOptions).length === 0)
+    ngOnInit():void {
+        super.ngOnInit()
+        if (Object.keys(this.editorOptions).length === 0)
+            if (this.model.editorOptions)
+                this.editorOptions = this._extendObject(
+                    this.editorOptions, this._tools.copyLimitedRecursively(
+                        this.model.editorOptions))
+            else
                 this._extendObject(this.editorOptions, {
                     advanced: {},
+                    /* eslint-disable max-len */
                     normal: {
                         toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect | searchreplace visualblocks fullscreen code'
                     },
@@ -3088,34 +3102,42 @@ export class TextareaComponent extends AbstractInputComponent
                         toolbar1: 'cut copy paste | undo redo removeformat | bold italic underline strikethrough subscript superscript | fullscreen',
                         toolbar2: false
                     }
+                    /* eslint-enable max-len */
                 })
+    }
+    /**
+     * Initializes textarea editor options.
+     * @param changes - Holds informations about changed bound properties.
+     * @returns Nothing.
+     */
+    ngOnChanges(changes:Object):void {
+        if (changes.hasOwnProperty('editorOptions') && this.editorOptions)
             for (const key:string in this.editorOptions)
                 if (this.editorOptions.hasOwnProperty(key))
                     this._extendObject(true, this.editorOptions[key], {
-                        document_base_url: '/',
-                        relative_urls: false,
-                        hidden_input: false,
+                        allow_conditional_comments: false,
+                        allow_script_urls: false,
                         cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
-                        plugins: 'fullscreen link code hr nonbreaking searchreplace visualblocks',
-                        menubar: false,
-                        toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect fontselect fontsizeselect | searchreplace visualblocks fullscreen code',
-                        toolbar2: 'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',
+                        convert_fonts_to_spans: true,
+                        document_base_url: '/',
+                        element_format: 'xhtml',
                         entity_encoding: 'raw',
                         fix_list_elements: true,
                         forced_root_block: null,
-                        trim: true,
-                        allow_conditional_comments: false,
-                        convert_fonts_to_spans: true,
-                        element_format: 'xhtml',
+                        hidden_input: false,
                         invalid_elements: 'em',
                         invalid_styles: 'color font-size line-height',
                         keep_styles: false,
+                        menubar: false,
+                        plugins: 'fullscreen link code hr nonbreaking searchreplace visualblocks',
+                        relative_urls: false,
+                        remove_script_host: false,
                         remove_trailing_brs: true,
                         schema: 'html5',
-                        allow_script_urls: false,
-                        remove_script_host: false,
+                        toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect fontselect fontsizeselect | searchreplace visualblocks fullscreen code',
+                        toolbar2: 'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',
+                        trim: true
                     }, this.editorOptions[key])
-        }
     }
 }
 // // endregion
