@@ -3002,6 +3002,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
             getFilenameByPrefixPipe, initialData)
     }
 }
+/* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
@@ -3034,6 +3035,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
         </md-input-container></ng-template>
     `
 })
+/* eslint-enable max-len */
 /* eslint-disable brace-style */
 /**
  * A generic form textarea component with validation, labeling and info
@@ -3094,15 +3096,17 @@ export class TextareaComponent extends AbstractInputComponent
             else
                 this._extendObject(this.editorOptions, {
                     advanced: {},
-                    /* eslint-disable max-len */
                     normal: {
+                        /* eslint-disable max-len */
                         toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect | searchreplace visualblocks fullscreen code'
+                        /* eslint-enable max-len */
                     },
                     simple: {
+                        /* eslint-disable max-len */
                         toolbar1: 'cut copy paste | undo redo removeformat | bold italic underline strikethrough subscript superscript | fullscreen',
                         toolbar2: false
+                        /* eslint-enable max-len */
                     }
-                    /* eslint-enable max-len */
                 })
     }
     /**
@@ -3129,13 +3133,17 @@ export class TextareaComponent extends AbstractInputComponent
                         invalid_styles: 'color font-size line-height',
                         keep_styles: false,
                         menubar: false,
+                        /* eslint-disable max-len */
                         plugins: 'fullscreen link code hr nonbreaking searchreplace visualblocks',
+                        /* eslint-enable max-len */
                         relative_urls: false,
                         remove_script_host: false,
                         remove_trailing_brs: true,
                         schema: 'html5',
+                        /* eslint-disable max-len */
                         toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect fontselect fontsizeselect | searchreplace visualblocks fullscreen code',
                         toolbar2: 'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',
+                        /* eslint-enable max-len */
                         trim: true
                     }, this.editorOptions[key])
     }
