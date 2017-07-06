@@ -1025,13 +1025,16 @@ export class ConfirmComponent {
     @Input() okText:string = 'OK'
     /**
      * Gets needed component data injected.
+     * NOTE: The "@Optional" decorator makes test instances possible.
+     * NOTE: Don't set default values for theses optional parameter since the
+     * would overwrite an injected value.
      * @param data - Data to provide for the dialog component instance.
      * @param dialogReference - Dialog component instance.
      * @returns Nothing.
      */
     constructor(
-        @Optional() @Inject(MD_DIALOG_DATA) data:any = null,
-        @Optional() dialogReference:?MdDialogRef<ConfirmComponent> = null
+        @Optional() @Inject(MD_DIALOG_DATA) data:any,
+        @Optional() dialogReference:MdDialogRef<ConfirmComponent>
     ):void {
         this.dialogReference = dialogReference
         if (typeof data === 'object' && data !== null)
@@ -2885,6 +2888,7 @@ const propertyWrapperInputContent:string = `
     selector: 'generic-input',
     template: `
         <generic-textarea
+            @defaultAnimation
             [editorType]="editorType"
             [minimumNumberOfRows]="minimumNumberOfRows"
             [maximumNumberOfRows]="maximumNumberOfRows"
@@ -2946,7 +2950,9 @@ export class InputComponent extends AbstractInputComponent {
     animations: [defaultAnimation()],
     selector: 'generic-simple-input',
     template: `
-        <ng-container *ngIf="model.selection; else textInput">
+        <ng-container
+            @defaultAnimation *ngIf="model.selection; else textInput"
+        >
             <md-select [(ngModel)]="model.value" ${propertyGenericContent}>
                 <md-option
                     *ngFor="let value of model.selection" [value]="value"
