@@ -3037,6 +3037,11 @@ export class SimpleInputComponent extends AbstractInputComponent {
                 ${propertyGenericContent}
             ></textarea>
             ${inputContent}
+            <a
+                (click)="$event.preventDefault();$event.stopPropagation();editorType = type"
+                href=""
+                *ngFor="let type of (editorOptions | genericObjectKeys)"
+            >{{type}}</a>
             <ng-content></ng-content>
         </md-input-container></ng-template>
     `
@@ -4005,7 +4010,7 @@ const providers:Array<Object> = Object.keys(module.exports).filter((
     name.endsWith('Resolver') || name.endsWith('Pipe') ||
     name.endsWith('Guard') || name.endsWith('Service')
 )).map((name:string):Object => module.exports[name])
-const tinyMCEBasePath:string = '../node_modules/tinymce/'
+const tinyMCEBasePath:string = '/tinymce/'
 const modules:Array<Object> = [
     BrowserModule.withServerTransition({appId: 'generic-universal'}),
     FormsModule,
