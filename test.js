@@ -245,6 +245,7 @@ registerAngularTest(function(
                 /**
                  * Dummy constructor to inject needed service instances and
                  * perform various tests.
+                 * @param alert - Injected alert service instance.
                  * @param attachmentWithPrefixExistsPipe - Injected attachment
                  * with prefix exists pipe instance.
                  * @param canDeactivateRouteLeave - Injected can deactivate
@@ -1080,6 +1081,7 @@ registerAngularTest(function(
                 FileInputComponent,
                 InputComponent,
                 PaginationComponent,
+                SimpleInputComponent,
                 TextareaComponent
             } = index
             // endregion
@@ -1107,9 +1109,9 @@ registerAngularTest(function(
                 done()
             })
             // / endregion
-            // / region input/textarea
+            // / region input/select/textarea
             for (const component:AbstractInputComponent of [
-                InputComponent, TextareaComponent
+                InputComponent, TextareaComponent, SimpleInputComponent
             ])
                 this.test(
                     `AbstractInputComponent/${component.name} (${roundType})`,
@@ -1140,10 +1142,7 @@ registerAngularTest(function(
                             ).nativeElement.textContent.trim(), 'test')
                             const inputDomNode:DomNode =
                                 fixture.debugElement.query(By.css(
-                                    component.name.replace(
-                                        /^(.+)Component$/, '$1'
-                                    ).toLowerCase()
-                                )).nativeElement
+                                    'input, select, textarea')).nativeElement
                             inputDomNode.value = 'aa'
                             inputDomNode.dispatchEvent(getNativeEvent('input'))
                             await fixture.whenStable()
@@ -1192,7 +1191,7 @@ registerAngularTest(function(
                             await fixture.whenStable()
                             assert.deepEqual(
                                 'Cb', fixture.componentInstance.model.value)
-                            if (component.name === 'InputComponent') {
+                            if (component.name === 'SimpleInputComponent') {
                                 fixture.componentInstance.type = 'password'
                                 fixture.detectChanges()
                                 await fixture.whenStable()

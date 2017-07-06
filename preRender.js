@@ -12,7 +12,7 @@
 */
 // region imports
 import type {File, Window} from 'clientnode'
-import {default as Tools, globalContext} from 'clientnode'
+import Tools, {globalContext} from 'clientnode'
 import {enableProdMode, NgModule} from '@angular/core'
 import {APP_BASE_HREF} from '@angular/common'
 import {renderModule, ServerModule} from '@angular/platform-server'

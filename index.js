@@ -20,7 +20,7 @@
 // region imports
 import {blobToBase64String} from 'blob-util'
 import type {PlainObject} from 'clientnode'
-import {$, globalContext, default as Tools} from 'clientnode'
+import Tools, {$, globalContext} from 'clientnode'
 import {
     animate, AnimationTriggerMetadata, style, transition, trigger
 } from '@angular/animations'
@@ -2812,12 +2812,12 @@ export class IntervalsInputComponent {
 // // region text/selection
 /* eslint-disable max-len */
 const propertyGenericContent:string = `
-    #state="ngModel"
-    [required]="!model.nullable"
     [name]="model.name"
     [ngModel]="model.value"
     (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
     [placeholder]="model.description || model.name"
+    [required]="!model.nullable"
+    #state="ngModel"
 `
 const propertyInputContent:string = `
     [disabled]="model.disabled || model.mutable === false || model.writable === false"
@@ -2827,12 +2827,16 @@ const propertyInputContent:string = `
 `
 const inputContent:string = `
     <md-hint
-        @defaultAnimation align="start"
-        (click)="showDeclaration = !showDeclaration" title="info"
-        *ngIf="model.declaration" [class.activ]="showDeclaration"
+        align="start" [class.activ]="showDeclaration"
+        (click)="showDeclaration = !showDeclaration"
+        @defaultAnimation
+        title="info"
+        *ngIf="model.declaration"
     >
         <a
-            @defaultAnimation (click)="$event.preventDefault()" href=""
+            (click)="$event.preventDefault()"
+            @defaultAnimation
+            href=""
             *ngIf="infoText"
         >{{infoText}}</a>
         <span @defaultAnimation *ngIf="showDeclaration">
@@ -2867,10 +2871,73 @@ const inputContent:string = `
         *ngIf="!model.selection && model.type === 'string' && model.maximumLength !== null && model.maximumLength < 100"
     >{{model.value?.length}} / {{model.maximumLength}}</md-hint>
 `
+/* eslint-enable max-len */
+const propertyWrapperInputContent:string = `
+    [infoText]="infoText"
+    [model]="model"
+    [showValidationErrorMessages]="showValidationErrorMessages"
+`
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
     selector: 'generic-input',
+    template: `
+        <generic-textarea
+            [minimumNumberOfRows]="minimumNumberOfRows"
+            [maximumNumberOfRows]="maximumNumberOfRows"
+            *ngIf="model.text; else simpleInput"
+            [rows]="rows"
+            ${propertyWrapperInputContent}
+        ><ng-content></ng-content></generic-textarea>
+        <ng-template #simpleInput><generic-simple-input
+            [labels]="labels"
+            ${propertyWrapperInputContent}
+            [type]="type"
+        ><ng-content></ng-content></generic-simple-input></ng-template>
+    `
+})
+/**
+ * A generic form input, selection or textarea component with validation,
+ * labeling and info description support.
+ * @property labels - Defines some selectable value labels.
+ * @property maximumNumberOfRows - Maximum resizeable number of rows.
+ * @property minimumNumberOfRows - Minimum resizeable number of rows.
+ * @property rows - Number of rows to show.
+ * @property type - Optionally defines an input type explicitly.
+ */
+export class InputComponent extends AbstractInputComponent {
+    @Input() labels:{[key:string]:string} = {}
+    @Input() maximumNumberOfRows:?string
+    @Input() minimumNumberOfRows:?string
+    @Input() rows:?string
+    @Input() type:?string
+    /**
+     * Forwards injected service instances to the abstract input component's
+     * constructor.
+     * @param attachmentWithPrefixExistsPipe - Saves the attachment by prefix
+     * pipe instance.
+     * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
+     * pipe instance.
+     * @param initialData - Injected initial data service instance.
+     * @returns Nothing.
+     */
+    constructor(
+        attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
+        extendObjectPipe:ExtendObjectPipe,
+        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
+        initialData:InitialDataService
+    ):void {
+        super(
+            attachmentWithPrefixExistsPipe, extendObjectPipe,
+            getFilenameByPrefixPipe, initialData)
+    }
+}
+/* eslint-disable max-len */
+// IgnoreTypeCheck
+@Component({
+    animations: [defaultAnimation()],
+    selector: 'generic-simple-input',
     template: `
         <ng-container *ngIf="model.selection; else textInput">
             <md-select [(ngModel)]="model.value" ${propertyGenericContent}>
@@ -2883,28 +2950,27 @@ const inputContent:string = `
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
-        <ng-template #textInput>
-            <md-input-container>
-                <input
-                    mdInput [max]="model.type === 'number' ? model.maximum : null"
-                    [min]="model.type === 'number' ? model.minimum : null"
-                    [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
-                    ${propertyInputContent}
-                    ${propertyGenericContent}
-                >
-                ${inputContent}
-                <ng-content></ng-content>
-            </md-input-container>
-        </ng-template>
+        <ng-template #textInput><md-input-container>
+            <input
+                mdInput [max]="model.type === 'number' ? model.maximum : null"
+                [min]="model.type === 'number' ? model.minimum : null"
+                [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+                ${propertyInputContent}
+                ${propertyGenericContent}
+            >
+            ${inputContent}
+            <ng-content></ng-content>
+        </md-input-container></ng-template>
     `
 })
 /* eslint-enable max-len */
 /**
- * A generic form input component with validation, labeling and info
+ * A generic form input or select component with validation, labeling and info
  * description support.
+ * @property labels - Defines some selectable value labels.
  * @property type - Optionally defines an input type explicitly.
  */
-export class InputComponent extends AbstractInputComponent {
+export class SimpleInputComponent extends AbstractInputComponent {
     @Input() labels:{[key:string]:string} = {}
     @Input() type:?string
     /**
@@ -2936,9 +3002,11 @@ export class InputComponent extends AbstractInputComponent {
     template: `
         <md-input-container>
             <textarea
-                mdInput mdTextareaAutosize
-                [mdAutosizeMinRows]="minimumNumberOfRows" [rows]="rows"
+                [mdAutosizeMinRows]="minimumNumberOfRows"
                 [mdAutosizeMaxRows]="maximumNumberOfRows"
+                mdInput
+                mdTextareaAutosize
+                [rows]="rows"
                 ${propertyInputContent}
                 ${propertyGenericContent}
             ></textarea>
@@ -2950,6 +3018,9 @@ export class InputComponent extends AbstractInputComponent {
 /**
  * A generic form textarea component with validation, labeling and info
  * description support.
+ * @property maximumNumberOfRows - Maximum resizeable number of rows.
+ * @property minimumNumberOfRows - Minimum resizeable number of rows.
+ * @property rows - Number of rows to show.
  */
 export class TextareaComponent extends AbstractInputComponent {
     @Input() maximumNumberOfRows:?string
