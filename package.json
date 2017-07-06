@@ -58,6 +58,7 @@
     "@angular/platform-browser-dynamic": "latest",
     "@angular/platform-server": "latest",
     "@angular/router": "latest",
+    "angular-tinymce": "latest",
     "blob-util": "latest",
     "clientnode": "latest",
     "hammerjs": "latest",
@@ -135,6 +136,7 @@
           ]
         ],
         "normal": {
+          "^angular-tinymce$": "angular-tinymce/bundles/angular-tinymce.umd.min.js",
           "^babel-polyfill$": "babel-polyfill/dist/polyfill.min.js",
           "^blob-util$": "blob-util/dist/blob-util.min.js",
           "^hammerjs$": "hammerjs/hammer.min.js",

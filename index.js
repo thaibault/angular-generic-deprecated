@@ -18,6 +18,7 @@
     endregion
 */
 // region imports
+import {TinyMceModule} from 'angular-tinymce'
 import {blobToBase64String} from 'blob-util'
 import type {PlainObject} from 'clientnode'
 import Tools, {$, globalContext} from 'clientnode'
@@ -60,6 +61,7 @@ try {
     module.require('source-map-support/register')
 } catch (error) {}
 // endregion
+declare var UTC_BUILD_TIMESTAMP:number
 let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
@@ -2883,6 +2885,7 @@ const propertyWrapperInputContent:string = `
     selector: 'generic-input',
     template: `
         <generic-textarea
+            [editorType]="editorType"
             [minimumNumberOfRows]="minimumNumberOfRows"
             [maximumNumberOfRows]="maximumNumberOfRows"
             *ngIf="model.text; else simpleInput"
@@ -2899,6 +2902,8 @@ const propertyWrapperInputContent:string = `
 /**
  * A generic form input, selection or textarea component with validation,
  * labeling and info description support.
+ * @property editorOptions - Options to choose from for an activated editor.
+ * @property editorType - Currently selected editor type.
  * @property labels - Defines some selectable value labels.
  * @property maximumNumberOfRows - Maximum resizeable number of rows.
  * @property minimumNumberOfRows - Minimum resizeable number of rows.
@@ -2906,6 +2911,8 @@ const propertyWrapperInputContent:string = `
  * @property type - Optionally defines an input type explicitly.
  */
 export class InputComponent extends AbstractInputComponent {
+    @Input() editorOptions:?PlainObject = null
+    @Input() editorType:string = ''
     @Input() labels:{[key:string]:string} = {}
     @Input() maximumNumberOfRows:?string
     @Input() minimumNumberOfRows:?string
@@ -3000,7 +3007,19 @@ export class SimpleInputComponent extends AbstractInputComponent {
     animations: [defaultAnimation()],
     selector: 'generic-textarea',
     template: `
-        <md-input-container>
+        <ng-container
+            *ngIf="editorOptions.hasOwnProperty(editorType) && editorOptions[editorType]; else simple"
+        >
+            <angular-tinymce
+                [ngModel]="model.value"
+                (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
+                [settings]="editorOptions[editorType]"
+                #state="ngModel"
+            ></angular-tinymce>
+            ${inputContent}
+            <ng-content></ng-content>
+        </ng-container>
+        <ng-template #simple><md-input-container>
             <textarea
                 [mdAutosizeMinRows]="minimumNumberOfRows"
                 [mdAutosizeMaxRows]="maximumNumberOfRows"
@@ -3012,17 +3031,22 @@ export class SimpleInputComponent extends AbstractInputComponent {
             ></textarea>
             ${inputContent}
             <ng-content></ng-content>
-        </md-input-container>
+        </md-input-container></ng-template>
     `
 })
 /**
  * A generic form textarea component with validation, labeling and info
  * description support.
+ * @property editorOptions - Options to choose from for an activated editor.
+ * @property editorType - Currently selected editor type.
  * @property maximumNumberOfRows - Maximum resizeable number of rows.
  * @property minimumNumberOfRows - Minimum resizeable number of rows.
  * @property rows - Number of rows to show.
  */
-export class TextareaComponent extends AbstractInputComponent {
+export class TextareaComponent extends AbstractInputComponent
+/* implements OnChanges */{
+    @Input() editorOptions:?PlainObject = {}
+    @Input() editorType:string = ''
     @Input() maximumNumberOfRows:?string
     @Input() minimumNumberOfRows:?string
     @Input() rows:?string
@@ -3046,6 +3070,52 @@ export class TextareaComponent extends AbstractInputComponent {
         super(
             attachmentWithPrefixExistsPipe, extendObjectPipe,
             getFilenameByPrefixPipe, initialData)
+    }
+    /**
+     * Initializes textarea editor options.
+     * @param changes - Holds informations about changed bound properties.
+     * @returns Nothing.
+     */
+    ngOnChanges(changes:Object):void {
+        if (changes.hasOwnProperty('editorOptions') && this.editorOptions) {
+            if (Object.keys(this.editorOptions).length === 0)
+                this._extendObject(this.editorOptions, {
+                    advanced: {},
+                    normal: {
+                        toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect | searchreplace visualblocks fullscreen code'
+                    },
+                    simple: {
+                        toolbar1: 'cut copy paste | undo redo removeformat | bold italic underline strikethrough subscript superscript | fullscreen',
+                        toolbar2: false
+                    }
+                })
+            for (const key:string in this.editorOptions)
+                if (this.editorOptions.hasOwnProperty(key))
+                    this._extendObject(true, this.editorOptions[key], {
+                        document_base_url: '/',
+                        relative_urls: false,
+                        hidden_input: false,
+                        cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
+                        plugins: 'fullscreen link code hr nonbreaking searchreplace visualblocks',
+                        menubar: false,
+                        toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect fontselect fontsizeselect | searchreplace visualblocks fullscreen code',
+                        toolbar2: 'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',
+                        entity_encoding: 'raw',
+                        fix_list_elements: true,
+                        forced_root_block: null,
+                        trim: true,
+                        allow_conditional_comments: false,
+                        convert_fonts_to_spans: true,
+                        element_format: 'xhtml',
+                        invalid_elements: 'em',
+                        invalid_styles: 'color font-size line-height',
+                        keep_styles: false,
+                        remove_trailing_brs: true,
+                        schema: 'html5',
+                        allow_script_urls: false,
+                        remove_script_host: false,
+                    }, this.editorOptions[key])
+        }
     }
 }
 // // endregion
@@ -3899,6 +3969,7 @@ const providers:Array<Object> = Object.keys(module.exports).filter((
     name.endsWith('Resolver') || name.endsWith('Pipe') ||
     name.endsWith('Guard') || name.endsWith('Service')
 )).map((name:string):Object => module.exports[name])
+const tinyMCEBasePath:string = '../node_modules/tinymce/'
 const modules:Array<Object> = [
     BrowserModule.withServerTransition({appId: 'generic-universal'}),
     FormsModule,
@@ -3906,7 +3977,13 @@ const modules:Array<Object> = [
     MdCardModule,
     MdDialogModule,
     MdInputModule,
-    MdSelectModule
+    MdSelectModule,
+    TinyMceModule.forRoot({
+        baseURL: tinyMCEBasePath,
+        skin_url: `${tinyMCEBasePath}skins/lightgray`,
+        theme_url: `${tinyMCEBasePath}themes/modern/theme.min.js`,
+        tinymceScriptURL: `${tinyMCEBasePath}tinymce.min.js`
+    })
 ]
 // IgnoreTypeCheck
 @NgModule({
