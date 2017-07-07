@@ -3220,13 +3220,16 @@ export class TextareaComponent extends AbstractInputComponent
                 *ngIf="headerText || file?.name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description || name"
             >
                 <md-card-title>
+                    <!-- NOTE: NgIfElse doesnt work here. -->
                     <span
                         @defaultAnimation
-                        *ngIf="revision || headerText || !file?.name; else editable"
+                        *ngIf="revision || headerText || !file?.name"
                     >
                         {{headerText || file?.name || model[attachmentTypeName][internalName]?.description || name}}
                     </span>
-                    <ng-container #editiable *ngIf="file?.name">
+                    <ng-container
+                        *ngIf="!(revision || headerText || !file?.name)"
+                    >
                         <!-- NOTE: NgIfElse doesnt work here. -->
                         <ng-container *ngIf="synchronizeImmediately">
                             <md-input-container
@@ -3754,9 +3757,10 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         const file:Object = await this._data.getAttachment(
             id, this.file.name, options)
         this.file = {
-            data: await blobToBase64String(file),
             content_type: file.type || 'text/plain',
-            length: file.size
+            data: await blobToBase64String(file),
+            length: file.size,
+            name: this.file.name
         }
         this.file.source = this._domSanitizer.bypassSecurityTrustResourceUrl(
             `data:${this.file.content_type};base64,${this.file.data}`)
