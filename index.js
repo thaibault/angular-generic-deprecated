@@ -18,7 +18,7 @@
     endregion
 */
 // region imports
-import {TinyMceModule} from 'angular-tinymce'
+import {tinymceDefaultSettings, TinyMceModule} from 'angular-tinymce'
 import {blobToBase64String} from 'blob-util'
 import type {PlainObject} from 'clientnode'
 import Tools, {$, globalContext} from 'clientnode'
@@ -65,6 +65,42 @@ declare var UTC_BUILD_TIMESTAMP:number
 let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
+const tinyMCEBasePath:string = '/tinymce/'
+export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
+    true, tinymceDefaultSettings, {
+        // region paths
+        baseURL: tinyMCEBasePath,
+        skin_url: `${tinyMCEBasePath}skins/lightgray`,
+        theme_url: `${tinyMCEBasePath}themes/modern/theme.min.js`,
+        tinymceScriptURL: `${tinyMCEBasePath}tinymce.min.js`,
+        // endregion
+        allow_conditional_comments: false,
+        allow_script_urls: false,
+        cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
+        convert_fonts_to_spans: true,
+        document_base_url: '/',
+        element_format: 'xhtml',
+        entity_encoding: 'raw',
+        fix_list_elements: true,
+        forced_root_block: null,
+        hidden_input: false,
+        invalid_elements: 'em',
+        invalid_styles: 'color font-size line-height',
+        keep_styles: false,
+        menubar: false,
+        /* eslint-disable max-len */
+        plugins: 'fullscreen link code hr nonbreaking searchreplace visualblocks',
+        /* eslint-enable max-len */
+        relative_urls: false,
+        remove_script_host: false,
+        remove_trailing_brs: true,
+        schema: 'html5',
+        /* eslint-disable max-len */
+        toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect fontselect fontsizeselect | searchreplace visualblocks fullscreen code',
+        toolbar2: 'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',
+        /* eslint-enable max-len */
+        trim: true
+    })
 // region basic services
 // IgnoreTypeCheck
 @Injectable()
@@ -2831,21 +2867,35 @@ const propertyInputContent:string = `
     [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
 `
 const inputContent:string = `
-    <md-hint
-        align="start" [class.activ]="showDeclaration"
-        (click)="showDeclaration = !showDeclaration"
-        @defaultAnimation
-        title="info"
-        *ngIf="model.declaration"
-    >
-        <a
-            (click)="$event.preventDefault()"
-            @defaultAnimation
-            href=""
-            *ngIf="infoText"
-        >{{infoText}}</a>
-        <span @defaultAnimation *ngIf="showDeclaration">
-            {{model.declaration}}
+    <md-hint align="start" @defaultAnimation title="info">
+        <span
+            [class.activ]="showDeclaration"
+            (click)="showDeclaration = !showDeclaration"
+            *ngIf="model.declaration"
+        >
+            <a
+                (click)="$event.preventDefault()"
+                @defaultAnimation
+                href=""
+                *ngIf="infoText"
+            >{{infoText}}</a>
+            <span @defaultAnimation *ngIf="showDeclaration">
+                {{model.declaration}}
+            </span>
+        </span>
+        <span *ngIf="editor && selectableEditor">
+            <span *ngIf="model.declaration">|</span>
+            <a
+                [class.activ]="activeEditor"
+                (click)="$event.preventDefault(); $event.stopPropagation(); activeEditor = true"
+                href=""
+            >editor</a>
+            <span>|</span>
+            <a
+                [class.activ]="!activeEditor"
+                (click)="$event.preventDefault(); $event.stopPropagation(); activeEditor = false"
+                href=""
+            >plain</a>
         </span>
     </md-hint>
     <span @defaultAnimation generic-error *ngIf="showValidationErrorMessages">
@@ -2889,11 +2939,13 @@ const propertyWrapperInputContent:string = `
     template: `
         <generic-textarea
             @defaultAnimation
-            [editorType]="editorType"
+            [activeEditor]="activeEditor"
+            [editor]="editor"
             [minimumNumberOfRows]="minimumNumberOfRows"
             [maximumNumberOfRows]="maximumNumberOfRows"
-            *ngIf="model.text; else simpleInput"
+            *ngIf="model.editor; else simpleInput"
             [rows]="rows"
+            [selectableEditor]="selectableEditor"
             ${propertyWrapperInputContent}
         ><ng-content></ng-content></generic-textarea>
         <ng-template #simpleInput><generic-simple-input
@@ -2906,21 +2958,23 @@ const propertyWrapperInputContent:string = `
 /**
  * A generic form input, selection or textarea component with validation,
  * labeling and info description support.
- * @property editorOptions - Options to choose from for an activated editor.
- * @property editorType - Currently selected editor type.
+ * @property activeEditor - Indicates whether current editor is active.
+ * @property editor - Editor to choose from for an activated editor.
  * @property labels - Defines some selectable value labels.
  * @property maximumNumberOfRows - Maximum resizeable number of rows.
  * @property minimumNumberOfRows - Minimum resizeable number of rows.
  * @property rows - Number of rows to show.
+ * @property selectableEditor - Indicates whether an editor is selectable.
  * @property type - Optionally defines an input type explicitly.
  */
 export class InputComponent extends AbstractInputComponent {
-    @Input() editorOptions:?PlainObject = null
-    @Input() editorType:string = ''
+    @Input() activeEditor:?boolean = null
+    @Input() editor:?PlainObject|string = null
     @Input() labels:{[key:string]:string} = {}
     @Input() maximumNumberOfRows:?string
     @Input() minimumNumberOfRows:?string
     @Input() rows:?string
+    @Input() selectableEditor:?boolean = null
     @Input() type:?string
     /**
      * Forwards injected service instances to the abstract input component's
@@ -3014,19 +3068,25 @@ export class SimpleInputComponent extends AbstractInputComponent {
     animations: [defaultAnimation()],
     selector: 'generic-textarea',
     template: `
-        <ng-container
-            *ngIf="editorOptions.hasOwnProperty(editorType) && editorOptions[editorType]; else simple"
-        >
+        <ng-container *ngIf="activeEditor; else plain">
+            <span [class.focus]="focused" class="editor-label">
+                {{model.description || model.name}}
+            </span>
             <angular-tinymce
+                (blur)="focused = false"
+                @defaultAnimation
+                (focus)="focused = true"
+                (init)="initialized = true"
                 [ngModel]="model.value"
                 (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
-                [settings]="editorOptions[editorType]"
+                [settings]="editor"
+                [style.visibilty]="initialized ? 'visible' : 'hidden'"
                 #state="ngModel"
             ></angular-tinymce>
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
-        <ng-template #simple><md-input-container>
+        <ng-template #plain><md-input-container @defaultAnimation>
             <textarea
                 [mdAutosizeMinRows]="minimumNumberOfRows"
                 [mdAutosizeMaxRows]="maximumNumberOfRows"
@@ -3037,11 +3097,6 @@ export class SimpleInputComponent extends AbstractInputComponent {
                 ${propertyGenericContent}
             ></textarea>
             ${inputContent}
-            <a
-                (click)="$event.preventDefault();$event.stopPropagation();editorType = type"
-                href=""
-                *ngFor="let type of (editorOptions | genericObjectKeys)"
-            >{{type}}</a>
             <ng-content></ng-content>
         </md-input-container></ng-template>
     `
@@ -3051,20 +3106,24 @@ export class SimpleInputComponent extends AbstractInputComponent {
 /**
  * A generic form textarea component with validation, labeling and info
  * description support.
- * @property editorOptions - Options to choose from for an activated editor.
- * @property editorType - Currently selected editor type.
+ * @property _defaultEditorOptions - Globale default editor options.
+ * @property activeEditor - Indicated weather current editor is active or not.
+ * @property editor - Editor options to choose from for an activated editor.
  * @property maximumNumberOfRows - Maximum resizeable number of rows.
  * @property minimumNumberOfRows - Minimum resizeable number of rows.
  * @property rows - Number of rows to show.
+ * @property selectableEditor - Indicates whether an editor is selectable.
  */
 export class TextareaComponent extends AbstractInputComponent
-/* implements OnChanges, OnInit*/{
+/* implements OnInit*/{
 /* eslint-enable brace-style */
-    @Input() editorOptions:?PlainObject = {}
-    @Input() editorType:string = ''
+    _defaultEditorOptions:PlainObject = {}
+    @Input() activeEditor:?boolean = null
+    @Input() editor:?PlainObject = null
     @Input() maximumNumberOfRows:?string
     @Input() minimumNumberOfRows:?string
     @Input() rows:?string
+    @Input() selectableEditor:?boolean = null
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
@@ -3074,24 +3133,23 @@ export class TextareaComponent extends AbstractInputComponent
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
      * @param initialData - Injected initial data service instance.
-     * @param tools - Saves the generic tools service instance.
      * @returns Nothing.
      */
     constructor(
         attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
         extendObjectPipe:ExtendObjectPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-        initialData:InitialDataService, tools:ToolsService
+        initialData:InitialDataService
     ):void {
         super(
             attachmentWithPrefixExistsPipe, extendObjectPipe,
             getFilenameByPrefixPipe, initialData)
-        this._tools = tools
-        if (this.editorOptions && Object.keys(
-            this.editorOptions
-        ).length === 0 && initialData.configuration.editorOptions)
-            this.editorOptions = this._tools.copyLimitedRecursively(
-                initialData.configuration.editorOptions)
+        if (initialData.configuration.hasOwnProperty(
+            'defaultEditorOptions'
+        ) && typeof initialData.configuration.defaultEditorOptions ===
+        'object' && initialData.configuration.defaultEditorOptions !== null)
+            this._defaultEditorOptions =
+                initialData.configuration.defaultEditorOptions
     }
     /**
      * Triggers after input values have been resolved.
@@ -3099,64 +3157,53 @@ export class TextareaComponent extends AbstractInputComponent
      */
     ngOnInit():void {
         super.ngOnInit()
-        if (Object.keys(this.editorOptions).length === 0)
-            if (this.model.editorOptions)
-                this.editorOptions = this._extendObject(
-                    this.editorOptions, this._tools.copyLimitedRecursively(
-                        this.model.editorOptions))
+        if (this.editor === null && this.model.editor)
+            this.editor = this.model.editor
+        if (typeof this.editor === 'string') {
+            if (this.editor.startsWith('!')) {
+                this.editor = this.editor.substring(1)
+                if (this.selectableEditor === null)
+                    this.selectableEditor = false
+            }
+            if (this.editor.startsWith('(') && this.editor.endsWith(')')) {
+                this.editor = this.editor.substring(1, this.editor.length - 1)
+            } else if (this.activeEditor === null)
+                this.activeEditor = true
+            if (this.editor === 'code')
+                this.editor = {
+                    toolbar1: 'cut copy paste | undo redo removeformat | code | fullscreen',
+                    toolbar2: false
+                }
+            else if (this.editor === 'normal')
+                this.editor = {
+                    /* eslint-disable max-len */
+                    toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect | searchreplace visualblocks fullscreen code'
+                    /* eslint-enable max-len */
+                }
+            else if (this.editor === 'simple')
+                this.editor = {
+                    /* eslint-disable max-len */
+                    toolbar1: 'cut copy paste | undo redo removeformat | bold italic underline strikethrough subscript superscript | fullscreen',
+                    toolbar2: false
+                    /* eslint-enable max-len */
+                }
             else
-                this._extendObject(this.editorOptions, {
-                    advanced: {},
-                    normal: {
-                        /* eslint-disable max-len */
-                        toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect | searchreplace visualblocks fullscreen code'
-                        /* eslint-enable max-len */
-                    },
-                    simple: {
-                        /* eslint-disable max-len */
-                        toolbar1: 'cut copy paste | undo redo removeformat | bold italic underline strikethrough subscript superscript | fullscreen',
-                        toolbar2: false
-                        /* eslint-enable max-len */
-                    }
-                })
-    }
-    /**
-     * Initializes textarea editor options.
-     * @param changes - Holds informations about changed bound properties.
-     * @returns Nothing.
-     */
-    ngOnChanges(changes:Object):void {
-        if (changes.hasOwnProperty('editorOptions') && this.editorOptions)
-            for (const key:string in this.editorOptions)
-                if (this.editorOptions.hasOwnProperty(key))
-                    this._extendObject(true, this.editorOptions[key], {
-                        allow_conditional_comments: false,
-                        allow_script_urls: false,
-                        cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
-                        convert_fonts_to_spans: true,
-                        document_base_url: '/',
-                        element_format: 'xhtml',
-                        entity_encoding: 'raw',
-                        fix_list_elements: true,
-                        forced_root_block: null,
-                        hidden_input: false,
-                        invalid_elements: 'em',
-                        invalid_styles: 'color font-size line-height',
-                        keep_styles: false,
-                        menubar: false,
-                        /* eslint-disable max-len */
-                        plugins: 'fullscreen link code hr nonbreaking searchreplace visualblocks',
-                        /* eslint-enable max-len */
-                        relative_urls: false,
-                        remove_script_host: false,
-                        remove_trailing_brs: true,
-                        schema: 'html5',
-                        /* eslint-disable max-len */
-                        toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect fontselect fontsizeselect | searchreplace visualblocks fullscreen code',
-                        toolbar2: 'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',
-                        /* eslint-enable max-len */
-                        trim: true
-                    }, this.editorOptions[key])
+                this.editor = {}
+        } else if (
+            this.editor === null && (this.model.editor || this.activeEditor)
+        )
+            this.editor = {}
+        if (this.activeEditor === null)
+            this.activeEditor = false
+        if (this.selectableEditor === null)
+            if (typeof this.model.selectableEditor === 'boolean')
+                this.selectableEditor = this.model.selectableEditor
+            else
+                this.selectableEditor = true
+        if (typeof this.editor === 'object' && this.editor !== null)
+            this.editor = this._extendObject(
+                true, {}, TINY_MCE_DEFAULT_OPTIONS, this._defaultEditorOptions,
+                this.editor)
     }
 }
 // // endregion
@@ -4010,7 +4057,6 @@ const providers:Array<Object> = Object.keys(module.exports).filter((
     name.endsWith('Resolver') || name.endsWith('Pipe') ||
     name.endsWith('Guard') || name.endsWith('Service')
 )).map((name:string):Object => module.exports[name])
-const tinyMCEBasePath:string = '/tinymce/'
 const modules:Array<Object> = [
     BrowserModule.withServerTransition({appId: 'generic-universal'}),
     FormsModule,
@@ -4019,12 +4065,7 @@ const modules:Array<Object> = [
     MdDialogModule,
     MdInputModule,
     MdSelectModule,
-    TinyMceModule.forRoot({
-        baseURL: tinyMCEBasePath,
-        skin_url: `${tinyMCEBasePath}skins/lightgray`,
-        theme_url: `${tinyMCEBasePath}themes/modern/theme.min.js`,
-        tinymceScriptURL: `${tinyMCEBasePath}tinymce.min.js`
-    })
+    TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
 ]
 // IgnoreTypeCheck
 @NgModule({
