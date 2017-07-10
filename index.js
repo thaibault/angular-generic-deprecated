@@ -28,11 +28,10 @@ import {
 import {
     /* AfterViewInit,*/ APP_INITIALIZER, ChangeDetectorRef, Component,
     /* eslint-disable no-unused-vars */
-    Directive, ElementRef, EventEmitter, forwardRef, Injectable, Inject,
-    /* eslint-enable no-unused-vars */
-    Injector, Input, NgModule, /* OnChanges, OnInit,*/ Optional, Output, Pipe,
-    /* eslint-disable no-unused-vars */
-    PipeTransform, PLATFORM_ID, ReflectiveInjector, Renderer, ViewChild
+    ContentChild, Directive, ElementRef, EventEmitter, forwardRef, Injectable,
+    Inject, Injector, Input, NgModule, /* OnChanges, OnInit,*/ Optional,
+    Output, Pipe, PipeTransform, PLATFORM_ID, ReflectiveInjector, Renderer,
+    TemplateRef, ViewChild
     /* eslint-enable no-unused-vars */
 } from '@angular/core'
 import {isPlatformServer} from '@angular/common'
@@ -2772,13 +2771,18 @@ export class IntervalInputComponent {
     selector: 'generic-intervals-input',
     template: `
         <div>{{model.description || model.name}}</div>
-        <div @defaultAnimation *ngFor="let interval of model.value">
+        <div *ngFor="let interval of model.value">
             <generic-interval-input [model]="interval">
-                <ng-content></ng-content>
+                <ng-container *ngIf="contentTemplate; else fallback">
+                    <ng-container
+                        *ngTemplateOutlet="contentTemplate; context: {\$implicit:interval}"
+                    ></ng-container>
+                </ng-container>
             </generic-interval-input>
-            <span (click)="remove(interval)">x</span>
+            <span (click)="remove(interval)">-</span>
         </div>
         <span (click)="add()">+</span>
+        <ng-template #fallback>--</ng-template>
     `
 })
 /**
@@ -2792,6 +2796,8 @@ export class IntervalInputComponent {
  * @property modelChange - Event emitter for interval list changes.
  */
 export class IntervalsInputComponent {
+    @ContentChild(TemplateRef) contentTemplate:TemplateRef
+
     _extendObject:Function
     _typeName:string
     @Input() additionalObjectData:PlainObject
