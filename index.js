@@ -1915,7 +1915,7 @@ export class DataScopeService {
                     'Time'
                 ) || name.endsWith('Date')))
                     // NOTE: We interpret given value as an utc timestamp.
-                    result[name].value = new Date(result[name].value)
+                    result[name].value = new Date(result[name].value * 1000)
             }
         }
         for (const name:string of reservedNames)
@@ -2762,8 +2762,8 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
  */
 export class IntervalInputComponent {
     @Input() model:{end:number;start:number} = {
-        end: (new Date(1970, 0, 1)).getTime(),
-        start: (new Date(1970, 0, 1)).getTime()
+        end: (new Date(1970, 0, 1)).getTime() / 1000,
+        start: (new Date(1970, 0, 1)).getTime() / 1000
     }
 }
 // IgnoreTypeCheck
@@ -2833,7 +2833,7 @@ export class IntervalsInputComponent {
         this.model.value.push(this._extendObject({
             end: new Date(lastEnd.getTime() + (new Date(
                 1970, 0, 1, 2
-            )).getTime()),
+            )).getTime()) / 1000,
             start: lastEnd
         }, this.additionalObjectData))
         this.modelChange.emit(this.model)
