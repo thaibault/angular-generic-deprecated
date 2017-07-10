@@ -386,7 +386,7 @@ registerAngularTest(function(
                                     {a: new Date(0), b: [2, 3]},
                                     {a: 0, b: [2, 3]}
                                 ],
-                                [{a: [new Date(90)]}, {a: [90]}]
+                                [{a: [new Date(90000)]}, {a: [90]}]
                             ])
                                 assert.deepEqual(
                                     extractRawDataPipe.constructor

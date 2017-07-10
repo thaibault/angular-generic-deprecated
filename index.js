@@ -327,8 +327,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      */
     static _convertDateToTimestampRecursively(value:any):any {
         if (typeof value === 'object' && value !== null)
-            if (value instanceof Date)
-                // NOTE: We save given date as an utc timestamp.
+            if (value instanceof Date) {
+                // NOTE: We save given date as an utc unix timestamp.
                 return Date.UTC(
                     value.getUTCFullYear(),
                     value.getUTCMonth(),
@@ -336,8 +336,9 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     value.getUTCHours(),
                     value.getUTCMinutes(),
                     value.getUTCSeconds(),
-                    value.getUTCMilliseconds())
-            else if (Array.isArray(value)) {
+                    value.getUTCMilliseconds()
+                ) / 1000
+            } else if (Array.isArray(value)) {
                 const result:Array<any> = []
                 for (const subValue:any of value)
                     result.push(ExtractRawDataPipe
@@ -1791,7 +1792,8 @@ export class DataScopeService {
             const nowUTCTimestamp:number = Date.UTC(
                 now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
                 now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
-                now.getUTCMilliseconds())
+                now.getUTCMilliseconds()
+            ) / 1000
             if (name === specialNames.attachment) {
                 for (const type:string in specification[name])
                     if (specification[name].hasOwnProperty(type)) {
@@ -2244,7 +2246,8 @@ export class AbstractInputComponent/* implements OnInit*/ {
         const nowUTCTimestamp:number = Date.UTC(
             now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
             now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
-            now.getUTCMilliseconds())
+            now.getUTCMilliseconds()
+        ) / 1000
         const newData:PlainObject = {[this.model.name]: newValue}
         for (const hookType:string of [
             'onUpdateExpression', 'onUpdateExecution'
