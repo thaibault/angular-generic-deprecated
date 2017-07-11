@@ -2779,9 +2779,15 @@ export class IntervalInputComponent {
                     ></ng-container>
                 </ng-container>
             </generic-interval-input>
-            <span (click)="remove(interval)">-</span>
+            <a
+                (click)="$event.preventDefault(); $event.stopPropagation(); remove(interval)"
+                href=""
+            >-</a>
         </div>
-        <span (click)="add()">+</span>
+        <a
+            (click)="$event.preventDefault(); $event.stopPropagation(); add()"
+            href=""
+        >+</a>
         <ng-template #fallback>--</ng-template>
     `
 })
