@@ -74,11 +74,17 @@
     "zone.js": "^0.8.12"
   },
   "devDependencies": {
+    "@angular/cdk": "latest",
     "babel-plugin-angular2-annotations": "latest",
     "babel-plugin-transform-decorators-legacy": "latest",
     "documentation-website": "latest",
+    "eslint": "latest",
+    "flow-bin": "latest",
+    "jsdoc": "latest",
     "source-map-support": "latest",
-    "weboptimizer": "latest"
+    "weboptimizer": "latest",
+    "webpack": "latest",
+    "webpack-dev-server": "latest"
   },
   "webOptimizer": {
     "injection": {
