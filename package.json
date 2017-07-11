@@ -74,11 +74,15 @@
     "zone.js": "^0.8.12"
   },
   "devDependencies": {
+    "babel-eslint": "latest",
     "@angular/cdk": "latest",
     "babel-plugin-angular2-annotations": "latest",
     "babel-plugin-transform-decorators-legacy": "latest",
     "documentation-website": "latest",
     "eslint": "latest",
+    "eslint-config-google": "latest",
+    "eslint-plugin-flowtype": "latest",
+    "eslint-plugin-jsdoc": "latest",
     "flow-bin": "latest",
     "jsdoc": "latest",
     "source-map-support": "latest",
