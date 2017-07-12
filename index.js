@@ -434,34 +434,39 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             if present).
         */
         for (const name:string in newDocument)
-            if (newDocument.hasOwnProperty(name) && ![
-                undefined, null, ''
-            ].includes(newDocument[name]) && (
-                this.configuration.database.model.property.name.reserved
+            if (
+                newDocument.hasOwnProperty(name) &&
+                ![undefined, null, ''].includes(newDocument[name]) &&
+                (
+                    this.configuration.database.model.property.name.reserved
                     .concat(
                         specialNames.deleted,
                         specialNames.id,
                         specialNames.revision,
                         specialNames.type
                     ).includes(name) ||
-            ![
-                specialNames.allowedRole,
-                specialNames.conflict,
-                specialNames.constraint.execution,
-                specialNames.constraint.expression,
-                specialNames.deletedConflict,
-                specialNames.extend,
-                specialNames.localSequence,
-                specialNames.maximumAggregatedSize,
-                specialNames.minimumAggregatedSize,
-                specialNames.revisionsInformations,
-                specialNames.revisions,
-                specialNames.validatedDocumentsCache
-            ].includes(name) && (!(
-                specialNames.type in newDocument
-            ) || this.configuration.database.model.entities[newDocument[
-                specialNames.type
-            ]].hasOwnProperty(name))))
+                    ![
+                        specialNames.allowedRole,
+                        specialNames.conflict,
+                        specialNames.constraint.execution,
+                        specialNames.constraint.expression,
+                        specialNames.deletedConflict,
+                        specialNames.extend,
+                        specialNames.localSequence,
+                        specialNames.maximumAggregatedSize,
+                        specialNames.minimumAggregatedSize,
+                        specialNames.revisionsInformations,
+                        specialNames.revisions,
+                        specialNames.validatedDocumentsCache
+                    ].includes(name) &&
+                    (
+                        !(specialNames.type in newDocument) ||
+                        this.configuration.database.model.entities[newDocument[
+                            specialNames.type
+                        ]].hasOwnProperty(name)
+                    )
+                )
+            )
                 if (name === specialNames.attachment) {
                     result[name] = {}
                     let empty:boolean = true
@@ -481,25 +486,34 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                         oldAttachment = oldDocument[name][
                                             type
                                         ].value
-                            if ((newDocument[name][fileName].hasOwnProperty(
-                                'data'
-                            ) && newDocument[name][fileName].data ||
-                            newDocument[name][fileName].hasOwnProperty(
-                                'stub'
-                            ) && newDocument[name][fileName].stub &&
-                            oldAttachment) && !(
-                                oldAttachment &&
-                                oldAttachment.name === fileName &&
-                                // TODO use digest to compare!
-                                newDocument[name][
-                                    fileName
-                                ].length === oldAttachment.length && (
-                                    oldAttachment.content_type ||
-                                    'application/octet-stream'
-                                ) === (newDocument[name][
-                                    fileName
-                                ].content_type || 'application/octet-stream')
-                            )) {
+                            if (
+                                (
+                                    newDocument[name][fileName].hasOwnProperty(
+                                        'data'
+                                    ) && newDocument[name][fileName].data ||
+                                    newDocument[name][fileName].hasOwnProperty(
+                                        'stub'
+                                    ) && newDocument[name][fileName].stub &&
+                                    oldAttachment
+                                ) &&
+                                !(
+                                    oldAttachment &&
+                                    oldAttachment.name === fileName &&
+                                    // TODO use digest to compare!
+                                    newDocument[name][
+                                        fileName
+                                    ].length === oldAttachment.length &&
+                                    (
+                                        oldAttachment.content_type ||
+                                        'application/octet-stream'
+                                    ) === (
+                                            newDocument[name][
+                                                fileName
+                                            ].content_type ||
+                                            'application/octet-stream'
+                                        )
+                                )
+                            ) {
                                 if (newDocument[name][fileName].hasOwnProperty(
                                     'data'
                                 ) && newDocument[name][fileName].data)
@@ -531,33 +545,37 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                 values (only respect values if specified in model).
             */
             for (const name:string in oldDocument)
-                if (oldDocument.hasOwnProperty(
-                    name
-                ) && !(this.configuration.database.model.property.name.reserved
-                    .concat([
-                        specialNames.allowedRole,
-                        specialNames.attachment,
-                        specialNames.conflict,
-                        specialNames.constraint.execution,
-                        specialNames.constraint.expression,
-                        specialNames.deleted,
-                        specialNames.deletedConflict,
-                        specialNames.extend,
-                        specialNames.id,
-                        specialNames.localSequence,
-                        specialNames.maximumAggregatedSize,
-                        specialNames.minimumAggregatedSize,
-                        specialNames.revision,
-                        specialNames.revisionsInformation,
-                        specialNames.revisions,
-                        specialNames.type
-                    ]).includes(name) || [null, undefined].includes(
-                        oldDocument[name].value)
-                ) && (!(
-                    specialNames.type in newDocument
-                ) || this.configuration.database.model.entities[newDocument[
-                    specialNames.type
-                ]].hasOwnProperty(name)))
+                if (
+                    oldDocument.hasOwnProperty(name) &&
+                    !(
+                        this.configuration.database.model.property.name
+                        .reserved.concat([
+                            specialNames.allowedRole,
+                            specialNames.attachment,
+                            specialNames.conflict,
+                            specialNames.constraint.execution,
+                            specialNames.constraint.expression,
+                            specialNames.deleted,
+                            specialNames.deletedConflict,
+                            specialNames.extend,
+                            specialNames.id,
+                            specialNames.localSequence,
+                            specialNames.maximumAggregatedSize,
+                            specialNames.minimumAggregatedSize,
+                            specialNames.revision,
+                            specialNames.revisionsInformation,
+                            specialNames.revisions,
+                            specialNames.type
+                        ]).includes(name) ||
+                        [null, undefined].includes(oldDocument[name].value)
+                    ) &&
+                    (
+                        !(specialNames.type in newDocument) ||
+                        this.configuration.database.model.entities[newDocument[
+                            specialNames.type
+                        ]].hasOwnProperty(name)
+                    )
+                )
                     if (result.hasOwnProperty(name)) {
                         if (Array.isArray(result[name])) {
                             if (this.equals(result[name], oldDocument[
@@ -601,15 +619,15 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         // Check if real payload exists in currently determined raw data.
         if (!payloadExists)
             for (const name:string in result)
-                if (result.hasOwnProperty(
-                    name
-                ) && !this.configuration.database.model.property.name.reserved
-                    .concat(
-                        specialNames.deleted,
-                        specialNames.id,
-                        specialNames.revision,
-                        specialNames.type
-                    ).includes(name)
+                if (
+                    result.hasOwnProperty(name) &&
+                    !this.configuration.database.model.property.name.reserved
+                        .concat(
+                            specialNames.deleted,
+                            specialNames.id,
+                            specialNames.revision,
+                            specialNames.type
+                        ).includes(name)
                 ) {
                     payloadExists = true
                     break
@@ -1069,8 +1087,10 @@ export class ConfirmComponent {
      * @returns Nothing.
      */
     constructor(
+        /* eslint-disable indent */
         @Optional() @Inject(MD_DIALOG_DATA) data:any,
         @Optional() dialogReference:MdDialogRef<ConfirmComponent>
+        /* eslint-enable indent */
     ):void {
         this.dialogReference = dialogReference
         if (typeof data === 'object' && data !== null)
@@ -1272,9 +1292,10 @@ export class DataService {
             }
             return result
         }
-        this.database.plugin({bulkDocs})
-                     .plugin(PouchDBFindPlugin)
-                     .plugin(PouchDBValidationPlugin)
+        this.database
+            .plugin({bulkDocs})
+            .plugin(PouchDBFindPlugin)
+            .plugin(PouchDBValidationPlugin)
         for (const plugin:Object of this.configuration.database.plugins || [])
             this.database.plugin(plugin)
     }
@@ -1383,11 +1404,15 @@ export class DataService {
                 const modelName:string in
                 this.configuration.database.model.entities
             )
-                if (this.configuration.database.model.entities.hasOwnProperty(
-                    modelName
-                ) && (new RegExp(this.configuration.database.model.property
-                    .name.typeRegularExpressionPattern.public
-                )).test(modelName))
+                if (
+                    this.configuration.database.model.entities.hasOwnProperty(
+                        modelName
+                    ) && (
+                        new RegExp(
+                            this.configuration.database.model.property.name
+                                .typeRegularExpressionPattern.public)
+                    ).test(modelName)
+                )
                     for (
                         const name:string of
                         DataService.determineGenericIndexablePropertyNames(
@@ -1501,17 +1526,20 @@ export class DataService {
         const revisionName:string =
             this.configuration.database.model.property.name.special.revision
         const result:PlainObject = await this.connection.get(...parameter)
-        if (LAST_KNOWN_DATA.data.hasOwnProperty(
-            result[idName]
-        ) && parameter.length > 1 && (
-            this.equals(parameter[1], {rev: 'latest'}) ||
-            this.equals(parameter[1], {latest: true}) ||
-            this.equals(parameter[1], {latest: true, rev: 'latest'})
-        ) && parseInt(result[revisionName].match(
-            this.constructor.revisionNumberRegularExpression
-        )[1]) < parseInt(LAST_KNOWN_DATA.data[result[idName]][
-            revisionName
-        ].match(this.constructor.revisionNumberRegularExpression)[1]))
+        if (
+            LAST_KNOWN_DATA.data.hasOwnProperty(result[idName]) &&
+            parameter.length > 1 && (
+                this.equals(parameter[1], {rev: 'latest'}) ||
+                this.equals(parameter[1], {latest: true}) ||
+                this.equals(parameter[1], {latest: true, rev: 'latest'})
+            ) &&
+            parseInt(result[revisionName].match(
+                this.constructor.revisionNumberRegularExpression
+            )[1]) < parseInt(
+                    LAST_KNOWN_DATA.data[result[idName]][revisionName].match(
+                        this.constructor.revisionNumberRegularExpression
+                    )[1])
+        )
             return LAST_KNOWN_DATA.data[result[idName]]
         return result
     }
@@ -1587,13 +1615,15 @@ export class DataService {
      */
     startSynchronisation():Object {
         return this.synchronisation = this.connection.sync(
-            this.remoteConnection, {live: true, retry: true})
-        .on('change', (info:Object):void => console.info('change', info))
-        .on('paused', ():void => console.info('paused'))
-        .on('active', ():void => console.info('active'))
-        .on('denied', (error:Object):void => console.warn('denied', error))
-        .on('complete', (info:Object):void => console.info('complete', info))
-        .on('error', (error:Object):void => console.error('error', error))
+            this.remoteConnection, {live: true, retry: true}
+        )
+            .on('change', (info:Object):void => console.info('change', info))
+            .on('paused', ():void => console.info('paused'))
+            .on('active', ():void => console.info('active'))
+            .on('denied', (error:Object):void => console.warn('denied', error))
+            .on('complete', (info:Object):void =>
+                console.info('complete', info))
+            .on('error', (error:Object):void => console.error('error', error))
     }
 }
 // IgnoreTypeCheck
@@ -1682,7 +1712,7 @@ export class DataScopeService {
             if (revisionHistory) {
                 const revisionsInformationName:string =
                     this.configuration.database.model.property.name.special
-                    .revisionsInformation
+                        .revisionsInformation
                 let revisions:Array<PlainObject>
                 let latestData:?PlainObject
                 if (revision !== 'latest') {
@@ -1693,10 +1723,9 @@ export class DataScopeService {
                     } catch (error) {
                         throw new Error(
                             `Document with given id "${id}" and revision "` +
-                            `${revision}" isn't available: ` + ((
-                                'message' in error
-                            ) ? error.message : this.tools.representObject(
-                                error)))
+                            `${revision}" isn't available: ` + (
+                                ('message' in error) ? error.message :
+                                this.tools.representObject(error)))
                     }
                     revisions = latestData[revisionsInformationName]
                     delete latestData[revisionsInformationName]
@@ -1785,8 +1814,9 @@ export class DataScopeService {
                     specification[name])
             else
                 result[name] = this.tools.copyLimitedRecursively(
-                    'additional' in specialNames && specialNames.additional ?
-                    specification[specialNames.additional] : {})
+                    'additional' in specialNames &&
+                    specialNames.additional ?
+                        specification[specialNames.additional] : {})
             const now:Date = new Date()
             const nowUTCTimestamp:number = Date.UTC(
                 now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
@@ -1816,7 +1846,7 @@ export class DataScopeService {
                                         'attachmentWithPrefixExists', (
                                             hookType.endsWith(
                                                 'Expression'
-                                     ) ? 'return ' : ''
+                                            ) ? 'return ' : ''
                                         ) + result[name][type][hookType]
                                     ))(
                                         data, null, {}, {}, type,
@@ -1853,11 +1883,13 @@ export class DataScopeService {
                                     result[name][type].value.name = fileName
                                     break
                                 }
-                        if (!fileFound && result[name][type].hasOwnProperty(
-                            'default'
-                        ) && ![undefined, null].includes(result[name][
-                            type
-                        ].default))
+                        if (
+                            !fileFound &&
+                            result[name][type].hasOwnProperty('default') &&
+                            ![undefined, null].includes(result[name][
+                                type
+                            ].default)
+                        )
                             result[name][type].value = result[name][
                                 type
                             ].default
@@ -1904,11 +1936,11 @@ export class DataScopeService {
                     undefined, null
                 ].includes(result[name].default))
                     result[name].value = result[name].default
-                else if (result[name].hasOwnProperty(
-                    'selection'
-                ) && Array.isArray(
-                    result[name].selection
-                ) && result[name].selection.length)
+                else if (
+                    result[name].hasOwnProperty('selection') &&
+                    Array.isArray(result[name].selection) &&
+                    result[name].selection.length
+                )
                     result[name].value = result[name].selection[0]
                 if (!(result[name].value instanceof Date) && (name.endsWith(
                     'Time'
@@ -1935,21 +1967,24 @@ export class DataScopeService {
             this.configuration.database.model.property.name.special
         const result:PlainObject = {}
         for (const key:string in scope)
-            if (scope.hasOwnProperty(key) && (!(
-                specialNames.type in scope
-            ) || this.configuration.database.model.entities[scope[
-                specialNames.type
-            ]].hasOwnProperty(key)) && ![
-                specialNames.additional,
-                // NOTE: Will be handled later.
-                specialNames.attachment,
-                specialNames.allowedRole,
-                specialNames.conflict,
-                specialNames.deletedConflict,
-                specialNames.localSequence,
-                specialNames.revisions,
-                specialNames.revisionsInformations
-            ].includes(key))
+            if (
+                scope.hasOwnProperty(key) && (
+                    !(specialNames.type in scope) ||
+                    this.configuration.database.model.entities[scope[
+                        specialNames.type
+                    ]].hasOwnProperty(key)
+                ) && ![
+                    specialNames.additional,
+                    // NOTE: Will be handled later.
+                    specialNames.attachment,
+                    specialNames.allowedRole,
+                    specialNames.conflict,
+                    specialNames.deletedConflict,
+                    specialNames.localSequence,
+                    specialNames.revisions,
+                    specialNames.revisionsInformations
+                ].includes(key)
+            )
                 if (
                     typeof scope[key] === 'object' && scope[key] !== null &&
                     'hasOwnProperty' in scope && scope[key].hasOwnProperty(
@@ -2059,8 +2094,8 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
                 this.specialNames.minimumAggregatedSize,
                 this.specialNames.revision,
                 this.specialNames.type
-            ].includes(name) && [undefined, 'string'].includes(
-                this.models[this.type][name].type))
+            ].includes(name) &&
+            [undefined, 'string'].includes(this.models[this.type][name].type))
         const selector:PlainObject = {[this.specialNames.type]: this.type}
         if (searchTerm || Object.keys(additionalSelector).length) {
             if (sort.length)
@@ -2769,6 +2804,7 @@ export class IntervalInputComponent {
 @Component({
     animations: [defaultAnimation()],
     selector: 'generic-intervals-input',
+    /* eslint-disable max-len */
     template: `
         <div>{{model.description || model.name}}</div>
         <div *ngFor="let interval of model.value">
@@ -2790,6 +2826,7 @@ export class IntervalInputComponent {
         >+</a>
         <ng-template #fallback>--</ng-template>
     `
+    /* eslint-enable max-len */
 })
 /**
  * Represents an editable list of intervals.
@@ -2839,9 +2876,8 @@ export class IntervalsInputComponent {
     add():void {
         const lastEnd:Date = (
             this.model.value && this.model.value.length
-        ) ? new Date(
-            this.model.value[this.model.value.length - 1].end
-        ) : new Date(1970, 0, 1)
+        ) ? new Date(this.model.value[this.model.value.length - 1].end) :
+            new Date(1970, 0, 1)
         this.model.value.push(this._extendObject({
             end: new Date(lastEnd.getTime() + (new Date(
                 1970, 0, 1, 2
@@ -3180,13 +3216,15 @@ export class TextareaComponent extends AbstractInputComponent
                 if (this.selectableEditor === null)
                     this.selectableEditor = false
             }
-            if (this.editor.startsWith('(') && this.editor.endsWith(')')) {
+            if (this.editor.startsWith('(') && this.editor.endsWith(')'))
                 this.editor = this.editor.substring(1, this.editor.length - 1)
-            } else if (this.activeEditor === null)
+            else if (this.activeEditor === null)
                 this.activeEditor = true
             if (this.editor === 'code')
                 this.editor = {
+                    /* eslint-disable max-len */
                     toolbar1: 'cut copy paste | undo redo removeformat | code | fullscreen',
+                    /* eslint-enable max-len */
                     toolbar2: false
                 }
             else if (this.editor === 'normal')
@@ -3587,7 +3625,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      */
     async ngOnChanges(changes:Object):Promise<void> {
         if (typeof this.model[this._idName] === 'object')
-           this._idIsObject = true
+            this._idIsObject = true
         if (changes.hasOwnProperty(
             'mapNameToField'
         ) && this.mapNameToField && !Array.isArray(this.mapNameToField))
@@ -3811,29 +3849,35 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
             this.model[this.attachmentTypeName][
                 this.internalName
             ].state.errors = {name: true}
-        if (!([undefined, null].includes(this.model[
-            this.attachmentTypeName
-        ][this.internalName].contentTypeRegularExpressionPattern) || (
-            new RegExp(this.model[this.attachmentTypeName][
-                this.internalName
-            ].contentTypeRegularExpressionPattern)
-        ).test(this.file.content_type)))
+        if (!(
+            [undefined, null].includes(this.model[
+                this.attachmentTypeName
+            ][this.internalName].contentTypeRegularExpressionPattern) || (
+                new RegExp(this.model[this.attachmentTypeName][
+                    this.internalName
+                ].contentTypeRegularExpressionPattern)
+            ).test(this.file.content_type)
+        ))
             this.model[this.attachmentTypeName][
                 this.internalName
             ].state.errors.contentType = true
-        if (!([undefined, null].includes(this.model[
-            this.attachmentTypeName
-        ][this.internalName].minimumSize) || this.model[
-            this.attachmentTypeName
-        ][this.internalName].minimumSize <= this.file.length))
+        if (!(
+            [undefined, null].includes(this.model[
+                this.attachmentTypeName
+            ][this.internalName].minimumSize) || this.model[
+                this.attachmentTypeName
+            ][this.internalName].minimumSize <= this.file.length
+        ))
             this.model[this.attachmentTypeName][
                 this.internalName
             ].state.errors.minimuSize = true
-        if (!([undefined, null].includes(this.model[
-            this.attachmentTypeName
-        ][this.internalName].maximumSize) || this.model[
-            this.attachmentTypeName
-        ][this.internalName].maximumSize >= this.file.length))
+        if (!(
+            [undefined, null].includes(this.model[
+                this.attachmentTypeName
+            ][this.internalName].maximumSize) || this.model[
+                this.attachmentTypeName
+            ][this.internalName].maximumSize >= this.file.length
+        ))
             this.model[this.attachmentTypeName][
                 this.internalName
             ].state.errors.maximumSize = true
