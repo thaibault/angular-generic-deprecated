@@ -132,12 +132,13 @@ export default function(
             'base'
         )[0].href
         for (const name:string in window)
-            if (window.hasOwnProperty(
-                name
-            ) && !globalContext.hasOwnProperty(name) && (
-                globalVariableNamesToInject.length === 0 ||
-                globalVariableNamesToInject.includes(name)
-            )) {
+            if (
+                window.hasOwnProperty(name) &&
+                !globalContext.hasOwnProperty(name) && (
+                    globalVariableNamesToInject.length === 0 ||
+                    globalVariableNamesToInject.includes(name)
+                )
+            ) {
                 console.info(`Inject variable "${name}".`)
                 globalContext[name] = window[name]
             }
@@ -214,9 +215,9 @@ export default function(
         for (const url:string of urls) {
             const filePath:string = path.join(targetDirectoryPath, (
                 url === basePath
-            ) ? '/' : url.substring(basePath.length).replace(
-                /^\/+(.+)/, '$1'
-            )) + '.html'
+            ) ? '/' :
+                url.substring(basePath.length).replace(/^\/+(.+)/, '$1')) +
+                '.html'
             filePaths.push(filePath)
             try {
                 await new Promise((

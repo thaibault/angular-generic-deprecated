@@ -32,7 +32,7 @@ import {
     Inject, Injector, Input, NgModule, /* OnChanges, OnInit,*/ Optional,
     Output, Pipe, PipeTransform, PLATFORM_ID, ReflectiveInjector, Renderer,
     TemplateRef, ViewChild
-    /* eslint-enable no-unused-vars */
+    /* eslint-enyyable no-unused-vars */
 } from '@angular/core'
 import {isPlatformServer} from '@angular/common'
 import {
@@ -64,6 +64,7 @@ declare var UTC_BUILD_TIMESTAMP:number
 let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
+// region configuration
 const tinyMCEBasePath:string = '/tinymce/'
 export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
     true, tinymceDefaultSettings, {
@@ -100,6 +101,7 @@ export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
         /* eslint-enable max-len */
         trim: true
     })
+// endregion
 // region basic services
 // IgnoreTypeCheck
 @Injectable()
@@ -3919,9 +3921,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 ) {
                     newData[this._deletedName] = true
                     tasks.unshift(newData)
-                    newData = this._extendObject(true, {}, newData, {[
-                        this._deletedName
-                    ]: false})
+                    newData = this._extendObject(
+                        true, {}, newData, {[this._deletedName]: false})
                 }
                 for (const name:string of this.mapNameToField) {
                     newData[name] = this.file.name

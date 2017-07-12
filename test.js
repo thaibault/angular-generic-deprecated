@@ -126,7 +126,7 @@ registerAngularTest(function(
                                 minimumLength: 0,
                                 minimumNumber: 0,
                                 name: 'a'
-                           }
+                            }
                         }},
                         property: {
                             defaultSpecification: {
@@ -217,7 +217,9 @@ registerAngularTest(function(
                  */
                 constructor(
                     data:DataService,
+                    /* eslint-disable indent */
             escapeRegularExpressionsPipe:StringEscapeRegularExpressionsPipe,
+                    /* eslint-enable indent */
                     extendObjectPipe:ExtendObjectPipe,
                     initialData:InitialDataService
                 ):void {
@@ -288,7 +290,9 @@ registerAngularTest(function(
                  */
                 constructor(
                     alert:AlertService,
+                    /* eslint-disable indent */
                 attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
+                    /* eslint-enable indent */
                     canDeactivateRouteLeave:CanDeactivateRouteLeaveGuard,
                     data:DataService,
                     dataScope:DataScopeService,
@@ -308,7 +312,9 @@ registerAngularTest(function(
                     stringMaximumLengthPipe:StringMaximumLengthPipe,
                     stringMD5Pipe:StringMD5Pipe,
                     stringReplacePipe:StringReplacePipe,
+                    /* eslint-disable indent */
                 stringShowIfPatternMatchesPipe:StringShowIfPatternMatchesPipe,
+                    /* eslint-enable indent */
                     stringSliceMatchPipe:StringSliceMatchPipe,
                     stringStartsWithPipe:StringStartsWithPipe,
                     tools:ToolsService,
@@ -355,7 +361,7 @@ registerAngularTest(function(
                                 ])
                                     assert.ok(
                                         attachmentWithPrefixExistsPipe
-                                        .transform(test[0], test[1]))
+                                            .transform(test[0], test[1]))
                                 for (const test:Array<any> of [
                                     [{}, null],
                                     [{}, 'a'],
@@ -363,7 +369,7 @@ registerAngularTest(function(
                                 ])
                                     assert.notOk(
                                         attachmentWithPrefixExistsPipe
-                                        .transform(test[0], test[1]))
+                                            .transform(test[0], test[1]))
                             })
                         self.test(`ExtractRawDataPipe (${roundType})`, (
                             assert:Object
@@ -418,9 +424,9 @@ registerAngularTest(function(
                             ])
                                 assert.deepEqual(
                                     extractRawDataPipe
-                                    ._handleAttachmentChanges(
-                                        test[0], test[1], test[2], test[3]
-                                    ), test[4])
+                                        ._handleAttachmentChanges(
+                                            test[0], test[1], test[2], test[3]
+                                        ), test[4])
                             // endregion
                             // region transform
                             for (const test:Array<any> of [
@@ -687,7 +693,7 @@ registerAngularTest(function(
                                 ])
                                     assert.strictEqual(
                                         stringShowIfPatternMatchesPipe
-                                        .transform(...test[0]), test[1])
+                                            .transform(...test[0]), test[1])
                             })
                         self.test(`StringStartsWithPipe (${roundType})`, (
                             assert:Object
@@ -890,8 +896,10 @@ registerAngularTest(function(
                                         '_attachments'
                                     ]], {_attachments: {
                                         '.+\\.(?:jpe?g|png)': {
+                                            /* eslint-disable indent */
                                         contentTypeRegularExpressionPattern:
                                                 '^image/.+',
+                                            /* eslint-enable indent */
                                             maximumNumber: 1,
                                             minimum: 0,
                                             minimumLength: 0,
@@ -899,10 +907,10 @@ registerAngularTest(function(
                                             name: '.+\\.(?:jpe?g|png)',
                                             onCreateExpression:
                                                 initialData.configuration
-                                                .database.model.entities.Test
-                                                ._attachments[
-                                                    '.+\\.(?:jpe?g|png)'
-                                                ].onCreateExpression,
+                                                    .database.model.entities
+                                                    .Test._attachments[
+                                                        '.+\\.(?:jpe?g|png)'
+                                                    ].onCreateExpression,
                                             value: {name: 'a.jpg'}
                                         }
                                     }}],
@@ -943,7 +951,8 @@ registerAngularTest(function(
                                         test[0].length < 2 ||
                                         test[0][1] === null
                                     ) ? initialData.configuration.database
-                                        .model.entities.Test : {}, test[1]))
+                                            .model.entities.Test : {}, test[1]
+                                    ))
                                 // endregion
                                 // region set
                                 assert.deepEqual(await dataScope.determine(

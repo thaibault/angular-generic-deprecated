@@ -15,7 +15,9 @@
     endregion
 */
 // region imports
+/* eslint-disable no-unused-vars */
 import type {DomNode, PlainObject} from 'clientnode'
+/* eslint-disable no-unused-vars */
 import registerTest from 'clientnode/test'
 // NOTE: Only needed for debugging this file.
 try {
@@ -140,11 +142,10 @@ export default function(
                 platform = ((
                     typeof TARGET_TECHNOLOGY === 'string' &&
                     TARGET_TECHNOLOGY === 'node'
-                ) ? require(
-                    '@angular/platform-server'
-                ).platformServer : require(
-                    '@angular/platform-browser-dynamic'
-                ).platformBrowserDynamic)()
+                ) ? require('@angular/platform-server').platformServer :
+                    require(
+                        '@angular/platform-browser-dynamic'
+                    ).platformBrowserDynamic)()
                 module = await platform.bootstrapModule(result[0])
             } catch (error) {
                 throw error
