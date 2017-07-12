@@ -76,6 +76,17 @@
     "zone.js": "latest"
   },
   "devDependencies": {
+    "@angular/animations": "latest",
+    "@angular/common": "latest",
+    "@angular/compiler": "latest",
+    "@angular/core": "latest",
+    "@angular/forms": "latest",
+    "@angular/http": "latest",
+    "@angular/material": "latest",
+    "@angular/platform-browser": "latest",
+    "@angular/platform-browser-dynamic": "latest",
+    "@angular/platform-server": "latest",
+    "@angular/router": "latest",
     "babel-eslint": "latest",
     "@angular/cdk": "latest",
     "babel-plugin-angular2-annotations": "latest",
@@ -87,10 +98,13 @@
     "eslint-plugin-jsdoc": "latest",
     "flow-bin": "latest",
     "jsdoc": "latest",
+    "reflect-metadata": "latest",
+    "rxjs": "latest",
     "source-map-support": "latest",
     "weboptimizer": "latest",
     "webpack": "latest",
-    "webpack-dev-server": "latest"
+    "webpack-dev-server": "latest",
+    "zone.js": "latest"
   },
   "webOptimizer": {
     "injection": {
