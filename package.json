@@ -77,6 +77,7 @@
   },
   "devDependencies": {
     "@angular/animations": "latest",
+    "@angular/cdk": "latest",
     "@angular/common": "latest",
     "@angular/compiler": "latest",
     "@angular/core": "latest",
@@ -88,7 +89,6 @@
     "@angular/platform-server": "latest",
     "@angular/router": "latest",
     "babel-eslint": "latest",
-    "@angular/cdk": "latest",
     "babel-plugin-angular2-annotations": "latest",
     "babel-plugin-transform-decorators-legacy": "latest",
     "documentation-website": "latest",
