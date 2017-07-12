@@ -52,12 +52,12 @@
     "clientnode": "latest",
     "hammerjs": "latest",
     "jsdom": "latest",
-    "mkdirp": "latest",
+    "mkdirp": "^0.5.1",
     "pouchdb": "latest",
     "pouchdb-adapter-memory": "latest",
     "pouchdb-find": "latest",
     "pouchdb-validation": "latest",
-    "rimraf": "latest"
+    "rimraf": "^2.6.1"
   },
   "peerDependencies": {
     "@angular/animations": "latest",
@@ -101,8 +101,8 @@
     "reflect-metadata": "latest",
     "rxjs": "latest",
     "source-map-support": "latest",
-    "weboptimizer": "latest",
-    "webpack": "latest",
+    "weboptimizer": "^1.0.343",
+    "webpack": "^3.2.0",
     "webpack-dev-server": "latest",
     "zone.js": "latest"
   },
