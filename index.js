@@ -68,6 +68,7 @@ let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
 const tinyMCEBasePath:string = '/tinymce/'
 export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
     true, tinymceDefaultSettings, {
+        /* eslint-disable camelcase */
         // region paths
         baseURL: tinyMCEBasePath,
         skin_url: `${tinyMCEBasePath}skins/lightgray`,
@@ -100,6 +101,7 @@ export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
         toolbar2: 'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',
         /* eslint-enable max-len */
         trim: true
+        /* eslint-enable camelcase */
     })
 // endregion
 // region basic services
@@ -520,9 +522,11 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                     'data'
                                 ) && newDocument[name][fileName].data)
                                     result[name][fileName] = {
+                                        /* eslint-disable camelcase */
                                         content_type: newDocument[name][
                                             fileName
                                         ].content_type ||
+                                        /* eslint-enable camelcase */
                                         'application/octet-stream',
                                         data: newDocument[name][fileName].data
                                     }
@@ -1344,7 +1348,9 @@ export class DataService {
      */
     async initialize():Promise<void> {
         const options:PlainObject = this.extendObject(
+            /* eslint-disable camelcase */
             true, {skip_setup: true},
+            /* eslint-enable camelcase */
             this.configuration.database.connector || {})
         const databaseName:string = this.configuration.name || 'generic'
         if (!isPlatformServer(this.platformID))
@@ -1699,7 +1705,9 @@ export class DataScopeService {
             if (revision === 'latest') {
                 options.latest = true
                 if (revisionHistory)
+                    /* eslint-disable camelcase */
                     options.revs_info = true
+                    /* eslint-enable camelcase */
             } else
                 options.rev = revision
             try {
@@ -1719,7 +1727,9 @@ export class DataScopeService {
                 let latestData:?PlainObject
                 if (revision !== 'latest') {
                     delete options.rev
+                    /* eslint-disable camelcase */
                     options.revs_info = true
+                    /* eslint-enable camelcase */
                     try {
                         latestData = await this.data.get(id, options)
                     } catch (error) {
@@ -2324,7 +2334,10 @@ export class AbstractInputComponent/* implements OnInit*/ {
  */
 export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     static _defaultLiveUpdateOptions:PlainObject = {
-        heartbeat: 3000, include_docs: true, live: true, timeout: false}
+        /* eslint-disable camelcase */
+        heartbeat: 3000, include_docs: true, live: true, timeout: false
+        /* eslint-enable camelcase */
+    }
     actions:Array<PlainObject> = []
     _canceled:boolean = false
     _changeDetectorReference:ChangeDetectorRef
@@ -3709,9 +3722,11 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         this.input.nativeElement.addEventListener('change', ():void => {
             if (this.input.nativeElement.files.length > 0) {
                 this.file = {
+                    /* eslint-disable camelcase */
                     // IgnoreTypeCheck
                     content_type: this.input.nativeElement.files[0].type ||
                         'text/plain',
+                    /* eslint-enable camelcase */
                     // IgnoreTypeCheck
                     data: this.input.nativeElement.files[0],
                     initialName: this.input.nativeElement.files[0].name,
@@ -3744,7 +3759,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 update[this._deletedName] = true
             else
                 update[this.attachmentTypeName] = {[this.file.name]: {
+                    /* eslint-disable camelcase */
                     content_type: 'text/plain',
+                    /* eslint-enable camelcase */
                     data: null
                 }}
             try {
@@ -3812,7 +3829,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         const file:Object = await this._data.getAttachment(
             id, this.file.name, options)
         this.file = {
+            /* eslint-disable camelcase */
             content_type: file.type || 'text/plain',
+            /* eslint-enable camelcase */
             data: await blobToBase64String(file),
             length: file.size,
             name: this.file.name
@@ -3934,7 +3953,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
             }
             newData[this._revisionName] = 'upsert'
             newData[this.attachmentTypeName] = {[this.file.name]: {
+                /* eslint-disable camelcase */
                 content_type: this.file.content_type,
+                /* eslint-enable camelcase */
                 data: this.file.data
             }}
             tasks.unshift(newData)

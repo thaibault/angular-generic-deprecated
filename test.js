@@ -99,8 +99,10 @@ registerAngularTest(function(
                 database: {
                     connector: {
                         adapter: 'memory',
+                        /* eslint-disable camelcase */
                         auto_compaction: true,
                         revs_limit: 10
+                        /* eslint-enable camelcase */
                     },
                     model: {
                         entities: {Test: {
@@ -444,15 +446,21 @@ registerAngularTest(function(
                                 [[{_attachments: {a: {}}}], null],
                                 [[{_attachments: {a: {data: 2}}}], {
                                     _attachments: {a: {
+                                        /* eslint-disable camelcase */
                                         content_type:
                                             'application/octet-stream',
+                                        /* eslint-enable camelcase */
                                         data: 2
                                     }}
                                 }],
                                 [[{_attachments: {a: {
+                                    /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2
+                                    /* eslint-enable camelcase */
                                 }}}], {_attachments: {a: {
+                                    /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2
+                                    /* eslint-enable camelcase */
                                 }}}],
                                 [[{_attachments: {a: {data: 2, length: 2}}}, {
                                     _attachments: {a: {value: {
@@ -460,15 +468,21 @@ registerAngularTest(function(
                                     }}}
                                 }], null],
                                 [[{_attachments: {a: {
+                                    /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2, length: 2
+                                    /* eslint-enable camelcase */
                                 }}}, {_attachments: {a: {value: {
+                                    /* eslint-disable camelcase */
                                     content_type: 'a/b', length: 2, name: 'a'
+                                    /* eslint-enable camelcase */
                                 }}}}], null],
                                 // 34.
                                 [[{_attachments: {a: {data: 2, length: 2}}}, {
                                     _attachments: {a: {value: {
+                                        /* eslint-disable camelcase */
                                         content_type:
                                             'application/octet-stream',
+                                        /* eslint-enable camelcase */
                                         length: 2, name: 'a'
                                     }}}
                                 }], null],
@@ -477,15 +491,21 @@ registerAngularTest(function(
                                         length: 3, name: 'a'
                                     }}}
                                 }], {_attachments: {a: {
+                                    /* eslint-disable camelcase */
                                     content_type: 'application/octet-stream',
+                                    /* eslint-enable camelcase */
                                     data: 2
                                 }}}],
                                 [[{_attachments: {a: {
+                                    /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2, length: 2
+                                    /* eslint-enable camelcase */
                                 }}}, {_attachments: {a: {value: {
                                     length: 2, name: 'a'
                                 }}}}], {_attachments: {a: {
+                                    /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2
+                                    /* eslint-enable camelcase */
                                 }}}],
                                 [
                                     [{}, {a: {value: {length: 2, name: 'a'}}}],
@@ -1368,7 +1388,9 @@ registerAngularTest(function(
                         _attachments: {name: {
                             nullable: true,
                             value: {
+                                /* eslint-disable camelcase */
                                 content_type: 'text/plain',
+                                /* eslint-enable camelcase */
                                 digest: 'hash',
                                 name: 'name'
                             }
@@ -1392,7 +1414,9 @@ registerAngularTest(function(
                     fixture.componentInstance.input.nativeElement
                         .dispatchEvent(getNativeEvent('change'))
                     await fixture.whenStable()
+                    /* eslint-disable camelcase */
                     fixture.componentInstance.file.content_type = 'image/png'
+                    /* eslint-enable camelcase */
                     fixture.componentInstance.determinePresentationType()
                     assert.strictEqual(
                         fixture.componentInstance.file.type, 'image')
@@ -1417,7 +1441,9 @@ registerAngularTest(function(
                         _attachments: {name: {
                             nullable: true,
                             value: {
+                                /* eslint-disable camelcase */
                                 content_type: 'text/plain',
+                                /* eslint-enable camelcase */
                                 digest: 'hash',
                                 name: 'name'
                             }
