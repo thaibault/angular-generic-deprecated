@@ -36,7 +36,7 @@
     "document": "webOptimizer document",
     "export": "webOptimizer build '{development:{tool:false},module:{preprocessor:{javaScript:{options:{plugins:{__remove__:\"transform-runtime\"}}}}}}' && npm run build:tTest",
     "lint": "webOptimizer check:type; webOptimizer lint",
-    "prepublish": "npm run build",
+    "prepare": "npm run build",
     "serve": "webOptimizer serve",
     "start": "npm run serve",
     "test": "webOptimizer test",
