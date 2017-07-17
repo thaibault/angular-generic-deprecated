@@ -53,9 +53,9 @@
     "hammerjs": "^2.0.8",
     "jsdom": "^11.1.0",
     "mkdirp": "^0.5.1",
-    "pouchdb": "^6.3.2",
-    "pouchdb-adapter-memory": "^6.3.2",
-    "pouchdb-find": "^6.3.2",
+    "pouchdb": "^6.3.4",
+    "pouchdb-adapter-memory": "^6.3.4",
+    "pouchdb-find": "^6.3.4",
     "pouchdb-validation": "^1.2.1",
     "rimraf": "^2.6.1"
   },
@@ -66,7 +66,7 @@
     "@angular/core": "^4.2.6",
     "@angular/forms": "^4.2.6",
     "@angular/http": "^4.2.6",
-    "@angular/material": "^2.0.0-beta.8",
+    "@angular/material": "2.0.0-beta.4",
     "@angular/platform-browser": "^4.2.6",
     "@angular/platform-browser-dynamic": "^4.2.6",
     "@angular/platform-server": "^4.2.6",
@@ -76,18 +76,18 @@
     "zone.js": "^0.8.13"
   },
   "devDependencies": {
-    "@angular/animations": "^4.2.6",
+    "@angular/animations": "^4.3.0",
     "@angular/cdk": "^2.0.0-beta.8",
-    "@angular/common": "^4.2.6",
-    "@angular/compiler": "^4.2.6",
-    "@angular/core": "^4.2.6",
-    "@angular/forms": "^4.2.6",
-    "@angular/http": "^4.2.6",
-    "@angular/material": "^2.0.0-beta.8",
-    "@angular/platform-browser": "^4.2.6",
-    "@angular/platform-browser-dynamic": "^4.2.6",
-    "@angular/platform-server": "^4.2.6",
-    "@angular/router": "^4.2.6",
+    "@angular/common": "^4.3.0",
+    "@angular/compiler": "^4.3.0",
+    "@angular/core": "^4.3.0",
+    "@angular/forms": "^4.3.0",
+    "@angular/http": "^4.3.0",
+    "@angular/material": "2.0.0-beta.4",
+    "@angular/platform-browser": "^4.3.0",
+    "@angular/platform-browser-dynamic": "^4.3.0",
+    "@angular/platform-server": "^4.3.0",
+    "@angular/router": "^4.3.0",
     "babel-cli": "^6.24.1",
     "babel-eslint": "^7.2.3",
     "babel-plugin-angular2-annotations": "^5.1.0",
@@ -103,7 +103,7 @@
     "reflect-metadata": "^0.1.10",
     "rxjs": "^5.4.2",
     "source-map-support": "^0.4.15",
-    "weboptimizer": "^1.0.347",
+    "weboptimizer": "^1.0.348",
     "webpack": "^3.2.0",
     "webpack-dev-server": "^2.5.1",
     "zone.js": "^0.8.13"
@@ -175,7 +175,7 @@
         }
       },
       "skipParseRegularExpressions": {
-        "__evaluate__": "/(?:^|\\/)(?:(?:babel-polyfill\\/dist\\/polyfill)|(?:hammerjs\\/hammer)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb)|(?:pouchdb\\.find\\/dist\\/pouchdb\\.find)|(?:reflect-metadata\\/Reflect)|(?:rxjs\\/bundles\\/Rx)|(?:webpack\\/buildin\\/global)|(?:webpack\\/buildin\\/module)|(?:zone\\.js\\/dist\\/zone))(?:\\.min)?\\.js(?:\\?.+|$)/"
+        "__evaluate__": "/(?:^|\\/)(?:(?:babel-polyfill\\/dist\\/polyfill)|(?:hammerjs\\/hammer)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb)|(?:reflect-metadata\\/Reflect)|(?:rxjs\\/bundles\\/Rx)|(?:webpack\\/buildin\\/global)|(?:webpack\\/buildin\\/module)|(?:zone\\.js\\/dist\\/zone))(?:\\.min)?\\.js(?:\\?.+|$)/"
       }
     }
   }

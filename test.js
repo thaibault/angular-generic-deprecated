@@ -1140,7 +1140,7 @@ registerAngularTest(function(
             // / endregion
             // / region input/select/textarea
             for (const component:AbstractInputComponent of [
-                InputComponent, TextareaComponent, SimpleInputComponent
+                InputComponent//, TextareaComponent, SimpleInputComponent
             ])
                 this.test(
                     `AbstractInputComponent/${component.name} (${roundType})`,

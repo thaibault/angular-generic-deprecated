@@ -2718,13 +2718,6 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
 }
 // / endregion
 // // region date/time
-// IgnoreTypeCheck
-@Directive(Tools.extendObject(true, {
-}, DefaultValueAccessor.decorators[0].args[0], {providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(():DateTimeValueAccessor => DateTimeValueAccessor),
-    multi: true
-}]}))
 /**
  * Time value accessor with "ngModel" support.
  */
@@ -2789,6 +2782,11 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
             }
         return value
     }
+}
+export const dateTimeValueAccessor:Object = {
+    provide: NG_VALUE_ACCESSOR,
+    useExisting: forwardRef(():DateTimeValueAccessor => DateTimeValueAccessor),
+    multi: true
 }
 // // / region intervall
 // IgnoreTypeCheck
@@ -3001,6 +2999,7 @@ const propertyWrapperInputContent:string = `
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
+    providers: [dateTimeValueAccessor],
     selector: 'generic-input',
     template: `
         <generic-textarea
@@ -3068,6 +3067,7 @@ export class InputComponent extends AbstractInputComponent {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
+    providers: [dateTimeValueAccessor],
     selector: 'generic-simple-input',
     template: `
         <ng-container
@@ -3132,6 +3132,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
+    providers: [dateTimeValueAccessor],
     selector: 'generic-textarea',
     template: `
         <ng-container *ngIf="activeEditor; else plain">
@@ -4132,7 +4133,7 @@ export class PaginationComponent {
 const declarations:Array<Object> = Object.keys(module.exports).filter((
     name:string
 ):boolean => !name.startsWith('Abstract') && [
-    'Accessor', 'Component', 'Directive', 'Pipe'
+    'Component', 'Directive', 'Pipe'
 ].some((suffix:string):boolean => name.endsWith(suffix))).map((
     name:string
 ):Object => module.exports[name])
