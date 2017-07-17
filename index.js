@@ -2890,15 +2890,16 @@ export class IntervalsInputComponent {
      * @returns Nothing.
      */
     add():void {
-        const lastEnd:Date = (
+        const lastEnd:Date = ((
             this.model.value && this.model.value.length
         ) ? new Date(this.model.value[this.model.value.length - 1].end) :
             new Date(1970, 0, 1)
+        ).getTime()
         this.model.value.push(this._extendObject({
-            end: new Date(lastEnd.getTime() + (new Date(
+            end: new Date(lastEnd + (new Date(
                 1970, 0, 1, 2
             )).getTime()) / 1000,
-            start: lastEnd
+            start: lastEnd / 1000
         }, this.additionalObjectData))
         this.modelChange.emit(this.model)
     }
