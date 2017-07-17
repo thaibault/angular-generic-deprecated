@@ -2496,6 +2496,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
         stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
     ):void {
         super(changeDetectorReference, data, stringCapitalizePipe, tools)
+        this.keyCode = this._tools.keyCode
         this._route = route
         this._router = router
         // IgnoreTypeCheck
