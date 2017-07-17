@@ -2745,7 +2745,10 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
      * @returns Given and transformed value.
      */
     exportValue(value:any):any {
-        if (value && ['date', 'time'].includes(this.type)) {
+        if (
+            ![undefined, null].includes(value) &&
+            ['date', 'time'].includes(this.type)
+        ) {
             const date:Date = new Date(value)
             if (isNaN(date.getDate()))
                 return
@@ -2791,7 +2794,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
         return value
     }
 }
-// // / region intervall
+// // / region interval
 // IgnoreTypeCheck
 @Component({
     selector: 'generic-interval-input',
@@ -2799,7 +2802,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
         <md-input-container><input
             mdInput type="time" [(ngModel)]="model.start" placeholder="Start"
         /></md-input-container>
-        <span class="delimiter"><ng-content></ng-content></span>
+        <ng-content></ng-content>
         <md-input-container><input
             mdInput type="time" [(ngModel)]="model.end" placeholder="Ende"
         /></md-input-container>
@@ -2812,8 +2815,8 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
  */
 export class IntervalInputComponent {
     @Input() model:{end:number;start:number} = {
-        end: (new Date(1970, 0, 1)).getTime() / 1000,
-        start: (new Date(1970, 0, 1)).getTime() / 1000
+        end: 0,
+        start: 0
     }
 }
 // IgnoreTypeCheck
@@ -2855,11 +2858,10 @@ export class IntervalInputComponent {
  * @property modelChange - Event emitter for interval list changes.
  */
 export class IntervalsInputComponent {
-    @ContentChild(TemplateRef) contentTemplate:TemplateRef
-
     _extendObject:Function
     _typeName:string
     @Input() additionalObjectData:PlainObject
+    @ContentChild(TemplateRef) contentTemplate:TemplateRef
     @Input() model:PlainObject = {value: []}
     @Output() modelChange:EventEmitter<Array<PlainObject>> = new EventEmitter()
     /**
@@ -2890,15 +2892,14 @@ export class IntervalsInputComponent {
      * @returns Nothing.
      */
     add():void {
-        const lastEnd:number = ((
+        const lastEnd:number = (
             this.model.value && this.model.value.length
-        ) ? new Date(this.model.value[this.model.value.length - 1].end) :
-            new Date(1970, 0, 1)
-        ).getTime()
+        ) ? (new Date(
+            this.model.value[this.model.value.length - 1].end
+        )).getTime() : 0
         this.model.value.push(this._extendObject({
-            end: new Date(lastEnd + (new Date(
-                1970, 0, 1, 2
-            )).getTime()),
+            // NOTE: We add one hour in milliseconds as default interval.
+            end: lastEnd + 60 ** 2 * 1000,
             start: lastEnd
         }, this.additionalObjectData))
         this.modelChange.emit(this.model)
