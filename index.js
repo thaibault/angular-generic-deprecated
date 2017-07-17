@@ -30,7 +30,7 @@ import {
     /* eslint-disable no-unused-vars */
     ContentChild, Directive, ElementRef, EventEmitter, forwardRef, Injectable,
     Inject, Injector, Input, NgModule, /* OnChanges, OnInit,*/ Optional,
-    Output, Pipe, PipeTransform, PLATFORM_ID, ReflectiveInjector, Renderer,
+    Output, Pipe, PipeTransform, PLATFORM_ID, ReflectiveInjector, Renderer2,
     TemplateRef, ViewChild
     /* eslint-enyyable no-unused-vars */
 } from '@angular/core'
@@ -2719,6 +2719,13 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
 }
 // / endregion
 // // region date/time
+// IgnoreTypeCheck
+@Directive(Tools.extendObject(true, {
+}, DefaultValueAccessor.decorators[0].args[0], {providers: [{
+    provide: NG_VALUE_ACCESSOR,
+    useExisting: forwardRef(():DateTimeValueAccessor => DateTimeValueAccessor),
+    multi: true
+}]}))
 /**
  * Time value accessor with "ngModel" support.
  */
@@ -2729,7 +2736,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
      * @param renderer - Angular's dom abstraction layer.
      * @param elementRef - Host element reference.
      */
-    constructor(renderer:Renderer, elementRef:ElementRef):void {
+    constructor(renderer:Renderer2, elementRef:ElementRef):void {
         super(renderer, elementRef, null)
     }
     /**
@@ -2783,11 +2790,6 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
             }
         return value
     }
-}
-export const dateTimeValueAccessor:Object = {
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(():DateTimeValueAccessor => DateTimeValueAccessor),
-    multi: true
 }
 // // / region intervall
 // IgnoreTypeCheck
@@ -2948,7 +2950,7 @@ const inputContent:string = `
                 {{model.declaration}}
             </span>
         </span>
-        <span *ngIf="editor && selectableEditor">
+        <span *ngIf="editor && selectableEditor && !model.disabled">
             <span *ngIf="model.declaration">|</span>
             <a
                 [class.activ]="activeEditor"
@@ -3000,7 +3002,6 @@ const propertyWrapperInputContent:string = `
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
-    providers: [dateTimeValueAccessor],
     selector: 'generic-input',
     template: `
         <generic-textarea
@@ -3068,7 +3069,6 @@ export class InputComponent extends AbstractInputComponent {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
-    providers: [dateTimeValueAccessor],
     selector: 'generic-simple-input',
     template: `
         <ng-container
@@ -3133,7 +3133,6 @@ export class SimpleInputComponent extends AbstractInputComponent {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
-    providers: [dateTimeValueAccessor],
     selector: 'generic-textarea',
     template: `
         <ng-container *ngIf="activeEditor; else plain">
@@ -4156,7 +4155,11 @@ const modules:Array<Object> = [
 ]
 // IgnoreTypeCheck
 @NgModule({
-    declarations,
+    declarations: declarations.concat(Object.keys(module.exports).filter((
+        name:string
+    ):boolean => !name.startsWith('Abstract') && ['Accessor'].some(
+        (suffix:string):boolean => name.endsWith(suffix)
+    )).map((name:string):Object => module.exports[name])),
     entryComponents: [ConfirmComponent],
     exports: declarations,
     imports: modules,
