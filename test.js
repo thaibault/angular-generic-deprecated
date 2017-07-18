@@ -973,6 +973,96 @@ registerAngularTest(function(
                                     ) ? initialData.configuration.database
                                             .model.entities.Test : {}, test[1]
                                     ))
+                                const modelBackup:PlainObject =
+                                    initialData.configuration.database.model
+                                        .entities
+                                initialData.configuration.database.model
+                                    .entities = {
+                                        A: {
+                                            a: {
+                                                minimum: 0,
+                                                minimumLength: 0,
+                                                minimumNumber: 0,
+                                                name: 'a'
+                                            },
+                                            b: {
+                                                minimum: 0,
+                                                minimumLength: 0,
+                                                minimumNumber: 0,
+                                                name: 'b'
+                                            }
+                                        },
+                                        Test: {a: {
+                                            default: {
+                                                a: 'a',
+                                                b: 'b'
+                                            },
+                                            minimum: 0,
+                                            minimumLength: 0,
+                                            minimumNumber: 0,
+                                            name: 'a',
+                                            type: 'A'
+                                        }}
+                                    }
+                                assert.deepEqual(dataScope.generate(
+                                    'Test'
+                                ), extendObjectPipe.transform(true, {
+                                    _metaData: {submitted: false},
+                                    '-type': 'Test',
+                                    a: {value: extendObjectPipe.transform(
+                                        true, {
+                                            '-type': 'A',
+                                            _metaData: {submitted: false},
+                                            a: {
+                                                value: 'a'
+                                            },
+                                            b: {
+                                                value: 'b'
+                                            }
+                                        },
+                                        initialData.configuration.database
+                                            .model.entities.A
+                                    )}
+                                }, initialData.configuration.database.model
+                                    .entities.Test))
+                                initialData.configuration.database.model
+                                    .entities = {
+                                        A: {a: {
+                                            minimum: 0,
+                                            minimumLength: 0,
+                                            minimumNumber: 0,
+                                            name: 'a'
+                                        }},
+                                        Test: {a: {
+                                            default: [{a: 'a'}],
+                                            minimum: 0,
+                                            minimumLength: 0,
+                                            minimumNumber: 0,
+                                            name: 'a',
+                                            type: 'A[]'
+                                        }}
+                                    }
+                                assert.deepEqual(dataScope.generate(
+                                    'Test'
+                                ), extendObjectPipe.transform(
+                                    true, {},
+                                    initialData.configuration.database.model
+                                        .entities.Test,
+                                    {
+                                        _metaData: {submitted: false},
+                                        '-type': 'Test',
+                                        a: {value: [extendObjectPipe.transform(
+                                            true, {
+                                                '-type': 'A',
+                                                _metaData: {submitted: false},
+                                                a: {value: 'a'}
+                                            },
+                                            initialData.configuration.database
+                                                .model.entities.A
+                                        )]}
+                                    }))
+                                initialData.configuration.database.model
+                                    .entities = modelBackup
                                 // endregion
                                 // region set
                                 assert.deepEqual(await dataScope.determine(

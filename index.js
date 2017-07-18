@@ -1901,9 +1901,9 @@ export class DataScopeService {
                                 type
                             ].default)
                         )
-                            result[name][type].value = result[name][
-                                type
-                            ].default
+                            result[name][type].value =
+                                this.tools.copyLimitedRecursively(
+                                    {}, result[name][type].default)
                     }
             } else {
                 result[name].name = name
@@ -1945,36 +1945,41 @@ export class DataScopeService {
                 else if (result[name].hasOwnProperty('default') && ![
                     undefined, null
                 ].includes(result[name].default))
-                    result[name].value = result[name].default
+                    result[name].value = this.tools.copyLimitedRecursively(
+                        result[name].default)
                 else if (
                     result[name].hasOwnProperty('selection') &&
                     Array.isArray(result[name].selection) &&
                     result[name].selection.length
                 )
                     result[name].value = result[name].selection[0]
-                if (
-                    !(result[name].value instanceof Date) &&
-                    result[name].type.endsWith('Time')
-                )
-                    // NOTE: We interpret given value as an utc timestamp.
-                    result[name].value = new Date(result[name].value * 1000)
-                if (entities.hasOwnProperty(result[name].type))
-                    result[name].value = this.generate(
-                        result[name].type, null, result[name].value || {})
-                else if (result[name].type.endsWith('[]'))
-                    const type:string = result[name].type.substring(
-                        0, result[name].type.length - 2)
+                if (result[name].hasOwnProperty('type')) {
                     if (
-                        Array.isArray(result[name].value) &&
-                        entities.hasOwnProperty(type)
-                    ) {
-                        let index:number = 0
-                        for (const item:any of result[name].value) {
-                            result[name].value[index] = this.generate(
-                                type, null, item || {})
-                            index += 1
+                        !(result[name].value instanceof Date) &&
+                        result[name].type.endsWith('Time')
+                    )
+                        // NOTE: We interpret given value as an utc timestamp.
+                        result[name].value = new Date(
+                            result[name].value * 1000)
+                    if (entities.hasOwnProperty(result[name].type))
+                        result[name].value = this.generate(
+                            result[name].type, null, result[name].value || {})
+                    else if (result[name].type.endsWith('[]')) {
+                        const type:string = result[name].type.substring(
+                            0, result[name].type.length - 2)
+                        if (
+                            Array.isArray(result[name].value) &&
+                            entities.hasOwnProperty(type)
+                        ) {
+                            let index:number = 0
+                            for (const item:any of result[name].value) {
+                                result[name].value[index] = this.generate(
+                                    type, null, item || {})
+                                index += 1
+                            }
                         }
                     }
+                }
             }
         }
         for (const name:string of reservedNames)
@@ -2815,13 +2820,9 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
 @Component({
     selector: 'generic-interval-input',
     template: `
-        <md-input-container><input
-            mdInput type="time" [(ngModel)]="model.start" placeholder="Start"
-        /></md-input-container>
+        <generic-input type="time" [model]="model.start"></generic-input>
         <ng-content></ng-content>
-        <md-input-container><input
-            mdInput type="time" [(ngModel)]="model.end" placeholder="Ende"
-        /></md-input-container>
+        <generic-input type="time" [model]="model.end"></generic-input>
     `
 })
 /**
