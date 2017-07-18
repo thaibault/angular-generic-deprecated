@@ -2833,8 +2833,8 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
  */
 export class IntervalInputComponent {
     @Input() model:{end:number;start:number} = {
-        end: 0,
-        start: 0
+        end: {value: 0},
+        start: {value: 0}
     }
 }
 // IgnoreTypeCheck
@@ -2918,17 +2918,18 @@ export class IntervalsInputComponent {
      * Adds a new interval.
      * @returns Nothing.
      */
-    add():void {
+    add(data:PlainObject = {}):void {
         const lastEnd:number = (
             this.model.value && this.model.value.length
         ) ? (new Date(
             this.model.value[this.model.value.length - 1].end.value
         )).getTime() : 0
-        this.model.value.push(this._extendObject(true, {
-            // NOTE: We add one hour in milliseconds as default interval.
-            end: {value: lastEnd + 60 ** 2 * 1000},
-            start: {value: lastEnd}
-        }, this.additionalObjectData))
+        this.model.value.push(this._extendObject(
+            true, {}, this.additionalObjectData, {
+                // NOTE: We add one hour in milliseconds as default interval.
+                end: {value: new Date(lastEnd + 60 ** 2 * 1000)},
+                start: {value: new Date(lastEnd)}
+            }, data))
         this.modelChange.emit(this.model)
     }
     /**
