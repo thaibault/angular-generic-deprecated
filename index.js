@@ -298,7 +298,8 @@ export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
 // IgnoreTypeCheck
 @Pipe({name: 'genericExtractRawData'})
 /**
- * Removes all meta data from documents.
+ * Removes all meta data and already existing data (compared to an old
+ * document) from a document recursively.
  * @property configuration - Initial given configuration object.
  * @property equals - Equals pipe transform function.
  * @property tools - Holds the tools class from the tools service.
@@ -462,8 +463,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         specialNames.revisionsInformations,
                         specialNames.revisions,
                         specialNames.validatedDocumentsCache
-                    ].includes(name) &&
-                    (
+                    ].includes(name) && (
                         !(specialNames.type in newDocument) ||
                         this.configuration.database.model.entities[newDocument[
                             specialNames.type
@@ -574,8 +574,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                             specialNames.type
                         ]).includes(name) ||
                         [null, undefined].includes(oldDocument[name].value)
-                    ) &&
-                    (
+                    ) && (
                         !(specialNames.type in newDocument) ||
                         this.configuration.database.model.entities[newDocument[
                             specialNames.type
@@ -1767,11 +1766,12 @@ export class DataScopeService {
      * scope for. If "null" is given all properties in given model will be
      * taken into account.
      * @param data - Data to use for given properties.
+     * @param propertyNamesToIgnore - Property names ti skip.
      * @returns The generated scope object.
      */
     generate(
         modelName:string, propertyNames:?Array<string> = null,
-        data:PlainObject = {}
+        data:PlainObject = {}, propertyNamesToIgnore:Array<string> = []
     ):PlainObject {
         const entities:PlainObject = this.configuration.database.model.entities
         const modelSpecification:PlainObject = entities[modelName]
@@ -1822,6 +1822,8 @@ export class DataScopeService {
         }
         const result:PlainObject = {}
         for (const name:string of propertyNames) {
+            if (propertyNamesToIgnore.includes(name))
+                continue
             if (specification.hasOwnProperty(name))
                 result[name] = this.tools.copyLimitedRecursively(
                     specification[name])
@@ -1964,7 +1966,8 @@ export class DataScopeService {
                             result[name].value * 1000)
                     if (entities.hasOwnProperty(result[name].type))
                         result[name].value = this.generate(
-                            result[name].type, null, result[name].value || {})
+                            result[name].type, null, result[name].value || {},
+                            [specialNames.attachment, specialNames.id])
                     else if (result[name].type.endsWith('[]')) {
                         const type:string = result[name].type.substring(
                             0, result[name].type.length - 2)
@@ -1975,7 +1978,8 @@ export class DataScopeService {
                             let index:number = 0
                             for (const item:any of result[name].value) {
                                 result[name].value[index] = this.generate(
-                                    type, null, item || {})
+                                    type, null, item || {},
+                                    [specialNames.attachment, specialNames.id])
                                 index += 1
                             }
                         }
@@ -1992,7 +1996,7 @@ export class DataScopeService {
         return result
     }
     /**
-     * Retrieves needed data for given scope.
+     * Retrieves raw data (without meta data) for given scope recursively.
      * @param scope - Scope to use to determine which data is needed.
      * @returns Resolved data.
      */
@@ -2019,12 +2023,20 @@ export class DataScopeService {
                     specialNames.revisionsInformations
                 ].includes(key)
             )
-                if (
-                    typeof scope[key] === 'object' && scope[key] !== null &&
-                    'hasOwnProperty' in scope && scope[key].hasOwnProperty(
-                        'value')
-                )
-                    result[key] = scope[key].value
+                if (typeof scope[key] === 'object' && scope[key] !== null)
+                    if (
+                        'hasOwnProperty' in scope &&
+                        scope[key].hasOwnProperty('value')
+                    )
+                        if (
+                            typeof scope[key].value === 'object' &&
+                            scope[key].value !== null
+                        )
+                            result[key] = this.get(scope[key].value)
+                        else
+                            result[key] = scope[key].value
+                    else
+                        result[key] = this.get(scope[key])
                 else
                     result[key] = scope[key]
         if (scope.hasOwnProperty(
