@@ -1813,7 +1813,8 @@ export class DataScopeService {
                                 .defaultSpecification,
                         ), modelSpecification[name])
         if (!propertyNames) {
-            propertyNames = Object.keys(specification)
+            propertyNames = Object.keys(specification).filter(
+                (key:string):boolean => typeof specification[key] === 'object')
             propertyNames = propertyNames.concat(Object.keys(data).filter((
                 name:string
             // IgnoreTypeCheck
@@ -2845,7 +2846,7 @@ export class IntervalInputComponent {
         <div
             *ngIf="description !== '' && (description || model.description || model.name)"
         >{{description || model.description || model.name}}</div>
-        <div *ngFor="let interval of model.value">
+        <div @defaultAnimation *ngFor="let interval of model.value">
             <generic-interval-input [model]="interval">
                 <ng-container *ngIf="contentTemplate; else fallback">
                     <ng-container
