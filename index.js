@@ -2825,7 +2825,9 @@ export class IntervalInputComponent {
     selector: 'generic-intervals-input',
     /* eslint-disable max-len */
     template: `
-        <div>{{model.description || model.name}}</div>
+        <div
+            *ngIf="description !== '' && description || model.description || model.name"
+        >{{description || model.description || model.name}}</div>
         <div *ngFor="let interval of model.value">
             <generic-interval-input [model]="interval">
                 <ng-container *ngIf="contentTemplate; else fallback">
@@ -2856,6 +2858,7 @@ export class IntervalInputComponent {
  * @property _typeName - Saves current configured type name.
  * @property additionalObjectData - Additional object data to save with current
  * interval object.
+ * @property description - Interval description to use as label.
  * @property model - Saves current list of intervals.
  * @property modelChange - Event emitter for interval list changes.
  */
@@ -2864,6 +2867,7 @@ export class IntervalsInputComponent {
     _typeName:string
     @Input() additionalObjectData:PlainObject
     @ContentChild(TemplateRef) contentTemplate:TemplateRef
+    @Input() description:?string = null
     @Input() model:PlainObject = {value: []}
     @Output() modelChange:EventEmitter<Array<PlainObject>> = new EventEmitter()
     /**
