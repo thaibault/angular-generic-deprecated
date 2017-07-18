@@ -1909,6 +1909,8 @@ export class DataScopeService {
             } else {
                 result[name].name = name
                 result[name].value = null
+                // TODO generate structure recursively and expect a full moddel
+                // object in interval components.
                 if (Object.keys(data).length === 0)
                     for (const type:string of [
                         'onCreateExpression', 'onCreateExecution'
@@ -1940,6 +1942,8 @@ export class DataScopeService {
                             if (result[name].value === undefined)
                                 result[name].value = null
                         }
+                if (result[name].type.endsWith('Time') && result[name].default)
+                    result[name].default *= 1000
                 if (data.hasOwnProperty(name) && ![undefined, null].includes(
                     data[name]
                 ))
