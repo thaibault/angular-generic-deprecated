@@ -2826,7 +2826,7 @@ export class IntervalInputComponent {
     /* eslint-disable max-len */
     template: `
         <div
-            *ngIf="description !== '' && description || model.description || model.name"
+            *ngIf="description !== '' && (description || model.description || model.name)"
         >{{description || model.description || model.name}}</div>
         <div *ngFor="let interval of model.value">
             <generic-interval-input [model]="interval">
