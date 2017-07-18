@@ -1773,8 +1773,8 @@ export class DataScopeService {
         modelName:string, propertyNames:?Array<string> = null,
         data:PlainObject = {}
     ):PlainObject {
-        const modelSpecification:PlainObject =
-            this.configuration.database.model.entities[modelName]
+        const entities:PlainObject = this.configuration.database.model.entities
+        const modelSpecification:PlainObject = entities[modelName]
         const specialNames:PlainObject =
             this.configuration.database.model.property.name.special
         const reservedNames:Array<string> =
@@ -1862,8 +1862,7 @@ export class DataScopeService {
                                         ) + result[name][type][hookType]
                                     ))(
                                         data, null, {}, {}, type,
-                                        this.configuration.database.model
-                                            .entities,
+                                        entities,
                                         this.configuration.database.model, (
                                             object:Object
                                         ):string => JSON.stringify(
@@ -1909,8 +1908,6 @@ export class DataScopeService {
             } else {
                 result[name].name = name
                 result[name].value = null
-                // TODO generate structure recursively and expect a full moddel
-                // object in interval components.
                 if (Object.keys(data).length === 0)
                     for (const type:string of [
                         'onCreateExpression', 'onCreateExecution'
@@ -1929,8 +1926,7 @@ export class DataScopeService {
                                     ''
                                 ) + result[name][type]
                             ))(
-                                data, null, {}, {}, name,
-                                this.configuration.database.model.entities,
+                                data, null, {}, {}, name, entities,
                                 this.configuration.database.model,
                                 (object:Object):string => JSON.stringify(
                                     object, null, 4
@@ -1942,8 +1938,6 @@ export class DataScopeService {
                             if (result[name].value === undefined)
                                 result[name].value = null
                         }
-                if (result[name].type.endsWith('Time') && result[name].default)
-                    result[name].default *= 1000
                 if (data.hasOwnProperty(name) && ![undefined, null].includes(
                     data[name]
                 ))
@@ -1958,11 +1952,29 @@ export class DataScopeService {
                     result[name].selection.length
                 )
                     result[name].value = result[name].selection[0]
-                if (!(result[name].value instanceof Date) && (name.endsWith(
-                    'Time'
-                ) || name.endsWith('Date')))
+                if (
+                    !(result[name].value instanceof Date) &&
+                    result[name].type.endsWith('Time')
+                )
                     // NOTE: We interpret given value as an utc timestamp.
                     result[name].value = new Date(result[name].value * 1000)
+                if (entities.hasOwnProperty(result[name].type))
+                    result[name].value = this.generate(
+                        result[name].type, null, result[name].value || {})
+                else if (result[name].type.endsWith('[]'))
+                    const type:string = result[name].type.substring(
+                        0, result[name].type.length - 2)
+                    if (
+                        Array.isArray(result[name].value) &&
+                        entities.hasOwnProperty(type)
+                    ) {
+                        let index:number = 0
+                        for (const item:any of result[name].value) {
+                            result[name].value[index] = this.generate(
+                                type, null, item || {})
+                            index += 1
+                        }
+                    }
             }
         }
         for (const name:string of reservedNames)
