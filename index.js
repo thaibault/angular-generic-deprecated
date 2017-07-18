@@ -2871,6 +2871,7 @@ export class IntervalInputComponent {
 })
 /**
  * Represents an editable list of intervals.
+ * @property _dataScope - Data scope service instance.
  * @property _extendObject - Holds the extend object pipe instance's transform
  * method.
  * @property _typeName - Saves current configured type name.
@@ -2881,6 +2882,7 @@ export class IntervalInputComponent {
  * @property modelChange - Event emitter for interval list changes.
  */
 export class IntervalsInputComponent {
+    _dataScope:DataScopeService
     _extendObject:Function
     _typeName:string
     @Input() additionalObjectData:PlainObject
@@ -2890,13 +2892,16 @@ export class IntervalsInputComponent {
     @Output() modelChange:EventEmitter<Array<PlainObject>> = new EventEmitter()
     /**
      * Constructs the interval list component.
+     * @param dataScope - Data scope service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
      * @returns Nothing.
      */
     constructor(
-        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService
+        dataScope:DataScopeService, extendObjectPipe:ExtendObjectPipe,
+        initialData:InitialDataService
     ):void {
+        this._dataScope = dataScope
         this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this._typeName =
             initialData.configuration.database.model.property.name.special.type
@@ -2907,9 +2912,7 @@ export class IntervalsInputComponent {
      */
     ngOnInit():void {
         if (!this.additionalObjectData)
-            this.additionalObjectData = {
-                [this._typeName]: '_interval'
-            }
+            this.additionalObjectData = this._dataScope.generate('_interval')
     }
     /**
      * Adds a new interval.
@@ -2919,12 +2922,12 @@ export class IntervalsInputComponent {
         const lastEnd:number = (
             this.model.value && this.model.value.length
         ) ? (new Date(
-            this.model.value[this.model.value.length - 1].end
+            this.model.value[this.model.value.length - 1].end.value
         )).getTime() : 0
-        this.model.value.push(this._extendObject({
+        this.model.value.push(this._extendObject(true, {
             // NOTE: We add one hour in milliseconds as default interval.
-            end: lastEnd + 60 ** 2 * 1000,
-            start: lastEnd
+            end: {value: lastEnd + 60 ** 2 * 1000},
+            start: {value: lastEnd}
         }, this.additionalObjectData))
         this.modelChange.emit(this.model)
     }
