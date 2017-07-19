@@ -415,8 +415,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
     tools:Tools
     /**
      * Gets injected services.
-     * @param equalsPipe - Equals pipe service instance.
-     * @param extractDataPipe
+     * @param equalsPipe - Equals pipe instance.
+     * @param extractDataPipe - Extract data pipe instance.
      * @param initialData - Initial data service instance.
      * @param tools - Injected tools service instance.
      * @returns Nothing.
@@ -1886,12 +1886,16 @@ export class DataScopeService {
      */
     generate(
         modelName:string, propertyNames:?Array<string> = null,
-        data:PlainObject = {}, propertyNamesToIgnore:Array<string> = []
+        data:PlainObject = {}, propertyNamesToIgnore:?Array<string> = null
     ):PlainObject {
         const entities:PlainObject = this.configuration.database.model.entities
         const modelSpecification:PlainObject = entities[modelName]
         const specialNames:PlainObject =
             this.configuration.database.model.property.name.special
+        if (!propertyNamesToIgnore)
+            propertyNamesToIgnore = modelName.startsWith('_') ? [
+                specialNames.id, specialNames.attachment
+            ] : []
         const reservedNames:Array<string> =
             this.configuration.database.model.property.name.reserved.concat(
                 specialNames.conflict,

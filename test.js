@@ -257,6 +257,8 @@ registerAngularTest(function(
                  * route leave guard instance.
                  * @param data - Injected data service instance.
                  * @param dataScope - Injected data scope service instance.
+                 * @param extractDataPipe - Injected extract data pipe
+                 * instance.
                  * @param extractRawDataPipe - Injected extract raw data pipe
                  * instance.
                  * @param extendObjectPipe - Injected extend object data pipe.
@@ -465,7 +467,7 @@ registerAngularTest(function(
                                     test[1])
                             // endregion
                             // region transform
-                            for (const test:Array<PlainObject> of [
+                            for (const test:Array<any> of [
                                 [{}, {}],
                                 [2, 2],
                                 [false, false],
@@ -478,33 +480,29 @@ registerAngularTest(function(
                                     {a: {value: 2}}
                                 ],
                                 [
-                                    {
-                                        value: {a: {value: 2},
-                                        '-type': 'Test'}
-                                    },
+                                    {value: {a: {value: 2}, '-type': 'Test'}},
                                     {a: 2}
                                 ],
                                 [
                                     [{
-                                        value: {a: {value: 2},
-                                        '-type': 'Test'}
+                                        value: {a: {value: 2}, '-type': 'Test'}
                                     }],
                                     [{a: 2}]
                                 ],
                                 [
-                                    [{
-                                        value: {a: {value: 2},
+                                    [{value: {
+                                        a: {value: 2},
                                         metaData: true,
-                                        '-type': 'Test'}
-                                    }],
+                                        '-type': 'Test'
+                                    }}],
                                     [{a: 2}]
                                 ],
                                 [
-                                    [[[{
-                                        value: {a: {value: 2},
+                                    [[[{value: {
+                                        a: {value: 2},
                                         metaData: true,
-                                        '-type': 'Test'}
-                                    }]]],
+                                        '-type': 'Test'
+                                    }}]]],
                                     [[[{a: 2}]]]
                                 ]
                             ])
