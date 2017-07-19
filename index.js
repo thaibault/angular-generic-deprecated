@@ -1782,7 +1782,7 @@ export class DataScopeService {
                         item.value[specialNames.type])
                 )
                     return this.get(item.value)
-                return item.value
+                return this.extract(item.value)
             } else if (
                 specialNames.type in item &&
                 this.configuration.database.model.entities.hasOwnProperty(

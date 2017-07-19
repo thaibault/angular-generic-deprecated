@@ -937,6 +937,26 @@ registerAngularTest(function(
                                         }]}},
                                         {a: [{a: 2}]}
                                     ],
+                                    [
+                                        {a: {value: [[{
+                                            a: {value: 2},
+                                            metaData: true,
+                                            '-type': 'Test'
+                                        }]]}},
+                                        {a: [[{a: 2}]]}
+                                    ],
+                                    [
+                                        {a: {value: [[{
+                                            a: {value: [[{
+                                                a: {value: 2},
+                                                metaData: true,
+                                                '-type': 'Test'
+                                            }]]},
+                                            metaData: true,
+                                            '-type': 'Test'
+                                        }]]}},
+                                        {a: [[{a: [[{a: 2}]]}]]}
+                                    ],
                                     [{
                                         a: {value: 2}, b: 3, _c: {value: 4},
                                         _attachments: null, '-type': 'Test'
