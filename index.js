@@ -463,7 +463,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         specialNames.revisionsInformations,
                         specialNames.revisions,
                         specialNames.validatedDocumentsCache
-                    ].includes(name) && (
+                    ].includes(name) &&
+                    (
                         !(specialNames.type in newDocument) ||
                         this.configuration.database.model.entities[newDocument[
                             specialNames.type
@@ -2928,14 +2929,15 @@ export class IntervalsInputComponent {
     }
     /**
      * Adds a new interval.
+     * @param data - Additional data to use for newly created entity.
      * @returns Nothing.
      */
     add(data:PlainObject = {}):void {
         const lastEnd:number = (
             this.model.value && this.model.value.length
         ) ? (new Date(
-            this.model.value[this.model.value.length - 1].end.value
-        )).getTime() : 0
+                this.model.value[this.model.value.length - 1].end.value
+            )).getTime() : 0
         this.model.value.push(this._extendObject(
             true, {}, this.additionalObjectData, {
                 // NOTE: We add one hour in milliseconds as default interval.
