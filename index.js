@@ -1760,6 +1760,40 @@ export class DataScopeService {
         return this.generate(modelName, propertyNames, data)
     }
     /**
+     * Extracts raw data from given scope item.
+     * @param item - Item to extract data from.
+     * @returns Given extracted data.
+     */
+    extract(item:any):any {
+        if (Array.isArray(item)) {
+            const result:Array<any> = []
+            for (const subItem:any of item)
+                result.push(this.extract(subItem))
+            return result
+        } else if (typeof item === 'object' && item !== null) {
+            const specialNames:PlainObject =
+                this.configuration.database.model.property.name.special
+            if (item.hasOwnProperty('value')) {
+                if (
+                    typeof item.value === 'object' &&
+                    item.value !== null &&
+                    specialNames.type in item.value &&
+                    this.configuration.database.model.entities.hasOwnProperty(
+                        item.value[specialNames.type])
+                )
+                    return this.get(item.value)
+                return item.value
+            } else if (
+                specialNames.type in item &&
+                this.configuration.database.model.entities.hasOwnProperty(
+                    item[specialNames.type])
+            )
+                return this.get(item)
+            return item
+        }
+        return item
+    }
+    /**
      * Generates a scope object for given model with given property names and
      * property value mapping data.
      * @param modelName - Name of model to generate scope for.
@@ -2024,32 +2058,7 @@ export class DataScopeService {
                     specialNames.revisionsInformations
                 ].includes(key)
             )
-                if (typeof scope[key] === 'object' && scope[key] !== null)
-                    if (
-                        'hasOwnProperty' in scope &&
-                        scope[key].hasOwnProperty('value')
-                    )
-                        if (
-                            typeof scope[key].value === 'object' &&
-                            scope[key].value !== null &&
-                            specialNames.type in scope[key].value &&
-                            this.configuration.database.model.entities
-                                .hasOwnProperty(
-                                    scope[key].value[specialNames.type])
-                        )
-                            result[key] = this.get(scope[key].value)
-                        else
-                            result[key] = scope[key].value
-                    else if (
-                        specialNames.type in scope[key] &&
-                        this.configuration.database.model.entities
-                            .hasOwnProperty(scope[key][specialNames.type])
-                    )
-                        result[key] = this.get(scope[key])
-                    else
-                        result[key] = scope[key]
-                else
-                    result[key] = scope[key]
+                result[key] = this.extract(scope[key])
         if (scope.hasOwnProperty(
             specialNames.attachment
         ) && scope[specialNames.attachment])

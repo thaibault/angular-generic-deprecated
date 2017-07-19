@@ -852,6 +852,56 @@ registerAngularTest(function(
                         ):Promise<void> => {
                             const done:Function = assert.async()
                             try {
+                                // region determine
+                                // TODO
+                                // endregion
+                                // region extract
+                                for (const test:Array<PlainObject> of [
+                                    [{}, {}],
+                                    [2, 2],
+                                    [false, false],
+                                    [true, true],
+                                    [0, 0],
+                                    [{value: 2}, 2],
+                                    [{value: {a: 2}}, {a: 2}],
+                                    [
+                                        {value: {a: {value: 2}}},
+                                        {a: {value: 2}}
+                                    ],
+                                    [
+                                        {
+                                            value: {a: {value: 2},
+                                            '-type': 'Test'}
+                                        },
+                                        {a: 2}
+                                    ],
+                                    [
+                                        [{
+                                            value: {a: {value: 2},
+                                            '-type': 'Test'}
+                                        }],
+                                        [{a: 2}]
+                                    ],
+                                    [
+                                        [{
+                                            value: {a: {value: 2},
+                                            metaData: true,
+                                            '-type': 'Test'}
+                                        }],
+                                        [{a: 2}]
+                                    ],
+                                    [
+                                        [[[{
+                                            value: {a: {value: 2},
+                                            metaData: true,
+                                            '-type': 'Test'}
+                                        }]]],
+                                        [[[{a: 2}]]]
+                                    ]
+                                ])
+                                    assert.deepEqual(
+                                        dataScope.extract(test[0]), test[1])
+                                // endregion
                                 // region get
                                 for (const test:Array<PlainObject> of [
                                     [{}, {}],
@@ -878,6 +928,14 @@ registerAngularTest(function(
                                             '-type': 'Test'
                                         }}},
                                         {a: {a: 2}}
+                                    ],
+                                    [
+                                        {a: {value: [{
+                                            a: {value: 2},
+                                            metaData: true,
+                                            '-type': 'Test'
+                                        }]}},
+                                        {a: [{a: 2}]}
                                     ],
                                     [{
                                         a: {value: 2}, b: 3, _c: {value: 4},
