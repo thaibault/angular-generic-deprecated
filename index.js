@@ -2078,6 +2078,7 @@ export class DataScopeService {
                 if (result[name].hasOwnProperty('type')) {
                     if (
                         !(result[name].value instanceof Date) &&
+                        result[name].type.endsWith('Date') ||
                         result[name].type.endsWith('Time')
                     )
                         // NOTE: We interpret given value as an utc timestamp.
@@ -2399,7 +2400,10 @@ export class AbstractInputComponent/* implements OnInit*/ {
                     this._getFilenameByPrefix,
                     this._attachmentWithPrefixExists.bind(newData, newData),
                     newValue)
-                if (this.model.type.endsWith('Time'))
+                if (!(newValue instanceof Date) && (
+                    this.model.type.endsWith('Date') ||
+                    this.model.type.endsWith('Time')
+                ))
                     newValue *= 1000
             }
         this.model.state = state
