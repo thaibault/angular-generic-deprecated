@@ -178,6 +178,7 @@ registerAngularTest(function(
                 CanDeactivateRouteLeaveGuard,
                 DataScopeService,
                 ExtendObjectPipe,
+                ExtractDataPipe,
                 ExtractRawDataPipe,
                 GetFilenameByPrefixPipe,
                 InitialDataService,
@@ -298,6 +299,7 @@ registerAngularTest(function(
                     canDeactivateRouteLeave:CanDeactivateRouteLeaveGuard,
                     data:DataService,
                     dataScope:DataScopeService,
+                    extractDataPipe:ExtractDataPipe,
                     extractRawDataPipe:ExtractRawDataPipe,
                     extendObjectPipe:ExtendObjectPipe,
                     getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
@@ -373,6 +375,144 @@ registerAngularTest(function(
                                         attachmentWithPrefixExistsPipe
                                             .transform(test[0], test[1]))
                             })
+                        self.test(`ExtractDataPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            // region _extractFromObject
+                            for (const test:Array<PlainObject> of [
+                                [{}, {}],
+                                [{a: {value: 2}}, {a: 2}],
+                                [
+                                    {a: {value: 2}, b: 3, _c: {value: 4}},
+                                    {a: 2, b: 3, _c: 4}
+                                ],
+                                [{a: {value: {a: 2}}}, {a: {a: 2}}],
+                                [
+                                    {a: {value: {a: {value: 2}}}},
+                                    {a: {a: {value: 2}}}
+                                ],
+                                [
+                                    {a: {value: {
+                                        a: {value: 2}, '-type': 'Test'
+                                    }}},
+                                    {a: {a: 2}}
+                                ],
+                                [
+                                    {a: {value: {
+                                        a: {value: 2},
+                                        metaData: true,
+                                        '-type': 'Test'
+                                    }}},
+                                    {a: {a: 2}}
+                                ],
+                                [
+                                    {a: {value: [{
+                                        a: {value: 2},
+                                        metaData: true,
+                                        '-type': 'Test'
+                                    }]}},
+                                    {a: [{a: 2}]}
+                                ],
+                                [
+                                    {a: {value: [[{
+                                        a: {value: 2},
+                                        metaData: true,
+                                        '-type': 'Test'
+                                    }]]}},
+                                    {a: [[{a: 2}]]}
+                                ],
+                                [
+                                    {a: {value: [[{
+                                        a: {value: [[{
+                                            a: {value: 2},
+                                            metaData: true,
+                                            '-type': 'Test'
+                                        }]]},
+                                        metaData: true,
+                                        '-type': 'Test'
+                                    }]]}},
+                                    {a: [[{a: [[{a: 2}]]}]]}
+                                ],
+                                [{
+                                    a: {value: 2}, b: 3, _c: {value: 4},
+                                    _attachments: null, '-type': 'Test'
+                                }, {a: 2}],
+                                [{
+                                    a: {value: 2}, b: 3, _c: {value: 4},
+                                    _attachments: {}
+                                }, {a: 2, b: 3, _c: 4}],
+                                [{a: {value: 2}, b: 3, _attachments: {a: {
+                                    value: {name: 'a'}
+                                }}}, {a: 2, b: 3, _attachments: {a: {
+                                    name: 'a'
+                                }}}],
+                                [{
+                                    a: {value: 2}, b: 3, _c: {value: 4},
+                                    _id: 2,
+                                    _attachments: {a: {value: {
+                                        name: 'a'
+                                    }}},
+                                    '-type': 'Test'
+                                }, {
+                                    a: 2,
+                                    _attachments: {a: {name: 'a'}},
+                                    _id: 2
+                                }]
+                            ])
+                                assert.deepEqual(
+                                    extractDataPipe._extractFromObject(
+                                        test[0]),
+                                    test[1])
+                            // endregion
+                            // region transform
+                            for (const test:Array<PlainObject> of [
+                                [{}, {}],
+                                [2, 2],
+                                [false, false],
+                                [true, true],
+                                [0, 0],
+                                [{value: 2}, 2],
+                                [{value: {a: 2}}, {a: 2}],
+                                [
+                                    {value: {a: {value: 2}}},
+                                    {a: {value: 2}}
+                                ],
+                                [
+                                    {
+                                        value: {a: {value: 2},
+                                        '-type': 'Test'}
+                                    },
+                                    {a: 2}
+                                ],
+                                [
+                                    [{
+                                        value: {a: {value: 2},
+                                        '-type': 'Test'}
+                                    }],
+                                    [{a: 2}]
+                                ],
+                                [
+                                    [{
+                                        value: {a: {value: 2},
+                                        metaData: true,
+                                        '-type': 'Test'}
+                                    }],
+                                    [{a: 2}]
+                                ],
+                                [
+                                    [[[{
+                                        value: {a: {value: 2},
+                                        metaData: true,
+                                        '-type': 'Test'}
+                                    }]]],
+                                    [[[{a: 2}]]]
+                                ]
+                            ])
+                                assert.deepEqual(
+                                    extractDataPipe.transform(test[0]), test[1]
+                                )
+                            // endregion
+                        })
                         self.test(`ExtractRawDataPipe (${roundType})`, (
                             assert:Object
                         ):void => {
@@ -854,137 +994,6 @@ registerAngularTest(function(
                             try {
                                 // region determine
                                 // TODO
-                                // endregion
-                                // region extract
-                                for (const test:Array<PlainObject> of [
-                                    [{}, {}],
-                                    [2, 2],
-                                    [false, false],
-                                    [true, true],
-                                    [0, 0],
-                                    [{value: 2}, 2],
-                                    [{value: {a: 2}}, {a: 2}],
-                                    [
-                                        {value: {a: {value: 2}}},
-                                        {a: {value: 2}}
-                                    ],
-                                    [
-                                        {
-                                            value: {a: {value: 2},
-                                            '-type': 'Test'}
-                                        },
-                                        {a: 2}
-                                    ],
-                                    [
-                                        [{
-                                            value: {a: {value: 2},
-                                            '-type': 'Test'}
-                                        }],
-                                        [{a: 2}]
-                                    ],
-                                    [
-                                        [{
-                                            value: {a: {value: 2},
-                                            metaData: true,
-                                            '-type': 'Test'}
-                                        }],
-                                        [{a: 2}]
-                                    ],
-                                    [
-                                        [[[{
-                                            value: {a: {value: 2},
-                                            metaData: true,
-                                            '-type': 'Test'}
-                                        }]]],
-                                        [[[{a: 2}]]]
-                                    ]
-                                ])
-                                    assert.deepEqual(
-                                        dataScope.extract(test[0]), test[1])
-                                // endregion
-                                // region get
-                                for (const test:Array<PlainObject> of [
-                                    [{}, {}],
-                                    [{a: {value: 2}}, {a: 2}],
-                                    [
-                                        {a: {value: 2}, b: 3, _c: {value: 4}},
-                                        {a: 2, b: 3, _c: 4}
-                                    ],
-                                    [{a: {value: {a: 2}}}, {a: {a: 2}}],
-                                    [
-                                        {a: {value: {a: {value: 2}}}},
-                                        {a: {a: {value: 2}}}
-                                    ],
-                                    [
-                                        {a: {value: {
-                                            a: {value: 2}, '-type': 'Test'
-                                        }}},
-                                        {a: {a: 2}}
-                                    ],
-                                    [
-                                        {a: {value: {
-                                            a: {value: 2},
-                                            metaData: true,
-                                            '-type': 'Test'
-                                        }}},
-                                        {a: {a: 2}}
-                                    ],
-                                    [
-                                        {a: {value: [{
-                                            a: {value: 2},
-                                            metaData: true,
-                                            '-type': 'Test'
-                                        }]}},
-                                        {a: [{a: 2}]}
-                                    ],
-                                    [
-                                        {a: {value: [[{
-                                            a: {value: 2},
-                                            metaData: true,
-                                            '-type': 'Test'
-                                        }]]}},
-                                        {a: [[{a: 2}]]}
-                                    ],
-                                    [
-                                        {a: {value: [[{
-                                            a: {value: [[{
-                                                a: {value: 2},
-                                                metaData: true,
-                                                '-type': 'Test'
-                                            }]]},
-                                            metaData: true,
-                                            '-type': 'Test'
-                                        }]]}},
-                                        {a: [[{a: [[{a: 2}]]}]]}
-                                    ],
-                                    [{
-                                        a: {value: 2}, b: 3, _c: {value: 4},
-                                        _attachments: null, '-type': 'Test'
-                                    }, {a: 2}],
-                                    [{
-                                        a: {value: 2}, b: 3, _c: {value: 4},
-                                        _attachments: {}
-                                    }, {a: 2, b: 3, _c: 4}],
-                                    [{a: {value: 2}, b: 3, _attachments: {a: {
-                                        value: {name: 'a'}
-                                    }}}, {a: 2, b: 3, _attachments: {a: {
-                                        name: 'a'
-                                    }}}],
-                                    [{
-                                        a: {value: 2}, b: 3, _c: {value: 4},
-                                        _id: 2,
-                                        _attachments: {a: {value: {
-                                            name: 'a'
-                                        }}},
-                                        '-type': 'Test'
-                                    }, {
-                                        a: 2,
-                                        _attachments: {a: {name: 'a'}},
-                                        _id: 2
-                                    }]
-                                ])
-                                    assert.deepEqual(
-                                        dataScope.get(test[0]), test[1])
                                 // endregion
                                 // region generate
                                 for (const test:Array<any> of [

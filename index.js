@@ -296,31 +296,138 @@ export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
     }
 }
 // IgnoreTypeCheck
+@Pipe({name: 'genericExtractData'})
+/**
+ * Removes all meta data from a document recursively.
+ * @property modelConfiguration - Model configuration object.
+ */
+export class ExtractDataPipe/* implements PipeTransform*/ {
+    modelConfiguration:PlainObject
+    /**
+     * Gets injected services.
+     * @param initialData - Initial data service instance.
+     * @returns Nothing.
+     */
+    constructor(initialData:InitialDataService):void {
+        this.modelConfiguration = initialData.configuration.database.model
+    }
+    /**
+     * Retrieves raw data (without meta data) for given scope recursively.
+     * @param object - Object to use to determine data from.
+     * @returns Resolved data.
+     */
+    _extractFromObject(object:Object):PlainObject {
+        const specialNames:PlainObject =
+            this.modelConfiguration.property.name.special
+        const result:PlainObject = {}
+        for (const key:string in object)
+            if (
+                object.hasOwnProperty(key) && (
+                    !(specialNames.type in object) ||
+                    this.modelConfiguration.entities[object[
+                        specialNames.type
+                    ]].hasOwnProperty(key)
+                ) && ![
+                    specialNames.additional,
+                    // NOTE: Will be handled later.
+                    specialNames.attachment,
+                    specialNames.allowedRole,
+                    specialNames.conflict,
+                    specialNames.deletedConflict,
+                    specialNames.localSequence,
+                    specialNames.revisions,
+                    specialNames.revisionsInformations
+                ].includes(key)
+            )
+                result[key] = this.transform(object[key])
+        if (object.hasOwnProperty(
+            specialNames.attachment
+        ) && object[specialNames.attachment])
+            for (const key:string in object[specialNames.attachment])
+                if (object[specialNames.attachment].hasOwnProperty(
+                    key
+                ) &&
+                typeof object[specialNames.attachment][key] === 'object' &&
+                object[specialNames.attachment][key] !== null &&
+                'hasOwnProperty' in object[specialNames.attachment] &&
+                object[specialNames.attachment][key].hasOwnProperty(
+                    'value'
+                ) && object[specialNames.attachment][key].value) {
+                    if (!result[specialNames.attachment])
+                        result[specialNames.attachment] = {}
+                    result[specialNames.attachment][object[
+                        specialNames.attachment
+                    ][key].value.name] = object[specialNames.attachment][
+                        key
+                    ].value
+                }
+        return result
+    }
+    /**
+     * Extracts raw data from given scope item.
+     * @param item - Item to extract data from.
+     * @returns Given extracted data.
+     */
+    transform(item:any):any {
+        if (Array.isArray(item)) {
+            const result:Array<any> = []
+            for (const subItem:any of item)
+                result.push(this.transform(subItem))
+            return result
+        } else if (typeof item === 'object' && item !== null) {
+            const specialNames:PlainObject =
+                this.modelConfiguration.property.name.special
+            if (item.hasOwnProperty('value')) {
+                if (
+                    typeof item.value === 'object' &&
+                    item.value !== null &&
+                    specialNames.type in item.value &&
+                    this.modelConfiguration.entities.hasOwnProperty(
+                        item.value[specialNames.type])
+                )
+                    return this._extractFromObject(item.value)
+                return this.transform(item.value)
+            } else if (
+                specialNames.type in item &&
+                this.modelConfiguration.entities.hasOwnProperty(
+                    item[specialNames.type])
+            )
+                return this._extractFromObject(item)
+            return item
+        }
+        return item
+    }
+}
+// IgnoreTypeCheck
 @Pipe({name: 'genericExtractRawData'})
 /**
  * Removes all meta data and already existing data (compared to an old
  * document) from a document recursively.
- * @property configuration - Initial given configuration object.
  * @property equals - Equals pipe transform function.
+ * @property extractData - Extract data pipe transform function.
+ * @property modelConfiguration - Model configuration object.
  * @property tools - Holds the tools class from the tools service.
  */
 export class ExtractRawDataPipe/* implements PipeTransform*/ {
-    configuration:PlainObject
     equals:Function
+    extractData:Function
+    modelConfiguration:PlainObject
     tools:Tools
     /**
      * Gets injected services.
      * @param equalsPipe - Equals pipe service instance.
+     * @param extractDataPipe
      * @param initialData - Initial data service instance.
      * @param tools - Injected tools service instance.
      * @returns Nothing.
      */
     constructor(
-        equalsPipe:EqualsPipe, initialData:InitialDataService,
-        tools:ToolsService
+        equalsPipe:EqualsPipe, extractDataPipe:ExtractDataPipe,
+        initialData:InitialDataService, tools:ToolsService
     ):void {
-        this.configuration = initialData.configuration
+        this.modelConfiguration = initialData.configuration.database.model
         this.equals = equalsPipe.transform.bind(equalsPipe)
+        this.extractData = extractDataPipe.transform.bind(extractDataPipe)
         this.tools = tools.tools
     }
     /**
@@ -377,11 +484,10 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                 undefined, null
             ].includes(oldAttachments[type].value)) {
                 if (newDocument[
-                    this.configuration.database.model.property.name.special
-                        .attachment
+                    this.modelConfiguration.property.name.special.attachment
                 ]) {
                     if (newDocument[
-                        this.configuration.database.model.property.name.special
+                        this.modelConfiguration.property.name.special
                             .attachment
                     ].hasOwnProperty(oldAttachments[type].value.name))
                         continue
@@ -389,25 +495,25 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     oldAttachments[type].value.name
                 )) {
                     newDocument[
-                        this.configuration.database.model.property.name.special
+                        this.modelConfiguration.property.name.special
                             .attachment
                     ] = {[oldAttachments[type].value.name]: {data: null}}
                     continue
                 }
                 if (fileTypeReplacement)
                     for (const fileName:string in newDocument[
-                        this.configuration.database.model.property.name.special
+                        this.modelConfiguration.property.name.special
                             .attachment
                     ])
                         if (newDocument[
-                            this.configuration.database.model.property.name
-                                .special.attachment
+                            this.modelConfiguration.property.name.special
+                                .attachment
                         ].hasOwnProperty(
                             fileName
                         ) && (new RegExp(type)).test(fileName))
                             newDocument[
-                                this.configuration.database.model.property.name
-                                    .special.attachment
+                                this.modelConfiguration.property.name.special
+                                    .attachment
                             ][oldAttachments[type].value.name] = {data: null}
             }
         return newDocument
@@ -431,7 +537,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         newDocument = this.constructor._convertDateToTimestampRecursively(
             newDocument)
         const specialNames:PlainObject =
-            this.configuration.database.model.property.name.special
+            this.modelConfiguration.property.name.special
         const result:PlainObject = {}
         const untouchedAttachments:Array<string> = []
         /*
@@ -443,8 +549,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                 newDocument.hasOwnProperty(name) &&
                 ![undefined, null, ''].includes(newDocument[name]) &&
                 (
-                    this.configuration.database.model.property.name.reserved
-                    .concat(
+                    this.modelConfiguration.property.name.reserved.concat(
                         specialNames.deleted,
                         specialNames.id,
                         specialNames.revision,
@@ -466,7 +571,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     ].includes(name) &&
                     (
                         !(specialNames.type in newDocument) ||
-                        this.configuration.database.model.entities[newDocument[
+                        this.modelConfiguration.entities[newDocument[
                             specialNames.type
                         ]].hasOwnProperty(name)
                     )
@@ -555,8 +660,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                 if (
                     oldDocument.hasOwnProperty(name) &&
                     !(
-                        this.configuration.database.model.property.name
-                        .reserved.concat([
+                        this.modelConfiguration.property.name.reserved.concat([
                             specialNames.allowedRole,
                             specialNames.attachment,
                             specialNames.conflict,
@@ -577,21 +681,25 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         [null, undefined].includes(oldDocument[name].value)
                     ) && (
                         !(specialNames.type in newDocument) ||
-                        this.configuration.database.model.entities[newDocument[
+                        this.modelConfiguration.entities[newDocument[
                             specialNames.type
                         ]].hasOwnProperty(name)
                     )
                 )
+                    // TODO check recursively
                     if (result.hasOwnProperty(name)) {
                         if (Array.isArray(result[name])) {
-                            if (this.equals(result[name], oldDocument[
-                                name
-                            ].value))
+                            if (this.equals(
+                                result[name],
+                                this.extractData(oldDocument[name].value)
+                            ))
                                 delete result[name]
                         } else if (
                             typeof result[name] === 'object' &&
                             result[name] !== null &&
-                            result[name].hasOwnProperty(specialNames.type)
+                            result[name].hasOwnProperty(specialNames.type) &&
+                            this.modelConfiguration.entities.hasOwnProperty(
+                                result[name][specialNames.type])
                         ) {
                             result[name] = this.transform(
                                 result[name], oldDocument[name],
@@ -603,7 +711,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                             if (result[name] === null)
                                 delete result[name]
                         } else if (this.equals(
-                            result[name], oldDocument[name].value
+                            result[name],
+                            this.extractData(oldDocument[name].value)
                         ))
                             delete result[name]
                     } else {
@@ -627,13 +736,12 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             for (const name:string in result)
                 if (
                     result.hasOwnProperty(name) &&
-                    !this.configuration.database.model.property.name.reserved
-                        .concat(
-                            specialNames.deleted,
-                            specialNames.id,
-                            specialNames.revision,
-                            specialNames.type
-                        ).includes(name)
+                    !this.modelConfiguration.property.name.reserved.concat(
+                        specialNames.deleted,
+                        specialNames.id,
+                        specialNames.revision,
+                        specialNames.type
+                    ).includes(name)
                 ) {
                     payloadExists = true
                     break
@@ -1644,6 +1752,8 @@ export class DataService {
  * @property data - Holds the data exchange service instance.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
+ * @property extractData - Holds the xtract object's pipe transformation
+ * method.
  * @property getFilenameByPrefix - Holds the get file name by prefix's pipe
  * transformation method.
  * @property tools - Holds the tools class from the tools service.
@@ -1653,6 +1763,7 @@ export class DataScopeService {
     configuration:PlainObject
     data:DataService
     extendObject:Function
+    extractData:Function
     getFilenameByPrefix:Function
     tools:typeof Tools
     /**
@@ -1661,6 +1772,7 @@ export class DataScopeService {
      * pipe instance.
      * @param data - Injected data service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param extractDataPipe - Injected extract data pipe instance.
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
      * @param initialData - Injected initial data service instance.
@@ -1670,6 +1782,7 @@ export class DataScopeService {
     constructor(
         attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
         data:DataService, extendObjectPipe:ExtendObjectPipe,
+        extractDataPipe:ExtractDataPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService, tools:ToolsService
     ):void {
@@ -1681,6 +1794,7 @@ export class DataScopeService {
         this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.extractData = extractDataPipe.transform.bind(extractDataPipe)
         this.tools = tools.tools
     }
     /**
@@ -1758,40 +1872,6 @@ export class DataScopeService {
             }
         }
         return this.generate(modelName, propertyNames, data)
-    }
-    /**
-     * Extracts raw data from given scope item.
-     * @param item - Item to extract data from.
-     * @returns Given extracted data.
-     */
-    extract(item:any):any {
-        if (Array.isArray(item)) {
-            const result:Array<any> = []
-            for (const subItem:any of item)
-                result.push(this.extract(subItem))
-            return result
-        } else if (typeof item === 'object' && item !== null) {
-            const specialNames:PlainObject =
-                this.configuration.database.model.property.name.special
-            if (item.hasOwnProperty('value')) {
-                if (
-                    typeof item.value === 'object' &&
-                    item.value !== null &&
-                    specialNames.type in item.value &&
-                    this.configuration.database.model.entities.hasOwnProperty(
-                        item.value[specialNames.type])
-                )
-                    return this.get(item.value)
-                return this.extract(item.value)
-            } else if (
-                specialNames.type in item &&
-                this.configuration.database.model.entities.hasOwnProperty(
-                    item[specialNames.type])
-            )
-                return this.get(item)
-            return item
-        }
-        return item
     }
     /**
      * Generates a scope object for given model with given property names and
@@ -2028,57 +2108,6 @@ export class DataScopeService {
             else if (name === specialNames.type)
                 result[name] = modelName
         result._metaData = {submitted: false}
-        return result
-    }
-    /**
-     * Retrieves raw data (without meta data) for given scope recursively.
-     * @param scope - Scope to use to determine which data is needed.
-     * @returns Resolved data.
-     */
-    get(scope:Object):PlainObject {
-        const specialNames:PlainObject =
-            this.configuration.database.model.property.name.special
-        const result:PlainObject = {}
-        for (const key:string in scope)
-            if (
-                scope.hasOwnProperty(key) && (
-                    !(specialNames.type in scope) ||
-                    this.configuration.database.model.entities[scope[
-                        specialNames.type
-                    ]].hasOwnProperty(key)
-                ) && ![
-                    specialNames.additional,
-                    // NOTE: Will be handled later.
-                    specialNames.attachment,
-                    specialNames.allowedRole,
-                    specialNames.conflict,
-                    specialNames.deletedConflict,
-                    specialNames.localSequence,
-                    specialNames.revisions,
-                    specialNames.revisionsInformations
-                ].includes(key)
-            )
-                result[key] = this.extract(scope[key])
-        if (scope.hasOwnProperty(
-            specialNames.attachment
-        ) && scope[specialNames.attachment])
-            for (const key:string in scope[specialNames.attachment])
-                if (scope[specialNames.attachment].hasOwnProperty(
-                    key
-                ) && typeof scope[specialNames.attachment][key] === 'object' &&
-                scope[specialNames.attachment][key] !== null &&
-                'hasOwnProperty' in scope[specialNames.attachment] &&
-                scope[specialNames.attachment][key].hasOwnProperty(
-                    'value'
-                ) && scope[specialNames.attachment][key].value) {
-                    if (!result[specialNames.attachment])
-                        result[specialNames.attachment] = {}
-                    result[specialNames.attachment][scope[
-                        specialNames.attachment
-                    ][key].value.name] = scope[specialNames.attachment][
-                        key
-                    ].value
-                }
         return result
     }
 }
