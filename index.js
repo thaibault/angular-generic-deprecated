@@ -2920,12 +2920,14 @@ export class IntervalInputComponent {
                 </ng-container>
             </generic-interval-input>
             <a
+                class="remove"
                 *ngIf="model.minimumNumber === null || model.value.length > model.minimumNumber"
                 (click)="$event.preventDefault(); $event.stopPropagation(); remove(interval)"
                 href=""
             >-</a>
         </div>
         <a
+            class="add"
             *ngIf="model.maximumNumber === null || model.value.length < model.maximumNumber"
             (click)="$event.preventDefault(); $event.stopPropagation(); add()"
             href=""
