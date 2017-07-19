@@ -3008,7 +3008,7 @@ export class IntervalsInputComponent {
     remove(interval:PlainObject):void {
         const index:number = this.model.value.indexOf(interval)
         if (index !== -1) {
-            this.model.value.splice(index)
+            this.model.value.splice(index, 1)
             this.modelChange.emit(this.model)
         }
     }
