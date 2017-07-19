@@ -2031,13 +2031,23 @@ export class DataScopeService {
                     )
                         if (
                             typeof scope[key].value === 'object' &&
-                            scope[key].value !== null
+                            scope[key].value !== null &&
+                            specialNames.type in scope[key].value &&
+                            this.configuration.database.model.entities
+                                .hasOwnProperty(
+                                    scope[key].value[specialNames.type])
                         )
                             result[key] = this.get(scope[key].value)
                         else
                             result[key] = scope[key].value
-                    else
+                    else if (
+                        specialNames.type in scope[key] &&
+                        this.configuration.database.model.entities
+                            .hasOwnProperty(scope[key][specialNames.type])
+                    )
                         result[key] = this.get(scope[key])
+                    else
+                        result[key] = scope[key]
                 else
                     result[key] = scope[key]
         if (scope.hasOwnProperty(
