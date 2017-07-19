@@ -2388,7 +2388,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
             if (
                 this.model.hasOwnProperty(hookType) && this.model[hookType] &&
                 typeof this.model[hookType] === 'function'
-            )
+            ) {
                 newValue = this.model[hookType](
                     newData, null, {}, {}, this.model.name,
                     this._modelConfiguration.entities,
@@ -2399,6 +2399,9 @@ export class AbstractInputComponent/* implements OnInit*/ {
                     this._getFilenameByPrefix,
                     this._attachmentWithPrefixExists.bind(newData, newData),
                     newValue)
+                if (this.model.type.endsWith('Time'))
+                    newValue *= 1000
+            }
         this.model.state = state
         return newValue
     }
@@ -2898,8 +2901,8 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
  */
 export class IntervalInputComponent {
     @Input() model:{end:number;start:number} = {
-        end: {value: 0},
-        start: {value: 0}
+        end: {value: new Date(1970, 0, 1)},
+        start: {value: new Date(1970, 0, 1)}
     }
 }
 // IgnoreTypeCheck
