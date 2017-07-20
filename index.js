@@ -2286,6 +2286,8 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
  * transformation method.
  * @property _modelConfiguration - All model configurations.
+ * @property description - Description to use instead of those coming from
+ * model specification.
  * @property infoText - Info text to click for more informations.
  * @property model - Holds model informations including actual value and
  * metadata.
@@ -2300,6 +2302,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
     _extendObject:Function
     _getFilenameByPrefix:Function
     _modelConfiguration:PlainObject
+    @Input() description:?string = null
     @Input() infoText:string = 'ℹ'
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter = new EventEmitter()
@@ -2893,17 +2896,25 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
 @Component({
     selector: 'generic-interval-input',
     template: `
-        <generic-input type="time" [model]="model.start"></generic-input>
+        <generic-input
+            [description]="startDescription" type="time" [model]="model.start"
+        ></generic-input>
         <ng-content></ng-content>
-        <generic-input type="time" [model]="model.end"></generic-input>
+        <generic-input
+            [description]="endDescription" type="time" [model]="model.end"
+        ></generic-input>
     `
 })
 /**
  * Represents an interval input.
+ * @property endDescription - Description for end input.
+ * @property startDescription - Description for start input.
  * @property model - Object that saves start and end time as unix timestamp in
  * milliseconds.
  */
 export class IntervalInputComponent {
+    @Input() endDescription:?string = null
+    @Input() startDescription:?string = null
     @Input() model:{end:number;start:number} = {
         end: {value: new Date(1970, 0, 1)},
         start: {value: new Date(1970, 0, 1)}
@@ -2918,8 +2929,15 @@ export class IntervalInputComponent {
         <div
             *ngIf="description !== '' && (description || model.description || model.name)"
         >{{description || model.description || model.name}}</div>
-        <div @defaultAnimation *ngFor="let interval of model.value">
-            <generic-interval-input [model]="interval">
+        <div
+            @defaultAnimation
+            *ngFor="let interval of model.value; let first = first"
+        >
+            <generic-interval-input
+                [endDescription]="first ? null : ''"
+                [startDescription]="first ? null : ''"
+                [model]="interval"
+            >
                 <ng-container *ngIf="contentTemplate; else fallback">
                     <ng-container
                         *ngTemplateOutlet="contentTemplate; context: {\$implicit:interval}"
@@ -3028,7 +3046,7 @@ const propertyGenericContent:string = `
     [name]="model.name"
     [ngModel]="model.value"
     (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
-    [placeholder]="model.description || model.name"
+    [placeholder]="description === '' ? null : description ? description : (model.description || model.name)"
     [required]="!model.nullable"
     #state="ngModel"
 `
@@ -3112,6 +3130,7 @@ const propertyWrapperInputContent:string = `
         <generic-textarea
             @defaultAnimation
             [activeEditor]="activeEditor"
+            [description]="description"
             [editor]="editor"
             [minimumNumberOfRows]="minimumNumberOfRows"
             [maximumNumberOfRows]="maximumNumberOfRows"
@@ -3121,6 +3140,7 @@ const propertyWrapperInputContent:string = `
             ${propertyWrapperInputContent}
         ><ng-content></ng-content></generic-textarea>
         <ng-template #simpleInput><generic-simple-input
+            [description]="description"
             [labels]="labels"
             ${propertyWrapperInputContent}
             [type]="type"
@@ -3242,7 +3262,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
     template: `
         <ng-container *ngIf="activeEditor; else plain">
             <span [class.focus]="focused" class="editor-label">
-                {{model.description || model.name}}
+                {{description === '' ? null : description ? description : (model.description || model.name)}}
             </span>
             <angular-tinymce
                 (blur)="focused = false"
