@@ -43,7 +43,7 @@ import {
     // IgnoreTypeCheck
     MdButtonModule, MdCardModule, MD_DIALOG_DATA, MdDialog, MdDialogRef,
     /* eslint-enable no-unused-vars */
-    MdDialogModule, MdInputModule, MdSelectModule
+    MdDialogModule, MdInputModule, MdSelectModule, MdTooltipModule
 } from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {
@@ -3057,7 +3057,7 @@ const propertyInputContent:string = `
     [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
 `
 const inputContent:string = `
-    <md-hint align="start" @defaultAnimation title="info">
+    <md-hint align="start" @defaultAnimation mdTooltip="info">
         <span
             [class.activ]="showDeclaration"
             (click)="showDeclaration = !showDeclaration"
@@ -3428,7 +3428,7 @@ export class TextareaComponent extends AbstractInputComponent
                         <ng-container *ngIf="synchronizeImmediately">
                             <md-input-container
                                 [class.dirty]="editedName && editedName !== file.name"
-                                title="Focus to edit."
+                                mdTooltip="Focus to edit."
                             >
                                 <input
                                     mdInput
@@ -3439,7 +3439,7 @@ export class TextareaComponent extends AbstractInputComponent
                                     @defaultAnimation
                                     [class.activ]="showDeclaration"
                                     (click)="showDeclaration = !showDeclaration"
-                                    title="info"
+                                    mdTooltip="info"
                                     *ngIf="model[attachmentTypeName][internalName]?.declaration"
                                 >
                                     <a
@@ -3470,7 +3470,7 @@ export class TextareaComponent extends AbstractInputComponent
                         <md-input-container
                             @defaultAnimation
                             [class.dirty]="file.initialName !== file.name"
-                            title="Focus to edit."
+                            mdTooltip="Focus to edit."
                             *ngIf="!synchronizeImmediately"
                         >
                             <input
@@ -3481,7 +3481,7 @@ export class TextareaComponent extends AbstractInputComponent
                                 @defaultAnimation
                                 [class.activ]="showDeclaration"
                                 (click)="showDeclaration = !showDeclaration"
-                                title="info"
+                                mdTooltip="info"
                                 *ngIf="model[attachmentTypeName][internalName]?.declaration"
                             >
                                 <a
@@ -4276,6 +4276,7 @@ const modules:Array<Object> = [
     MdDialogModule,
     MdInputModule,
     MdSelectModule,
+    MdTooltipModule,
     TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
 ]
 // IgnoreTypeCheck
