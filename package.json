@@ -71,6 +71,7 @@
     "@angular/platform-browser-dynamic": "^4.2.6",
     "@angular/platform-server": "^4.2.6",
     "@angular/router": "^4.2.6",
+    "codemirror": "^5.27.4",
     "reflect-metadata": "^0.1.10",
     "rxjs": "^5.4.2",
     "zone.js": "^0.8.14"

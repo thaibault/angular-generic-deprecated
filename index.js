@@ -65,6 +65,9 @@ let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
 // region configuration
+export const CODE_MIRROR_DEFAULT_OPTIONS:PlainObject = {
+    indentUnit: 4
+}
 const tinyMCEBasePath:string = '/tinymce/'
 export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
     true, tinymceDefaultSettings, {
@@ -3041,6 +3044,71 @@ export class IntervalsInputComponent {
 // // / endregion
 // // endregion
 // // region text/selection
+@Component({
+    selector: 'code-editor',
+    providers: [{
+        provide: NG_VALUE_ACCESSOR,
+        useExisting: forwardRef(() => CodemirrorComponent),
+        multi: true
+    }],
+    template: `<textarea #host></textarea>`,
+})
+/**
+ * Provides a generic code editor.
+ * @property blur - Blur event emitter.
+ * @property change - Change event emitter.
+ * @property codemirror - Current code mirror constructor.
+ * @property configuration - Code mirror configuration.
+ * @property focus - Focus event emitter.
+ * @property host - Host textarea dom element to bind editor to.
+ * @property instance - Currently active code editor instance.
+ * @property value - Current editable text string.
+ */
+export class CodemirrorComponent implements AfterViewInit {
+    @Output() blur:EventEmitter = new EventEmitter()
+    @Output() change:EventEmitter = new EventEmitter()
+    codemirror:Object
+    @Input() configuration:PlainObject = {}
+    @Output() focus:EventEmitter = new EventEmitter()
+    @ViewChild('host') host:ElementRef
+    @Output() instance:?Object = null
+    value:string = ''
+    /**
+     * Initializes the code mirror resource loading if not available yet.
+     * @returns Nothing.
+     */
+    constructor():void {
+        if (!codemirror)
+            console.log('TODO')
+    }
+    /**
+     * Initializes the code editor element.
+     * @returns Nothing.
+     */
+    ngAfterViewInit():void {
+        this.instance = this.codemirror.fromTextArea(
+            this.host.nativeElement, this.configuration)
+        this.instance.setValue(this.value)
+        this.instance.on('blur', (instance:Object, event:Object):void =>
+            this.blur.emit({instance, event}))
+        this.instance.on('change', ():void => {
+            this.value = this.instance.getValue()
+            this.change.emit(value)
+        })
+        this.instance.on('focus', (instance:Object, event:Object):void =>
+            this.focus.emit({instance, event}))
+    }
+    /**
+     * Synchronizes given value into internal code mirror instance.
+     * @param value - Given value to set in code editor.
+     * @returns Nothing.
+     */
+    writeValue(value:any):void {
+        this.value = value || ''
+        if (this.instance)
+            this.instance.setValue(this.value)
+    }
+}
 /* eslint-disable max-len */
 const propertyGenericContent:string = `
     [name]="model.name"
@@ -3073,7 +3141,9 @@ const inputContent:string = `
                 {{model.declaration}}
             </span>
         </span>
-        <span *ngIf="editor && selectableEditor && !model.disabled">
+        <span
+            *ngIf="editor && selectableEditor && !model.disabled"
+        >
             <span *ngIf="model.declaration">|</span>
             <a
                 [class.activ]="activeEditor"
@@ -3264,7 +3334,20 @@ export class SimpleInputComponent extends AbstractInputComponent {
             <span [class.focus]="focused" class="editor-label">
                 {{description === '' ? null : description ? description : (model.description || model.name)}}
             </span>
+            <code-editor
+                *ngIf="editor.indentUnit; else markup"
+                (blur)="focused = false"
+                [configuration]="editor"
+                @defaultAnimation
+                (focus)="focused = true"
+                (initialized)="initialized = true"
+                [ngModel]="model.value"
+                (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
+                [style.visibilty]="initialized ? 'visible' : 'hidden'"
+                #state="ngModel"
+            ></code-editor>
             <angular-tinymce
+                #markup
                 (blur)="focused = false"
                 @defaultAnimation
                 (focus)="focused = true"
@@ -3301,6 +3384,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
  * @property _defaultEditorOptions - Globale default editor options.
  * @property activeEditor - Indicated weather current editor is active or not.
  * @property editor - Editor options to choose from for an activated editor.
+ * @property editorType - Editor type description.
  * @property maximumNumberOfRows - Maximum resizeable number of rows.
  * @property minimumNumberOfRows - Minimum resizeable number of rows.
  * @property rows - Number of rows to show.
@@ -3309,9 +3393,13 @@ export class SimpleInputComponent extends AbstractInputComponent {
 export class TextareaComponent extends AbstractInputComponent
 /* implements OnInit*/{
 /* eslint-enable brace-style */
-    _defaultEditorOptions:PlainObject = {}
+    _defaultEditorOptions:{code:PlainObject;markup:PlainObject} = {
+        code: {},
+        markup: {}
+    }
     @Input() activeEditor:?boolean = null
-    @Input() editor:?PlainObject = null
+    @Input() editor:?PlainObject|?string = null
+    editorType:string = 'custom'
     @Input() maximumNumberOfRows:?string
     @Input() minimumNumberOfRows:?string
     @Input() rows:?string
@@ -3361,18 +3449,17 @@ export class TextareaComponent extends AbstractInputComponent
                 this.editor = this.editor.substring(1, this.editor.length - 1)
             else if (this.activeEditor === null)
                 this.activeEditor = true
-            if (this.editor === 'code')
+            this.editorType = this.editor
+            if (this.editor === 'code:cascadingStyleSheet')
+                this.editor = {}
+            else if (this.editor.startsWith('code'))
+                this.editor = {}
+            else if (this.editor === 'raw')
                 this.editor = {
                     /* eslint-disable max-len */
                     toolbar1: 'cut copy paste | undo redo removeformat | code | fullscreen',
                     /* eslint-enable max-len */
                     toolbar2: false
-                }
-            else if (this.editor === 'normal')
-                this.editor = {
-                    /* eslint-disable max-len */
-                    toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect | searchreplace visualblocks fullscreen code'
-                    /* eslint-enable max-len */
                 }
             else if (this.editor === 'simple')
                 this.editor = {
@@ -3381,11 +3468,16 @@ export class TextareaComponent extends AbstractInputComponent
                     toolbar2: false
                     /* eslint-enable max-len */
                 }
+            else if (this.editor === 'normal')
+                this.editor = {
+                    /* eslint-disable max-len */
+                    toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect | searchreplace visualblocks fullscreen code'
+                    /* eslint-enable max-len */
+                }
             else
+                // Advanced editor.
                 this.editor = {}
-        } else if (
-            this.editor === null && (this.model.editor || this.activeEditor)
-        )
+        } else if (this.editor === null && this.activeEditor)
             this.editor = {}
         if (this.activeEditor === null)
             this.activeEditor = false
@@ -3395,9 +3487,14 @@ export class TextareaComponent extends AbstractInputComponent
             else
                 this.selectableEditor = true
         if (typeof this.editor === 'object' && this.editor !== null)
-            this.editor = this._extendObject(
-                true, {}, TINY_MCE_DEFAULT_OPTIONS, this._defaultEditorOptions,
-                this.editor)
+            if (this.editor.indentUnit)
+                this.editor = this._extendObject(
+                    true, {}, CODE_MIRROR_DEFAULT_OPTIONS,
+                    this._defaultEditorOptions.code, this.editor)
+            else
+                this.editor = this._extendObject(
+                    true, {}, TINY_MCE_DEFAULT_OPTIONS,
+                    this._defaultEditorOptions.markup, this.editor)
     }
 }
 // // endregion
