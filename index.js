@@ -66,6 +66,12 @@ let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
 }
 // region configuration
 export const CODE_MIRROR_DEFAULT_OPTIONS:PlainObject = {
+    // region paths
+    path: {
+        base: '/codemirror/',
+        script: 'lib/codemirror.js'
+    },
+    // endregion
     indentUnit: 4
 }
 const tinyMCEBasePath:string = '/tinymce/'
@@ -2833,10 +2839,11 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
     /**
      * Initializes and forwards needed services to the default value accesor
      * constructor.
-     * @param renderer - Angular's dom abstraction layer.
      * @param elementRef - Host element reference.
+     * @param renderer - Angular's dom abstraction layer.
+     * @returns Nothing.
      */
-    constructor(renderer:Renderer2, elementRef:ElementRef):void {
+    constructor(elementRef:ElementRef, renderer:Renderer2):void {
         super(renderer, elementRef, null)
     }
     /**
@@ -3047,47 +3054,105 @@ export class IntervalsInputComponent {
 @Component({
     providers: [{
         provide: NG_VALUE_ACCESSOR,
-        useExisting: forwardRef(():CodemirrorComponent => CodemirrorComponent),
+        useExisting: forwardRef(():CodeEditorComponent => CodeEditorComponent),
         multi: true
     }],
     selector: 'code-editor',
-    template: `<textarea #host></textarea>`
+    template: '<textarea #hostDomNode></textarea>'
 })
+/* eslint-disable brace-style */
 /**
  * Provides a generic code editor.
+ * @property static:_applicationInterfaceLoad - Promise which resolves when
+ * code editor is fully loaded.
  * @property blur - Blur event emitter.
  * @property change - Change event emitter.
- * @property codemirror - Current code mirror constructor.
+ * @property codeMirror - Current code mirror constructor.
  * @property configuration - Code mirror configuration.
  * @property focus - Focus event emitter.
- * @property host - Host textarea dom element to bind editor to.
+ * @property hostDomNode - Host textarea dom element to bind editor to.
+ * @property initialized - Initialized event emitter.
  * @property instance - Currently active code editor instance.
  * @property value - Current editable text string.
  */
-export class CodemirrorComponent implements AfterViewInit {
+export class CodeEditorComponent extends DefaultValueAccessor
+/* implements AfterViewInit*/ {
+/* eslint-enable brace-style */
+    static _applicationInterfaceLoad:Promise<Object>
     @Output() blur:EventEmitter = new EventEmitter()
     @Output() change:EventEmitter = new EventEmitter()
-    codemirror:Object
+    codeMirror:Object
     @Input() configuration:PlainObject = {}
     @Output() focus:EventEmitter = new EventEmitter()
-    @ViewChild('host') host:ElementRef
+    @ViewChild('hostDomNode') hostDomNode:ElementRef
+    @Output() initialized:EventEmitter<Object> = new EventEmitter()
     @Output() instance:?Object = null
     value:string = ''
     /**
      * Initializes the code mirror resource loading if not available yet.
+     * @param elementRef - Host element reference.
+     * @param renderer - Angular's dom abstraction layer.
+     * @param tools - Tools service instance.
      * @returns Nothing.
      */
-    constructor():void {
-        if (!codemirror)
-            console.log('TODO')
+    constructor(
+        elementRef:ElementRef, renderer:Renderer2, tools:ToolsService
+    ):void {
+        super(renderer, elementRef, null)
+        this.tools = tools.tools
+        if (tools.globalContext.CodeMirror)
+            this.codeMirror = tools.globalContext.CodeMirror
+        else if (
+            typeof this.constructor._applicationInterfaceLoad !== 'object'
+        ) {
+            // TODO use config
+            tools.$('head').append(
+                '<link rel="stylesheet" href="/codemirror/lib/codemirror.css" type="text/css" />')
+            this.constructor._applicationInterfaceLoad = new Promise((
+                resolve:Function, reject:Function
+            ):void => tools.$.ajax({
+                cache: true,
+                dataType: 'script',
+                error: reject,
+                success: ():Promise<any> => tools.$.ajax({
+                    cache: true,
+                    dataType: 'script',
+                    error: reject,
+                    success: ():Object => {
+                        this.codeMirror = tools.globalContext.CodeMirror
+                        resolve(this.codeMirror)
+                    },
+                    // TODO use config
+                    url: '/codemirror/mode/css/css.js'
+                }),
+                // TODO use config
+                url: '/codemirror/lib/codemirror.js'
+            }))
+        }
     }
     /**
      * Initializes the code editor element.
      * @returns Nothing.
      */
-    ngAfterViewInit():void {
-        this.instance = this.codemirror.fromTextArea(
-            this.host.nativeElement, this.configuration)
+    async ngAfterViewInit():Promise<void> {
+        if (this.codeMirror)
+            /*
+                NOTE: We have to do a dummy timeout to avoid an event emit in
+                first initializing call stack.
+            */
+            await this.tools.timeout()
+        else
+            try {
+                await this.constructor._applicationInterfaceLoad
+            } catch (error) {
+                throw error
+            }
+        delete this.configuration.path
+        this.initialized.emit(this.codeMirror)
+        console.log('A', this.hostDomNode.nativeElement, this.configuration)
+        this.instance = this.codeMirror(
+            this.hostDomNode.nativeElement, this.configuration)
+        console.log('B', this.instance)
         this.instance.setValue(this.value)
         this.instance.on('blur', (instance:Object, event:Object):void =>
             this.blur.emit({instance, event}))
@@ -3335,23 +3400,24 @@ export class SimpleInputComponent extends AbstractInputComponent {
                 {{description === '' ? null : description ? description : (model.description || model.name)}}
             </span>
             <code-editor
-                *ngIf="editor.indentUnit; else markup"
                 (blur)="focused = false"
                 [configuration]="editor"
                 @defaultAnimation
                 (focus)="focused = true"
                 (initialized)="initialized = true"
+                *ngIf="editorType === 'code' || editor.indentUnit"
                 [ngModel]="model.value"
                 (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
                 [style.visibilty]="initialized ? 'visible' : 'hidden'"
                 #state="ngModel"
             ></code-editor>
+            <!-- NOTE: NgIfElse doesnt work here. -->
             <angular-tinymce
-                #markup
                 (blur)="focused = false"
                 @defaultAnimation
                 (focus)="focused = true"
                 (init)="initialized = true"
+                *ngIf="editorType !== 'code' && !editor.indentUnit"
                 [ngModel]="model.value"
                 (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
                 [settings]="editor"
@@ -3451,6 +3517,7 @@ export class TextareaComponent extends AbstractInputComponent
                 this.activeEditor = true
             this.editorType = this.editor
             if (this.editor === 'code:cascadingStyleSheet')
+                // TODO
                 this.editor = {}
             else if (this.editor.startsWith('code'))
                 this.editor = {}
@@ -3487,7 +3554,7 @@ export class TextareaComponent extends AbstractInputComponent
             else
                 this.selectableEditor = true
         if (typeof this.editor === 'object' && this.editor !== null)
-            if (this.editor.indentUnit)
+            if (this.editorType.startsWith('code') || this.editor.indentUnit)
                 this.editor = this._extendObject(
                     true, {}, CODE_MIRROR_DEFAULT_OPTIONS,
                     this._defaultEditorOptions.code, this.editor)
