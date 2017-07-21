@@ -3045,13 +3045,13 @@ export class IntervalsInputComponent {
 // // endregion
 // // region text/selection
 @Component({
-    selector: 'code-editor',
     providers: [{
         provide: NG_VALUE_ACCESSOR,
-        useExisting: forwardRef(() => CodemirrorComponent),
+        useExisting: forwardRef(():CodemirrorComponent => CodemirrorComponent),
         multi: true
     }],
-    template: `<textarea #host></textarea>`,
+    selector: 'code-editor',
+    template: `<textarea #host></textarea>`
 })
 /**
  * Provides a generic code editor.
