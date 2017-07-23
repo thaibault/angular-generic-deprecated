@@ -3312,13 +3312,13 @@ const inputContent:string = `
         *ngIf="!model.selection && model.type === 'string' && model.maximumLength !== null && model.maximumLength < 100"
     >{{model.value?.length}} / {{model.maximumLength}}</md-hint>
 `
-/* eslint-enable max-len */
 const propertyWrapperInputContent:string = `
     [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
     [infoText]="infoText"
     [model]="model"
     [showValidationErrorMessages]="showValidationErrorMessages"
 `
+/* eslint-enable max-len */
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
