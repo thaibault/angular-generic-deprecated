@@ -3552,7 +3552,7 @@ export class TextareaComponent extends AbstractInputComponent
      * the overridden method invocation.
      * @returns Nothing.
      */
-    ngOnInit(...additionalParameter):void {
+    ngOnInit(...additionalParameter:Array<any>):void {
         super.ngOnInit(...additionalParameter)
         if (this.editor === null && this.model.editor)
             this.editor = this.model.editor
