@@ -72,7 +72,12 @@ export const CODE_MIRROR_DEFAULT_OPTIONS:PlainObject = {
         script: 'lib/codemirror.js'
     },
     // endregion
-    indentUnit: 4
+    indentUnit: 4,
+    tabSize: 4,
+    indentWithTabs: false,
+    lineWrapping: false,
+    lineNumbers: true,
+    scrollbarStyle: 'native'
 }
 const tinyMCEBasePath:string = '/tinymce/'
 export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
@@ -3150,7 +3155,7 @@ export class CodeEditorComponent extends DefaultValueAccessor
         delete this.configuration.path
         this.initialized.emit(this.codeMirror)
         console.log('A', this.hostDomNode.nativeElement, this.configuration)
-        this.instance = this.codeMirror(
+        this.instance = this.codeMirror.fromTextArea(
             this.hostDomNode.nativeElement, this.configuration)
         console.log('B', this.instance)
         this.instance.setValue(this.value)
@@ -3158,7 +3163,7 @@ export class CodeEditorComponent extends DefaultValueAccessor
             this.blur.emit({instance, event}))
         this.instance.on('change', ():void => {
             this.value = this.instance.getValue()
-            this.change.emit(value)
+            this.change.emit(this.value)
         })
         this.instance.on('focus', (instance:Object, event:Object):void =>
             this.focus.emit({instance, event}))
@@ -3517,8 +3522,9 @@ export class TextareaComponent extends AbstractInputComponent
                 this.activeEditor = true
             this.editorType = this.editor
             if (this.editor === 'code:cascadingStyleSheet')
-                // TODO
-                this.editor = {}
+                this.editor = {
+                    mode: 'css'
+                }
             else if (this.editor.startsWith('code'))
                 this.editor = {}
             else if (this.editor === 'raw')
