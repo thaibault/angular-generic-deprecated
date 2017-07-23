@@ -3445,7 +3445,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
     selector: 'generic-textarea',
     template: `
         <ng-container *ngIf="activeEditor; else plain">
-            <span [class.focus]="focused" class="editor-label">
+            <span [class.focused]="focused" class="editor-label">
                 {{description === '' ? null : description ? description : (model.description || model.name)}}
             </span>
             <code-editor
