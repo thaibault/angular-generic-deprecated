@@ -2302,6 +2302,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * @property _modelConfiguration - All model configurations.
  * @property description - Description to use instead of those coming from
  * model specification.
+ * @property disabled - Sets disabled state.
  * @property infoText - Info text to click for more informations.
  * @property model - Holds model informations including actual value and
  * metadata.
@@ -2317,6 +2318,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
     _getFilenameByPrefix:Function
     _modelConfiguration:PlainObject
     @Input() description:?string = null
+    @Input() disabled:?boolean = null
     @Input() infoText:string = 'ℹ'
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
@@ -3118,6 +3120,8 @@ export class CodeEditorComponent extends AbstractValueAccessor
     }> = new EventEmitter()
     codeMirror:Object
     @Input() configuration:PlainObject = {}
+    @Input() disabled:?boolean = null
+    extendObject:Function
     @Output() focus:EventEmitter<{
         event:Object;instance:Object;
     }> = new EventEmitter()
@@ -3129,14 +3133,17 @@ export class CodeEditorComponent extends AbstractValueAccessor
     /**
      * Initializes the code mirror resource loading if not available yet.
      * @param elementRef - Host element reference.
+     * @param extendObjectPipe - Injected extend object pipe instance.
      * @param renderer - Angular's dom abstraction layer.
      * @param tools - Tools service instance.
      * @returns Nothing.
      */
     constructor(
-        elementRef:ElementRef, renderer:Renderer2, tools:ToolsService
+        elementRef:ElementRef, extendObjectPipe:ExtendObjectPipe,
+        renderer:Renderer2, tools:ToolsService
     ):void {
         super(renderer, elementRef, null)
+        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.tools = tools.tools
         if (tools.globalContext.CodeMirror)
             this.codeMirror = tools.globalContext.CodeMirror
@@ -3185,10 +3192,14 @@ export class CodeEditorComponent extends AbstractValueAccessor
             } catch (error) {
                 throw error
             }
-        delete this.configuration.path
-        this.initialized.emit(this.codeMirror)
+        const configuration:PlainObjec = this.extendObject(
+            {}, this.configuration, {readOnly: this.disabled === null ? (
+                this.model.disabled || model.mutable === false ||
+                model.writable === false
+            ) : this.disabled})
+        delete configuration.path
         this.instance = this.codeMirror.fromTextArea(
-            this.hostDomNode.nativeElement, this.configuration)
+            this.hostDomNode.nativeElement, configuration)
         this.instance.setValue(this.model)
         this.instance.on('blur', (instance:Object, event:Object):void =>
             this.blur.emit({event, instance}))
@@ -3199,6 +3210,7 @@ export class CodeEditorComponent extends AbstractValueAccessor
         })
         this.instance.on('focus', (instance:Object, event:Object):void =>
             this.focus.emit({event, instance}))
+        this.initialized.emit(this.codeMirror)
     }
     /**
      * Synchronizes given value into internal code mirror instance.
@@ -3219,8 +3231,8 @@ export class CodeEditorComponent extends AbstractValueAccessor
      * @returns Nothing.
      */
     setDisabledState(isDisabled:boolean):void {
-        // TODO
-        this.instance
+        if (this.codeMirror)
+            this.instance.setOption('readOnly', isDisabled)
     }
 }
 /* eslint-disable max-len */
@@ -3233,7 +3245,7 @@ const propertyGenericContent:string = `
     #state="ngModel"
 `
 const propertyInputContent:string = `
-    [disabled]="model.disabled || model.mutable === false || model.writable === false"
+    [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
     [maxlength]="model.type === 'string' ? model.maximumLength : null"
     [minlength]="model.type === 'string' ? model.minimumLength : null"
     [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
@@ -3302,6 +3314,7 @@ const inputContent:string = `
 `
 /* eslint-enable max-len */
 const propertyWrapperInputContent:string = `
+    [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
     [infoText]="infoText"
     [model]="model"
     [showValidationErrorMessages]="showValidationErrorMessages"
@@ -3452,6 +3465,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
                 (blur)="focused = false"
                 [configuration]="editor"
                 @defaultAnimation
+                [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
                 (focus)="focused = true"
                 (initialized)="initialized = true"
                 *ngIf="editorType === 'code' || editor.indentUnit"
