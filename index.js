@@ -12,9 +12,9 @@
     License
     -------
 
-    This library written by Torben Sickert stand under a creative commons
+    This library written by torben sickert stand under a creative commons
     naming 3.0 unported license.
-    See http://creativecommons.org/licenses/by/3.0/deed.de
+    see http://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
 // region imports
@@ -2319,7 +2319,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
     @Input() description:?string = null
     @Input() infoText:string = 'ℹ'
     @Input() model:PlainObject = {}
-    @Output() modelChange:EventEmitter = new EventEmitter()
+    @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
     parseInt = parseInt
     parseFloat = parseFloat
     @Input() showValidationErrorMessages:boolean = false
@@ -2786,13 +2786,15 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
  * @property type - Saves current input type.
  */
 export class AbstractValueAccessor extends DefaultValueAccessor {
+    onChangeCallback:Function = Tools.noop
+    onTouchedCallback:Function = Tools.noop
     @Input() type:?string
     /**
      * Manipulates editable value representation.
      * @param value - Value to manipulate.
      * @returns Given and transformed value.
      */
-    exportValue(value:any):any {
+    export(value:any):any {
         return value
     }
     /**
@@ -2800,8 +2802,34 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
      * @param value - Value to convert to its internal representation.
      * @returns Given and transformed value.
      */
-    importValue(value:any):any {
+    import(value:any):any {
         return value
+    }
+    /**
+     * Needed implementation for an angular control value accessor.
+     * @param callback - Callback function to register.
+     * @param additionalParameter - Additional parameter will be forwarded to
+     * inherited super method.
+     * @returns What inherited method returns.
+     */
+    registerOnChange(
+        callback:Function, ...additionalParameter:Array<any>
+    ):any {
+        this.onChangeCallback = callback
+        return super.registerOnChange(callback, ...additionalParameter)
+    }
+    /**
+     * Needed implementation for an angular control value accessor.
+     * @param callback - Callback function to register.
+     * @param additionalParameter - Additional parameter will be forwarded to
+     * inherited super method.
+     * @returns What inherited method returns.
+     */
+    registerOnTouched(
+        callback:Function, ...additionalParameter:Array<any>
+    ):any {
+        this.onTouchedCallback = callback
+        return super.registerOnTouched(callback, ...additionalParameter)
     }
     /**
      * Overridden inherited function for value export.
@@ -2811,7 +2839,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
      * @returns The transformed give value.
      */
     writeValue(value:any, ...additionalParameter:Array<any>):any {
-        return super.writeValue(this.exportValue(
+        return super.writeValue(this.export(
             value, ...additionalParameter
         ), ...additionalParameter)
     }
@@ -2823,7 +2851,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
      * @returns The transformed give value.
      */
     _handleInput(value:any, ...additionalParameter:Array<any>):any {
-        return super._handleInput(this.importValue(
+        return super._handleInput(this.import(
             value, ...additionalParameter
         ), ...additionalParameter)
     }
@@ -2856,7 +2884,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
      * @param value - Value to manipulate.
      * @returns Given and transformed value.
      */
-    exportValue(value:any):any {
+    export(value:any):any {
         if (
             ![undefined, null].includes(value) &&
             ['date', 'time'].includes(this.type)
@@ -2889,7 +2917,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
      * @param value - Value to convert to its internal representation.
      * @returns Given and transformed value.
      */
-    importValue(value:any):any {
+    import(value:any):any {
         if (typeof value === 'string')
             if (this.type === 'time') {
                 const match = /^([0-9]{2}):([0-9]{2})$/.exec(value)
@@ -3071,28 +3099,33 @@ export class IntervalsInputComponent {
  * @property static:_applicationInterfaceLoad - Promise which resolves when
  * code editor is fully loaded.
  * @property blur - Blur event emitter.
- * @property change - Change event emitter.
  * @property codeMirror - Current code mirror constructor.
  * @property configuration - Code mirror configuration.
  * @property focus - Focus event emitter.
  * @property hostDomNode - Host textarea dom element to bind editor to.
  * @property initialized - Initialized event emitter.
  * @property instance - Currently active code editor instance.
- * @property value - Current editable text string.
+ * @property model - Current editable text string.
+ * @property modelChange - Change event emitter.
  */
-export class CodeEditorComponent extends DefaultValueAccessor
+export class CodeEditorComponent extends AbstractValueAccessor
 /* implements AfterViewInit*/ {
 /* eslint-enable brace-style */
     static _applicationInterfaceLoad:Promise<Object>
-    @Output() blur:EventEmitter = new EventEmitter()
-    @Output() change:EventEmitter = new EventEmitter()
+    @Output() blur:EventEmitter<{
+        event:Object;
+        instance:Object;
+    }> = new EventEmitter()
     codeMirror:Object
     @Input() configuration:PlainObject = {}
-    @Output() focus:EventEmitter = new EventEmitter()
+    @Output() focus:EventEmitter<{
+        event:Object;instance:Object;
+    }> = new EventEmitter()
     @ViewChild('hostDomNode') hostDomNode:ElementRef
     @Output() initialized:EventEmitter<Object> = new EventEmitter()
-    @Output() instance:?Object = null
-    value:string = ''
+    instance:?Object = null
+    @Input() model:string = ''
+    @Output() modelChange:EventEmitter<string> = new EventEmitter()
     /**
      * Initializes the code mirror resource loading if not available yet.
      * @param elementRef - Host element reference.
@@ -3123,7 +3156,7 @@ export class CodeEditorComponent extends DefaultValueAccessor
                     cache: true,
                     dataType: 'script',
                     error: reject,
-                    success: ():Object => {
+                    success: ():void => {
                         this.codeMirror = tools.globalContext.CodeMirror
                         resolve(this.codeMirror)
                     },
@@ -3154,29 +3187,40 @@ export class CodeEditorComponent extends DefaultValueAccessor
             }
         delete this.configuration.path
         this.initialized.emit(this.codeMirror)
-        console.log('A', this.hostDomNode.nativeElement, this.configuration)
         this.instance = this.codeMirror.fromTextArea(
             this.hostDomNode.nativeElement, this.configuration)
-        console.log('B', this.instance)
-        this.instance.setValue(this.value)
+        this.instance.setValue(this.model)
         this.instance.on('blur', (instance:Object, event:Object):void =>
-            this.blur.emit({instance, event}))
+            this.blur.emit({event, instance}))
         this.instance.on('change', ():void => {
-            this.value = this.instance.getValue()
-            this.change.emit(this.value)
+            this.model = this.onChangeCallback(this.import(
+                this.instance.getValue()))
+            this.modelChange.emit(this.model)
         })
         this.instance.on('focus', (instance:Object, event:Object):void =>
-            this.focus.emit({instance, event}))
+            this.focus.emit({event, instance}))
     }
     /**
      * Synchronizes given value into internal code mirror instance.
      * @param value - Given value to set in code editor.
+     * @param additionalParameter - Additional arguments will be forwarded to
+     * the overridden method invocation.
+     * @returns What inherited method returns.
+     */
+    export(value:any, ...additionalParameter:Array<any>):any {
+        this.model = value || ''
+        if (this.instance)
+            this.instance.setValue(this.model)
+        return super.export(value, ...additionalParameter)
+    }
+    /**
+     * Triggers disabled state changes.
+     * @param isDisabled - Indicates disabled state.
      * @returns Nothing.
      */
-    writeValue(value:any):void {
-        this.value = value || ''
-        if (this.instance)
-            this.instance.setValue(this.value)
+    setDisabledState(isDisabled:boolean):void {
+        // TODO
+        this.instance
     }
 }
 /* eslint-disable max-len */
@@ -3504,10 +3548,12 @@ export class TextareaComponent extends AbstractInputComponent
     }
     /**
      * Triggers after input values have been resolved.
+     * @param additionalParameter - Additional arguments will be forwarded to
+     * the overridden method invocation.
      * @returns Nothing.
      */
-    ngOnInit():void {
-        super.ngOnInit()
+    ngOnInit(...additionalParameter):void {
+        super.ngOnInit(...additionalParameter)
         if (this.editor === null && this.model.editor)
             this.editor = this.model.editor
         if (typeof this.editor === 'string') {
@@ -3843,11 +3889,11 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     _typeName:string
     _prefixMatch:boolean = false
     attachmentTypeName:string
-    @Output() delete:EventEmitter = new EventEmitter()
+    @Output() delete:EventEmitter<string> = new EventEmitter()
     @Input() deleteButtonText:string = 'delete'
     @Input() downloadButtonText:string = 'download'
     file:any = null
-    @Output() fileChange:EventEmitter = new EventEmitter()
+    @Output() fileChange:EventEmitter<any> = new EventEmitter()
     @Input() headerText:string = ''
     @Input() infoText:string = 'ℹ'
     @ViewChild('input') input:ElementRef
@@ -3855,7 +3901,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     keyCode:{[key:string]:number}
     @Input() mapNameToField:?string|?Array<string> = null
     @Input() model:{id:?string;[key:string]:any;}
-    @Output() modelChange:EventEmitter = new EventEmitter()
+    @Output() modelChange:EventEmitter<{
+        id:?string;[key:string]:any;
+    }> = new EventEmitter()
     @Input() name:?string = null
     @Input() newButtonText:string = 'new'
     @Input() noFileText:string = ''
@@ -4358,7 +4406,7 @@ export class PaginationComponent {
     _makeRange:Function
     @Input() itemsPerPage:number = 20
     @Input() page:number = 1
-    @Output() pageChange:EventEmitter = new EventEmitter()
+    @Output() pageChange:EventEmitter<number> = new EventEmitter()
     @Input() pageRangeLimit:number = 4
     @Input() total:number = 0
     /**
