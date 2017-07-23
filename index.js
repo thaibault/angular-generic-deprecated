@@ -3231,7 +3231,7 @@ export class CodeEditorComponent extends AbstractValueAccessor
      * @returns Nothing.
      */
     setDisabledState(isDisabled:boolean):void {
-        if (this.codeMirror)
+        if (this.instance)
             this.instance.setOption('readOnly', isDisabled)
     }
 }
