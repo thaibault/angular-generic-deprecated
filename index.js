@@ -1294,10 +1294,18 @@ export class AlertService {
 export class DataService {
     static revisionNumberRegularExpression:RegExp = /^([0-9]+)-/
     static wrappableMethodNames:Array<string> = [
-        'allDocs', 'bulkDocs', 'bulkGet', 'changes', 'close', 'compact',
-        'compactDocument', 'createIndex', 'deleteIndexs', 'destroy', 'find',
-        'get', 'getAttachment', 'getIndexes', 'info', 'post', 'put',
-        'putAttachment', 'query', 'remove', 'removeAttachment', 'sync']
+        'allDocs', 'bulkDocs', 'bulkGet',
+        'close',
+        'compact', 'compactDocument',
+        'createIndex', 'deleteIndexs',
+        'destroy',
+        'find', 'get',
+        'getAttachment', 'getIndexes',
+        'info',
+        'post', 'put', 'putAttachment',
+        'query',
+        'remove', 'removeAttachment'
+    ]
     connection:PouchDB
     configuration:PlainObject
     database:typeof PouchDB
@@ -1313,6 +1321,7 @@ export class DataService {
     }
     platformID:string
     remoteConnection:?PouchDB = null
+    runningRequests:Array<PlainObject> = []
     stringFormat:Function
     synchronisation:?Object
     tools:Tools
@@ -1490,27 +1499,58 @@ export class DataService {
                 name
             ) && typeof this.connection[name] === 'function') {
                 const method:Function = this.connection[name]
-                this.connection[name] = (...parameter:Array<any>):any => {
+                this.connection[name] = async (
+                    ...parameter:Array<any>
+                ):Promise<any> => {
+                    const request:{
+                        parameter:Array<any>;
+                        wrappedParameter:?Array<any>;
+                    } = {name, parameter}
+                    this.runningRequests.push(request)
                     for (const methodName:string of [name, '_all'])
                         if (this.middlewares.pre.hasOwnProperty(methodName))
                             for (
                                 const interceptor:Function of
                                 this.middlewares.pre[methodName]
-                            )
+                            ) {
                                 parameter = interceptor.apply(
                                     this.connection, parameter.concat(
                                         methodName === '_all' ? name : []))
+                                if ('then' in parameter)
+                                    try {
+                                        parameter = await parameter
+                                    } catch (error) {
+                                        throw error
+                                    }
+                            }
+                    request.wrappedParameter = parameter
                     let result:any = method.apply(this.connection, parameter)
                     for (const methodName:string of [name, '_all'])
                         if (this.middlewares.post.hasOwnProperty(methodName))
                             for (
                                 const interceptor:Function of
                                 this.middlewares.post[methodName]
-                            )
+                            ) {
                                 result = interceptor.call(
                                     this.connection, result,
                                     ...parameter.concat(
                                         methodName === '_all' ? name : []))
+                                if ('then' in result)
+                                    try {
+                                        result = await result
+                                    } catch (error) {
+                                        throw error
+                                    }
+                            }
+                    if ('then' in result)
+                        try {
+                            result = await result
+                        } catch (error) {
+                            throw error
+                        }
+                    const index:number = this.runningRequests.indexOf(request)
+                    if (index !== -1)
+                        this.runningRequests.splice(index, 1)
                     return result
                 }
             }
@@ -2441,6 +2481,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
  * service instance.
  * @property _changesStream - Database observation representation.
  * @property _data - Data service instance.
+ * @property _extendObject - Extend object pipe's transformation method.
  * @property _liveUpdateOptions - Options for database observation.
  * @property _stringCapitalize - String capitalize pipe transformation
  * function.
@@ -2456,26 +2497,26 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     _changeDetectorReference:ChangeDetectorRef
     _changesStream:Object
     _data:DataService
+    _extendObject:Function
     _liveUpdateOptions:PlainObject = {}
     _stringCapitalize:Function
-    _tools:typeof Tools
     /**
      * Saves injected service instances as instance properties.
      * @param changeDetectorReference - Model dirty checking service.
      * @param data - Data stream service.
+     * @param extendObjectPipe - Extend object pipe instance.
      * @param stringCapitalizePipe - The string capitalize pipe instance.
-     * @param tools - The injected tools service instance.
      * @returns Nothing.
      */
     constructor(
         changeDetectorReference:ChangeDetectorRef, data:DataService,
-        stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
+        extendObjectPipe, stringCapitalizePipe:StringCapitalizePipe
     ):void {
         this._changeDetectorReference = changeDetectorReference
         this._data = data
+        this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this._stringCapitalize = stringCapitalizePipe.transform.bind(
             stringCapitalizePipe)
-        this._tools = tools.tools
     }
     /**
      * Initializes data observation when view has been initialized.
@@ -2483,7 +2524,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      */
     ngOnInit():void {
         this._changesStream = this._data.connection.changes(
-            this._tools.extendObject(
+            this._extendObject(
                 {since: LAST_KNOWN_DATA.sequence},
                 this.constructor._defaultLiveUpdateOptions,
                 this._liveUpdateOptions))
@@ -2581,6 +2622,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     _itemsPath:string = 'items'
     _route:ActivatedRoute
     _router:Router
+    _tools:typeof Tools
     _toolsInstance:Tools
     allItemsChecked:boolean = false
     debouncedUpdate:Function
@@ -2597,6 +2639,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * Saves injected service instances as instance properties.
      * @param changeDetectorReference - Model dirty checking service.
      * @param data - Data stream service.
+     * @param ExtendObjectPipe - Extend object pipe instance.
      * @param route - Current route configuration.
      * @param router - Injected router service instance.
      * @param stringCapitalizePipe - String capitalize pipe instance.
@@ -2605,10 +2648,13 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      */
     constructor(
         changeDetectorReference:ChangeDetectorRef, data:DataService,
-        route:ActivatedRoute, router:Router,
+        extendObjectPipe:ExtendObjectPipe, route:ActivatedRoute, router:Router,
         stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
     ):void {
-        super(changeDetectorReference, data, stringCapitalizePipe, tools)
+        super(
+            changeDetectorReference, data, extendObjectPipe,
+            stringCapitalizePipe)
+        this._tools = tools.tools
         this.keyCode = this._tools.keyCode
         this._route = route
         this._router = router
@@ -2641,11 +2687,11 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             if (this.applyPageConstraints())
                 this.update()
         })
-        this.searchTermStream.debounceTime(200).distinctUntilChanged().map((
-        ):Promise<boolean> => {
+        this.searchTermStream.debounceTime(200).distinctUntilChanged()
+        .subscribe(():Promise<boolean> => {
             this.page = 1
             return this.update()
-        }).subscribe()
+        })
         this.debouncedUpdate = this._tools.debounce(this.update.bind(this))
     }
     /**
@@ -3641,16 +3687,16 @@ export class TextareaComponent extends AbstractInputComponent
         <md-card>
             <md-card-header
                 @defaultAnimation
-                *ngIf="headerText || file?.name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description || name"
+                *ngIf="headerText !== '' && (headerText || file?.name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description || name)"
             >
                 <md-card-title>
-                    <!-- NOTE: NgIfElse doesnt work here. -->
                     <span
                         @defaultAnimation
                         *ngIf="revision || headerText || !file?.name"
                     >
                         {{headerText || file?.name || model[attachmentTypeName][internalName]?.description || name}}
                     </span>
+                    <!-- NOTE: NgIfElse doesnt work here. -->
                     <ng-container
                         *ngIf="!(revision || headerText || !file?.name)"
                     >
@@ -3908,7 +3954,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     @Input() downloadButtonText:string = 'download'
     file:any = null
     @Output() fileChange:EventEmitter<any> = new EventEmitter()
-    @Input() headerText:string = ''
+    @Input() headerText:?string = null
     @Input() infoText:string = 'ℹ'
     @ViewChild('input') input:ElementRef
     internalName:string
