@@ -55,12 +55,13 @@ import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
 import {Subject} from 'rxjs'
 import {Observable} from 'rxjs/Observable'
-import {ISubscription} from 'rxjs/Subscription';
+import {ISubscription} from 'rxjs/Subscription'
 // NOTE: Only needed for debugging this file.
 try {
     module.require('source-map-support/register')
 } catch (error) {}
 // endregion
+// TODO einiheitliche Reihenfolge für static und dynamic properties.
 declare var UTC_BUILD_TIMESTAMP:number
 let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
@@ -1188,10 +1189,10 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
             {{message}}
         </md-dialog-content>
         <md-dialog-actions>
-            <button md-raised-button (click)="dialogReference.close(true)">
+            <button (click)="dialogReference.close(true)" md-raised-button>
                 {{okText}}
             </button>
-            <button md-raised-button (click)="dialogReference.close(false)">
+            <button (click)="dialogReference.close(false)" md-raised-button>
                 {{cancelText}}
             </button>
         </md-dialog-actions>
@@ -2345,31 +2346,57 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
  * transformation method.
  * @property _modelConfiguration - All model configurations.
+ * @property declaration - Declaration info text.
  * @property description - Description to use instead of those coming from
  * model specification.
  * @property disabled - Sets disabled state.
- * @property infoText - Info text to click for more informations.
+ * @property maximum - Maximum allowed number value.
+ * @property maximumLength - Maximum allowed number of symbols.
+ * @property maximumLengthText - Maximum length validation text.
+ * @property maximumText - Maximum number validation text.
+ * @property minimum - Minimum allowed number.
+ * @property minimumLength - Minimum allowed number of symbols.
+ * @property minimumLengthText - Minimum number validation text.
+ * @property minimumText - Minimum number of symbols validation text.
  * @property model - Holds model informations including actual value and
  * metadata.
  * @property modelChange - Model event emitter emitting events on each model
  * change.
+ * @property pattern - Allowed pattern to match against given input.
+ * @property patternText - Pattern validation text.
+ * @property required - Indicates whether this inputs have to be filled.
+ * @property requiredText - Required validation text.
+ * @property showDeclarationText - Info text to click for more informations.
  * @property showValidationErrorMessages - Indicates whether validation errors
  * should be suppressed or be shown automatically. Useful to prevent error
  * component from showing error messages before the user has submit the form.
+ * @property type - Type of given input.
  */
 export class AbstractInputComponent/* implements OnInit*/ {
     _attachmentWithPrefixExists:Function
     _extendObject:Function
     _getFilenameByPrefix:Function
     _modelConfiguration:PlainObject
+    @Input() declaration:?string = null
     @Input() description:?string = null
     @Input() disabled:?boolean = null
-    @Input() infoText:string = 'ℹ'
+    @Input() maximum:?number = null
+    @Input() maximumLength:?number = null
+    @Input() maximumLengthText:string
+    @Input() maximumText:string
+    @Input() minimum:?number = null
+    @Input() minimumLength:?number = null
+    @Input() minimumLengthText:string
+    @Input() minimumText:string
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
-    parseInt = parseInt
-    parseFloat = parseFloat
+    @Input() pattern:string
+    @Input() patternText:string
+    @Input() required:?boolean = null
+    @Input() requiredText:string
+    @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
+    @Input() type:string
     /**
      * Sets needed services as property values.
      * @param attachmentWithPrefixExistsPipe - Saves the attachment by prefix
@@ -3007,11 +3034,15 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
     selector: 'generic-interval-input',
     template: `
         <generic-input
-            [description]="startDescription" type="time" [model]="model.start"
+            [description]="startDescription"
+            [model]="model.start"
+            type="time"
         ></generic-input>
         <ng-content></ng-content>
         <generic-input
-            [description]="endDescription" type="time" [model]="model.end"
+            [description]="endDescription"
+            [model]="model.end"
+            type="time"
         ></generic-input>
     `
 })
@@ -3045,8 +3076,8 @@ export class IntervalInputComponent {
         >
             <generic-interval-input
                 [endDescription]="first ? null : ''"
-                [startDescription]="first ? null : ''"
                 [model]="interval"
+                [startDescription]="first ? null : ''"
             >
                 <ng-container *ngIf="contentTemplate; else fallback">
                     <ng-container
@@ -3056,16 +3087,16 @@ export class IntervalInputComponent {
             </generic-interval-input>
             <a
                 class="remove"
-                *ngIf="model.minimumNumber === null || model.value.length > model.minimumNumber"
                 (click)="$event.preventDefault(); $event.stopPropagation(); remove(interval)"
                 href=""
+                *ngIf="model.minimumNumber === null || model.value.length > model.minimumNumber"
             >-</a>
         </div>
         <a
             class="add"
-            *ngIf="model.maximumNumber === null || model.value.length < model.maximumNumber"
             (click)="$event.preventDefault(); $event.stopPropagation(); add()"
             href=""
+            *ngIf="model.maximumNumber === null || model.value.length < model.maximumNumber"
         >+</a>
         <ng-template #fallback>--</ng-template>
     `
@@ -3332,20 +3363,52 @@ export class CodeEditorComponent extends AbstractValueAccessor
     }
 }
 /* eslint-disable max-len */
-const propertyGenericContent:string = `
-    [name]="model.name"
-    [ngModel]="model.value"
-    (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
-    [placeholder]="description === '' ? null : description ? description : (model.description || model.name)"
-    [required]="!model.nullable"
-    #state="ngModel"
-`
-const propertyInputContent:string = `
-    [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
-    [maxlength]="model.type === 'string' ? model.maximumLength : null"
-    [minlength]="model.type === 'string' ? model.minimumLength : null"
-    [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
-`
+const propertyContent:PlainObject = {
+    editor: `
+        (blur)="focused = false"
+        @defaultAnimation
+        (focus)="focused = true"
+        [ngModel]="model.value"
+        (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
+        [style.visibilty]="initialized ? 'visible' : 'hidden'"
+        #state="ngModel"
+    `,
+    nativ: `
+        [name]="model.name"
+        [ngModel]="model.value"
+        (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
+        [placeholder]="description === '' ? null : description ? description : (model.description || model.name)"
+        [required]="required === null ? !model.nullable : required"
+        #state="ngModel"
+    `,
+    nativText: `
+        [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
+        [maxlength]="maximumLength === null ? (model.type === 'string' ? model.maximumLength : null) : maximumLength"
+        [minlength]="minimumLength === null ? (model.type === 'string' ? model.minimumLength : null) : minimumLength"
+        [pattern]="pattern === null ? (model.type === 'string' ? model.regularExpressionPattern : null) : pattern"
+    `,
+    wrapper: `
+        [declaration]="declaration"
+        [description]="description"
+        [disabled]="disabled"
+        [showDeclarationText]="showDeclarationText"
+        [maximum]="maximum"
+        [maximumLength]="maximumLength"
+        [maximumLengthText]="maximumLengthText"
+        [maximumText]="maximumText"
+        [minimum]="minimum"
+        [minimumLength]="minimumLength"
+        [model]="model"
+        [pattern]="pattern"
+        [required]="required"
+        [requiredText]="requiredText"
+        [minimumLengthText]="minimumLengthText"
+        [minimumText]="minimumText"
+        [patternText]="patternText"
+        [showValidationErrorMessages]="showValidationErrorMessages"
+        [type]="type"
+    `
+}
 const inputContent:string = `
     <md-hint align="start" @defaultAnimation mdTooltip="info">
         <span
@@ -3357,8 +3420,8 @@ const inputContent:string = `
                 (click)="$event.preventDefault()"
                 @defaultAnimation
                 href=""
-                *ngIf="infoText"
-            >{{infoText}}</a>
+                *ngIf="showDeclarationText"
+            >{{showDeclarationText}}</a>
             <span @defaultAnimation *ngIf="showDeclaration">
                 {{model.declaration}}
             </span>
@@ -3382,37 +3445,60 @@ const inputContent:string = `
     </md-hint>
     <span @defaultAnimation generic-error *ngIf="showValidationErrorMessages">
         <p @defaultAnimation *ngIf="model.state?.errors?.required">
-            Bitte füllen Sie das Feld "{{model.description || model.name}}"
-            aus.
+            <ng-container *ngIf="requiredText; else default">
+                {{requiredText}}
+            </ng-container>
+            <ng-template #default>
+                Please fill field "{{model.description || model.name}}".
+            </ng-template>
         </p>
         <p @defaultAnimation *ngIf="model.state?.errors?.maxlength">
-            Bitte geben Sie maximal {{model.maximumLength}} Zeichen ein.
+            <ng-container *ngIf="maximumLengthText; else default">
+                {{maximumLengthText}}
+            </ng-container>
+            <ng-template #default>
+                Please type less or equal than {{model.maximumLength}} symbols.
+            </ng-template>
         </p>
         <p @defaultAnimation *ngIf="model.state?.errors?.minlength">
-            Bitte geben Sie mindestens {{model.minimumLength}} Zeichen ein.
+            <ng-container *ngIf="minimumLengthText; else default">
+                {{minimumLengthText}}
+            </ng-container>
+            <ng-template #default>
+                Please type at least or equal {{model.minimumLength}} symbols.
+            </ng-template>
         </p>
         <p @defaultAnimation *ngIf="model.state?.errors?.max">
-            Bitte geben Sie eine Zahl kleiner oder gleich {{model.maximum}}
-            ein.
+            <ng-container *ngIf="maximumText; else default">
+                {{maximumText}}
+            </ng-container>
+            <ng-template #default>
+                Please give a number less or equal than {{model.maximum}}.
+            </ng-template>
         </p>
         <p @defaultAnimation *ngIf="model.state?.errors?.min">
-            Bitte geben Sie eine Zahl größer oder gleich {{model.minimum}} ein.
+            <ng-container *ngIf="minimumText; else default">
+                {{minimumText}}
+            </ng-container>
+            <ng-template #default>
+                Please given a number at least or equal to {{model.minimum}}.
+            </ng-template>
         </p>
         <p @defaultAnimation *ngIf="model.state?.errors?.pattern">
-            Bitte geben Sie eine Zeinefolge ein die dem regulären Ausdruck
-            "{{model.regularExpressionPattern}}" entspricht.
+            <ng-container *ngIf="patternText; else default">
+                {{patternText}}
+            </ng-container>
+            <ng-template #default>
+                Your string have to match the regular expression:
+                "{{model.regularExpressionPattern}}".
+            </ng-template>
         </p>
     </span>
     <md-hint
-        @defaultAnimation align="end"
+        align="end"
+        @defaultAnimation
         *ngIf="!model.selection && model.type === 'string' && model.maximumLength !== null && model.maximumLength < 100"
     >{{model.value?.length}} / {{model.maximumLength}}</md-hint>
-`
-const propertyWrapperInputContent:string = `
-    [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
-    [infoText]="infoText"
-    [model]="model"
-    [showValidationErrorMessages]="showValidationErrorMessages"
 `
 /* eslint-enable max-len */
 // IgnoreTypeCheck
@@ -3421,22 +3507,18 @@ const propertyWrapperInputContent:string = `
     selector: 'generic-input',
     template: `
         <generic-textarea
-            @defaultAnimation
+            ${propertyContent.wrapper}
             [activeEditor]="activeEditor"
-            [description]="description"
             [editor]="editor"
-            [minimumNumberOfRows]="minimumNumberOfRows"
             [maximumNumberOfRows]="maximumNumberOfRows"
+            [minimumNumberOfRows]="minimumNumberOfRows"
             *ngIf="model.editor; else simpleInput"
             [rows]="rows"
             [selectableEditor]="selectableEditor"
-            ${propertyWrapperInputContent}
         ><ng-content></ng-content></generic-textarea>
         <ng-template #simpleInput><generic-simple-input
-            [description]="description"
+            ${propertyContent.wrapper}
             [labels]="labels"
-            ${propertyWrapperInputContent}
-            [type]="type"
         ><ng-content></ng-content></generic-simple-input></ng-template>
     `
 })
@@ -3492,7 +3574,7 @@ export class InputComponent extends AbstractInputComponent {
         <ng-container
             @defaultAnimation *ngIf="model.selection; else textInput"
         >
-            <md-select [(ngModel)]="model.value" ${propertyGenericContent}>
+            <md-select [(ngModel)]="model.value" ${propertyContent.nativ}>
                 <md-option
                     *ngFor="let value of model.selection" [value]="value"
                 >
@@ -3504,12 +3586,13 @@ export class InputComponent extends AbstractInputComponent {
         </ng-container>
         <ng-template #textInput><md-input-container>
             <input
-                mdInput [max]="model.type === 'number' ? model.maximum : null"
-                [min]="model.type === 'number' ? model.minimum : null"
+                ${propertyContent.nativ}
+                ${propertyContent.nativText}
+                [max]="maximum === null ? (model.type === 'number' ? model.maximum : null) : maximum"
+                mdInput
+                [min]="minimum === null ? (model.type === 'number' ? model.minimum : null) : minimum"
                 [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
-                ${propertyInputContent}
-                ${propertyGenericContent}
-            >
+            />
             ${inputContent}
             <ng-content></ng-content>
         </md-input-container></ng-template>
@@ -3558,43 +3641,29 @@ export class SimpleInputComponent extends AbstractInputComponent {
                 {{description === '' ? null : description ? description : (model.description || model.name)}}
             </span>
             <code-editor
-                (blur)="focused = false"
+                ${propertyContent.editor}
                 [configuration]="editor"
-                @defaultAnimation
                 [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
-                (focus)="focused = true"
                 (initialized)="initialized = true"
-                *ngIf="editorType === 'code' || editor.indentUnit"
-                [ngModel]="model.value"
-                (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
-                [style.visibilty]="initialized ? 'visible' : 'hidden'"
-                #state="ngModel"
+                *ngIf="editorType === 'code' || editor.indentUnit; else tinyMCE"
             ></code-editor>
-            <!-- NOTE: NgIfElse doesnt work here. -->
-            <angular-tinymce
-                (blur)="focused = false"
-                @defaultAnimation
-                (focus)="focused = true"
+            <ng-template #tinyMCE><angular-tinymce
+                ${propertyContent.editor}
                 (init)="initialized = true"
-                *ngIf="editorType !== 'code' && !editor.indentUnit"
-                [ngModel]="model.value"
-                (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
                 [settings]="editor"
-                [style.visibilty]="initialized ? 'visible' : 'hidden'"
-                #state="ngModel"
-            ></angular-tinymce>
+            ></angular-tinymce></ng-template>
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
         <ng-template #plain><md-input-container @defaultAnimation>
             <textarea
-                [mdAutosizeMinRows]="minimumNumberOfRows"
+                ${propertyContent.nativ}
+                ${propertyContent.nativText}
                 [mdAutosizeMaxRows]="maximumNumberOfRows"
+                [mdAutosizeMinRows]="minimumNumberOfRows"
                 mdInput
                 mdTextareaAutosize
                 [rows]="rows"
-                ${propertyInputContent}
-                ${propertyGenericContent}
             ></textarea>
             ${inputContent}
             <ng-content></ng-content>
@@ -3730,6 +3799,7 @@ export class TextareaComponent extends AbstractInputComponent
 // // endregion
 // / region file input
 /* eslint-disable max-len */
+// TODO texte per property konfigurierbar machen und mit englischem default.
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
@@ -3743,16 +3813,12 @@ export class TextareaComponent extends AbstractInputComponent
                 <md-card-title>
                     <span
                         @defaultAnimation
-                        *ngIf="revision || headerText || !file?.name"
+                        *ngIf="revision || headerText || !file?.name; else editable"
                     >
                         {{headerText || file?.name || model[attachmentTypeName][internalName]?.description || name}}
                     </span>
-                    <!-- NOTE: NgIfElse doesnt work here. -->
-                    <ng-container
-                        *ngIf="!(revision || headerText || !file?.name)"
-                    >
-                        <!-- NOTE: NgIfElse doesnt work here. -->
-                        <ng-container *ngIf="synchronizeImmediately">
+                    <ng-template #editable>
+                        <ng-container *ngIf="synchronizeImmediately; else parent">
                             <md-input-container
                                 [class.dirty]="editedName && editedName !== file.name"
                                 mdTooltip="Focus to edit."
@@ -3763,18 +3829,22 @@ export class TextareaComponent extends AbstractInputComponent
                                     (ngModelChange)="editedName = $event"
                                 />
                                 <md-hint
-                                    @defaultAnimation
                                     [class.activ]="showDeclaration"
                                     (click)="showDeclaration = !showDeclaration"
+                                    @defaultAnimation
                                     mdTooltip="info"
                                     *ngIf="model[attachmentTypeName][internalName]?.declaration"
                                 >
                                     <a
+                                        (click)="$event.preventDefault()"
                                         @defaultAnimation
-                                        (click)="$event.preventDefault()" href=""
-                                        *ngIf="infoText"
-                                    >{{infoText}}</a>
-                                    <span @defaultAnimation *ngIf="showDeclaration">
+                                        href=""
+                                        *ngIf="showDeclarationText"
+                                    >{{showDeclarationText}}</a>
+                                    <span
+                                        @defaultAnimation
+                                        *ngIf="showDeclaration"
+                                    >
                                         {{model[attachmentTypeName][internalName].declaration}}
                                     </span>
                                 </md-hint>
@@ -3783,65 +3853,72 @@ export class TextareaComponent extends AbstractInputComponent
                                 *ngIf="editedName && editedName !== file.name"
                             >
                                 <a
-                                    @defaultAnimation
                                     (click)="$event.preventDefault();rename(editedName)"
+                                    @defaultAnimation
                                     href=""
                                 >✓</a>
                                 <a
-                                    @defaultAnimation
                                     (click)="$event.preventDefault();editedName = file.name"
+                                    @defaultAnimation
                                     href=""
                                 >✕</a>
                             </ng-container>
                         </ng-container>
-                        <md-input-container
-                            @defaultAnimation
+                        <ng-template #parent><md-input-container
                             [class.dirty]="file.initialName !== file.name"
+                            @defaultAnimation
                             mdTooltip="Focus to edit."
                             *ngIf="!synchronizeImmediately"
                         >
                             <input
                                 mdInput [ngModel]="file.name"
-                                (ngModelChange)="file.name = $event;modelChange.emit(this.model);fileChange.emit(file)"
+                                (ngModelChange)="file.name = $event;modelChange.emit(this.model); fileChange.emit(file)"
                             />
                             <md-hint
-                                @defaultAnimation
                                 [class.activ]="showDeclaration"
                                 (click)="showDeclaration = !showDeclaration"
+                                @defaultAnimation
                                 mdTooltip="info"
                                 *ngIf="model[attachmentTypeName][internalName]?.declaration"
                             >
                                 <a
-                                    @defaultAnimation
                                     (click)="$event.preventDefault()" href=""
-                                    *ngIf="infoText"
-                                >{{infoText}}</a>
-                                <span @defaultAnimation *ngIf="showDeclaration">
+                                    @defaultAnimation
+                                    *ngIf="showDeclarationText"
+                                >{{showDeclarationText}}</a>
+                                <span
+                                    @defaultAnimation
+                                    *ngIf="showDeclaration"
+                                >
                                     {{model[attachmentTypeName][internalName].declaration}}
                                 </span>
                             </md-hint>
-                        </md-input-container>
-                    </ng-container>
+                        </md-input-container></ng-template>
+                    </ng-template>
                 </md-card-title>
             </md-card-header>
             <img md-card-image
+                [attr.alt]="name"
+                [attr.src]="file.source"
                 @defaultAnimation
                 *ngIf="file?.type === 'image' && file?.source"
-                [attr.alt]="name" [attr.src]="file.source"
             >
             <video
+                autoplay
                 @defaultAnimation
-                md-card-image autoplay muted loop
+                md-card-image
+                muted
                 *ngIf="file?.type === 'video' && file?.source"
+                loop
             >
                 <source [attr.src]="file.source" [type]="file.content_type">
-                Keine Vorschau möglich.
+                No preview possible.
             </video>
             <iframe
                 @defaultAnimation
-                [src]="file.source"
                 *ngIf="file?.type === 'text' && file?.source"
-                style="border:none;width:100%;max-height:150px"
+                [src]="file.source"
+                style="border: none; width: 100%; max-height: 150px"
             ></iframe>
             <div
                 @defaultAnimation
@@ -3901,17 +3978,22 @@ export class TextareaComponent extends AbstractInputComponent
                 </div>
             </md-card-content>
             <md-card-actions>
-                <input #input type="file" style="display:none" />
+                <input #input style="display: none" type="file" />
                 <button
-                    @defaultAnimation (click)="input.click()"
-                    md-raised-button *ngIf="newButtonText"
+                    @defaultAnimation
+                    (click)="input.click()"
+                    md-raised-button
+                    *ngIf="newButtonText"
                 >{{newButtonText}}</button>
                 <button
-                    @defaultAnimation (click)="remove()" md-raised-button
+                    (click)="remove()"
+                    @defaultAnimation
+                    md-raised-button
                     *ngIf="deleteButtonText && file"
                 >{{deleteButtonText}}</button>
                 <button md-raised-button
-                    @defaultAnimation *ngIf="downloadButtonText && file"
+                    @defaultAnimation
+                    *ngIf="downloadButtonText && file"
                 ><a [download]="file.name" [href]="file.source">
                     {{downloadButtonText}}
                 </a></button>
@@ -3956,7 +4038,7 @@ export class TextareaComponent extends AbstractInputComponent
  * @property file - Holds the current selected file object if present.
  * @property headerText - Header text to show instead of property description
  * or name.
- * @property infoText - Info text to click for more informations.
+ * @property showDeclarationText - Info text to click for more informations.
  * @property input - Virtual file input dom node.
  * @property internalName - Technical regular expression style file type.
  * @property keyCode - Mapping from key code to their description.
@@ -4006,7 +4088,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     file:any = null
     @Output() fileChange:EventEmitter<any> = new EventEmitter()
     @Input() headerText:?string = null
-    @Input() infoText:string = 'ℹ'
+    @Input() showDeclarationText:string = 'ℹ'
     @ViewChild('input') input:ElementRef
     internalName:string
     keyCode:{[key:string]:number}
@@ -4489,7 +4571,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 [ngClass]="{current: currentPage === page, previous: currentPage === previousPage, next: currentPage === nextPage, even: even, 'even-page': currentPage % 2 === 0, first: currentPage === firstPage, last: currentPage === lastPage}"
                 *ngFor="let currentPage of pagesRange;let even = even"
             >
-                <a href="" (click)="change($event, currentPage)">
+                <a (click)="change($event, currentPage)" href="">
                     {{currentPage}}
                 </a>
             </li>

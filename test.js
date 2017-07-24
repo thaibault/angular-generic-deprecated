@@ -1403,7 +1403,15 @@ registerAngularTest(function(
                                 By.css('span[generic-error] p')
                             ).nativeElement.textContent.trim().replace(
                                 /\s+/g, ' '
-                            ), 'Bitte füllen Sie das Feld "test" aus.')
+                            ), 'Please fill field "test".')
+                            fixture.componentInstance.requiredText = 'Required'
+                            fixture.detectChanges()
+                            await fixture.whenStable()
+                            assert.strictEqual(fixture.debugElement.query(
+                                By.css('span[generic-error] p')
+                            ).nativeElement.textContent.trim().replace(
+                                /\s+/g, ' '
+                            ), 'Required')
                             inputDomNode.value = '  b '
                             inputDomNode.dispatchEvent(getNativeEvent('input'))
                             fixture.detectChanges()
