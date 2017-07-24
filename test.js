@@ -53,6 +53,7 @@ registerAngularTest(function(
     const {
         AbstractItemsComponent,
         DataService,
+        ExtendObjectPipe,
         StringCapitalizePipe,
         ToolsService
     } = index
@@ -70,15 +71,17 @@ registerAngularTest(function(
          * parameter.
          * @param changeDetectorRef - Model dirty checking service.
          * @param data - Data stream service.
-         * @param extendObject - Extend object pipe instance.
+         * @param extendObjectPipe - Extend object pipe instance.
          * @param route - Current route state.
          * @param router - Application wide router instance.
          * @param stringCapitalizePipe - String capitalize pipe instance.
+         * @param tools - Tools service instance.
          */
         constructor(
             changeDetectorRef:ChangeDetectorRef, data:DataService,
-            extendObjectPipe:ExtendObjectPipe route:ActivatedRoute,
-            router:Router, stringCapitalizePipe:StringCapitalizePipe
+            extendObjectPipe:ExtendObjectPipe, route:ActivatedRoute,
+            router:Router, stringCapitalizePipe:StringCapitalizePipe,
+            tools:ToolsService
         ):void {
             route.testData = {items: []}
             route.testParameter = {
@@ -88,7 +91,7 @@ registerAngularTest(function(
             }
             super(
                 changeDetectorRef, data, extendObjectPipe, route, router,
-                stringCapitalizePipe)
+                stringCapitalizePipe, tools)
         }
     }
     // endregion
@@ -177,7 +180,6 @@ registerAngularTest(function(
                 AttachmentWithPrefixExistsPipe,
                 CanDeactivateRouteLeaveGuard,
                 DataScopeService,
-                ExtendObjectPipe,
                 ExtractDataPipe,
                 ExtractRawDataPipe,
                 GetFilenameByPrefixPipe,

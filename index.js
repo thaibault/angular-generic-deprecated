@@ -68,7 +68,9 @@ let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
 export const CODE_MIRROR_DEFAULT_OPTIONS:PlainObject = {
     // region paths
     path: {
+        cascadingStyleSheet: 'lib/codemirror.css',
         base: '/codemirror/',
+        mode: 'mode/{mode}/{mode}.js',
         script: 'lib/codemirror.js'
     },
     // endregion
@@ -700,7 +702,6 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         ]].hasOwnProperty(name)
                     )
                 )
-                    // TODO check recursively
                     if (result.hasOwnProperty(name)) {
                         if (Array.isArray(result[name])) {
                             if (this.equals(
@@ -2510,7 +2511,8 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      */
     constructor(
         changeDetectorReference:ChangeDetectorRef, data:DataService,
-        extendObjectPipe, stringCapitalizePipe:StringCapitalizePipe
+        extendObjectPipe:ExtendObjectPipe,
+        stringCapitalizePipe:StringCapitalizePipe
     ):void {
         this._changeDetectorReference = changeDetectorReference
         this._data = data
@@ -2639,7 +2641,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * Saves injected service instances as instance properties.
      * @param changeDetectorReference - Model dirty checking service.
      * @param data - Data stream service.
-     * @param ExtendObjectPipe - Extend object pipe instance.
+     * @param extendObjectPipe - Extend object pipe instance.
      * @param route - Current route configuration.
      * @param router - Injected router service instance.
      * @param stringCapitalizePipe - String capitalize pipe instance.
@@ -2688,10 +2690,10 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
                 this.update()
         })
         this.searchTermStream.debounceTime(200).distinctUntilChanged()
-        .subscribe(():Promise<boolean> => {
-            this.page = 1
-            return this.update()
-        })
+            .subscribe(():Promise<boolean> => {
+                this.page = 1
+                return this.update()
+            })
         this.debouncedUpdate = this._tools.debounce(this.update.bind(this))
     }
     /**
@@ -3146,6 +3148,7 @@ export class IntervalsInputComponent {
  * Provides a generic code editor.
  * @property static:_applicationInterfaceLoad - Promise which resolves when
  * code editor is fully loaded.
+ * @property static:_modesLoad - Mapping from mode to their loading state.
  * @property blur - Blur event emitter.
  * @property codeMirror - Current code mirror constructor.
  * @property configuration - Code mirror configuration.
@@ -3160,6 +3163,7 @@ export class CodeEditorComponent extends AbstractValueAccessor
 /* implements AfterViewInit*/ {
 /* eslint-enable brace-style */
     static _applicationInterfaceLoad:Promise<Object>
+    static _modesLoad:{[key:string]:Promise<void>|true} = {}
     @Output() blur:EventEmitter<{
         event:Object;
         instance:Object;
@@ -3176,6 +3180,7 @@ export class CodeEditorComponent extends AbstractValueAccessor
     instance:?Object = null
     @Input() model:string = ''
     @Output() modelChange:EventEmitter<string> = new EventEmitter()
+    tools:ToolsService
     /**
      * Initializes the code mirror resource loading if not available yet.
      * @param elementRef - Host element reference.
@@ -3190,36 +3195,33 @@ export class CodeEditorComponent extends AbstractValueAccessor
     ):void {
         super(renderer, elementRef, null)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
-        this.tools = tools.tools
-        if (tools.globalContext.CodeMirror)
-            this.codeMirror = tools.globalContext.CodeMirror
+        this.tools = tools
+        if (this.tools.globalContext.CodeMirror)
+            this.codeMirror = this.tools.globalContext.CodeMirror
         else if (
             typeof this.constructor._applicationInterfaceLoad !== 'object'
-        ) {
-            // TODO use config
-            tools.$('head').append(
-                '<link rel="stylesheet" href="/codemirror/lib/codemirror.css" type="text/css" />')
-            this.constructor._applicationInterfaceLoad = new Promise((
-                resolve:Function, reject:Function
-            ):void => tools.$.ajax({
-                cache: true,
-                dataType: 'script',
-                error: reject,
-                success: ():Promise<any> => tools.$.ajax({
+        )
+            this.constructor._applicationInterfaceLoad = Promise.all([
+                new Promise((resolve:Function):$DomNode => this.tools.$(`<link
+                    href="${CODE_MIRROR_DEFAULT_OPTIONS.path.base}` +
+                    `${CODE_MIRROR_DEFAULT_OPTIONS.path.cascadingStyleSheet}"
+                    rel="stylesheet"
+                    type="text/css"
+                />`).appendTo('head').on('load', resolve)),
+                new Promise((
+                    resolve:Function, reject:Function
+                ):Object => this.tools.$.ajax({
                     cache: true,
                     dataType: 'script',
                     error: reject,
                     success: ():void => {
-                        this.codeMirror = tools.globalContext.CodeMirror
+                        this.codeMirror = this.tools.globalContext.CodeMirror
                         resolve(this.codeMirror)
                     },
-                    // TODO use config
-                    url: '/codemirror/mode/css/css.js'
-                }),
-                // TODO use config
-                url: '/codemirror/lib/codemirror.js'
-            }))
-        }
+                    url: CODE_MIRROR_DEFAULT_OPTIONS.path.base +
+                        CODE_MIRROR_DEFAULT_OPTIONS.path.script
+                }))
+            ])
     }
     /**
      * Initializes the code editor element.
@@ -3231,14 +3233,45 @@ export class CodeEditorComponent extends AbstractValueAccessor
                 NOTE: We have to do a dummy timeout to avoid an event emit in
                 first initializing call stack.
             */
-            await this.tools.timeout()
+            await this.tools.tools.timeout()
         else
             try {
                 await this.constructor._applicationInterfaceLoad
             } catch (error) {
                 throw error
             }
-        const configuration:PlainObjec = this.extendObject(
+        if (this.configuration.mode)
+            if (this.constructor._modesLoad.hasOwnProperty(
+                this.configuration.mode
+            )) {
+                if (this.constructor._modesLoad[
+                    this.configuration.mode
+                ] !== true)
+                    try {
+                        await this.constructor._modesLoad[
+                            this.configuration.mode]
+                    } catch (error) {
+                        throw error
+                    }
+            } else {
+                this.constructor._modesLoad[this.configuration.mode] =
+                    new Promise((resolve:Function, reject:Function):Object =>
+                        this.tools.$.ajax({
+                            cache: true,
+                            dataType: 'script',
+                            error: reject,
+                            success: resolve,
+                            url: this.configuration.path.base +
+                                this.configuration.path.mode.replace(
+                                    /{mode}/g, this.configuration.mode)
+                        }))
+                try {
+                    await this.constructor._modesLoad[this.configuration.mode]
+                } catch (error) {
+                    throw error
+                }
+            }
+        const configuration:PlainObject = this.extendObject(
             {}, this.configuration, {readOnly: this.disabled === null ? (
                 this.model.disabled || model.mutable === false ||
                 model.writable === false
@@ -3627,13 +3660,14 @@ export class TextareaComponent extends AbstractInputComponent
             else if (this.activeEditor === null)
                 this.activeEditor = true
             this.editorType = this.editor
-            if (this.editor === 'code:cascadingStyleSheet')
-                this.editor = {
-                    mode: 'css'
-                }
-            else if (this.editor.startsWith('code'))
-                this.editor = {}
-            else if (this.editor === 'raw')
+            if (this.editor.startsWith('code')) {
+                if (this.editor.startsWith('code:'))
+                    this.editor = {
+                        mode: this.editor.substring('code:'.length)
+                    }
+                else
+                    this.editor = {}
+            } else if (this.editor === 'raw')
                 this.editor = {
                     /* eslint-disable max-len */
                     toolbar1: 'cut copy paste | undo redo removeformat | code | fullscreen',
