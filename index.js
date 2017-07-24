@@ -3660,14 +3660,14 @@ export class TextareaComponent extends AbstractInputComponent
             else if (this.activeEditor === null)
                 this.activeEditor = true
             this.editorType = this.editor
-            if (this.editor.startsWith('code')) {
+            if (this.editor.startsWith('code'))
                 if (this.editor.startsWith('code:'))
                     this.editor = {
                         mode: this.editor.substring('code:'.length)
                     }
                 else
                     this.editor = {}
-            } else if (this.editor === 'raw')
+            else if (this.editor === 'raw')
                 this.editor = {
                     /* eslint-disable max-len */
                     toolbar1: 'cut copy paste | undo redo removeformat | code | fullscreen',
