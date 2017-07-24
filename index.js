@@ -55,6 +55,7 @@ import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
 import {Subject} from 'rxjs'
 import {Observable} from 'rxjs/Observable'
+import {ISubscription} from 'rxjs/Subscription';
 // NOTE: Only needed for debugging this file.
 try {
     module.require('source-map-support/register')
@@ -1323,6 +1324,7 @@ export class DataService {
     platformID:string
     remoteConnection:?PouchDB = null
     runningRequests:Array<PlainObject> = []
+    runningRequestsStream:Subject<Array<PlainObject>> = new Subject()
     stringFormat:Function
     synchronisation:?Object
     tools:Tools
@@ -1508,6 +1510,7 @@ export class DataService {
                         wrappedParameter:?Array<any>;
                     } = {name, parameter}
                     this.runningRequests.push(request)
+                    this.runningRequestsStream.next(this.runningRequests)
                     for (const methodName:string of [name, '_all'])
                         if (this.middlewares.pre.hasOwnProperty(methodName))
                             for (
@@ -1552,6 +1555,7 @@ export class DataService {
                     const index:number = this.runningRequests.indexOf(request)
                     if (index !== -1)
                         this.runningRequests.splice(index, 1)
+                    this.runningRequestsStream.next(this.runningRequests)
                     return result
                 }
             }
@@ -2504,7 +2508,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     /**
      * Saves injected service instances as instance properties.
      * @param changeDetectorReference - Model dirty checking service.
-     * @param data - Data stream service.
+     * @param data - Data service instance.
      * @param extendObjectPipe - Extend object pipe instance.
      * @param stringCapitalizePipe - The string capitalize pipe instance.
      * @returns Nothing.
@@ -2617,13 +2621,14 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
  * @property sort - Sorting informations.
  */
 export class AbstractItemsComponent extends AbstractLiveDataComponent
-/* implements AfterContentChecked*/ {
+/* implements AfterContentChecked, OnDestroy*/ {
 /* eslint-enable brace-style */
     _currentParameter:PlainObject
     _itemPath:string = 'item'
     _itemsPath:string = 'items'
     _route:ActivatedRoute
     _router:Router
+    _subscriptions:Array<ISubscription> = []
     _tools:typeof Tools
     _toolsInstance:Tools
     allItemsChecked:boolean = false
@@ -2666,7 +2671,9 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             NOTE: Parameter have to be read before data to ensure that all page
             constraints have been set correctly before item slicing.
         */
-        this._route.params.subscribe((data:PlainObject):void => {
+        this._subscriptions.push(this._route.params.subscribe((
+            data:PlainObject
+        ):void => {
             this._currentParameter = data
             this.limit = parseInt(this._currentParameter.limit)
             this.page = parseInt(this._currentParameter.page)
@@ -2676,8 +2683,10 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
                 this.regularExpression = match[1] === 'regex'
                 this.searchTerm = decodeURIComponent(match[2])
             }
-        })
-        this._route.data.subscribe((data:PlainObject):void => {
+        }))
+        this._subscriptions.push(this._route.data.subscribe((
+            data:PlainObject
+        ):void => {
             this.limit = Math.max(1, this.limit || 1)
             const total:number = data.items.length + (
                 Math.max(1, this.page || 1) - 1
@@ -2688,12 +2697,12 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             this.items.total = total
             if (this.applyPageConstraints())
                 this.update()
-        })
-        this.searchTermStream.debounceTime(200).distinctUntilChanged()
-            .subscribe(():Promise<boolean> => {
+        }))
+        this._subscriptions.push(this.searchTermStream.debounceTime(200)
+            .distinctUntilChanged().subscribe(():Promise<boolean> => {
                 this.page = 1
                 return this.update()
-            })
+            }))
         this.debouncedUpdate = this._tools.debounce(this.update.bind(this))
     }
     /**
@@ -2720,12 +2729,12 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     changeItemWrapperFactory(callback:Function):Function {
         return async (...parameter:Array<any>):Promise<any> => {
             let update:boolean = true
-            const subscribing:Object = this._router.events.subscribe((
+            const subscription:ISubscription = this._router.events.subscribe((
                 event:Object
             ):void => {
                 if (event instanceof NavigationEnd) {
                     update = false
-                    subscribing.unsubscribe()
+                    subscription.unsubscribe()
                 }
             })
             const result:any = await callback(...parameter)
@@ -2779,6 +2788,14 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             page constraints which indicates a page reload.
         */
         return false
+    }
+    /**
+     * Unsubscribes all subscriptions when this component should be disposed.
+     * @returns Nothing.
+     */
+    ngOnDestroy():void {
+        for (const subscription:ISubscription of this._subscriptions)
+            subscription.unsubscribe()
     }
     /**
      * Select all available items.
