@@ -1293,6 +1293,7 @@ export class AlertService {
  * expression to retrieve revision number from revision hash.
  * @property static:wrappableMethodNames - Saves a list of method names which
  * can be intercepted.
+ *
  * @property connection - The current database connection instance.
  * @property database - The entire database constructor.
  * @property equals - Hilds the equals pipe transformation method.
@@ -2357,12 +2358,6 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
 // / region abstract
 /**
  * Generic input component.
- * @property _attachmentWithPrefixExists - Holds the attachment by prefix
- * checker pipe instance
- * @property _extendObject - Holds the extend object's pipe transformation
- * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
- * transformation method.
- * @property _modelConfiguration - All model configurations.
  * @property declaration - Declaration info text.
  * @property description - Description to use instead of those coming from
  * model specification.
@@ -2388,12 +2383,15 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * should be suppressed or be shown automatically. Useful to prevent error
  * component from showing error messages before the user has submit the form.
  * @property type - Type of given input.
+ *
+ * @property _attachmentWithPrefixExists - Holds the attachment by prefix
+ * checker pipe instance
+ * @property _extendObject - Holds the extend object's pipe transformation
+ * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
+ * transformation method.
+ * @property _modelConfiguration - All model configurations.
  */
 export class AbstractInputComponent/* implements OnInit*/ {
-    _attachmentWithPrefixExists:Function
-    _extendObject:Function
-    _getFilenameByPrefix:Function
-    _modelConfiguration:PlainObject
     @Input() declaration:?string = null
     @Input() description:?string = null
     @Input() disabled:?boolean = null
@@ -2420,6 +2418,11 @@ export class AbstractInputComponent/* implements OnInit*/ {
     @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
     @Input() type:string
+
+    _attachmentWithPrefixExists:Function
+    _extendObject:Function
+    _getFilenameByPrefix:Function
+    _modelConfiguration:PlainObject
     /**
      * Sets needed services as property values.
      * @param attachmentWithPrefixExistsPipe - Saves the attachment by prefix
@@ -2527,9 +2530,11 @@ export class AbstractInputComponent/* implements OnInit*/ {
 /**
  * Observes database for any data changes and triggers corresponding methods
  * on corresponding events.
- * @property static:_defaultLiveUpdateOptions - Options for database
+ * @property static:defaultLiveUpdateOptions - Options for database
  * observation.
+ *
  * @property actions - Array if actions which have happen.
+ *
  * @property _canceled - Indicates whether current view has been destroyed and
  * data observation should bee canceled.
  * @property _changeDetectorReference - Current views change detector reference
@@ -2542,12 +2547,14 @@ export class AbstractInputComponent/* implements OnInit*/ {
  * function.
  */
 export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
-    static _defaultLiveUpdateOptions:PlainObject = {
+    static defaultLiveUpdateOptions:PlainObject = {
         /* eslint-disable camelcase */
         heartbeat: 3000, include_docs: true, live: true, timeout: false
         /* eslint-enable camelcase */
     }
+
     actions:Array<PlainObject> = []
+
     _canceled:boolean = false
     _changeDetectorReference:ChangeDetectorRef
     _changesStream:Object
@@ -2582,7 +2589,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
         this._changesStream = this._data.connection.changes(
             this._extendObject(
                 {since: LAST_KNOWN_DATA.sequence},
-                this.constructor._defaultLiveUpdateOptions,
+                this.constructor.defaultLiveUpdateOptions,
                 this._liveUpdateOptions))
         for (const type:string of ['change', 'complete', 'error'])
             this._changesStream.on(type, async (
@@ -2648,12 +2655,6 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
 /**
  * A generic abstract component to edit, search, navigate and filter a list of
  * entities.
- * @property _currentParameter - Saves current route url parameter.
- * @property _itemPath - Routing path to a specific item.
- * @property _itemsPath - Routing path to the items overview.
- * @property _route - Current route configuration.
- * @property _router - Router service instance.
- * @property _toolsInstance - Instance of tools service instance property.
  * @property allItemsChecked - Indicates whether all currently selected items
  * are checked via select all selector.
  * @property items - Current list of visible items.
@@ -2669,18 +2670,17 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
  * @property selectedItems - List of currently selected items for group editing
  * purposes.
  * @property sort - Sorting informations.
+ *
+ * @property _currentParameter - Saves current route url parameter.
+ * @property _itemPath - Routing path to a specific item.
+ * @property _itemsPath - Routing path to the items overview.
+ * @property _route - Current route configuration.
+ * @property _router - Router service instance.
+ * @property _toolsInstance - Instance of tools service instance property.
  */
 export class AbstractItemsComponent extends AbstractLiveDataComponent
 /* implements AfterContentChecked, OnDestroy*/ {
 /* eslint-enable brace-style */
-    _currentParameter:PlainObject
-    _itemPath:string = 'item'
-    _itemsPath:string = 'items'
-    _route:ActivatedRoute
-    _router:Router
-    _subscriptions:Array<ISubscription> = []
-    _tools:typeof Tools
-    _toolsInstance:Tools
     allItemsChecked:boolean = false
     debouncedUpdate:Function
     items:Array<PlainObject>
@@ -2692,6 +2692,15 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     searchTermStream:Subject<string> = new Subject()
     selectedItems:Set<PlainObject> = new Set()
     sort:PlainObject = {_id: 'asc'}
+
+    _currentParameter:PlainObject
+    _itemPath:string = 'item'
+    _itemsPath:string = 'items'
+    _route:ActivatedRoute
+    _router:Router
+    _subscriptions:Array<ISubscription> = []
+    _tools:typeof Tools
+    _toolsInstance:Tools
     /**
      * Saves injected service instances as instance properties.
      * @param changeDetectorReference - Model dirty checking service.
@@ -2900,6 +2909,8 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
 }
 /**
  * Generic value accessor with "ngModel" support.
+ * @property onChangeCallback - Saves current on change callback.
+ * @property onTouchedCallback - Saves current on touch callback.
  * @property type - Saves current input type.
  */
 export class AbstractValueAccessor extends DefaultValueAccessor {
@@ -3127,25 +3138,27 @@ export class IntervalInputComponent {
 })
 /**
  * Represents an editable list of intervals.
- * @property _dataScope - Data scope service instance.
- * @property _extendObject - Holds the extend object pipe instance's transform
- * method.
- * @property _typeName - Saves current configured type name.
  * @property additionalObjectData - Additional object data to save with current
  * interval object.
  * @property description - Interval description to use as label.
  * @property model - Saves current list of intervals.
  * @property modelChange - Event emitter for interval list changes.
+ *
+ * @property _dataScope - Data scope service instance.
+ * @property _extendObject - Holds the extend object pipe instance's transform
+ * method.
+ * @property _typeName - Saves current configured type name.
  */
 export class IntervalsInputComponent {
-    _dataScope:DataScopeService
-    _extendObject:Function
-    _typeName:string
     @Input() additionalObjectData:PlainObject
     @ContentChild(TemplateRef) contentTemplate:TemplateRef
     @Input() description:?string = null
     @Input() model:PlainObject = {value: []}
     @Output() modelChange:EventEmitter<Array<PlainObject>> = new EventEmitter()
+
+    _dataScope:DataScopeService
+    _extendObject:Function
+    _typeName:string
     /**
      * Constructs the interval list component.
      * @param dataScope - Data scope service instance.
@@ -3217,9 +3230,10 @@ export class IntervalsInputComponent {
 /* eslint-disable brace-style */
 /**
  * Provides a generic code editor.
- * @property static:_applicationInterfaceLoad - Promise which resolves when
+ * @property static:applicationInterfaceLoad - Promise which resolves when
  * code editor is fully loaded.
- * @property static:_modesLoad - Mapping from mode to their loading state.
+ * @property static:modesLoad - Mapping from mode to their loading state.
+ *
  * @property blur - Blur event emitter.
  * @property codeMirror - Current code mirror constructor.
  * @property configuration - Code mirror configuration.
@@ -3233,8 +3247,9 @@ export class IntervalsInputComponent {
 export class CodeEditorComponent extends AbstractValueAccessor
 /* implements AfterViewInit*/ {
 /* eslint-enable brace-style */
-    static _applicationInterfaceLoad:Promise<Object>
-    static _modesLoad:{[key:string]:Promise<void>|true} = {}
+    static applicationInterfaceLoad:Promise<Object>
+    static modesLoad:{[key:string]:Promise<void>|true} = {}
+
     @Output() blur:EventEmitter<{
         event:Object;
         instance:Object;
@@ -3270,9 +3285,9 @@ export class CodeEditorComponent extends AbstractValueAccessor
         if (this.tools.globalContext.CodeMirror)
             this.codeMirror = this.tools.globalContext.CodeMirror
         else if (
-            typeof this.constructor._applicationInterfaceLoad !== 'object'
+            typeof this.constructor.applicationInterfaceLoad !== 'object'
         )
-            this.constructor._applicationInterfaceLoad = Promise.all([
+            this.constructor.applicationInterfaceLoad = Promise.all([
                 new Promise((resolve:Function):$DomNode => this.tools.$(`<link
                     href="${CODE_MIRROR_DEFAULT_OPTIONS.path.base}` +
                     `${CODE_MIRROR_DEFAULT_OPTIONS.path.cascadingStyleSheet}"
@@ -3307,25 +3322,25 @@ export class CodeEditorComponent extends AbstractValueAccessor
             await this.tools.tools.timeout()
         else
             try {
-                await this.constructor._applicationInterfaceLoad
+                await this.constructor.applicationInterfaceLoad
             } catch (error) {
                 throw error
             }
         if (this.configuration.mode)
-            if (this.constructor._modesLoad.hasOwnProperty(
+            if (this.constructor.modesLoad.hasOwnProperty(
                 this.configuration.mode
             )) {
-                if (this.constructor._modesLoad[
+                if (this.constructor.modesLoad[
                     this.configuration.mode
                 ] !== true)
                     try {
-                        await this.constructor._modesLoad[
+                        await this.constructor.modesLoad[
                             this.configuration.mode]
                     } catch (error) {
                         throw error
                     }
             } else {
-                this.constructor._modesLoad[this.configuration.mode] =
+                this.constructor.modesLoad[this.configuration.mode] =
                     new Promise((resolve:Function, reject:Function):Object =>
                         this.tools.$.ajax({
                             cache: true,
@@ -3337,7 +3352,7 @@ export class CodeEditorComponent extends AbstractValueAccessor
                                     /{mode}/g, this.configuration.mode)
                         }))
                 try {
-                    await this.constructor._modesLoad[this.configuration.mode]
+                    await this.constructor.modesLoad[this.configuration.mode]
                 } catch (error) {
                     throw error
                 }
@@ -3671,7 +3686,8 @@ export class SimpleInputComponent extends AbstractInputComponent {
 /**
  * A generic form textarea component with validation, labeling and info
  * description support.
- * @property _defaultEditorOptions - Globale default editor options.
+ * @property static:defaultEditorOptions - Globale default editor options.
+ *
  * @property activeEditor - Indicated weather current editor is active or not.
  * @property editor - Editor options to choose from for an activated editor.
  * @property editorType - Editor type description.
@@ -3683,10 +3699,11 @@ export class SimpleInputComponent extends AbstractInputComponent {
 export class TextareaComponent extends AbstractInputComponent
 /* implements OnInit*/{
 /* eslint-enable brace-style */
-    _defaultEditorOptions:{code:PlainObject;markup:PlainObject} = {
+    static defaultEditorOptions:{code:PlainObject;markup:PlainObject} = {
         code: {},
         markup: {}
     }
+
     @Input() activeEditor:?boolean = null
     @Input() editor:?PlainObject|?string = null
     editorType:string = 'custom'
@@ -3718,7 +3735,7 @@ export class TextareaComponent extends AbstractInputComponent
             'defaultEditorOptions'
         ) && typeof initialData.configuration.defaultEditorOptions ===
         'object' && initialData.configuration.defaultEditorOptions !== null)
-            this._defaultEditorOptions =
+            this.constructor.defaultEditorOptions =
                 initialData.configuration.defaultEditorOptions
     }
     /**
@@ -3785,11 +3802,11 @@ export class TextareaComponent extends AbstractInputComponent
             if (this.editorType.startsWith('code') || this.editor.indentUnit)
                 this.editor = this._extendObject(
                     true, {}, CODE_MIRROR_DEFAULT_OPTIONS,
-                    this._defaultEditorOptions.code, this.editor)
+                    this.constructor.defaultEditorOptions.code, this.editor)
             else
                 this.editor = this._extendObject(
                     true, {}, TINY_MCE_DEFAULT_OPTIONS,
-                    this._defaultEditorOptions.markup, this.editor)
+                    this.constructor.defaultEditorOptions.markup, this.editor)
     }
 }
 // // endregion
@@ -4053,24 +4070,7 @@ export class TextareaComponent extends AbstractInputComponent
  * should match to each known text mime type.
  * @property static:videoMimeTypeRegularExpression - Regular expression which
  * should match to each known video mime type.
- * @property _data - Holds the data service instance.
- * @property _deletedName - Holds the deleted model field name.
- * @property _domSanitizer - Holds the dom sanitizer service instance.
- * @property _extendObject - Holds the extend object pipe instance's transform
- * method.
- * @property _getFilenameByPrefix - Holds the file name by prefix getter pipe
- * instance's transform method.
- * @property _idIsObject - Indicates whether the model document specific id is
- * provided as object and "value" named property or directly.
- * @property _idName - Name if id field.
- * @property _representObject - Holds the represent object pipe instance's
- * transform method.
- * @property _revisionName - Name if revision field.
- * @property _stringFormat - Saves the string formatting pips transformation
- * function.
- * @property _typeName - Name of type field.
- * @property _prefixMatch - Holds the prefix match pipe instance's transform
- * method.
+ *
  * @property attachmentTypeName - Current attachment type name.
  * @property change - File change event emitter.
  * @property delete - Event emitter which triggers its handler when current
@@ -4104,6 +4104,25 @@ export class TextareaComponent extends AbstractInputComponent
  * done immediately after a file was selected (or synchronously with other
  * model data).
  * @property typePatternText - File type validation text.
+ *
+ * @property _data - Holds the data service instance.
+ * @property _deletedName - Holds the deleted model field name.
+ * @property _domSanitizer - Holds the dom sanitizer service instance.
+ * @property _extendObject - Holds the extend object pipe instance's transform
+ * method.
+ * @property _getFilenameByPrefix - Holds the file name by prefix getter pipe
+ * instance's transform method.
+ * @property _idIsObject - Indicates whether the model document specific id is
+ * provided as object and "value" named property or directly.
+ * @property _idName - Name if id field.
+ * @property _representObject - Holds the represent object pipe instance's
+ * transform method.
+ * @property _revisionName - Name if revision field.
+ * @property _stringFormat - Saves the string formatting pips transformation
+ * function.
+ * @property _typeName - Name of type field.
+ * @property _prefixMatch - Holds the prefix match pipe instance's transform
+ * method.
  */
 export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     static imageMimeTypeRegularExpression:RegExp = new RegExp(
@@ -4115,19 +4134,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         '^video/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|' +
         '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
         '(?:application/(?:x-)?shockwave-flash)$')
-    _configuration:PlainObject
-    _data:DataService
-    _deletedName:string
-    _domSanitizer:DomSanitizer
-    _extendObject:Function
-    _getFilenameByPrefix:Function
-    _idIsObject:boolean = false
-    _idName:string
-    _representObject:Function
-    _revisionName:string
-    _stringFormat:Function
-    _typeName:string
-    _prefixMatch:boolean = false
+
     attachmentTypeName:string
     @Output() delete:EventEmitter<string> = new EventEmitter()
     @Input() deleteButtonText:string = 'delete'
@@ -4164,6 +4171,20 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     @Input() typePatternText:string =
         'Filetype "${file.content_type}" doesn\'t match specified pattern "' +
         '${model.contentTypeRegularExpressionPattern}".'
+
+    _configuration:PlainObject
+    _data:DataService
+    _deletedName:string
+    _domSanitizer:DomSanitizer
+    _extendObject:Function
+    _getFilenameByPrefix:Function
+    _idIsObject:boolean = false
+    _idName:string
+    _representObject:Function
+    _revisionName:string
+    _stringFormat:Function
+    _typeName:string
+    _prefixMatch:boolean = false
     /**
      * Sets needed services as property values.
      * @param data - Injected data service instance.
@@ -4647,21 +4668,23 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
 /* eslint-enable max-len */
 /**
  * Provides a generic pagination component.
- * @property _makeRangePipe - Saves the make range pipe transformation
- * function.
  * @property itemsPerPage - Number of items to show per page as maximum.
  * @property page - Contains currently selected page number.
  * @property pageChange - Event emitter to fire on each page change event.
  * @property pageRangeLimit - Number of concrete page links to show.
  * @property total - Contains total number of pages.
+ *
+ * @property _makeRangePipe - Saves the make range pipe transformation
+ * function.
  */
 export class PaginationComponent {
-    _makeRange:Function
     @Input() itemsPerPage:number = 20
     @Input() page:number = 1
     @Output() pageChange:EventEmitter<number> = new EventEmitter()
     @Input() pageRangeLimit:number = 4
     @Input() total:number = 0
+
+    _makeRange:Function
     /**
      * Sets needed services as property values.
      * @param makeRangePipe - Saves the make range pipe instance.
