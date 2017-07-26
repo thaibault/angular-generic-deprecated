@@ -61,7 +61,7 @@ try {
     module.require('source-map-support/register')
 } catch (error) {}
 // endregion
-// TODO einiheitliche Reihenfolge für static und dynamic properties.
+// TODO einheitliche Reihenfolge für static und dynamic properties.
 declare var UTC_BUILD_TIMESTAMP:number
 let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
@@ -1061,23 +1061,6 @@ export class StringShowIfPatternMatchesPipe/* implements PipeTransform*/ {
     }
 }
 // IgnoreTypeCheck
-@Pipe({name: 'genericStringStartsWith'})
-/**
- * Forwards javascript's native "stringStartsWith" method.
- */
-export class StringStartsWithPipe/* implements PipeTransform*/ {
-    /**
-     * Performs the actual indicator method.
-     * @param string - To check.
-     * @param needle - Prefix to search for.
-     * @returns The boolean result.
-     */
-    transform(string:?string, needle:?string):boolean {
-        return typeof string === 'string' && typeof needle === 'string' &&
-            string.startsWith(needle)
-    }
-}
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringSliceMatch'})
 /**
  * Returns a matched part of given subject with given pattern. Default is the
@@ -1104,6 +1087,40 @@ export class StringSliceMatchPipe/* implements PipeTransform*/ {
                 return match[index]
         }
         return ''
+    }
+}
+// IgnoreTypeCheck
+@Pipe({name: 'genericStringStartsWith'})
+/**
+ * Forwards javascript's native "stringStartsWith" method.
+ */
+export class StringStartsWithPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual indicator method.
+     * @param string - To check.
+     * @param needle - Prefix to search for.
+     * @returns The boolean result.
+     */
+    transform(string:?string, needle:?string):boolean {
+        return typeof string === 'string' && typeof needle === 'string' &&
+            string.startsWith(needle)
+    }
+}
+// IgnoreTypeCheck
+@Pipe({name: 'genericStringTemplate'})
+/**
+ * Provides angular's template engine as pipe.
+ */
+export class StringTemplatePipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual indicator method.
+     * @param string - To check.
+     * @param scope - Scope to render given string again.
+     * @returns The rendered result.
+     */
+    transform(string:string = '', scope:PlainObject = {}):string {
+        return new Function(Object.keys(scope), `return \`${string}\``)(
+            ...Object.values(scope))
     }
 }
 // / endregion
@@ -2382,18 +2399,24 @@ export class AbstractInputComponent/* implements OnInit*/ {
     @Input() disabled:?boolean = null
     @Input() maximum:?number = null
     @Input() maximumLength:?number = null
-    @Input() maximumLengthText:string
-    @Input() maximumText:string
+    @Input() maximumLengthText:string =
+        'Please type less or equal than ${model.maximumLength} symbols.'
+    @Input() maximumText:string =
+        'Please give a number less or equal than ${model.maximum}.'
     @Input() minimum:?number = null
     @Input() minimumLength:?number = null
-    @Input() minimumLengthText:string
-    @Input() minimumText:string
+    @Input() minimumLengthText:string =
+        'Please type at least or equal ${model.minimumLength} symbols.'
+    @Input() minimumText:string =
+        'Please given a number at least or equal to {{model.minimum}}.'
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
     @Input() pattern:string
-    @Input() patternText:string
+    @Input() patternText:string =
+        'Your string have to match the regular expression: "' +
+        '${model.regularExpressionPattern}".'
     @Input() required:?boolean = null
-    @Input() requiredText:string
+    @Input() requiredText:string = 'Please fill this field.'
     @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
     @Input() type:string
@@ -3444,54 +3467,23 @@ const inputContent:string = `
         </span>
     </md-hint>
     <span @defaultAnimation generic-error *ngIf="showValidationErrorMessages">
-        <p @defaultAnimation *ngIf="model.state?.errors?.required">
-            <ng-container *ngIf="requiredText; else default">
-                {{requiredText}}
-            </ng-container>
-            <ng-template #default>
-                Please fill field "{{model.description || model.name}}".
-            </ng-template>
-        </p>
         <p @defaultAnimation *ngIf="model.state?.errors?.maxlength">
-            <ng-container *ngIf="maximumLengthText; else default">
-                {{maximumLengthText}}
-            </ng-container>
-            <ng-template #default>
-                Please type less or equal than {{model.maximumLength}} symbols.
-            </ng-template>
-        </p>
-        <p @defaultAnimation *ngIf="model.state?.errors?.minlength">
-            <ng-container *ngIf="minimumLengthText; else default">
-                {{minimumLengthText}}
-            </ng-container>
-            <ng-template #default>
-                Please type at least or equal {{model.minimumLength}} symbols.
-            </ng-template>
+            {{maximumLengthText | genericStringTemplate:model}}
         </p>
         <p @defaultAnimation *ngIf="model.state?.errors?.max">
-            <ng-container *ngIf="maximumText; else default">
-                {{maximumText}}
-            </ng-container>
-            <ng-template #default>
-                Please give a number less or equal than {{model.maximum}}.
-            </ng-template>
+            {{maximumText | genericStringTemplate:model}}
+        </p>
+        <p @defaultAnimation *ngIf="model.state?.errors?.minlength">
+            {{minimumLengthText | genericStringTemplate:model}}
         </p>
         <p @defaultAnimation *ngIf="model.state?.errors?.min">
-            <ng-container *ngIf="minimumText; else default">
-                {{minimumText}}
-            </ng-container>
-            <ng-template #default>
-                Please given a number at least or equal to {{model.minimum}}.
-            </ng-template>
+            {{minimumText | genericStringTemplate:model}}
         </p>
         <p @defaultAnimation *ngIf="model.state?.errors?.pattern">
-            <ng-container *ngIf="patternText; else default">
-                {{patternText}}
-            </ng-container>
-            <ng-template #default>
-                Your string have to match the regular expression:
-                "{{model.regularExpressionPattern}}".
-            </ng-template>
+            {{patternText | genericStringTemplate:model}}
+        </p>
+        <p @defaultAnimation *ngIf="model.state?.errors?.required">
+            {{requiredText | genericStringTemplate:model}}
         </p>
     </span>
     <md-hint
@@ -3638,7 +3630,11 @@ export class SimpleInputComponent extends AbstractInputComponent {
     template: `
         <ng-container *ngIf="activeEditor; else plain">
             <span [class.focused]="focused" class="editor-label">
-                {{description === '' ? null : description ? description : (model.description || model.name)}}
+                {{
+                    description === '' ? null : description ? description : (
+                        model.description || model.name
+                    )
+                }}
             </span>
             <code-editor
                 ${propertyContent.editor}
@@ -3799,7 +3795,6 @@ export class TextareaComponent extends AbstractInputComponent
 // // endregion
 // / region file input
 /* eslint-disable max-len */
-// TODO texte per property konfigurierbar machen und mit englischem default.
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
@@ -3815,7 +3810,14 @@ export class TextareaComponent extends AbstractInputComponent
                         @defaultAnimation
                         *ngIf="revision || headerText || !file?.name; else editable"
                     >
-                        {{headerText || file?.name || model[attachmentTypeName][internalName]?.description || name}}
+                        {{
+                            headerText ||
+                            file?.name ||
+                            model[attachmentTypeName][
+                                internalName
+                            ]?.description ||
+                            name
+                        }}
                     </span>
                     <ng-template #editable>
                         <ng-container *ngIf="synchronizeImmediately; else parent">
@@ -3845,7 +3847,11 @@ export class TextareaComponent extends AbstractInputComponent
                                         @defaultAnimation
                                         *ngIf="showDeclaration"
                                     >
-                                        {{model[attachmentTypeName][internalName].declaration}}
+                                        {{
+                                            model[attachmentTypeName][
+                                                internalName
+                                            ].declaration
+                                        }}
                                     </span>
                                 </md-hint>
                             </md-input-container>
@@ -3890,7 +3896,11 @@ export class TextareaComponent extends AbstractInputComponent
                                     @defaultAnimation
                                     *ngIf="showDeclaration"
                                 >
-                                    {{model[attachmentTypeName][internalName].declaration}}
+                                    {{
+                                        model[attachmentTypeName][
+                                            internalName
+                                        ].declaration
+                                    }}
                                 </span>
                             </md-hint>
                         </md-input-container></ng-template>
@@ -3935,45 +3945,77 @@ export class TextareaComponent extends AbstractInputComponent
                     <p
                         @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.required"
-                    >Bitte wählen Sie eine Datei aus.</p>
+                    >
+                        {{
+                            requiredText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
                     <p
                         @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.name"
                     >
-                        Der Dateiname "{{file.name}}" entspricht nicht dem
-                        vorgegebenen Muster "{{this.internalName}}".
+                        {{
+                            namePatternText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
                     </p>
                     <p
                         @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.contentType"
                     >
-                        Der Daten-Typ "{{file.content_type}}" entspricht
-                        nicht dem vorgegebenen Muster
-                        "{{model[attachmentTypeName][internalName].contentTypeRegularExpressionPattern}}".
+                        {{
+                            typePatternText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
                     </p>
                     <p
                         @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.minimumSize"
                     >
-                        Die Datei (Größe {{file.length}} Byte) unterschreitet
-                        die minimal erlaubte Größe von
-                        {{model[attachmentTypeName][internalName].minimumSize}}
-                        Byte.
+                        {{
+                            minimumSizeText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
                     </p>
                     <p
                         @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.maximumSize"
                     >
-                        Die Datei (Größe {{file.length}} Byte) überschreitet
-                        die maximal erlaubte Größe von
-                        {{model[attachmentTypeName][internalName].maximumSize}}
-                        Byte.
+                        {{
+                            maximumSizeText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
                     </p>
                     <p
                         @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.database"
                     >
-                        {{model[attachmentTypeName][internalName].state.errors.database}}
+                        {{
+                            model[attachmentTypeName][
+                                internalName
+                            ].state.errors.database
+                        }}
                     </p>
                 </div>
             </md-card-content>
@@ -4044,12 +4086,16 @@ export class TextareaComponent extends AbstractInputComponent
  * @property keyCode - Mapping from key code to their description.
  * @property mapNameToField - Indicates whether current file name should be
  * mapped to a specific model property.
+ * @property maximumSizeText - Maximum file size validation text.
+ * @property minimumSizeText - Minimum file size validation text.
  * @property model - File property specification.
  * @property modelChange - Event emitter triggering when model changes happen.
  * @property name - Name or prefix of currently active file.
+ * @property namePatternText - Name pattern validation text.
  * @property newButtonText - Text for button to trigger new file upload.
  * @property noFileText - Text to show if now file is selected.
  * @property noPreviewText - Text to show if no preview is available.
+ * @property requiredText - Required file selection validation text.
  * @property revision - Revision of given model to show.
  * @property showValidationErrorMessages - Indicates whether validation errors
  * should be displayed. Useful to hide error messages until user tries to
@@ -4057,6 +4103,7 @@ export class TextareaComponent extends AbstractInputComponent
  * @property synchronizeImmediately - Indicates whether file upload should be
  * done immediately after a file was selected (or synchronously with other
  * model data).
+ * @property typePatternText - File type validation text.
  */
 export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     static imageMimeTypeRegularExpression:RegExp = new RegExp(
@@ -4093,17 +4140,30 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     internalName:string
     keyCode:{[key:string]:number}
     @Input() mapNameToField:?string|?Array<string> = null
+    @Input() maximumSizeText:string =
+        'Filesize (${file.length} byte) is more than specified maximum of ' +
+        '${model.maximumSize} byte.'
+    @Input() minimumSizeText:string =
+        'Filesize (${file.length} byte) is less than specified minimum of ' +
+        '${model.minimumSize} byte.'
     @Input() model:{id:?string;[key:string]:any;}
     @Output() modelChange:EventEmitter<{
         id:?string;[key:string]:any;
     }> = new EventEmitter()
     @Input() name:?string = null
+    @Input() namePatternText:string =
+        'Given filename "${file.name}" doesn\'t match specified pattern "' +
+        '${internalName}".'
     @Input() newButtonText:string = 'new'
     @Input() noFileText:string = ''
     @Input() noPreviewText:string = ''
+    @Input() requiredText:string = 'Please select a file.'
     @Input() revision:?string = null
     @Input() showValidationErrorMessages:boolean = false
     @Input() synchronizeImmediately:boolean|PlainObject = false
+    @Input() typePatternText:string =
+        'Filetype "${file.content_type}" doesn\'t match specified pattern "' +
+        '${model.contentTypeRegularExpressionPattern}".'
     /**
      * Sets needed services as property values.
      * @param data - Injected data service instance.

@@ -180,8 +180,10 @@ registerAngularTest(function(
                 AttachmentWithPrefixExistsPipe,
                 CanDeactivateRouteLeaveGuard,
                 DataScopeService,
+                defaultAnimation,
                 ExtractDataPipe,
                 ExtractRawDataPipe,
+                fadeAnimation,
                 GetFilenameByPrefixPipe,
                 InitialDataService,
                 IsDefinedPipe,
@@ -189,19 +191,18 @@ registerAngularTest(function(
                 MapPipe,
                 NumberPercentPipe,
                 ObjectKeysPipe,
-                StringMD5Pipe,
-                StringEscapeRegularExpressionsPipe,
-                StringReplacePipe,
-                StringShowIfPatternMatchesPipe,
-                StringStartsWithPipe,
                 StringEndsWithPipe,
+                StringEscapeRegularExpressionsPipe,
+                StringHasTimeSuffixPipe,
                 StringMatchPipe,
                 StringMaximumLengthPipe,
+                StringMD5Pipe,
+                StringReplacePipe,
+                StringShowIfPatternMatchesPipe,
                 StringSliceMatchPipe,
-                StringHasTimeSuffixPipe,
-                TypePipe,
-                defaultAnimation,
-                fadeAnimation
+                StringStartsWithPipe,
+                StringTemplatePipe,
+                TypePipe
             } = index
             // IgnoreTypeCheck
             @Injectable()
@@ -291,6 +292,8 @@ registerAngularTest(function(
                  * pipe instance.
                  * @param stringStartsWithPipe - Injected start starts with
                  * pipe instances.
+                 * @param stringTemplatePipe - Injected string template pipe
+                 * instance.
                  * @param tools - Injected tools service instance.
                  * @param typePipe - Injected type pipe instance.
                  * @returns Nothing.
@@ -325,6 +328,7 @@ registerAngularTest(function(
                     /* eslint-enable indent */
                     stringSliceMatchPipe:StringSliceMatchPipe,
                     stringStartsWithPipe:StringStartsWithPipe,
+                    stringTemplatePipe:StringTemplatePipe,
                     tools:ToolsService,
                     typePipe:TypePipe
                 ):void {
@@ -855,14 +859,6 @@ registerAngularTest(function(
                                         stringShowIfPatternMatchesPipe
                                             .transform(...test[0]), test[1])
                             })
-                        self.test(`StringStartsWithPipe (${roundType})`, (
-                            assert:Object
-                        ):void => {
-                            assert.ok(stringStartsWithPipe.transform(
-                                'baa', 'b'))
-                            assert.notOk(
-                                stringStartsWithPipe.transform('baa', 'a'))
-                        })
                         self.test(`StringSliceMatchPipe (${roundType})`, (
                             assert:Object
                         ):void => {
@@ -874,6 +870,31 @@ registerAngularTest(function(
                             ])
                                 assert.strictEqual(
                                     stringSliceMatchPipe.transform(...test[0]),
+                                    test[1])
+                        })
+                        self.test(`StringStartsWithPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            assert.ok(stringStartsWithPipe.transform(
+                                'baa', 'b'))
+                            assert.notOk(
+                                stringStartsWithPipe.transform('baa', 'a'))
+                        })
+                        self.test(`StringTemplatePipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                [[], ''],
+                                [[''], ''],
+                                [['', {}], ''],
+                                [['', {a: 1}], ''],
+                                [['a', {a: 1}], 'a'],
+                                [['a ${1 + 2}'], 'a 3'],
+                                [['a ${a}', {a: 1}], 'a 1'],
+                                [['a ${a + 2}', {a: 1}], 'a 3']
+                            ])
+                                assert.strictEqual(
+                                    stringTemplatePipe.transform(...test[0]),
                                     test[1])
                         })
                         // / endregion
@@ -1403,7 +1424,7 @@ registerAngularTest(function(
                                 By.css('span[generic-error] p')
                             ).nativeElement.textContent.trim().replace(
                                 /\s+/g, ' '
-                            ), 'Please fill field "test".')
+                            ), 'Please fill this field.')
                             fixture.componentInstance.requiredText = 'Required'
                             fixture.detectChanges()
                             await fixture.whenStable()
