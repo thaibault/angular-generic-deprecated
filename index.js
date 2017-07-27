@@ -1438,9 +1438,9 @@ export class DataService {
                 )
                     if (
                         firstParameter[index].hasOwnProperty(revisionName) &&
+                        item.name === 'conflict' &&
                         ['latest', 'upsert'].includes(
-                            firstParameter[index][revisionName]) &&
-                        item.name === 'conflict'
+                            firstParameter[index][revisionName])
                     ) {
                         conflicts.push(item)
                         conflictingIndexes.push(index)
