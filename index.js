@@ -61,7 +61,6 @@ try {
     module.require('source-map-support/register')
 } catch (error) {}
 // endregion
-// TODO einheitliche Reihenfolge für static und dynamic properties.
 declare var UTC_BUILD_TIMESTAMP:number
 let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
@@ -1363,7 +1362,8 @@ export class DataService {
         initialData:InitialDataService, @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe, tools:ToolsService
     ):void {
-        this.configuration = initialData.configuration
+        const configuration = initialData.configuration
+        this.configuration = configuration
         if (this.configuration.database.hasOwnProperty('publicURL'))
             this.configuration.database.url =
                 this.configuration.database.publicURL
@@ -1384,7 +1384,7 @@ export class DataService {
         ):Promise<Array<PlainObject>> {
             /*
                 Implements a generic retry mechanism for "upsert" and "latest"
-                updates.
+                updates and optionally supports to ignore "NoChange" errors.
             */
             if (
                 !Array.isArray(firstParameter) &&
@@ -1393,11 +1393,15 @@ export class DataService {
                 firstParameter.hasOwnProperty(idName)
             )
                 firstParameter = [firstParameter]
-            let result:Array<PlainObject>
+            let result:Array<PlainObject> = []
             try {
                 result = await nativeBulkDocs.call(
                     this, firstParameter, ...parameter)
             } catch (error) {
+                /*
+                    NOTE: We retrieve lastest revision in an additional request
+                    if backend doesn't support the "latest" or "upsert" syntax.
+                */
                 if (error.name === 'bad_request') {
                     for (const item:PlainObject of firstParameter)
                         if (['latest', 'upsert'].includes(item[revisionName]))
@@ -1417,7 +1421,11 @@ export class DataService {
                     } catch (error) {
                         throw error
                     }
-                } else
+                } else if (!(
+                    configuration.database.ignoreNoChangeError &&
+                    error.hasOwnProperty('forbidden') &&
+                    error.forbidden.startsWith('NoChange:')
+                ))
                     throw error
             }
             const conflictingIndexes:Array<number> = []
@@ -1426,25 +1434,55 @@ export class DataService {
             for (const item:PlainObject of result) {
                 if (
                     typeof firstParameter[index] === 'object' &&
-                    firstParameter !== null &&
-                    firstParameter[index].hasOwnProperty(revisionName) && [
-                        'latest', 'upsert'
-                    ].includes(firstParameter[index][revisionName]) &&
-                    item.name === 'conflict'
-                ) {
-                    conflicts.push(item)
-                    conflictingIndexes.push(index)
-                }
+                    firstParameter !== null
+                )
+                    if (
+                        firstParameter[index].hasOwnProperty(revisionName) &&
+                        ['latest', 'upsert'].includes(
+                            firstParameter[index][revisionName]) &&
+                        item.name === 'conflict'
+                    ) {
+                        conflicts.push(item)
+                        conflictingIndexes.push(index)
+                    } else if (
+                        configuration.database.ignoreNoChangeError &&
+                        item.hasOwnProperty('error') &&
+                        item.error === 'forbidden' &&
+                        item.hasOwnProperty('reason') &&
+                        item.reason.startsWith('NoChange:')
+                    ) {
+                        result[index] = {
+                            ok: true,
+                            id: firstParameter[index].hasOwnProperty(
+                                idName
+                            ) ? firstParameter[index][idName] : item.id
+                        }
+                        try {
+                            result[index].rev =
+                                firstParameter[index].hasOwnProperty(
+                                    revisionName
+                                ) ? firstParameter[index][revisionName] : (
+                                    await this.get(result[index].id)
+                                )[revisionName]
+                        } catch (error) {
+                            throw error
+                        }
+                    }
                 index += 1
             }
             if (conflicts.length) {
                 firstParameter = conflicts
-                let retriedResults:Array<PlainObject>
+                let retriedResults:Array<PlainObject> = []
                 try {
                     retriedResults = await this.bulkDocs(
                         firstParameter, ...parameter)
                 } catch (error) {
-                    throw error
+                    if (!(
+                        his.configuration.database.ignoreNoChangeError &&
+                        error.hasOwnProperty('forbidden') &&
+                        error.forbidden.startsWith('NoChange:')
+                    ))
+                        throw error
                 }
                 for (const retriedResult:PlainObject of retriedResults)
                     result[conflictingIndexes.shift()] = retriedResult
