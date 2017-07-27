@@ -1446,10 +1446,9 @@ export class DataService {
                         conflictingIndexes.push(index)
                     } else if (
                         configuration.database.ignoreNoChangeError &&
-                        item.hasOwnProperty('error') &&
-                        item.error === 'forbidden' &&
-                        item.hasOwnProperty('reason') &&
-                        item.reason.startsWith('NoChange:')
+                        item.name === 'forbidden' &&
+                        item.hasOwnProperty('message') &&
+                        item.message.startsWith('NoChange:')
                     ) {
                         result[index] = {
                             ok: true,
