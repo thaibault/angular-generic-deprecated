@@ -1460,6 +1460,8 @@ export class DataService {
                             result[index].rev =
                                 firstParameter[index].hasOwnProperty(
                                     revisionName
+                                ) && !['latest', 'upsert'].includes(
+                                    firstParameter[index][revisionName]
                                 ) ? firstParameter[index][revisionName] : (
                                     await this.get(result[index].id)
                                 )[revisionName]
