@@ -1362,7 +1362,7 @@ export class DataService {
         initialData:InitialDataService, @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe, tools:ToolsService
     ):void {
-        const configuration = initialData.configuration
+        const configuration:PlainObject = initialData.configuration
         this.configuration = configuration
         if (this.configuration.database.hasOwnProperty('publicURL'))
             this.configuration.database.url =
@@ -1373,13 +1373,12 @@ export class DataService {
         this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.tools = tools.tools
-        const nativeBulkDocs:Function = this.database.prototype.bulkDocs
-        const self:DataService = this
         const idName:string =
             this.configuration.database.model.property.name.special.id
         const revisionName:string =
             this.configuration.database.model.property.name.special.revision
-        const bulkDocs:Function = async function(
+        const nativeBulkDocs:Function = this.database.prototype.bulkDocs
+        this.database.plugin({bulkDocs: async function(
             firstParameter:any, ...parameter:Array<any>
         ):Promise<Array<PlainObject>> {
             /*
@@ -1407,7 +1406,7 @@ export class DataService {
                         if (['latest', 'upsert'].includes(item[revisionName]))
                             try {
                                 item[revisionName] = (
-                                    await self.connection.get(item[idName])
+                                    await this.get(item[idName])
                                 )[revisionName]
                             } catch (error) {
                                 if (error.name === 'not_found')
@@ -1421,11 +1420,7 @@ export class DataService {
                     } catch (error) {
                         throw error
                     }
-                } else if (!(
-                    configuration.database.ignoreNoChangeError &&
-                    error.hasOwnProperty('forbidden') &&
-                    error.forbidden.startsWith('NoChange:')
-                ))
+                } else
                     throw error
             }
             const conflictingIndexes:Array<number> = []
@@ -1437,7 +1432,7 @@ export class DataService {
                     firstParameter !== null
                 )
                     if (
-                        firstParameter[index].hasOwnProperty(revisionName) &&
+                        revisionName in firstParameter[index] &&
                         item.name === 'conflict' &&
                         ['latest', 'upsert'].includes(
                             firstParameter[index][revisionName])
@@ -1445,22 +1440,21 @@ export class DataService {
                         conflicts.push(item)
                         conflictingIndexes.push(index)
                     } else if (
+                        idName in firstParameter[index] &&
                         configuration.database.ignoreNoChangeError &&
+                        'name' in item &&
                         item.name === 'forbidden' &&
-                        item.hasOwnProperty('message') &&
+                        'message' in item &&
                         item.message.startsWith('NoChange:')
                     ) {
                         result[index] = {
-                            ok: true,
-                            id: firstParameter[index].hasOwnProperty(
-                                idName
-                            ) ? firstParameter[index][idName] : item.id
+                            id: firstParameter[index][idName],
+                            ok: true
                         }
                         try {
                             result[index].rev =
-                                firstParameter[index].hasOwnProperty(
-                                    revisionName
-                                ) && !['latest', 'upsert'].includes(
+                                revisionName in firstParameter[index] &&
+                                !['latest', 'upsert'].includes(
                                     firstParameter[index][revisionName]
                                 ) ? firstParameter[index][revisionName] : (
                                     await this.get(result[index].id)
@@ -1473,25 +1467,14 @@ export class DataService {
             }
             if (conflicts.length) {
                 firstParameter = conflicts
-                let retriedResults:Array<PlainObject> = []
-                try {
-                    retriedResults = await this.bulkDocs(
-                        firstParameter, ...parameter)
-                } catch (error) {
-                    if (!(
-                        his.configuration.database.ignoreNoChangeError &&
-                        error.hasOwnProperty('forbidden') &&
-                        error.forbidden.startsWith('NoChange:')
-                    ))
-                        throw error
-                }
+                const retriedResults:Array<PlainObject> = await this.bulkDocs(
+                    firstParameter, ...parameter)
                 for (const retriedResult:PlainObject of retriedResults)
                     result[conflictingIndexes.shift()] = retriedResult
             }
             return result
-        }
+        }})
         this.database
-            .plugin({bulkDocs})
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBValidationPlugin)
         for (const plugin:Object of this.configuration.database.plugins || [])
@@ -1555,6 +1538,55 @@ export class DataService {
             this.connection = new this.database(databaseName, options)
         else
             this.connection = this.remoteConnection
+        // region apply "latest/upsert" and ignore "NoChange" error feature
+        /*
+            NOTE: A "bulkDocs" plugin does not get called for every "put" and
+            "post" call so we have to wrap runtime generated methods.
+        */
+        const configuration:PlainObject = this.configuration
+        const idName:string =
+            this.configuration.database.model.property.name.special.id
+        const revisionName:string =
+            this.configuration.database.model.property.name.special.revision
+        for (const pluginName:string of ['post', 'put']) {
+            const nativeMethod:Function = this.connection[pluginName].bind(
+                this.connection)
+            this.connection[pluginName] = async function(
+                firstParameter:any, ...parameter:Array<any>
+            ):Promise<any> {
+                try {
+                    return await nativeMethod(firstParameter, ...parameter)
+                } catch (error) {
+                    if (
+                        idName in firstParameter &&
+                        configuration.database.ignoreNoChangeError &&
+                        'name' in error &&
+                        error.name === 'forbidden' &&
+                        'message' in error &&
+                        error.message.startsWith('NoChange:')
+                    ) {
+                        const result:PlainObject = {
+                            id: firstParameter[idName],
+                            ok: true
+                        }
+                        try {
+                            result.rev =
+                                revisionName in firstParameter &&
+                                !['latest', 'upsert'].includes(
+                                    firstParameter[revisionName]
+                                ) ? firstParameter[revisionName] : (
+                                    await this.get(result.id)
+                                )[revisionName]
+                        } catch (error) {
+                            throw error
+                        }
+                        return result
+                    }
+                    throw error
+                }
+            }
+        }
+        // endregion
         for (const name:string in this.connection)
             if (this.constructor.wrappableMethodNames.includes(
                 name
