@@ -1601,6 +1601,13 @@ export class DataService {
                     } = {name, parameter}
                     this.runningRequests.push(request)
                     this.runningRequestsStream.next(this.runningRequests)
+                    const clear:Function = ():void => {
+                        const index:number = this.runningRequests.indexOf(
+                            request)
+                        if (index !== -1)
+                            this.runningRequests.splice(index, 1)
+                        this.runningRequestsStream.next(this.runningRequests)
+                    }
                     for (const methodName:string of [name, '_all'])
                         if (this.middlewares.pre.hasOwnProperty(methodName))
                             for (
@@ -1614,6 +1621,7 @@ export class DataService {
                                     try {
                                         parameter = await parameter
                                     } catch (error) {
+                                        clear()
                                         throw error
                                     }
                             }
@@ -1633,6 +1641,7 @@ export class DataService {
                                     try {
                                         result = await result
                                     } catch (error) {
+                                        clear()
                                         throw error
                                     }
                             }
@@ -1640,12 +1649,10 @@ export class DataService {
                         try {
                             result = await result
                         } catch (error) {
+                            clear()
                             throw error
                         }
-                    const index:number = this.runningRequests.indexOf(request)
-                    if (index !== -1)
-                        this.runningRequests.splice(index, 1)
-                    this.runningRequestsStream.next(this.runningRequests)
+                    clear()
                     return result
                 }
             }
