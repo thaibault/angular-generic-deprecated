@@ -3528,7 +3528,7 @@ const propertyContent:PlainObject = {
 const inputContent:string = `
     <md-hint align="start" @defaultAnimation mdTooltip="info">
         <span
-            [class.activ]="showDeclaration"
+            [class.active]="showDeclaration"
             (click)="showDeclaration = !showDeclaration"
             *ngIf="model.declaration"
         >
@@ -3547,13 +3547,13 @@ const inputContent:string = `
         >
             <span *ngIf="model.declaration">|</span>
             <a
-                [class.activ]="activeEditor"
+                [class.active]="activeEditor"
                 (click)="$event.preventDefault(); $event.stopPropagation(); activeEditor = true"
                 href=""
             >editor</a>
             <span>|</span>
             <a
-                [class.activ]="!activeEditor"
+                [class.active]="!activeEditor"
                 (click)="$event.preventDefault(); $event.stopPropagation(); activeEditor = false"
                 href=""
             >plain</a>
