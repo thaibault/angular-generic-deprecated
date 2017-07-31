@@ -3926,7 +3926,7 @@ export class TextareaComponent extends AbstractInputComponent
                                     (ngModelChange)="editedName = $event"
                                 />
                                 <md-hint
-                                    [class.activ]="showDeclaration"
+                                    [class.active]="showDeclaration"
                                     (click)="showDeclaration = !showDeclaration"
                                     @defaultAnimation
                                     mdTooltip="info"
@@ -3976,15 +3976,16 @@ export class TextareaComponent extends AbstractInputComponent
                                 (ngModelChange)="file.name = $event;modelChange.emit(this.model); fileChange.emit(file)"
                             />
                             <md-hint
-                                [class.activ]="showDeclaration"
+                                [class.active]="showDeclaration"
                                 (click)="showDeclaration = !showDeclaration"
                                 @defaultAnimation
                                 mdTooltip="info"
                                 *ngIf="model[attachmentTypeName][internalName]?.declaration"
                             >
                                 <a
-                                    (click)="$event.preventDefault()" href=""
+                                    (click)="$event.preventDefault()"
                                     @defaultAnimation
+                                    href=""
                                     *ngIf="showDeclarationText"
                                 >{{showDeclarationText}}</a>
                                 <span
