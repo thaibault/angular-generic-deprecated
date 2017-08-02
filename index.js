@@ -1668,9 +1668,10 @@ export class DataService {
                     await this.interceptSynchronisationPromise
                 this.startSynchronisation()
             })
-        if (isPlatformServer(
-            this.platformID
-        ) && this.configuration.database.createGenericFlatIndex) {
+        if (
+            isPlatformServer(this.platformID) &&
+            this.configuration.database.createGenericFlatIndex
+        ) {
             // region create/remove needed/unneeded generic indexes
             for (
                 const modelName:string in
