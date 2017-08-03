@@ -1913,6 +1913,7 @@ export class DataService {
  * method.
  * @property getFilenameByPrefix - Holds the get file name by prefix's pipe
  * transformation method.
+ * @property representObject - Represent object pipe's method.
  * @property tools - Holds the tools class from the tools service.
  */
 export class DataScopeService {
@@ -1922,6 +1923,7 @@ export class DataScopeService {
     extendObject:Function
     extractData:Function
     getFilenameByPrefix:Function
+    representObject:Function
     tools:typeof Tools
     /**
      * Saves alle needed services as property values.
@@ -1933,6 +1935,7 @@ export class DataScopeService {
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
      * @param initialData - Injected initial data service instance.
+     * @param representObjectPipe - Represent object pipe instance.
      * @param tools - Injected tools service instance.
      * @returns Nothing.
      */
@@ -1941,7 +1944,9 @@ export class DataScopeService {
         data:DataService, extendObjectPipe:ExtendObjectPipe,
         extractDataPipe:ExtractDataPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-        initialData:InitialDataService, tools:ToolsService
+        initialData:InitialDataService,
+        representObjectPipe:RepresentObjectPipe,
+        tools:ToolsService
     ):void {
         this.attachmentWithPrefixExists =
             attachmentWithPrefixExistsPipe.transform.bind(
@@ -1952,6 +1957,8 @@ export class DataScopeService {
             getFilenameByPrefixPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.extractData = extractDataPipe.transform.bind(extractDataPipe)
+        this.representObject = representObjectPipe.transform.bind(
+            representObjectPipe)
         this.tools = tools.tools
     }
     /**
@@ -1988,7 +1995,7 @@ export class DataScopeService {
                     `Document with given id "${id}" and revision "` +
                     `${revision}" isn't available: ` + ((
                         'message' in error
-                    ) ? error.message : this.tools.representObject(error)))
+                    ) ? error.message : this.representObject(error)))
             }
             if (revisionHistory) {
                 const revisionsInformationName:string =
@@ -2008,7 +2015,7 @@ export class DataScopeService {
                             `Document with given id "${id}" and revision "` +
                             `${revision}" isn't available: ` + (
                                 ('message' in error) ? error.message :
-                                this.tools.representObject(error)))
+                                this.representObject(error)))
                     }
                     revisions = latestData[revisionsInformationName]
                     delete latestData[revisionsInformationName]
