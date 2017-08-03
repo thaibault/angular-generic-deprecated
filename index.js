@@ -2942,11 +2942,14 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     }
     /**
      * Unsubscribes all subscriptions when this component should be disposed.
-     * @returns Nothing.
+     * @param parameter - List of all parameter to forward to super method.
+     * @returns Returns the super values return value.
      */
-    ngOnDestroy():void {
+    ngOnDestroy(...parameter:Array<any>):any {
+        const result:any = super.ngOnDestroy(...parameter)
         for (const subscription:ISubscription of this._subscriptions)
             subscription.unsubscribe()
+        return result
     }
     /**
      * Select all available items.
