@@ -2634,9 +2634,13 @@ export class AbstractInputComponent/* implements OnInit*/ {
  */
 export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     static defaultLiveUpdateOptions:PlainObject = {
+        heartbeat: 3000,
         /* eslint-disable camelcase */
-        heartbeat: 3000, include_docs: true, live: true, timeout: false
+        include_docs: true,
         /* eslint-enable camelcase */
+        live: true,
+        since: 'now',
+        timeout: false
     }
 
     actions:Array<PlainObject> = []
@@ -2710,7 +2714,8 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      */
     ngOnDestroy():void {
         this._canceled = true
-        this._changesStream.cancel()
+        if (this._changesStream)
+            this._changesStream.cancel()
     }
     /**
      * Triggers on any data changes.
