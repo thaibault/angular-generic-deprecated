@@ -2634,7 +2634,8 @@ export class AbstractInputComponent/* implements OnInit*/ {
  */
 export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     static defaultLiveUpdateOptions:PlainObject = {
-        heartbeat: 3000,
+        // NOTE: Triggers an "ETIMEOUT" error if activated.
+        heartbeat: false,
         /* eslint-disable camelcase */
         include_docs: true,
         /* eslint-enable camelcase */
