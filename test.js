@@ -191,6 +191,7 @@ registerAngularTest(function(
                 MapPipe,
                 NumberPercentPipe,
                 ObjectKeysPipe,
+                ReversePipe,
                 StringEndsWithPipe,
                 StringEscapeRegularExpressionsPipe,
                 StringHasTimeSuffixPipe,
@@ -317,6 +318,7 @@ registerAngularTest(function(
                     numberPercentPipe:NumberPercentPipe,
                     objectKeysPipe:ObjectKeysPipe,
                     resolver:Resolver,
+                    reversePipe:ReversePipe,
                     stringEndsWithPipe:StringEndsWithPipe,
                     stringHasTimeSuffixPipe:StringHasTimeSuffixPipe,
                     stringMatchPipe:StringMatchPipe,
@@ -748,6 +750,21 @@ registerAngularTest(function(
                                 assert.deepEqual(objectKeysPipe.transform(
                                     ...test[0]
                                 ), test[1])
+                        })
+                        self.test(`ReversePipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                [[], []],
+                                [null, []],
+                                [[2], [2]],
+                                [[[2]], [[2]]],
+                                [[{a: 2}], [{a: 2}]],
+                                [[1, 2, 3], [3, 2, 1]],
+                                [[2, 1, 3], [3, 1, 2]]
+                            ])
+                                assert.deepEqual(
+                                    reversePipe.transform(test[0]), test[1])
                         })
                         self.test(`TypePipe (${roundType})`, (
                             assert:Object

@@ -908,6 +908,25 @@ export class ObjectKeysPipe/* implements PipeTransform*/ {
     }
 }
 // IgnoreTypeCheck
+@Pipe({name: 'genericReverse'})
+/**
+ * Reverses a given list.
+ */
+export class ReversePipe/* implements PipeTransform*/ {
+    /**
+     * Performs the "Arrays" native "reverse()" method.
+     * @param object - Object to retrieve key names from.
+     * @returns Reverted arrays.
+     */
+    transform(list:?Array<any>):Array<any> {
+        if (!list)
+            list = []
+        if ('reverse' in list)
+            list.reverse()
+        return list
+    }
+}
+// IgnoreTypeCheck
 @Pipe({name: 'genericType'})
 /**
  * Determines type of given object.
@@ -2501,7 +2520,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
         '${model.regularExpressionPattern}".'
     @Input() required:?boolean = null
     @Input() requiredText:string = 'Please fill this field.'
-    @Input() showDeclarationText:string = 'ℹ'
+    @Input() showDeclarationText:string = 'â¹'
     @Input() showValidationErrorMessages:boolean = false
     @Input() type:string
 
@@ -3559,9 +3578,7 @@ const inputContent:string = `
                 {{model.declaration}}
             </span>
         </span>
-        <span
-            *ngIf="editor && selectableEditor && !model.disabled"
-        >
+        <span *ngIf="editor && selectableEditor && !model.disabled">
             <span *ngIf="model.declaration">|</span>
             <a
                 [class.active]="activeEditor"
@@ -3974,12 +3991,12 @@ export class TextareaComponent extends AbstractInputComponent
                                     (click)="$event.preventDefault();rename(editedName)"
                                     @defaultAnimation
                                     href=""
-                                >✓</a>
+                                >â</a>
                                 <a
                                     (click)="$event.preventDefault();editedName = file.name"
                                     @defaultAnimation
                                     href=""
-                                >✕</a>
+                                >â</a>
                             </ng-container>
                         </ng-container>
                         <ng-template #parent><md-input-container
@@ -4238,7 +4255,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     file:any = null
     @Output() fileChange:EventEmitter<any> = new EventEmitter()
     @Input() headerText:?string = null
-    @Input() showDeclarationText:string = 'ℹ'
+    @Input() showDeclarationText:string = 'â¹'
     @ViewChild('input') input:ElementRef
     internalName:string
     keyCode:{[key:string]:number}
