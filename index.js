@@ -921,10 +921,11 @@ export class ReversePipe/* implements PipeTransform*/ {
      * @returns Reverted arrays.
      */
     transform(list:?Array<any>, copy:boolean = false):Array<any> {
-        if (!list)
+        if (list) {
+            if (copy)
+                list = list.slice()
+        } else
             list = []
-        else if (copy)
-            list = list.slice()
         if ('reverse' in list)
             list.reverse()
         return list
