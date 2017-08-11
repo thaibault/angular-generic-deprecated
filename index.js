@@ -2520,7 +2520,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
         '${model.regularExpressionPattern}".'
     @Input() required:?boolean = null
     @Input() requiredText:string = 'Please fill this field.'
-    @Input() showDeclarationText:string = 'â¹'
+    @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
     @Input() type:string
 
