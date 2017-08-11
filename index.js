@@ -916,11 +916,15 @@ export class ReversePipe/* implements PipeTransform*/ {
     /**
      * Performs the "Arrays" native "reverse()" method.
      * @param object - Object to retrieve key names from.
+     * @param copy - Indicates whether a reversed copy should be created or
+     * reversion can be done in place.
      * @returns Reverted arrays.
      */
-    transform(list:?Array<any>):Array<any> {
+    transform(list:?Array<any>, copy:boolean = false):Array<any> {
         if (!list)
             list = []
+        else if (copy)
+            list = list.slice()
         if ('reverse' in list)
             list.reverse()
         return list
