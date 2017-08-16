@@ -276,6 +276,7 @@ registerAngularTest(function(
                  * instance.
                  * @param objectKeysPipe - Injected object keys pipe instance.
                  * @param resolver - Injected resolver service instance.
+                 * @param reversePipe - Injected reverse pipe instance.
                  * @param stringEndsWithPipe - Injected string ends with pipe
                  * instance.
                  * @param stringHasTimeSuffixPipe - Injected string has time

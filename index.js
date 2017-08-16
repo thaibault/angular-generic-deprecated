@@ -915,7 +915,7 @@ export class ObjectKeysPipe/* implements PipeTransform*/ {
 export class ReversePipe/* implements PipeTransform*/ {
     /**
      * Performs the "Arrays" native "reverse()" method.
-     * @param object - Object to retrieve key names from.
+     * @param list - List to reverse.
      * @param copy - Indicates whether a reversed copy should be created or
      * reversion can be done in place.
      * @returns Reverted arrays.
@@ -2771,6 +2771,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
 /**
  * A generic abstract component to edit, search, navigate and filter a list of
  * entities.
+ * @property allItems - Current list of items.
  * @property allItemsChecked - Indicates whether all currently selected items
  * are checked via select all selector.
  * @property items - Current list of visible items.
@@ -2797,6 +2798,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
 export class AbstractItemsComponent extends AbstractLiveDataComponent
 /* implements AfterContentChecked, OnDestroy*/ {
 /* eslint-enable brace-style */
+    allItems:Array<PlainObject>
     allItemsChecked:boolean = false
     debouncedUpdate:Function
     items:Array<PlainObject>
@@ -2866,6 +2868,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             const total:number = data.items.length + (
                 Math.max(1, this.page || 1) - 1
             ) * this.limit
+            this.allItems = data.items.slice()
             if (data.items.length > this.limit)
                 data.items.splice(this.limit, data.items.length - this.limit)
             this.items = data.items
