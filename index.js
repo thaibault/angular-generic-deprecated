@@ -455,7 +455,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      */
     static _convertDateToTimestampRecursively(value:any):any {
         if (typeof value === 'object' && value !== null)
-            if (value instanceof Date) {
+            if (value instanceof Date)
                 // NOTE: We save given date as an utc unix timestamp.
                 return Date.UTC(
                     value.getUTCFullYear(),
@@ -466,13 +466,14 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     value.getUTCSeconds(),
                     value.getUTCMilliseconds()
                 ) / 1000
-            } else if (Array.isArray(value)) {
+            if (Array.isArray(value)) {
                 const result:Array<any> = []
                 for (const subValue:any of value)
                     result.push(ExtractRawDataPipe
                         ._convertDateToTimestampRecursively(subValue))
                 return result
-            } else if (Object.getPrototypeOf(value) === Object.prototype) {
+            }
+            if (Object.getPrototypeOf(value) === Object.prototype) {
                 const result:PlainObject = {}
                 for (const name:string in value)
                     if (value.hasOwnProperty(name))
