@@ -454,7 +454,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      * @returns Given converted object.
      */
     static _convertDateToTimestampRecursively(value:any):any {
-        if (typeof value === 'object' && value !== null)
+        if (typeof value === 'object' && value !== null) {
             if (value instanceof Date)
                 // NOTE: We save given date as an utc unix timestamp.
                 return Date.UTC(
@@ -481,6 +481,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                             ._convertDateToTimestampRecursively(value[name])
                 return result
             }
+        }
         return value
     }
     /**
