@@ -2396,9 +2396,10 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
             selector.$or = []
             for (const name:string of this.relevantKeys)
                 selector.$or.push({[name]: {$regex: searchTerm}})
-            if (additionalSelector.hasOwnProperty(
-                '$or'
-            ) && additionalSelector.$or.length) {
+            if (
+                additionalSelector.hasOwnProperty('$or') &&
+                additionalSelector.$or.length
+            ) {
                 /*
                     NOTE: We have to integrate search expression into existing
                     selector.
