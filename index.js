@@ -2153,7 +2153,7 @@ export class DataScopeService {
                         result[name][type].value = null
                         if (Object.keys(data).length === 0)
                             for (const hookType:string of [
-                                'onCreateExpression', 'onCreateExecution'
+                                'onCreateExecution', 'onCreateExpression'
                             ])
                                 if (result[name][type].hasOwnProperty(
                                     hookType
@@ -2266,7 +2266,10 @@ export class DataScopeService {
                     result[name].value = result[name].selection[0]
                 if (result[name].hasOwnProperty('type')) {
                     if (
-                        !(result[name].value instanceof Date) &&
+                        !(
+                            result[name].value instanceof Date ||
+                            result[name].value === null
+                        ) &&
                         result[name].type.endsWith('Date') ||
                         result[name].type.endsWith('Time')
                     )
