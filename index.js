@@ -2270,14 +2270,16 @@ export class DataScopeService {
                         !(
                             result[name].value instanceof Date ||
                             result[name].value === null
-                        ) &&
-                        result[name].type.endsWith('Date') ||
-                        result[name].type.endsWith('Time')
-                    )
+                        ) && (
+                            result[name].type.endsWith('Date') ||
+                            result[name].type.endsWith('Time')
+                        )
+                    ) {
+                        console.log('AAA', name, result[name].value)
                         // NOTE: We interpret given value as an utc timestamp.
                         result[name].value = new Date(
                             result[name].value * 1000)
-                    if (entities.hasOwnProperty(result[name].type))
+                    } else if (entities.hasOwnProperty(result[name].type))
                         result[name].value = this.generate(
                             result[name].type, null, result[name].value || {},
                             [specialNames.attachment, specialNames.id])
