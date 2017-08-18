@@ -2265,7 +2265,7 @@ export class DataScopeService {
                     result[name].selection.length
                 )
                     result[name].value = result[name].selection[0]
-                if (result[name].hasOwnProperty('type')) {
+                if (result[name].hasOwnProperty('type'))
                     if (
                         !(
                             result[name].value instanceof Date ||
@@ -2274,12 +2274,11 @@ export class DataScopeService {
                             result[name].type.endsWith('Date') ||
                             result[name].type.endsWith('Time')
                         )
-                    ) {
-                        console.log('AAA', name, result[name].value)
+                    )
                         // NOTE: We interpret given value as an utc timestamp.
                         result[name].value = new Date(
                             result[name].value * 1000)
-                    } else if (entities.hasOwnProperty(result[name].type))
+                    else if (entities.hasOwnProperty(result[name].type))
                         result[name].value = this.generate(
                             result[name].type, null, result[name].value || {},
                             [specialNames.attachment, specialNames.id])
@@ -2299,7 +2298,6 @@ export class DataScopeService {
                             }
                         }
                     }
-                }
             }
         }
         for (const name:string of reservedNames)
