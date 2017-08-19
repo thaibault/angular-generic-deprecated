@@ -1653,7 +1653,7 @@ export class DataService {
                                     }
                             }
                     request.wrappedParameter = parameter
-                    action = (
+                    const action:Function = (
                         context:any=this.connection,
                         parameter:Array<any>=parameter
                     ):any => method.apply(context, parameter)
