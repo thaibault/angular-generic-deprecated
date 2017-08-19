@@ -1614,9 +1614,10 @@ export class DataService {
         }
         // endregion
         for (const name:string in this.connection)
-            if (this.constructor.wrappableMethodNames.includes(
-                name
-            ) && typeof this.connection[name] === 'function') {
+            if (
+                this.constructor.wrappableMethodNames.includes(name) &&
+                typeof this.connection[name] === 'function'
+            ) {
                 const method:Function = this.connection[name]
                 this.connection[name] = async (
                     ...parameter:Array<any>
@@ -1652,7 +1653,11 @@ export class DataService {
                                     }
                             }
                     request.wrappedParameter = parameter
-                    let result:any = method.apply(this.connection, parameter)
+                    action = (
+                        context:any=this.connection,
+                        parameter:Array<any>=parameter
+                    ):any => method.apply(context, parameter)
+                    let result:any = action()
                     for (const methodName:string of [name, '_all'])
                         if (this.middlewares.post.hasOwnProperty(methodName))
                             for (
@@ -1660,7 +1665,7 @@ export class DataService {
                                 this.middlewares.post[methodName]
                             ) {
                                 result = interceptor.call(
-                                    this.connection, result,
+                                    this.connection, result, action,
                                     ...parameter.concat(
                                         methodName === '_all' ? name : []))
                                 if ('then' in result)
