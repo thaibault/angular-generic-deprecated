@@ -1655,8 +1655,8 @@ export class DataService {
                     request.wrappedParameter = parameter
                     const action:Function = (
                         context:any=this.connection,
-                        parameter:Array<any>=parameter
-                    ):any => method.apply(context, parameter)
+                        givenParameter:Array<any>=parameter
+                    ):any => method.apply(context, givenParameter)
                     let result:any = action()
                     for (const methodName:string of [name, '_all'])
                         if (this.middlewares.post.hasOwnProperty(methodName))
