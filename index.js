@@ -2142,10 +2142,10 @@ export class DataScopeService {
                 result[name] = this.tools.copyLimitedRecursively(
                     specification[name])
             else
-                result[name] = this.tools.copyLimitedRecursively(
+                result[name] = this.tools.copyLimitedRecursively((
                     'additional' in specialNames &&
-                    specialNames.additional ?
-                        specification[specialNames.additional] : {})
+                    specialNames.additional
+                ) ? specification[specialNames.additional] : {})
             const now:Date = new Date()
             const nowUTCTimestamp:number = Date.UTC(
                 now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
