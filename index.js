@@ -1517,31 +1517,34 @@ export class DataService {
     ):Array<string> {
         const specialNames:PlainObject =
             modelConfiguration.property.name.special
-        return Object.keys(model).filter((name:string):boolean => !(
-            modelConfiguration.property.name.reserved.concat(
-                specialNames.additional,
-                specialNames.allowedRole,
-                specialNames.attachment,
-                specialNames.conflict,
-                specialNames.constraint.execution,
-                specialNames.constraint.expression,
-                specialNames.deleted,
-                specialNames.deleted_conflict,
-                specialNames.extend,
-                specialNames.id,
-                specialNames.maximumAggregatedSize,
-                specialNames.minimumAggregatedSize,
-                specialNames.revision,
-                specialNames.revisions,
-                specialNames.revisionsInformation,
-                specialNames.type
-            ).includes(name) || model[name].type && (
-                typeof model[name].type === 'string' &&
-                model[name].type.endsWith('[]') ||
-                Array.isArray(model[name].type) && model[name].type.length &&
-                Array.isArray(model[name].type[0]) ||
-                modelConfiguration.entities.hasOwnProperty(model[name].type))
-        )).concat(specialNames.id, specialNames.revision)
+        return Object.keys(model).filter((name:string):boolean =>
+            model[name].index || !(
+                modelConfiguration.property.name.reserved.concat(
+                    specialNames.additional,
+                    specialNames.allowedRole,
+                    specialNames.attachment,
+                    specialNames.conflict,
+                    specialNames.constraint.execution,
+                    specialNames.constraint.expression,
+                    specialNames.deleted,
+                    specialNames.deleted_conflict,
+                    specialNames.extend,
+                    specialNames.id,
+                    specialNames.maximumAggregatedSize,
+                    specialNames.minimumAggregatedSize,
+                    specialNames.revision,
+                    specialNames.revisions,
+                    specialNames.revisionsInformation,
+                    specialNames.type
+                ).includes(name) || model[name].type && (
+                    typeof model[name].type === 'string' &&
+                    model[name].type.endsWith('[]') ||
+                    Array.isArray(model[name].type) &&
+                    model[name].type.length &&
+                    Array.isArray(model[name].type[0]) ||
+                    modelConfiguration.entities.hasOwnProperty(
+                        model[name].type))
+            )).concat(specialNames.id, specialNames.revision)
     }
     /**
      * Initializes database connection and synchronisation if needed.
@@ -2377,23 +2380,9 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         additionalSelector:PlainObject = {}
     ):Promise<Array<PlainObject>> {
         if (!this.relevantKeys)
-            this.relevantKeys = Object.keys(this.models[this.type]).filter((
-                name:string
-            ):boolean => ![
-                this.specialNames.additional,
-                this.specialNames.allowedRole,
-                this.specialNames.attachment,
-                this.specialNames.constraint.execution,
-                this.specialNames.constraint.expression,
-                this.specialNames.deleted,
-                this.specialNames.extend,
-                this.specialNames.id,
-                this.specialNames.maximumAggregatedSize,
-                this.specialNames.minimumAggregatedSize,
-                this.specialNames.revision,
-                this.specialNames.type
-            ].includes(name) &&
-            [undefined, 'string'].includes(this.models[this.type][name].type))
+            this.relevantKeys =
+                DataService.determineGenericIndexablePropertyNames(
+                    this.models, this.models[this.type])
         const selector:PlainObject = {[this.specialNames.type]: this.type}
         if (searchTerm || Object.keys(additionalSelector).length) {
             if (sort.length)
