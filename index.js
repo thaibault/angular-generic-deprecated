@@ -2326,8 +2326,8 @@ export class DataScopeService {
  * pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
- * @property models - Saves a mapping from all available model names to their
- * specification.
+ * @property modelConfiguration - Saves a mapping from all available model
+ * names to their specification.
  * @property relevantKeys - Saves a list of relevant key names to take into
  * account during resolving.
  * @property specialNames - mapping of special database field names.
@@ -2338,7 +2338,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     data:PlainObject
     escapeRegularExpressions:Function
     extendObject:Function
-    models:PlainObject
+    modelConfiguration:PlainObject
     relevantKeys:?Array<string> = null
     specialNames:{[key:string]:string}
     type:string = 'Item'
@@ -2361,7 +2361,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
             escapeRegularExpressionsPipe.transform.bind(
                 escapeRegularExpressionsPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
-        this.models = initialData.configuration.database.model.entities
+        this.modelConfiguration = initialData.configuration.database.model
         this.specialNames = initialData.configuration.database.model.property
             .name.special
     }
@@ -2382,7 +2382,8 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         if (!this.relevantKeys)
             this.relevantKeys =
                 DataService.determineGenericIndexablePropertyNames(
-                    this.models, this.models[this.type])
+                    this.modelConfiguration,
+                    this.modelConfiguration.entities[this.type])
         const selector:PlainObject = {[this.specialNames.type]: this.type}
         if (searchTerm || Object.keys(additionalSelector).length) {
             if (sort.length)
