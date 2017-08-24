@@ -3189,12 +3189,9 @@ export class RootComponent {
         if (
             'nativeElement' in elementReference &&
             'getAttribute' in elementReference.nativeElement
-        ) {
-            console.log(elementReference.nativeElement.getAttribute(
-                'initial-data'))
-            initialData.set(elementReference.nativeElement.getAttribute(
-                'initial-data'))
-        }
+        )
+            initialData.set(JSON.parse(
+                elementReference.nativeElement.getAttribute('initial-data')))
     }
 }
 // // region date/time
