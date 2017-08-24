@@ -203,7 +203,7 @@ export class InitialDataService {
                     url: 'local'
                 }
             }
-        }, this.tools.globalContext.genericInitialData || {}))
+        }, tools.globalContext.genericInitialData || {}))
     }
     /**
      * Sets initial data.
@@ -2436,11 +2436,14 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         limit:number = 10, searchTerm:string = '',
         additionalSelector:PlainObject = {}
     ):Promise<Array<PlainObject>> {
-        if (!this.relevantKeys)
+        if (!this.relevantKeys) {
             this.relevantKeys =
                 DataService.determineGenericIndexablePropertyNames(
                     this.modelConfiguration,
                     this.modelConfiguration.entities[this.type])
+            this.relevantKeys.splice(
+                this.relevantKeys.indexOf(this.specialNames.revision), 1)
+        }
         const selector:PlainObject = {[this.specialNames.type]: this.type}
         if (searchTerm || Object.keys(additionalSelector).length) {
             if (sort.length)

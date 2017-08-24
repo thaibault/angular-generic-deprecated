@@ -1238,7 +1238,7 @@ registerAngularTest(function(
                                     [{_id: 'asc'}], 2
                                 )).length, 0)
                                 assert.strictEqual((await resolver.list(
-                                    [{_id: 'asc'}], 1, 1, 'a'
+                                    [{_id: 'asc'}], 1, 1, 'b'
                                 )).length, 0)
                                 // endregion
                                 // region resolve
@@ -1264,7 +1264,7 @@ registerAngularTest(function(
                                         params: test
                                     }))[0], item)
                                 for (const test:PlainObject of [
-                                    {searchTerm: 'exact-a'},
+                                    {searchTerm: 'exact-b'},
                                     {page: 2},
                                     {searchTerm: 'exact-testa', page: 1},
                                     {searchTerm: 'regex-aa', page: 1, limit: 2},
