@@ -101,11 +101,7 @@ registerAngularTest(function(
             $.global.genericInitialData = {configuration: {
                 database: {
                     connector: {
-                        adapter: 'memory',
-                        /* eslint-disable camelcase */
-                        auto_compaction: true,
-                        revs_limit: 10
-                        /* eslint-enable camelcase */
+                        adapter: 'memory'
                     },
                     model: {
                         entities: {Test: {
@@ -132,41 +128,7 @@ registerAngularTest(function(
                                 minimumNumber: 0,
                                 name: 'a'
                             }
-                        }},
-                        property: {
-                            defaultSpecification: {
-                                minimum: 0,
-                                minimumLength: 0,
-                                minimumNumber: 0
-                            },
-                            name: {
-                                reserved: [],
-                                special: {
-                                    allowedRole: '_allowedRoles',
-                                    attachment: '_attachments',
-                                    conflict: '_conflicts',
-                                    constraint: {
-                                        execution: '_constraintExecutions',
-                                        expression: '_constraintExpressions'
-                                    },
-                                    deleted: '_deleted',
-                                    deletedConflict: '_deleted_conflicts',
-                                    extend: '_extends',
-                                    id: '_id',
-                                    localSequence: '_local_seq',
-                                    maximumAggregatedSize:
-                                        '_maximumAggregatedSize',
-                                    minimumAggregatedSize:
-                                        '_minimumAggregatedSize',
-                                    revision: '_rev',
-                                    revisions: '_revisions',
-                                    revisionsInformation: '_revs_info',
-                                    strategy: '_updateStrategy',
-                                    type: '-type'
-                                },
-                                validatedDocumentsCache: '_validatedDocuments'
-                            }
-                        }
+                        }}
                     },
                     plugins: [PouchDBAdapterMemory],
                     url: 'test'
@@ -349,8 +311,14 @@ registerAngularTest(function(
                         })
                         self.test(`InitialDataService (${roundType})`, (
                             assert:Object
-                        ):void => assert.strictEqual(
-                            initialData.configuration.test, true))
+                        ):void => {
+                            assert.strictEqual(
+                                initialData.configuration.test, true)
+                            assert.strictEqual(
+                                initialData.set({
+                                    configuration: {test: false}
+                                }).configuration.test, false)
+                        })
                         // endregion
                         // region pipes
                         // / region forwarded

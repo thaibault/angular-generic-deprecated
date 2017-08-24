@@ -144,6 +144,7 @@ export class ToolsService {
  */
 export class InitialDataService {
     configuration:PlainObject
+    tools:Tools
     /**
      * Sets all properties of given initial data as properties to this
      * initializing instance.
@@ -151,10 +152,66 @@ export class InitialDataService {
      * @returns Nothing.
      */
     constructor(tools:ToolsService):void {
-        for (const key:string in tools.globalContext.genericInitialData)
-            if (tools.globalContext.genericInitialData.hasOwnProperty(key))
-                // IgnoreTypeCheck
-                this[key] = tools.globalContext.genericInitialData[key]
+        this.tools = tools.tools
+        this.set(this.tools.extendObject(true, {
+            configuration: {
+                database: {
+                    connector: {
+                        /* eslint-disable camelcase */
+                        auto_compaction: true,
+                        revs_limit: 10
+                        /* eslint-enable camelcase */
+                    },
+                    model: {
+                        entities: {},
+                        property: {
+                            defaultSpecification: {
+                                minimum: 0,
+                                minimumLength: 0,
+                                minimumNumber: 0
+                            },
+                            name: {
+                                reserved: [],
+                                special: {
+                                    allowedRole: '_allowedRoles',
+                                    attachment: '_attachments',
+                                    conflict: '_conflicts',
+                                    constraint: {
+                                        execution: '_constraintExecutions',
+                                        expression: '_constraintExpressions'
+                                    },
+                                    deleted: '_deleted',
+                                    deletedConflict: '_deleted_conflicts',
+                                    extend: '_extends',
+                                    id: '_id',
+                                    localSequence: '_local_seq',
+                                    maximumAggregatedSize:
+                                        '_maximumAggregatedSize',
+                                    minimumAggregatedSize:
+                                        '_minimumAggregatedSize',
+                                    revision: '_rev',
+                                    revisions: '_revisions',
+                                    revisionsInformation: '_revs_info',
+                                    strategy: '_updateStrategy',
+                                    type: '-type'
+                                },
+                                validatedDocumentsCache: '_validatedDocuments'
+                            }
+                        }
+                    },
+                    plugins: [],
+                    url: 'local'
+                }
+            }
+        }, this.tools.globalContext.genericInitialData || {}))
+    }
+    /**
+     * Sets initial data.
+     * @param data - Data to provide initially.
+     * @returns Complete generated data.
+     */
+    set(data:PlainObject):InitialDataService {
+        return this.tools.extendObject(true, this, data)
     }
 }
 // endregion
