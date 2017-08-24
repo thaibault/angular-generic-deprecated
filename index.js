@@ -3168,6 +3168,35 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
     }
 }
 // / endregion
+// IgnoreTypeCheck
+@Component({
+    selector: 'application',
+    template: '<div></div>'
+})
+/**
+ * Generic root component.
+ */
+export class RootComponent {
+    /**
+     * Initializes root component given initial data to initial data service.
+     * @param elementReference - Injected root dom node instance.
+     * @param initialData - Injected initial data service instance.
+     * @returns Nothing.
+     */
+    constructor(
+        elementReference:ElementRef, initialData:InitialDataService
+    ):void {
+        if (
+            'nativeElement' in elementReference &&
+            'getAttribute' in elementReference.nativeElement
+        ) {
+            console.log(elementReference.nativeElement.getAttribute(
+                'initial-data'))
+            initialData.set(elementReference.nativeElement.getAttribute(
+                'initial-data'))
+        }
+    }
+}
 // // region date/time
 // IgnoreTypeCheck
 @Directive(Tools.extendObject(true, {
