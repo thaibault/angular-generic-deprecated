@@ -153,65 +153,72 @@ export class InitialDataService {
      */
     constructor(tools:ToolsService):void {
         this.tools = tools.tools
-        this.set(this.tools.extendObject(true, {
-            configuration: {
-                database: {
-                    connector: {
-                        /* eslint-disable camelcase */
-                        auto_compaction: true,
-                        revs_limit: 10
-                        /* eslint-enable camelcase */
+        this.set({configuration: {database: {
+            connector: {
+                /* eslint-disable camelcase */
+                auto_compaction: true,
+                revs_limit: 10
+                /* eslint-enable camelcase */
+            },
+            model: {
+                entities: {},
+                property: {
+                    defaultSpecification: {
+                        minimum: 0,
+                        minimumLength: 0,
+                        minimumNumber: 0
                     },
-                    model: {
-                        entities: {},
-                        property: {
-                            defaultSpecification: {
-                                minimum: 0,
-                                minimumLength: 0,
-                                minimumNumber: 0
+                    name: {
+                        reserved: [],
+                        special: {
+                            allowedRole: '_allowedRoles',
+                            attachment: '_attachments',
+                            conflict: '_conflicts',
+                            constraint: {
+                                execution: '_constraintExecutions',
+                                expression: '_constraintExpressions'
                             },
-                            name: {
-                                reserved: [],
-                                special: {
-                                    allowedRole: '_allowedRoles',
-                                    attachment: '_attachments',
-                                    conflict: '_conflicts',
-                                    constraint: {
-                                        execution: '_constraintExecutions',
-                                        expression: '_constraintExpressions'
-                                    },
-                                    deleted: '_deleted',
-                                    deletedConflict: '_deleted_conflicts',
-                                    extend: '_extends',
-                                    id: '_id',
-                                    localSequence: '_local_seq',
-                                    maximumAggregatedSize:
-                                        '_maximumAggregatedSize',
-                                    minimumAggregatedSize:
-                                        '_minimumAggregatedSize',
-                                    revision: '_rev',
-                                    revisions: '_revisions',
-                                    revisionsInformation: '_revs_info',
-                                    strategy: '_updateStrategy',
-                                    type: '-type'
-                                },
-                                validatedDocumentsCache: '_validatedDocuments'
-                            }
-                        }
-                    },
-                    plugins: [],
-                    url: 'local'
+                            deleted: '_deleted',
+                            deletedConflict: '_deleted_conflicts',
+                            extend: '_extends',
+                            id: '_id',
+                            localSequence: '_local_seq',
+                            maximumAggregatedSize:
+                                '_maximumAggregatedSize',
+                            minimumAggregatedSize:
+                                '_minimumAggregatedSize',
+                            revision: '_rev',
+                            revisions: '_revisions',
+                            revisionsInformation: '_revs_info',
+                            strategy: '_updateStrategy',
+                            type: '-type'
+                        },
+                        validatedDocumentsCache: '_validatedDocuments'
+                    }
                 }
-            }
-        }, tools.globalContext.genericInitialData || {}))
+            },
+            plugins: [],
+            url: 'generic'
+        }}}, tools.globalContext.genericInitialData || {})
+        if (
+            'document' in tools.globalContext &&
+            'querySelector' in tools.globalContext.document
+        ) {
+            const domNode:DomNode = tools.globalContext.document.querySelector(
+                'application')
+            if (domNode && domNode.getAttribute('initial-data'))
+                this.set(JSON.parse(domNode.getAttribute('initial-data')))
+        }
+        console.log(this.configuration.database.publicURL)
     }
     /**
      * Sets initial data.
-     * @param data - Data to provide initially.
+     * @param parameter - All given data objects will be merged into current
+     * scope.
      * @returns Complete generated data.
      */
-    set(data:PlainObject):InitialDataService {
-        return this.tools.extendObject(true, this, data)
+    set(...parameter:Array<PlainObject>):InitialDataService {
+        return this.tools.extendObject(true, this, ...parameter)
     }
 }
 // endregion
@@ -1445,8 +1452,7 @@ export class DataService {
         initialData:InitialDataService, @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe, tools:ToolsService
     ):void {
-        const configuration:PlainObject = initialData.configuration
-        this.configuration = configuration
+        this.configuration = initialData.configuration
         if (this.configuration.database.hasOwnProperty('publicURL'))
             this.configuration.database.url =
                 this.configuration.database.publicURL
@@ -1524,7 +1530,7 @@ export class DataService {
                         conflictingIndexes.push(index)
                     } else if (
                         idName in firstParameter[index] &&
-                        configuration.database.ignoreNoChangeError &&
+                        this.configuration.database.ignoreNoChangeError &&
                         'name' in item &&
                         item.name === 'forbidden' &&
                         'message' in item &&
@@ -3168,32 +3174,6 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
     }
 }
 // / endregion
-// IgnoreTypeCheck
-@Component({
-    selector: 'application',
-    template: '<div></div>'
-})
-/**
- * Generic root component.
- */
-export class RootComponent {
-    /**
-     * Initializes root component given initial data to initial data service.
-     * @param elementReference - Injected root dom node instance.
-     * @param initialData - Injected initial data service instance.
-     * @returns Nothing.
-     */
-    constructor(
-        elementReference:ElementRef, initialData:InitialDataService
-    ):void {
-        if (
-            'nativeElement' in elementReference &&
-            'getAttribute' in elementReference.nativeElement
-        )
-            initialData.set(JSON.parse(
-                elementReference.nativeElement.getAttribute('initial-data')))
-    }
-}
 // // region date/time
 // IgnoreTypeCheck
 @Directive(Tools.extendObject(true, {
