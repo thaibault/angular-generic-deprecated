@@ -1568,7 +1568,7 @@ export class DataService {
         this.database
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBValidationPlugin)
-        for (const plugin:Object of this.configuration.database.plugins || [])
+        for (const plugin:Object of this.configuration.database.plugins)
             this.database.plugin(plugin)
     }
     /**
