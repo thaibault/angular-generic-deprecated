@@ -65,6 +65,7 @@
     "@angular/compiler": "^4.2.6",
     "@angular/core": "^4.2.6",
     "@angular/forms": "^4.2.6",
+    "@angular/http": "^4.2.6",
     "@angular/material": "^2.0.0-beta.8",
     "@angular/platform-browser": "^4.2.6",
     "@angular/platform-browser-dynamic": "^4.2.6",
@@ -82,6 +83,7 @@
     "@angular/compiler": "^4.3.1",
     "@angular/core": "^4.3.1",
     "@angular/forms": "^4.3.1",
+    "@angular/http": "^4.3.1",
     "@angular/material": "^2.0.0-beta.8",
     "@angular/platform-browser": "^4.3.1",
     "@angular/platform-browser-dynamic": "^4.3.1",
@@ -128,7 +130,7 @@
           "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './mockup'"
         },
         "vendor": {
-          "__evaluate__": "self.debug && 2 < self.givenCommandLineArguments.length && ['build:dll', 'serve', 'test:browser', 'watch:dll'].includes(self.givenCommandLineArguments[2]) ? ['babel-polyfill', 'blob-util', 'hammerjs', 'pouchdb', 'pouchdb-adapter-memory', 'pouchdb-find', 'pouchdb-validation', 'reflect-metadata', 'zone.js', 'rxjs', '@angular/animations', '@angular/common', '@angular/core', '@angular/material', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router'].concat(self.givenCommandLineArguments[2] === 'serve' ? [] : ['script!qunitjs', 'weboptimizer/browserAPI', './mockup']) : []"
+          "__evaluate__": "self.debug && 2 < self.givenCommandLineArguments.length && ['build:dll', 'serve', 'test:browser', 'watch:dll'].includes(self.givenCommandLineArguments[2]) ? ['babel-polyfill', 'blob-util', 'hammerjs', 'pouchdb', 'pouchdb-adapter-memory', 'pouchdb-find', 'pouchdb-validation', 'reflect-metadata', 'zone.js', 'rxjs', '@angular/animations', '@angular/common', '@angular/core', '@angular/http', '@angular/material', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router'].concat(self.givenCommandLineArguments[2] === 'serve' ? [] : ['script!qunitjs', 'weboptimizer/browserAPI', './mockup']) : []"
         }
       }
     },
