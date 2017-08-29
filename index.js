@@ -1469,6 +1469,7 @@ export class DataService {
         const revisionName:string =
             this.configuration.database.model.property.name.special.revision
         const nativeBulkDocs:Function = this.database.prototype.bulkDocs
+        const self:DataService = this
         this.database.plugin({bulkDocs: async function(
             firstParameter:any, ...parameter:Array<any>
         ):Promise<Array<PlainObject>> {
@@ -1532,7 +1533,7 @@ export class DataService {
                         conflictingIndexes.push(index)
                     } else if (
                         idName in firstParameter[index] &&
-                        this.configuration.database.ignoreNoChangeError &&
+                        self.configuration.database.ignoreNoChangeError &&
                         'name' in item &&
                         item.name === 'forbidden' &&
                         'message' in item &&
