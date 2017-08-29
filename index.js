@@ -206,10 +206,10 @@ export class InitialDataService {
         ) {
             const domNode:DomNode = tools.globalContext.document.querySelector(
                 'application')
-            if (domNode && domNode.getAttribute('initial-data')) {
-                this.set(JSON.parse(domNode.getAttribute('initial-data')))
+            if (domNode && domNode.getAttribute('initialData')) {
+                this.set(JSON.parse(domNode.getAttribute('initialData')))
                 // NOTE: Free memory.
-                domNode.removeAttribute('initial-data')
+                domNode.removeAttribute('initialData')
             }
         }
     }
