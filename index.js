@@ -4939,7 +4939,7 @@ export class PaginationComponent {
 }
 // / endregion
 // endregion
-// region modules
+// region module
 export const determineExports:Function = (module:Object):Array<Object> =>
     Object.keys(module.exports).filter((name:string):boolean =>
         !name.startsWith('Abstract') &&
@@ -4959,23 +4959,22 @@ export const determineProviders:Function = (module:Object):Array<Object> =>
             name.endsWith('Guard') || name.endsWith('Service')
         )
     ).map((name:string):Object => module.exports[name])
-const modules:Array<Object> = [
-    BrowserModule.withServerTransition({appId: 'generic-universal'}),
-    FormsModule,
-    MdButtonModule,
-    MdCardModule,
-    MdDialogModule,
-    MdInputModule,
-    MdSelectModule,
-    MdTooltipModule,
-    TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
-]
 // IgnoreTypeCheck
 @NgModule({
     declarations: determineDeclarations(module),
     entryComponents: [ConfirmComponent],
     exports: determineExports(module),
-    imports: modules,
+    imports: [
+        BrowserModule.withServerTransition({appId: 'generic-universal'}),
+        FormsModule,
+        MdButtonModule,
+        MdCardModule,
+        MdDialogModule,
+        MdInputModule,
+        MdSelectModule,
+        MdTooltipModule,
+        TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
+    ],
     providers: determineProviders(module).concat({
         deps: [DataService],
         multi: true,
