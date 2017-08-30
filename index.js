@@ -4940,19 +4940,25 @@ export class PaginationComponent {
 // / endregion
 // endregion
 // region modules
-const declarations:Array<Object> = Object.keys(module.exports).filter((
-    name:string
-):boolean => !name.startsWith('Abstract') && [
-    'Component', 'Directive', 'Pipe'
-].some((suffix:string):boolean => name.endsWith(suffix))).map((
-    name:string
-):Object => module.exports[name])
-const providers:Array<Object> = Object.keys(module.exports).filter((
-    name:string
-):boolean => !name.startsWith('Abstract') && (
-    name.endsWith('Resolver') || name.endsWith('Pipe') ||
-    name.endsWith('Guard') || name.endsWith('Service')
-)).map((name:string):Object => module.exports[name])
+export const determineExports:Function = (module:Object):Array<Object> =>
+    Object.keys(module.exports).filter((name:string):boolean =>
+        !name.startsWith('Abstract') &&
+        ['Component', 'Directive', 'Pipe'].some((suffix:string):boolean =>
+            name.endsWith(suffix))
+    ).map((name:string):Object => module.exports[name])
+export const determineDeclarations:Function = (module:Object):Array<Object> =>
+    determineExports(module).concat(Object.keys(module.exports).filter((
+        name:string
+    ):boolean => !name.startsWith('Abstract') && ['Accessor'].some(
+        (suffix:string):boolean => name.endsWith(suffix)
+    )).map((name:string):Object => module.exports[name]))
+export const determineProviders:Function = (module:Object):Array<Object> =>
+    Object.keys(module.exports).filter((name:string):boolean =>
+        !name.startsWith('Abstract') && (
+            name.endsWith('Resolver') || name.endsWith('Pipe') ||
+            name.endsWith('Guard') || name.endsWith('Service')
+        )
+    ).map((name:string):Object => module.exports[name])
 const modules:Array<Object> = [
     BrowserModule.withServerTransition({appId: 'generic-universal'}),
     FormsModule,
@@ -4966,13 +4972,9 @@ const modules:Array<Object> = [
 ]
 // IgnoreTypeCheck
 @NgModule({
-    declarations: declarations.concat(Object.keys(module.exports).filter((
-        name:string
-    ):boolean => !name.startsWith('Abstract') && ['Accessor'].some(
-        (suffix:string):boolean => name.endsWith(suffix)
-    )).map((name:string):Object => module.exports[name])),
+    declarations: determineDeclarations(module),
     entryComponents: [ConfirmComponent],
-    exports: declarations,
+    exports: determineExports(module),
     imports: modules,
     providers: providers.concat({
         deps: [DataService],
