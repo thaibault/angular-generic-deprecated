@@ -4976,7 +4976,7 @@ const modules:Array<Object> = [
     entryComponents: [ConfirmComponent],
     exports: determineExports(module),
     imports: modules,
-    providers: providers.concat({
+    providers: determineProviders(module).concat({
         deps: [DataService],
         multi: true,
         provide: APP_INITIALIZER,
