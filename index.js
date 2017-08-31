@@ -3708,7 +3708,7 @@ const inputContent:string = `
             [editor]="editor"
             [maximumNumberOfRows]="maximumNumberOfRows"
             [minimumNumberOfRows]="minimumNumberOfRows"
-            *ngIf="model.editor; else simpleInput"
+            *ngIf="editor || model.editor; else simpleInput"
             [rows]="rows"
             [selectableEditor]="selectableEditor"
         ><ng-content></ng-content></generic-textarea>
