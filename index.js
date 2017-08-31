@@ -786,7 +786,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                 result[name][specialNames.type])
                         ) {
                             result[name] = this.transform(
-                                result[name], oldDocument[name],
+                                result[name], oldDocument[name].value,
                                 fileTypeReplacement)
                             /*
                                 NOTE: If only the type property is given we can
