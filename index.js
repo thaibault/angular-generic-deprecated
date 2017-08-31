@@ -3781,7 +3781,7 @@ export class InputComponent extends AbstractInputComponent {
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
-        <ng-template #textInput><md-input-container>
+        <ng-template #textInput><md-form-field>
             <input
                 ${propertyContent.nativ}
                 ${propertyContent.nativText}
@@ -3792,7 +3792,7 @@ export class InputComponent extends AbstractInputComponent {
             />
             ${inputContent}
             <ng-content></ng-content>
-        </md-input-container></ng-template>
+        </md-form-field></ng-template>
     `
 })
 /* eslint-enable max-len */
@@ -3856,7 +3856,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
-        <ng-template #plain><md-input-container @defaultAnimation>
+        <ng-template #plain><md-form-field @defaultAnimation>
             <textarea
                 ${propertyContent.nativ}
                 ${propertyContent.nativText}
@@ -3868,7 +3868,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
             ></textarea>
             ${inputContent}
             <ng-content></ng-content>
-        </md-input-container></ng-template>
+        </md-form-field></ng-template>
     `
 })
 /* eslint-enable max-len */
@@ -4028,7 +4028,7 @@ export class TextareaComponent extends AbstractInputComponent
                     </span>
                     <ng-template #editable>
                         <ng-container *ngIf="synchronizeImmediately; else parent">
-                            <md-input-container
+                            <md-form-field
                                 [class.dirty]="editedName && editedName !== file.name"
                                 mdTooltip="Focus to edit."
                             >
@@ -4061,7 +4061,7 @@ export class TextareaComponent extends AbstractInputComponent
                                         }}
                                     </span>
                                 </md-hint>
-                            </md-input-container>
+                            </md-form-field>
                             <ng-container
                                 *ngIf="editedName && editedName !== file.name"
                             >
@@ -4077,7 +4077,7 @@ export class TextareaComponent extends AbstractInputComponent
                                 >â</a>
                             </ng-container>
                         </ng-container>
-                        <ng-template #parent><md-input-container
+                        <ng-template #parent><md-form-field
                             [class.dirty]="file.initialName !== file.name"
                             @defaultAnimation
                             mdTooltip="Focus to edit."
@@ -4111,7 +4111,7 @@ export class TextareaComponent extends AbstractInputComponent
                                     }}
                                 </span>
                             </md-hint>
-                        </md-input-container></ng-template>
+                        </md-form-field></ng-template>
                     </ng-template>
                 </md-card-title>
             </md-card-header>
