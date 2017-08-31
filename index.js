@@ -4069,12 +4069,12 @@ export class TextareaComponent extends AbstractInputComponent
                                     (click)="$event.preventDefault();rename(editedName)"
                                     @defaultAnimation
                                     href=""
-                                >â</a>
+                                >{{saveNameText}}</a>
                                 <a
                                     (click)="$event.preventDefault();editedName = file.name"
                                     @defaultAnimation
                                     href=""
-                                >â</a>
+                                >{{resetNameText}}</a>
                             </ng-container>
                         </ng-container>
                         <ng-template #parent><md-form-field
@@ -4333,7 +4333,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     file:any = null
     @Output() fileChange:EventEmitter<any> = new EventEmitter()
     @Input() headerText:?string = null
-    @Input() showDeclarationText:string = 'â¹'
+    @Input() resetNameText:string = '×'
+    @Input() saveNameText:string = '✓'
+    @Input() showDeclarationText:string = 'ℹ'
     @ViewChild('input') input:ElementRef
     internalName:string
     keyCode:{[key:string]:number}
