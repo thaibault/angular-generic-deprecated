@@ -2728,8 +2728,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
  */
 export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     static defaultLiveUpdateOptions:PlainObject = {
-        // NOTE: Triggers an "ETIMEOUT" error if activated.
-        heartbeat: false,
+        heartbeat: 10000,
         /* eslint-disable camelcase */
         include_docs: true,
         /* eslint-enable camelcase */
@@ -2771,11 +2770,11 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      * @returns Nothing.
      */
     ngOnInit():void {
-        this._changesStream = this._data.connection.changes(
-            this._extendObject(
-                {since: LAST_KNOWN_DATA.sequence},
-                this.constructor.defaultLiveUpdateOptions,
-                this._liveUpdateOptions))
+        this._changesStream = this._data.connection.changes(this._extendObject(
+            true, {},
+            {since: LAST_KNOWN_DATA.sequence},
+            this.constructor.defaultLiveUpdateOptions,
+            this._liveUpdateOptions))
         for (const type:string of ['change', 'complete', 'error'])
             this._changesStream.on(type, async (
                 action:PlainObject
