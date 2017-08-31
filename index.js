@@ -3643,7 +3643,7 @@ const inputContent:string = `
         <span
             [class.active]="showDeclaration"
             (click)="showDeclaration = !showDeclaration"
-            *ngIf="model.declaration"
+            *ngIf="declaration || model.declaration"
         >
             <a
                 (click)="$event.preventDefault()"
@@ -3652,11 +3652,11 @@ const inputContent:string = `
                 *ngIf="showDeclarationText"
             >{{showDeclarationText}}</a>
             <span @defaultAnimation *ngIf="showDeclaration">
-                {{model.declaration}}
+                {{declaration || model.declaration}}
             </span>
         </span>
         <span *ngIf="editor && selectableEditor && !model.disabled">
-            <span *ngIf="model.declaration">|</span>
+            <span *ngIf="declaration || model.declaration">|</span>
             <a
                 [class.active]="activeEditor"
                 (click)="$event.preventDefault(); $event.stopPropagation(); activeEditor = true"
