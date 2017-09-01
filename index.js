@@ -412,30 +412,36 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
                     ]].hasOwnProperty(key)
                 ) && ![
                     specialNames.additional,
+                    specialNames.allowedRole,
                     // NOTE: Will be handled later.
                     specialNames.attachment,
-                    specialNames.allowedRole,
                     specialNames.conflict,
+                    specialNames.constraint.execution,
+                    specialNames.constraint.expression,
                     specialNames.deletedConflict,
+                    specialNames.extend,
                     specialNames.localSequence,
+                    specialNames.maximumAggregatedSize,
+                    specialNames.minimumAggregatedSize,
                     specialNames.revisions,
                     specialNames.revisionsInformations
                 ].includes(key)
             )
                 result[key] = this.transform(object[key])
-        if (object.hasOwnProperty(
-            specialNames.attachment
-        ) && object[specialNames.attachment])
+        if (
+            object.hasOwnProperty(specialNames.attachment) &&
+            object[specialNames.attachment]
+        )
             for (const key:string in object[specialNames.attachment])
-                if (object[specialNames.attachment].hasOwnProperty(
-                    key
-                ) &&
-                typeof object[specialNames.attachment][key] === 'object' &&
-                object[specialNames.attachment][key] !== null &&
-                'hasOwnProperty' in object[specialNames.attachment] &&
-                object[specialNames.attachment][key].hasOwnProperty(
-                    'value'
-                ) && object[specialNames.attachment][key].value) {
+                if (
+                    object[specialNames.attachment].hasOwnProperty(key) &&
+                    typeof object[specialNames.attachment][key] === 'object' &&
+                    object[specialNames.attachment][key] !== null &&
+                    'hasOwnProperty' in object[specialNames.attachment] &&
+                    object[specialNames.attachment][key].hasOwnProperty(
+                        'value') &&
+                    object[specialNames.attachment][key].value
+                ) {
                     if (!result[specialNames.attachment])
                         result[specialNames.attachment] = {}
                     result[specialNames.attachment][object[
@@ -641,6 +647,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         specialNames.type
                     ).includes(name) ||
                     ![
+                        specialNames.additional,
                         specialNames.allowedRole,
                         specialNames.conflict,
                         specialNames.constraint.execution,
@@ -650,9 +657,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         specialNames.localSequence,
                         specialNames.maximumAggregatedSize,
                         specialNames.minimumAggregatedSize,
-                        specialNames.revisionsInformations,
                         specialNames.revisions,
-                        specialNames.validatedDocumentsCache
+                        specialNames.revisionsInformations
                     ].includes(name) &&
                     (
                         !(specialNames.type in newDocument) ||
@@ -2350,9 +2356,10 @@ export class DataScopeService {
                             if (result[name].value === undefined)
                                 result[name].value = null
                         }
-                if (data.hasOwnProperty(name) && ![undefined, null].includes(
-                    data[name]
-                ))
+                if (
+                    data.hasOwnProperty(name) &&
+                    ![undefined, null].includes(data[name])
+                )
                     result[name].value = data[name]
                 else if (result[name].hasOwnProperty('default') && ![
                     undefined, null
