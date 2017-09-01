@@ -2138,6 +2138,54 @@ export class DataScopeService {
         return this.generate(modelName, propertyNames, data)
     }
     /**
+     * Determines a recursive resolved specification object for given (flat)
+     * model object.
+     * @param modelSpecification - Specification object to traverse.
+     * @param propertyNames - List of property names to consider.
+     * @param propertyNamesToIgnore - List of property names to skip.
+     * @returns Resolved specification object.
+     */
+    determineSpecificationObject(
+        modelSpecification:PlainObject, propertyNames:?Array<string>,
+        propertyNamesToIgnore:Array<string> = []
+    ):PlainObject {
+        if (!propertyNames)
+            propertyNames = Object.keys(modelSpecification)
+        const result:PlainObject = {}
+        for (const name:string of propertyNames)
+            if (
+                modelSpecification.hasOwnProperty(name) &&
+                !propertyNamesToIgnore.includes(name)
+            )
+                if (
+                    name === this.configuration.database.model.property.name
+                        .special.attachment
+                ) {
+                    result[name] = {}
+                    for (const fileType:string in modelSpecification[name])
+                        if (modelSpecification[name].hasOwnProperty(fileType))
+                            result[name][fileType] = this.extendObject(
+                                true, this.tools.copyLimitedRecursively(
+                                    this.configuration.database.model
+                                        .property.defaultSpecification
+                                ), modelSpecification[name][fileType])
+                } else {
+                    result[name] = this.extendObject(
+                        true, this.tools.copyLimitedRecursively(
+                            this.configuration.database.model.property
+                                .defaultSpecification,
+                        ), modelSpecification[name])
+                    if (
+                        this.configuration.database.model.entities
+                            .hasOwnProperty(result[name].type)
+                    )
+                        result[name].value = this.determineSpecificationObject(
+                            this.configuration.database.model.entities[
+                                result[name].type])
+                }
+        return result
+    }
+    /**
      * Generates a scope object for given model with given property names and
      * property value mapping data.
      * @param modelName - Name of model to generate scope for.
@@ -2149,8 +2197,8 @@ export class DataScopeService {
      * @returns The generated scope object.
      */
     generate(
-        modelName:string, propertyNames:?Array<string> = null,
-        data:PlainObject = {}, propertyNamesToIgnore:?Array<string> = null
+        modelName:string, propertyNames:?Array<string>,
+        data:PlainObject = {}, propertyNamesToIgnore:?Array<string>
     ):PlainObject {
         const entities:PlainObject = this.configuration.database.model.entities
         const modelSpecification:PlainObject = entities[modelName]
@@ -2170,31 +2218,9 @@ export class DataScopeService {
                 specialNames.revisionsInformation,
                 specialNames.revisions,
                 specialNames.type)
-        const specification:PlainObject = {}
-        for (const name:string in modelSpecification)
-            if (modelSpecification.hasOwnProperty(name))
-                if (name === specialNames.attachment) {
-                    specification[name] = {}
-                    for (const fileType:string in modelSpecification[name])
-                        if (modelSpecification[name].hasOwnProperty(fileType))
-                            specification[name][fileType] = this.extendObject(
-                                true, this.tools.copyLimitedRecursively(
-                                    this.configuration.database.model
-                                        .property.defaultSpecification
-                                ), modelSpecification[name][fileType])
-                } else if (![
-                    specialNames.allowedRole,
-                    specialNames.constraint.execution,
-                    specialNames.constraint.expression,
-                    specialNames.extend,
-                    specialNames.maximumAggregatedSize,
-                    specialNames.minimumAggregatedSize
-                ].concat(reservedNames).includes(name))
-                    specification[name] = this.extendObject(
-                        true, this.tools.copyLimitedRecursively(
-                            this.configuration.database.model.property
-                                .defaultSpecification,
-                        ), modelSpecification[name])
+        const specification:PlainObject = this.determineSpecificationObject(
+            modelSpecification, propertyNames,
+            propertyNamesToIgnore.concat(reservedNames))
         if (!propertyNames) {
             propertyNames = Object.keys(specification).filter(
                 (key:string):boolean => typeof specification[key] === 'object')
