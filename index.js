@@ -295,6 +295,8 @@ for (const methodTypePrefix:string in methodGroups)
 const ArrayMakeRangePipe:PipeTransform = module.exports.ArrayMakeRangePipe
 const EqualsPipe:PipeTransform = module.exports.EqualsPipe
 const ExtendObjectPipe:PipeTransform = module.exports.ExtendObjectPipe
+const NumberGetUTCTimestampPipe:PipeTransform =
+    module.exports.NumberGetUTCTimestampPipe
 const RepresentObjectPipe:PipeTransform = module.exports.RepresentObjectPipe
 const StringCapitalizePipe:PipeTransform = module.exports.StringCapitalizePipe
 const StringEscapeRegularExpressionsPipe:PipeTransform =
@@ -495,66 +497,292 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
  * @property equals - Equals pipe transform function.
  * @property extractData - Extract data pipe transform function.
  * @property modelConfiguration - Model configuration object.
+ * @property numberGetUTCTimestamp - Date (and time) to unix timstamp converter
+ * pipe transform function.
  * @property tools - Holds the tools class from the tools service.
  */
 export class ExtractRawDataPipe/* implements PipeTransform*/ {
     equals:Function
     extractData:Function
     modelConfiguration:PlainObject
+    numberGetUTCTimestamp:Function
     tools:Tools
     /**
      * Gets injected services.
      * @param equalsPipe - Equals pipe instance.
      * @param extractDataPipe - Extract data pipe instance.
      * @param initialData - Initial data service instance.
+     * @param numberGetUTCTimestampPipe - Date (and time) to unix timestamp
+     * conversion.
      * @param tools - Injected tools service instance.
      * @returns Nothing.
      */
     constructor(
         equalsPipe:EqualsPipe, extractDataPipe:ExtractDataPipe,
-        initialData:InitialDataService, tools:ToolsService
+        initialData:InitialDataService,
+        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe, tools:ToolsService
     ):void {
         this.modelConfiguration = initialData.configuration.database.model
+        this.numberGetUTCTimestamp = numberGetUTCTimestampPipe.transform.bind(
+            numberGetUTCTimestampPipe)
         this.equals = equalsPipe.transform.bind(equalsPipe)
         this.extractData = extractDataPipe.transform.bind(extractDataPipe)
         this.tools = tools.tools
+        this.specialNames:PlainObject =
+            this.modelConfiguration.property.name.special
     }
     /**
-     * Converts all (nested) date object in given data structure to their
-     * corresponding utc timestamps in milliseconds.
-     * @param value - Given data structure to convert.
-     * @returns Given converted object.
+     * Remove already existing values and mark removed or truncated values
+     * (only respect values if specified in model).
+     * @param document - Object to consider.
+     * @param oldDocument - Old document to use for checking for equality.
+     * @returns Given sliced document.
      */
-    static _convertDateToTimestampRecursively(value:any):any {
-        if (typeof value === 'object' && value !== null) {
-            if (value instanceof Date)
-                // NOTE: We save given date as an utc unix timestamp.
-                return Date.UTC(
-                    value.getUTCFullYear(),
-                    value.getUTCMonth(),
-                    value.getUTCDate(),
-                    value.getUTCHours(),
-                    value.getUTCMinutes(),
-                    value.getUTCSeconds(),
-                    value.getUTCMilliseconds()
-                ) / 1000
-            if (Array.isArray(value)) {
-                const result:Array<any> = []
-                for (const subValue:any of value)
-                    result.push(ExtractRawDataPipe
-                        ._convertDateToTimestampRecursively(subValue))
-                return result
-            }
-            if (Object.getPrototypeOf(value) === Object.prototype) {
-                const result:PlainObject = {}
-                for (const name:string in value)
-                    if (value.hasOwnProperty(name))
-                        result[name] = ExtractRawDataPipe
-                            ._convertDateToTimestampRecursively(value[name])
-                return result
-            }
+    createNeededDifference(
+        document:PlainObject, oldDocument:PlainObject
+    ):PlainObject {
+        for (const name:string in oldDocument)
+            if (
+                oldDocument.hasOwnProperty(name) &&
+                !(
+                    this.modelConfiguration.property.name.reserved.concat([
+                        this.specialNames.additional,
+                        this.specialNames.allowedRole,
+                        this.specialNames.attachment,
+                        this.specialNames.conflict,
+                        this.specialNames.constraint.execution,
+                        this.specialNames.constraint.expression,
+                        this.specialNames.deleted,
+                        this.specialNames.deletedConflict,
+                        this.specialNames.extend,
+                        this.specialNames.id,
+                        this.specialNames.localSequence,
+                        this.specialNames.maximumAggregatedSize,
+                        this.specialNames.minimumAggregatedSize,
+                        this.specialNames.revision,
+                        this.specialNames.revisions,
+                        this.specialNames.revisionsInformation,
+                        this.specialNames.type
+                    ]).includes(name) ||
+                    [null, undefined].includes(oldDocument[name].value)
+                ) && (
+                    !(this.specialNames.type in newDocument) ||
+                    this.modelConfiguration.entities[newDocument[
+                        this.specialNames.type
+                    ]].hasOwnProperty(name)
+                )
+            )
+                if (document.hasOwnProperty(name)) {
+                    if (Array.isArray(document[name])) {
+                        if (this.equals(
+                            document[name],
+                            this.extractData(oldDocument[name].value)
+                        ))
+                            delete document[name]
+                    } else if (
+                        typeof document[name] === 'object' &&
+                        document[name] !== null &&
+                        document[name].hasOwnProperty(this.specialNames.type) &&
+                        this.modelConfiguration.entities.hasOwnProperty(
+                            document[name][this.specialNames.type])
+                    ) {
+                        document[name] = this.createNeededDifference(
+                            document[name], oldDocument[name].value)
+                        // NOTE: "null" indicates no new changes.
+                        if (result[name] === null)
+                            delete document[name]
+                    } else {
+                        if (oldDocument[name].value instanceof Date)
+                            oldDocument[name].value =
+                                this.numberGetUTCTimestamp(
+                                    oldDocument[name].value)
+                        if (this.equals(
+                            document[name],
+                            this.extractData(oldDocument[name].value)
+                        ))
+                            delete document[name]
+                    }
+                } else {
+                    payloadExists = true
+                    document[name] = null
+                }
         }
-        return value
+        return document
+    }
+    /**
+     * Removes all special property names with meta data from given document.
+     * @param document - To trim.
+     * @returns Sliced given document.
+     */
+    removeMetaData(document:PlainObject):PlainObject {
+        const result:PlainObject = {}
+        // Add all needed values in given new document (without meta data).
+        for (const name:string in document)
+            if (
+                document.hasOwnProperty(name) &&
+                ![undefined, null, ''].includes(document[name]) &&
+                (
+                    this.modelConfiguration.property.name.reserved.concat(
+                        this.specialNames.deleted,
+                        this.specialNames.id,
+                        this.specialNames.revision,
+                        this.specialNames.type
+                    ).includes(name) ||
+                    ![
+                        this.specialNames.additional,
+                        this.specialNames.allowedRole,
+                        this.specialNames.attachment,
+                        this.specialNames.conflict,
+                        this.specialNames.constraint.execution,
+                        this.specialNames.constraint.expression,
+                        this.specialNames.deletedConflict,
+                        this.specialNames.extend,
+                        this.specialNames.localSequence,
+                        this.specialNames.maximumAggregatedSize,
+                        this.specialNames.minimumAggregatedSize,
+                        this.specialNames.revisions,
+                        this.specialNames.revisionsInformations
+                    ].includes(name) &&
+                    (
+                        !(this.specialNames.type in document) ||
+                        this.modelConfiguration.entities[document[
+                            this.specialNames.type
+                        ]].hasOwnProperty(name)
+                    )
+                )
+            )
+                if (value instanceof Date)
+                    result[name] = this.numberGetUTCTimestamp(value)
+                else if (
+                    typeof result[name] === 'object' && result[name] !== null
+                )
+                    result[name] = this.removeMetaData(result[name])
+                else
+                    result[name] = document[name]
+        return result
+    }
+    /**
+     * Implements the meta data removing of given document.
+     * @param newDocument - Document to slice meta data from.
+     * @param oldDocument - Optionally existing old document to take into
+     * account.
+     * @param fileTypeReplacement - Indicates whether file type replacements
+     * and removes should be taken into account.
+     * @returns The copied sliced version of given document if changes exists
+     * (checked against given old document) and "null" otherwise.
+     */
+    transform(
+        newDocument:PlainObject, oldDocument:?PlainObject,
+        fileTypeReplacement:boolean = true
+    ):?PlainObject {
+        const result:PlainObject = this.removeMetaData(newDocument)
+        const untouchedAttachments:Array<string> = []
+        if (
+            newDocument.hasOwnProperty(this.specialNames.attachment) &&
+            ![undefined, null, ''].includes(newDocument[this.specialNames.attachment])
+        )
+            result[this.specialNames.attachment] = {}
+            let empty:boolean = true
+            for (const fileName:string in newDocument[this.specialNames.attachment])
+                if (newDocument[this.specialNames.attachment].hasOwnProperty(fileName)) {
+                    let oldAttachment:?PlainObject
+                    if (oldDocument && oldDocument.hasOwnProperty(
+                        this.specialNames.attachment
+                    ))
+                        for (const type:string in oldDocument[this.specialNames.attachment])
+                            if (oldDocument[this.specialNames.attachment][type].value && [
+                                fileName,
+                                newDocument[this.specialNames.attachment][fileName].initialName
+                            ].includes(oldDocument[this.specialNames.attachment][
+                                type
+                            ].value.name))
+                                oldAttachment = oldDocument[this.specialNames.attachment][
+                                    type
+                                ].value
+                    if (
+                        (
+                            newDocument[this.specialNames.attachment][fileName].hasOwnProperty(
+                                'data'
+                            ) && newDocument[this.specialNames.attachment][fileName].data ||
+                            newDocument[this.specialNames.attachment][fileName].hasOwnProperty(
+                                'stub'
+                            ) && newDocument[this.specialNames.attachment][fileName].stub &&
+                            oldAttachment
+                        ) &&
+                        !(
+                            oldAttachment &&
+                            oldAttachment.name === fileName &&
+                            // TODO use digest to compare!
+                            newDocument[this.specialNames.attachment][
+                                fileName
+                            ].length === oldAttachment.length &&
+                            (
+                                oldAttachment.content_type ||
+                                'application/octet-stream'
+                            ) === (
+                                    newDocument[this.specialNames.attachment][
+                                        fileName
+                                    ].content_type ||
+                                    'application/octet-stream'
+                                )
+                        )
+                    ) {
+                        if (newDocument[this.specialNames.attachment][fileName].hasOwnProperty(
+                            'data'
+                        ) && newDocument[this.specialNames.attachment][fileName].data)
+                            result[this.specialNames.attachment][fileName] = {
+                                /* eslint-disable camelcase */
+                                content_type: newDocument[this.specialNames.attachment][
+                                    fileName
+                                ].content_type ||
+                                /* eslint-enable camelcase */
+                                'application/octet-stream',
+                                data: newDocument[this.specialNames.attachment][fileName].data
+                            }
+                        else {
+                            result[this.specialNames.attachment][fileName] =
+                                this.tools.copyLimitedRecursively(
+                                    oldAttachment)
+                            result[this.specialNames.attachment][fileName].name = fileName
+                        }
+                        empty = false
+                    } else
+                        untouchedAttachments.push(fileName)
+                }
+            if (empty)
+                delete result[this.specialNames.attachment]
+        let payloadExists:boolean = false
+        if (oldDocument) {
+            result = this.createNeededDifference(result, oldDocument)
+            // Handle attachment removes or replacements.
+            if (
+                oldDocument.hasOwnProperty(this.specialNames.attachment) &&
+                oldDocument[this.specialNames.attachment]
+            ) {
+                this._handleAttachmentChanges(result, oldDocument[
+                    this.specialNames.attachment
+                ], fileTypeReplacement, untouchedAttachments)
+                if (this.specialNames.attachment in result)
+                    payloadExists = true
+            } else if (this.specialNames.attachment in result)
+                payloadExists = true
+        }
+        // Check if real payload exists in currently determined raw data.
+        if (!payloadExists)
+            for (const name:string in result)
+                if (
+                    result.hasOwnProperty(name) &&
+                    !this.modelConfiguration.property.name.reserved.concat(
+                        this.specialNames.deleted,
+                        this.specialNames.id,
+                        this.specialNames.revision,
+                        this.specialNames.type
+                    ).includes(name)
+                ) {
+                    payloadExists = true
+                    break
+                }
+        return payloadExists ? result : null
     }
     /**
      * Implements attachment changes or removes.
@@ -571,272 +799,36 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         fileTypeReplacement:boolean, untouchedAttachments:Array<string>
     ):PlainObject {
         for (const type:string in oldAttachments)
-            if (oldAttachments.hasOwnProperty(type) && ![
-                undefined, null
-            ].includes(oldAttachments[type].value)) {
-                if (newDocument[
-                    this.modelConfiguration.property.name.special.attachment
-                ]) {
+            if (
+                oldAttachments.hasOwnProperty(type) &&
+                ![undefined, null].includes(oldAttachments[type].value)
+            ) {
+                if (newDocument[this.specialNames.attachment]) {
                     if (newDocument[
-                        this.modelConfiguration.property.name.special
-                            .attachment
+                        this.specialNames.attachment
                     ].hasOwnProperty(oldAttachments[type].value.name))
                         continue
                 } else if (!untouchedAttachments.includes(
                     oldAttachments[type].value.name
                 )) {
-                    newDocument[
-                        this.modelConfiguration.property.name.special
-                            .attachment
-                    ] = {[oldAttachments[type].value.name]: {data: null}}
+                    newDocument[this.specialNames.attachment] = {
+                        [oldAttachments[type].value.name]: {data: null}}
                     continue
                 }
                 if (fileTypeReplacement)
                     for (const fileName:string in newDocument[
-                        this.modelConfiguration.property.name.special
-                            .attachment
+                        this.specialNames.attachment
                     ])
                         if (newDocument[
-                            this.modelConfiguration.property.name.special
-                                .attachment
-                        ].hasOwnProperty(
+                            this.specialNames.attachment
+                        ].hasOwnProperty(fileName) && (new RegExp(type)).test(
                             fileName
-                        ) && (new RegExp(type)).test(fileName))
-                            newDocument[
-                                this.modelConfiguration.property.name.special
-                                    .attachment
-                            ][oldAttachments[type].value.name] = {data: null}
+                        ))
+                            newDocument[this.specialNames.attachment][
+                                oldAttachments[type].value.name
+                            ] = {data: null}
             }
         return newDocument
-    }
-    /**
-     * Implements the meta data removing of given document.
-     * @param newDocument - Document to slice meta data from.
-     * @param oldDocument - Optionally existing old document to take into
-     * account.
-     * @param fileTypeReplacement - Indicates whether file type replacements
-     * and removes should be taken into account.
-     * @returns The copied sliced version of given document if changes exists
-     * (checked against given old document) and "null" otherwise.
-     */
-    transform(
-        newDocument:PlainObject, oldDocument:?PlainObject,
-        fileTypeReplacement:boolean = true
-    ):?PlainObject {
-        oldDocument = this.constructor._convertDateToTimestampRecursively(
-            oldDocument)
-        newDocument = this.constructor._convertDateToTimestampRecursively(
-            newDocument)
-        const specialNames:PlainObject =
-            this.modelConfiguration.property.name.special
-        const result:PlainObject = {}
-        const untouchedAttachments:Array<string> = []
-        /*
-            Add all needed values in new document (respect only values in model
-            if present).
-        */
-        for (const name:string in newDocument)
-            if (
-                newDocument.hasOwnProperty(name) &&
-                ![undefined, null, ''].includes(newDocument[name]) &&
-                (
-                    this.modelConfiguration.property.name.reserved.concat(
-                        specialNames.deleted,
-                        specialNames.id,
-                        specialNames.revision,
-                        specialNames.type
-                    ).includes(name) ||
-                    ![
-                        specialNames.additional,
-                        specialNames.allowedRole,
-                        specialNames.conflict,
-                        specialNames.constraint.execution,
-                        specialNames.constraint.expression,
-                        specialNames.deletedConflict,
-                        specialNames.extend,
-                        specialNames.localSequence,
-                        specialNames.maximumAggregatedSize,
-                        specialNames.minimumAggregatedSize,
-                        specialNames.revisions,
-                        specialNames.revisionsInformations
-                    ].includes(name) &&
-                    (
-                        !(specialNames.type in newDocument) ||
-                        this.modelConfiguration.entities[newDocument[
-                            specialNames.type
-                        ]].hasOwnProperty(name)
-                    )
-                )
-            )
-                if (name === specialNames.attachment) {
-                    result[name] = {}
-                    let empty:boolean = true
-                    for (const fileName:string in newDocument[name])
-                        if (newDocument[name].hasOwnProperty(fileName)) {
-                            let oldAttachment:?PlainObject
-                            if (oldDocument && oldDocument.hasOwnProperty(
-                                name
-                            ))
-                                for (const type:string in oldDocument[name])
-                                    if (oldDocument[name][type].value && [
-                                        fileName,
-                                        newDocument[name][fileName].initialName
-                                    ].includes(oldDocument[name][
-                                        type
-                                    ].value.name))
-                                        oldAttachment = oldDocument[name][
-                                            type
-                                        ].value
-                            if (
-                                (
-                                    newDocument[name][fileName].hasOwnProperty(
-                                        'data'
-                                    ) && newDocument[name][fileName].data ||
-                                    newDocument[name][fileName].hasOwnProperty(
-                                        'stub'
-                                    ) && newDocument[name][fileName].stub &&
-                                    oldAttachment
-                                ) &&
-                                !(
-                                    oldAttachment &&
-                                    oldAttachment.name === fileName &&
-                                    // TODO use digest to compare!
-                                    newDocument[name][
-                                        fileName
-                                    ].length === oldAttachment.length &&
-                                    (
-                                        oldAttachment.content_type ||
-                                        'application/octet-stream'
-                                    ) === (
-                                            newDocument[name][
-                                                fileName
-                                            ].content_type ||
-                                            'application/octet-stream'
-                                        )
-                                )
-                            ) {
-                                if (newDocument[name][fileName].hasOwnProperty(
-                                    'data'
-                                ) && newDocument[name][fileName].data)
-                                    result[name][fileName] = {
-                                        /* eslint-disable camelcase */
-                                        content_type: newDocument[name][
-                                            fileName
-                                        ].content_type ||
-                                        /* eslint-enable camelcase */
-                                        'application/octet-stream',
-                                        data: newDocument[name][fileName].data
-                                    }
-                                else {
-                                    result[name][fileName] =
-                                        this.tools.copyLimitedRecursively(
-                                            oldAttachment)
-                                    result[name][fileName].name = fileName
-                                }
-                                empty = false
-                            } else
-                                untouchedAttachments.push(fileName)
-                        }
-                    if (empty)
-                        delete result[name]
-                } else
-                    result[name] = newDocument[name]
-        let payloadExists:boolean = false
-        if (oldDocument) {
-            /*
-                Remove already existing values and mark removed or truncated
-                values (only respect values if specified in model).
-            */
-            for (const name:string in oldDocument)
-                if (
-                    oldDocument.hasOwnProperty(name) &&
-                    !(
-                        this.modelConfiguration.property.name.reserved.concat([
-                            specialNames.allowedRole,
-                            specialNames.attachment,
-                            specialNames.conflict,
-                            specialNames.constraint.execution,
-                            specialNames.constraint.expression,
-                            specialNames.deleted,
-                            specialNames.deletedConflict,
-                            specialNames.extend,
-                            specialNames.id,
-                            specialNames.localSequence,
-                            specialNames.maximumAggregatedSize,
-                            specialNames.minimumAggregatedSize,
-                            specialNames.revision,
-                            specialNames.revisionsInformation,
-                            specialNames.revisions,
-                            specialNames.type
-                        ]).includes(name) ||
-                        [null, undefined].includes(oldDocument[name].value)
-                    ) && (
-                        !(specialNames.type in newDocument) ||
-                        this.modelConfiguration.entities[newDocument[
-                            specialNames.type
-                        ]].hasOwnProperty(name)
-                    )
-                )
-                    if (result.hasOwnProperty(name)) {
-                        if (Array.isArray(result[name])) {
-                            if (this.equals(
-                                result[name],
-                                this.extractData(oldDocument[name].value)
-                            ))
-                                delete result[name]
-                        } else if (
-                            typeof result[name] === 'object' &&
-                            result[name] !== null &&
-                            result[name].hasOwnProperty(specialNames.type) &&
-                            this.modelConfiguration.entities.hasOwnProperty(
-                                result[name][specialNames.type])
-                        ) {
-                            result[name] = this.transform(
-                                result[name], oldDocument[name].value,
-                                fileTypeReplacement)
-                            /*
-                                NOTE: If only the type property is given we can
-                                skip the key completely.
-                            */
-                            if (result[name] === null)
-                                delete result[name]
-                        } else if (this.equals(
-                            result[name],
-                            this.extractData(oldDocument[name].value)
-                        ))
-                            delete result[name]
-                    } else {
-                        payloadExists = true
-                        result[name] = null
-                    }
-            // Handle attachment removes or replacements.
-            if (oldDocument.hasOwnProperty(
-                specialNames.attachment
-            ) && oldDocument[specialNames.attachment]) {
-                this._handleAttachmentChanges(result, oldDocument[
-                    specialNames.attachment
-                ], fileTypeReplacement, untouchedAttachments)
-                if (specialNames.attachment in result)
-                    payloadExists = true
-            } else if (specialNames.attachment in result)
-                payloadExists = true
-        }
-        // Check if real payload exists in currently determined raw data.
-        if (!payloadExists)
-            for (const name:string in result)
-                if (
-                    result.hasOwnProperty(name) &&
-                    !this.modelConfiguration.property.name.reserved.concat(
-                        specialNames.deleted,
-                        specialNames.id,
-                        specialNames.revision,
-                        specialNames.type
-                    ).includes(name)
-                ) {
-                    payloadExists = true
-                    break
-                }
-        return payloadExists ? result : null
     }
 }
 // IgnoreTypeCheck
@@ -2019,6 +2011,8 @@ export class DataService {
  * method.
  * @property getFilenameByPrefix - Holds the get file name by prefix's pipe
  * transformation method.
+ * @property numberGetUTCTimestamp - Holds a date (and time) to unix timestamp
+ * converter pipe transform method.
  * @property representObject - Represent object pipe's method.
  * @property tools - Holds the tools class from the tools service.
  */
@@ -2029,6 +2023,7 @@ export class DataScopeService {
     extendObject:Function
     extractData:Function
     getFilenameByPrefix:Function
+    numberGetUTCTimestamp:Function
     representObject:Function
     tools:typeof Tools
     /**
@@ -2041,6 +2036,8 @@ export class DataScopeService {
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
      * @param initialData - Injected initial data service instance.
+     * @param numberGetUTCTimestampPipe - Date (and time) to unix timestamp
+     * converter pipe instance.
      * @param representObjectPipe - Represent object pipe instance.
      * @param tools - Injected tools service instance.
      * @returns Nothing.
@@ -2051,6 +2048,7 @@ export class DataScopeService {
         extractDataPipe:ExtractDataPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService,
+        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe,
         representObjectPipe:RepresentObjectPipe,
         tools:ToolsService
     ):void {
@@ -2059,10 +2057,12 @@ export class DataScopeService {
                 attachmentWithPrefixExistsPipe)
         this.configuration = initialData.configuration
         this.data = data
-        this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
-            getFilenameByPrefixPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.extractData = extractDataPipe.transform.bind(extractDataPipe)
+        this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
+            getFilenameByPrefixPipe)
+        this.numberGetUTCTimestamp = numberGetUTCTimestampPipe.transform.bind(
+            NumberGetUTCTimestampPipe)
         this.representObject = representObjectPipe.transform.bind(
             representObjectPipe)
         this.tools = tools.tools
@@ -2248,11 +2248,7 @@ export class DataScopeService {
                     specialNames.additional
                 ) ? specification[specialNames.additional] : {})
             const now:Date = new Date()
-            const nowUTCTimestamp:number = Date.UTC(
-                now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
-                now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
-                now.getUTCMilliseconds()
-            ) / 1000
+            const nowUTCTimestamp:number = this.numberGetUTCTimestamp(now)
             if (name === specialNames.attachment) {
                 for (const type:string in specification[name])
                     if (specification[name].hasOwnProperty(type)) {
@@ -2603,6 +2599,8 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
  * transformation method.
  * @property _modelConfiguration - All model configurations.
+ * @property _numberGetUTCTimestamp - Date (and time) to unix timstamp
+ * converter pipe transform method.
  */
 export class AbstractInputComponent/* implements OnInit*/ {
     @Input() declaration:?string = null
@@ -2636,6 +2634,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
     _extendObject:Function
     _getFilenameByPrefix:Function
     _modelConfiguration:PlainObject
+    _numberGetUTCTimestamp:Function
     /**
      * Sets needed services as property values.
      * @param attachmentWithPrefixExistsPipe - Saves the attachment by prefix
@@ -2644,13 +2643,16 @@ export class AbstractInputComponent/* implements OnInit*/ {
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
      * @param initialData - Injected initial data service instance.
+     * @param numberGetUTCTimestampPipe - Injected date (and time) to unix
+     * timestamp converter pips instance.
      * @returns Nothing.
      */
     constructor(
         attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
         extendObjectPipe:ExtendObjectPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-        initialData:InitialDataService
+        initialData:InitialDataService,
+        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe
     ):void {
         this._attachmentWithPrefixExists =
             attachmentWithPrefixExistsPipe.transform.bind(
@@ -2659,6 +2661,8 @@ export class AbstractInputComponent/* implements OnInit*/ {
         this._getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
         this._modelConfiguration = initialData.configuration.database.model
+        this._numberGetUTCTimestamp = numberGetUTCTimestampPipe.bind(
+            NumberGetUTCTimestampPipe)
     }
     /**
      * Triggers after input values have been resolved.
@@ -2707,11 +2711,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
         else if (newValue && this.model.type === 'string' && this.model.trim)
             newValue = newValue.trim()
         const now:Date = new Date()
-        const nowUTCTimestamp:number = Date.UTC(
-            now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
-            now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds(),
-            now.getUTCMilliseconds()
-        ) / 1000
+        const nowUTCTimestamp:number = this._numberGetUTCTimestamp(now)
         const newData:PlainObject = {[this.model.name]: newValue}
         for (const hookType:string of [
             'onUpdateExpression', 'onUpdateExecution'

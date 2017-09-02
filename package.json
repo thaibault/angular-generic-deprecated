@@ -49,7 +49,7 @@
   "dependencies": {
     "angular-tinymce": "^3.1.3",
     "blob-util": "^1.3.0",
-    "clientnode": "^1.0.234",
+    "clientnode": "^1.0.236",
     "hammerjs": "^2.0.8",
     "jsdom": "^11.2.0",
     "mkdirp": "^0.5.1",
