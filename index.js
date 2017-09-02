@@ -499,6 +499,8 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
  * @property modelConfiguration - Model configuration object.
  * @property numberGetUTCTimestamp - Date (and time) to unix timstamp converter
  * pipe transform function.
+ * @property specialnames - A mapping to database specific special property
+ * names.
  * @property tools - Holds the tools class from the tools service.
  */
 export class ExtractRawDataPipe/* implements PipeTransform*/ {
@@ -506,6 +508,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
     extractData:Function
     modelConfiguration:PlainObject
     numberGetUTCTimestamp:Function
+    specialNames:{[key:string]:string}
     tools:Tools
     /**
      * Gets injected services.
@@ -527,20 +530,20 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             numberGetUTCTimestampPipe)
         this.equals = equalsPipe.transform.bind(equalsPipe)
         this.extractData = extractDataPipe.transform.bind(extractDataPipe)
+        this.specialNames = this.modelConfiguration.property.name.special
         this.tools = tools.tools
-        this.specialNames:PlainObject =
-            this.modelConfiguration.property.name.special
     }
     /**
      * Remove already existing values and mark removed or truncated values
      * (only respect values if specified in model).
      * @param document - Object to consider.
      * @param oldDocument - Old document to use for checking for equality.
-     * @returns Given sliced document.
+     * @returns A boolean indicator if there exists any payload.
      */
-    createNeededDifference(
+    removeAlreadyExistingData(
         document:PlainObject, oldDocument:PlainObject
-    ):PlainObject {
+    ):boolean {
+        let payloadExists:boolean = false
         for (const name:string in oldDocument)
             if (
                 oldDocument.hasOwnProperty(name) &&
@@ -566,48 +569,55 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     ]).includes(name) ||
                     [null, undefined].includes(oldDocument[name].value)
                 ) && (
-                    !(this.specialNames.type in newDocument) ||
-                    this.modelConfiguration.entities[newDocument[
+                    !(this.specialNames.type in document) ||
+                    this.modelConfiguration.entities[document[
                         this.specialNames.type
                     ]].hasOwnProperty(name)
                 )
             )
                 if (document.hasOwnProperty(name)) {
-                    if (Array.isArray(document[name])) {
+                    // TODO check if "equals" is correct here.
+                    if (Array.isArray(document[name]))
                         if (this.equals(
                             document[name],
                             this.extractData(oldDocument[name].value)
                         ))
                             delete document[name]
-                    } else if (
+                        else
+                            payloadExists = true
+                    else if (
                         typeof document[name] === 'object' &&
                         document[name] !== null &&
                         document[name].hasOwnProperty(this.specialNames.type) &&
                         this.modelConfiguration.entities.hasOwnProperty(
                             document[name][this.specialNames.type])
                     ) {
-                        document[name] = this.createNeededDifference(
+                        const result = this.removeAlreadyExistingData(
                             document[name], oldDocument[name].value)
-                        // NOTE: "null" indicates no new changes.
-                        if (result[name] === null)
+                        document[name] = result.document
+                        if (result.payloadExists)
+                            payloadExists = true
+                        else
                             delete document[name]
                     } else {
                         if (oldDocument[name].value instanceof Date)
                             oldDocument[name].value =
                                 this.numberGetUTCTimestamp(
                                     oldDocument[name].value)
+                        // TODO check if "equals" is correct here.
                         if (this.equals(
                             document[name],
                             this.extractData(oldDocument[name].value)
                         ))
                             delete document[name]
+                        else
+                            payloadExists = true
                     }
                 } else {
                     payloadExists = true
                     document[name] = null
                 }
-        }
-        return document
+        return payloadExists
     }
     /**
      * Removes all special property names with meta data from given document.
@@ -616,7 +626,6 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      */
     removeMetaData(document:PlainObject):PlainObject {
         const result:PlainObject = {}
-        // Add all needed values in given new document (without meta data).
         for (const name:string in document)
             if (
                 document.hasOwnProperty(name) &&
@@ -651,8 +660,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     )
                 )
             )
-                if (value instanceof Date)
-                    result[name] = this.numberGetUTCTimestamp(value)
+                if (result[name] instanceof Date)
+                    result[name] = this.numberGetUTCTimestamp(result[name])
                 else if (
                     typeof result[name] === 'object' && result[name] !== null
                 )
@@ -675,38 +684,57 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         newDocument:PlainObject, oldDocument:?PlainObject,
         fileTypeReplacement:boolean = true
     ):?PlainObject {
-        const result:PlainObject = this.removeMetaData(newDocument)
+        let result:PlainObject = this.removeMetaData(newDocument)
         const untouchedAttachments:Array<string> = []
         if (
             newDocument.hasOwnProperty(this.specialNames.attachment) &&
-            ![undefined, null, ''].includes(newDocument[this.specialNames.attachment])
-        )
+            ![undefined, null, ''].includes(
+                newDocument[this.specialNames.attachment])
+        ) {
             result[this.specialNames.attachment] = {}
             let empty:boolean = true
-            for (const fileName:string in newDocument[this.specialNames.attachment])
-                if (newDocument[this.specialNames.attachment].hasOwnProperty(fileName)) {
+            for (const fileName:string in newDocument[
+                this.specialNames.attachment
+            ])
+                if (newDocument[this.specialNames.attachment].hasOwnProperty(
+                    fileName
+                )) {
                     let oldAttachment:?PlainObject
                     if (oldDocument && oldDocument.hasOwnProperty(
                         this.specialNames.attachment
                     ))
-                        for (const type:string in oldDocument[this.specialNames.attachment])
-                            if (oldDocument[this.specialNames.attachment][type].value && [
-                                fileName,
-                                newDocument[this.specialNames.attachment][fileName].initialName
-                            ].includes(oldDocument[this.specialNames.attachment][
-                                type
-                            ].value.name))
-                                oldAttachment = oldDocument[this.specialNames.attachment][
+                        for (const type:string in oldDocument[
+                            this.specialNames.attachment
+                        ])
+                            if (
+                                oldDocument[this.specialNames.attachment][
                                     type
-                                ].value
+                                ].value && [
+                                    fileName,
+                                    newDocument[this.specialNames.attachment][
+                                        fileName
+                                    ].initialName
+                                ].includes(
+                                    oldDocument[this.specialNames.attachment][
+                                        type
+                                    ].value.name)
+                            )
+                                oldAttachment = oldDocument[
+                                    this.specialNames.attachment
+                                ][type].value
                     if (
                         (
-                            newDocument[this.specialNames.attachment][fileName].hasOwnProperty(
-                                'data'
-                            ) && newDocument[this.specialNames.attachment][fileName].data ||
-                            newDocument[this.specialNames.attachment][fileName].hasOwnProperty(
-                                'stub'
-                            ) && newDocument[this.specialNames.attachment][fileName].stub &&
+                            newDocument[this.specialNames.attachment][
+                                fileName
+                            ].hasOwnProperty('data') &&
+                            newDocument[this.specialNames.attachment][
+                                fileName
+                            ].data ||
+                            newDocument[this.specialNames.attachment][
+                                fileName
+                            ].hasOwnProperty('stub') &&
+                            newDocument[this.specialNames.attachment][
+                                fileName].stub &&
                             oldAttachment
                         ) &&
                         !(
@@ -727,23 +755,31 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                 )
                         )
                     ) {
-                        if (newDocument[this.specialNames.attachment][fileName].hasOwnProperty(
-                            'data'
-                        ) && newDocument[this.specialNames.attachment][fileName].data)
+                        if (
+                            newDocument[this.specialNames.attachment][
+                                fileName
+                            ].hasOwnProperty('data') &&
+                            newDocument[this.specialNames.attachment][
+                                fileName].data
+                        )
                             result[this.specialNames.attachment][fileName] = {
                                 /* eslint-disable camelcase */
-                                content_type: newDocument[this.specialNames.attachment][
-                                    fileName
-                                ].content_type ||
+                                content_type: newDocument[
+                                    this.specialNames.attachment
+                                ][fileName].content_type ||
                                 /* eslint-enable camelcase */
                                 'application/octet-stream',
-                                data: newDocument[this.specialNames.attachment][fileName].data
+                                data: newDocument[
+                                    this.specialNames.attachment
+                                ][fileName].data
                             }
                         else {
                             result[this.specialNames.attachment][fileName] =
                                 this.tools.copyLimitedRecursively(
                                     oldAttachment)
-                            result[this.specialNames.attachment][fileName].name = fileName
+                            result[this.specialNames.attachment][
+                                fileName
+                            ].name = fileName
                         }
                         empty = false
                     } else
@@ -751,9 +787,10 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                 }
             if (empty)
                 delete result[this.specialNames.attachment]
+        }
         let payloadExists:boolean = false
         if (oldDocument) {
-            result = this.createNeededDifference(result, oldDocument)
+            payloadExists = this.removeAlreadyExistingData(result, oldDocument)
             // Handle attachment removes or replacements.
             if (
                 oldDocument.hasOwnProperty(this.specialNames.attachment) &&
@@ -769,6 +806,10 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         }
         // Check if real payload exists in currently determined raw data.
         if (!payloadExists)
+            /*
+                NOTE: We have to check first level only since all unneeded
+                nested values should have been already removed.
+            */
             for (const name:string in result)
                 if (
                     result.hasOwnProperty(name) &&
@@ -819,11 +860,12 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     for (const fileName:string in newDocument[
                         this.specialNames.attachment
                     ])
-                        if (newDocument[
-                            this.specialNames.attachment
-                        ].hasOwnProperty(fileName) && (new RegExp(type)).test(
-                            fileName
-                        ))
+                        if (
+                            newDocument[
+                                this.specialNames.attachment
+                            ].hasOwnProperty(fileName) &&
+                            (new RegExp(type)).test(fileName)
+                        )
                             newDocument[this.specialNames.attachment][
                                 oldAttachments[type].value.name
                             ] = {data: null}
@@ -2062,7 +2104,7 @@ export class DataScopeService {
         this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
         this.numberGetUTCTimestamp = numberGetUTCTimestampPipe.transform.bind(
-            NumberGetUTCTimestampPipe)
+            numberGetUTCTimestampPipe)
         this.representObject = representObjectPipe.transform.bind(
             representObjectPipe)
         this.tools = tools.tools
@@ -2661,8 +2703,8 @@ export class AbstractInputComponent/* implements OnInit*/ {
         this._getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
         this._modelConfiguration = initialData.configuration.database.model
-        this._numberGetUTCTimestamp = numberGetUTCTimestampPipe.bind(
-            NumberGetUTCTimestampPipe)
+        this._numberGetUTCTimestamp = numberGetUTCTimestampPipe.transform.bind(
+            numberGetUTCTimestampPipe)
     }
     /**
      * Triggers after input values have been resolved.
@@ -3781,17 +3823,20 @@ export class InputComponent extends AbstractInputComponent {
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
      * @param initialData - Injected initial data service instance.
+     * @param numberGetUTCTimestampPipe - Injected date (and time) to unix
+     * timestamp converter pips instance.
      * @returns Nothing.
      */
     constructor(
         attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
         extendObjectPipe:ExtendObjectPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-        initialData:InitialDataService
+        initialData:InitialDataService,
+        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe
     ):void {
         super(
             attachmentWithPrefixExistsPipe, extendObjectPipe,
-            getFilenameByPrefixPipe, initialData)
+            getFilenameByPrefixPipe, initialData, numberGetUTCTimestampPipe)
     }
 }
 /* eslint-disable max-len */
@@ -3846,17 +3891,20 @@ export class SimpleInputComponent extends AbstractInputComponent {
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
      * @param initialData - Injected initial data service instance.
+     * @param numberGetUTCTimestampPipe - Injected date (and time) to unix
+     * timestamp converter pips instance.
      * @returns Nothing.
      */
     constructor(
         attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
         extendObjectPipe:ExtendObjectPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-        initialData:InitialDataService
+        initialData:InitialDataService,
+        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe
     ):void {
         super(
             attachmentWithPrefixExistsPipe, extendObjectPipe,
-            getFilenameByPrefixPipe, initialData)
+            getFilenameByPrefixPipe, initialData, numberGetUTCTimestampPipe)
     }
 }
 /* eslint-disable max-len */
@@ -3942,17 +3990,20 @@ export class TextareaComponent extends AbstractInputComponent
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
      * @param initialData - Injected initial data service instance.
+     * @param numberGetUTCTimestampPipe - Injected date (and time) to unix
+     * timestamp converter pips instance.
      * @returns Nothing.
      */
     constructor(
         attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
         extendObjectPipe:ExtendObjectPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-        initialData:InitialDataService
+        initialData:InitialDataService,
+        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe
     ):void {
         super(
             attachmentWithPrefixExistsPipe, extendObjectPipe,
-            getFilenameByPrefixPipe, initialData)
+            getFilenameByPrefixPipe, initialData, numberGetUTCTimestampPipe)
         if (initialData.configuration.hasOwnProperty(
             'defaultEditorOptions'
         ) && typeof initialData.configuration.defaultEditorOptions ===

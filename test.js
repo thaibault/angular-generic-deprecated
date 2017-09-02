@@ -491,32 +491,6 @@ registerAngularTest(function(
                         self.test(`ExtractRawDataPipe (${roundType})`, (
                             assert:Object
                         ):void => {
-                            // region _convertDateToTimestampRecursively
-                            for (const test:Array<any> of [
-                                [{}, {}],
-                                [null, null],
-                                [true, true],
-                                [2, 2],
-                                [0, 0],
-                                [[], []],
-                                [[1], [1]],
-                                [[1, 2], [1, 2]],
-                                [[1, new Date(0)], [1, 0]],
-                                [{a: 1, b: true}, {a: 1, b: true}],
-                                [{a: new Date(Date.UTC(1970, 0, 1))}, {a: 0}],
-                                [{a: new Date(0)}, {a: 0}],
-                                [
-                                    {a: new Date(0), b: [2, 3]},
-                                    {a: 0, b: [2, 3]}
-                                ],
-                                [{a: [new Date(90000)]}, {a: [90]}]
-                            ])
-                                assert.deepEqual(
-                                    extractRawDataPipe.constructor
-                                        ._convertDateToTimestampRecursively(
-                                            test[0]),
-                                    test[1])
-                            // endregion
                             // region _handleAttachmentChanges
                             for (const test:Array<any> of [
                                 [{}, {}, true, [], {}],
@@ -547,6 +521,12 @@ registerAngularTest(function(
                             // endregion
                             // region transform
                             for (const test:Array<any> of [
+                                [
+                                    [{}, {a: {value: {length: 2, name: 'a'}}}],
+                                    {a: null}
+                                ],
+
+
                                 [[{}], null],
                                 [[{}, {}], null],
                                 [[{}, {}, false], null],
