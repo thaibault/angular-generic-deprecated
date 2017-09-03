@@ -649,33 +649,34 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         this.specialNames.type
                     ).includes(name))
                         result[name] = data[name]
-                    else if (![
-                        this.specialNames.additional,
-                        this.specialNames.allowedRole,
-                        this.specialNames.attachment,
-                        this.specialNames.conflict,
-                        this.specialNames.constraint.execution,
-                        this.specialNames.constraint.expression,
-                        this.specialNames.deletedConflict,
-                        this.specialNames.extend,
-                        this.specialNames.localSequence,
-                        this.specialNames.maximumAggregatedSize,
-                        this.specialNames.minimumAggregatedSize,
-                        this.specialNames.revisions,
-                        this.specialNames.revisionsInformations
-                    ].includes(name) &&
-                    (
-                        !specification ||
-                        specification.hasOwnProperty(name) ||
-                        specification.hasOwnProperty(
-                            this.specialNames.additional) &&
-                        specification[this.specialNames.additional]
+                    else if (
+                        ![
+                            this.specialNames.additional,
+                            this.specialNames.allowedRole,
+                            this.specialNames.attachment,
+                            this.specialNames.conflict,
+                            this.specialNames.constraint.execution,
+                            this.specialNames.constraint.expression,
+                            this.specialNames.deletedConflict,
+                            this.specialNames.extend,
+                            this.specialNames.localSequence,
+                            this.specialNames.maximumAggregatedSize,
+                            this.specialNames.minimumAggregatedSize,
+                            this.specialNames.revisions,
+                            this.specialNames.revisionsInformations
+                        ].includes(name) &&
+                        (
+                            !specification ||
+                            specification.hasOwnProperty(name) ||
+                            specification.hasOwnProperty(
+                                this.specialNames.additional) &&
+                            specification[this.specialNames.additional]
+                        )
                     )
-                )
-                    result[name] = this.removeMetaData(
-                        data[name], specification && (
-                            specification[name] ||
-                            specification[this.specialNames.additional]))
+                        result[name] = this.removeMetaData(
+                            data[name], specification && (
+                                specification[name] ||
+                                specification[this.specialNames.additional]))
             return result
         }
         return data
@@ -2360,9 +2361,10 @@ export class DataScopeService {
                                         delete result[name][type].value
                                 }
                         let fileFound:boolean = false
-                        if (data.hasOwnProperty(name) && ![
-                            undefined, null
-                        ].includes(data[name]))
+                        if (
+                            data.hasOwnProperty(name) &&
+                            ![undefined, null].includes(data[name])
+                        )
                             for (const fileName:string in data[name])
                                 if (result[name].hasOwnProperty(type) && (
                                     new RegExp(type)
@@ -2422,9 +2424,10 @@ export class DataScopeService {
                     ![undefined, null].includes(data[name])
                 )
                     result[name].value = data[name]
-                else if (result[name].hasOwnProperty('default') && ![
-                    undefined, null
-                ].includes(result[name].default))
+                else if (
+                    result[name].hasOwnProperty('default') &&
+                    ![undefined, null].includes(result[name].default)
+                )
                     result[name].value = this.tools.copyLimitedRecursively(
                         result[name].default)
                 else if (
@@ -2433,7 +2436,10 @@ export class DataScopeService {
                     result[name].selection.length
                 )
                     result[name].value = result[name].selection[0]
-                if (result[name].hasOwnProperty('type'))
+                if (
+                    typeof result[name].value === 'object' &&
+                    result[name].value !== null
+                )
                     if (
                         !(
                             result[name].value instanceof Date ||
@@ -2446,7 +2452,10 @@ export class DataScopeService {
                         // NOTE: We interpret given value as an utc timestamp.
                         result[name].value = new Date(
                             result[name].value * 1000)
-                    else if (entities.hasOwnProperty(result[name].type))
+                    else if (
+                        result[name].hasOwnProperty('type') &&
+                        entities.hasOwnProperty(result[name].type)
+                    )
                         result[name].value = this.generate(
                             result[name].type, null, result[name].value || {},
                             [specialNames.attachment, specialNames.id])
