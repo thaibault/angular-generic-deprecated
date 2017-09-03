@@ -15,6 +15,7 @@
     endregion
 */
 // region imports
+import Tools from 'clientnode'
 import type {DomNode, PlainObject} from 'clientnode'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 // NOTE: Only needed for debugging this file.
@@ -33,6 +34,8 @@ registerAngularTest(function(
     bootstrap:Function;
     component:Function;
 } {
+    const now:Date = new Date()
+    const nowUTCTimestamp:number = Tools.numberGetUTCTimestamp(now)
     // region imports
     const {
         ChangeDetectorRef, Component, Injectable, NgModule, SimpleChange
@@ -357,6 +360,50 @@ registerAngularTest(function(
                         self.test(`ExtractDataPipe (${roundType})`, (
                             assert:Object
                         ):void => {
+                            // region transform
+                            for (const test:Array<any> of [
+                                [{}, {}],
+                                [2, 2],
+                                [false, false],
+                                [true, true],
+                                [0, 0],
+                                [{value: 2}, 2],
+                                [{value: {a: 2}}, {a: 2}],
+                                [
+                                    {value: {a: {value: 2}}},
+                                    {a: {value: 2}}
+                                ],
+                                [
+                                    {value: {a: {value: 2}, '-type': 'Test'}},
+                                    {a: 2}
+                                ],
+                                [
+                                    [{
+                                        value: {a: {value: 2}, '-type': 'Test'}
+                                    }],
+                                    [{a: 2}]
+                                ],
+                                [
+                                    [{value: {
+                                        a: {value: 2},
+                                        metaData: true,
+                                        '-type': 'Test'
+                                    }}],
+                                    [{a: 2}]
+                                ],
+                                [
+                                    [[[{value: {
+                                        a: {value: 2},
+                                        metaData: true,
+                                        '-type': 'Test'
+                                    }}]]],
+                                    [[[{a: 2}]]]
+                                ]
+                            ])
+                                assert.deepEqual(
+                                    extractDataPipe.transform(test[0]), test[1]
+                                )
+                            // endregion
                             // region _extractFromObject
                             for (const test:Array<PlainObject> of [
                                 [{}, {}],
@@ -443,90 +490,107 @@ registerAngularTest(function(
                                         test[0]),
                                     test[1])
                             // endregion
-                            // region transform
-                            for (const test:Array<any> of [
-                                [{}, {}],
-                                [2, 2],
-                                [false, false],
-                                [true, true],
-                                [0, 0],
-                                [{value: 2}, 2],
-                                [{value: {a: 2}}, {a: 2}],
-                                [
-                                    {value: {a: {value: 2}}},
-                                    {a: {value: 2}}
-                                ],
-                                [
-                                    {value: {a: {value: 2}, '-type': 'Test'}},
-                                    {a: 2}
-                                ],
-                                [
-                                    [{
-                                        value: {a: {value: 2}, '-type': 'Test'}
-                                    }],
-                                    [{a: 2}]
-                                ],
-                                [
-                                    [{value: {
-                                        a: {value: 2},
-                                        metaData: true,
-                                        '-type': 'Test'
-                                    }}],
-                                    [{a: 2}]
-                                ],
-                                [
-                                    [[[{value: {
-                                        a: {value: 2},
-                                        metaData: true,
-                                        '-type': 'Test'
-                                    }}]]],
-                                    [[[{a: 2}]]]
-                                ]
-                            ])
-                                assert.deepEqual(
-                                    extractDataPipe.transform(test[0]), test[1]
-                                )
-                            // endregion
                         })
                         self.test(`ExtractRawDataPipe (${roundType})`, (
                             assert:Object
                         ):void => {
-                            // region _handleAttachmentChanges
+                            // region removeAlreadyExistingData
                             for (const test:Array<any> of [
-                                [{}, {}, true, [], {}],
                                 [
-                                    {}, {a: {value: {name: 'a'}}}, true, [],
-                                    {_attachments: {a: {data: null}}}
+                                    {}, {}, null,
+                                    {newData: {}, payloadExists: false}
                                 ],
                                 [
-                                    {}, {a: {value: {name: 'a'}}}, true, ['a'],
-                                    {}
+                                    {a: 2}, {}, null,
+                                    {newData: {a: 2}, payloadExists: true}
                                 ],
                                 [
-                                    {_attachments: {a: {}}},
-                                    {'[ab]': {value: {name: 'b'}}}, true, [],
-                                    {_attachments: {a: {}, b: {data: null}}}
+                                    {a: 2}, {a: 2}, null,
+                                    {newData: {a: 2}, payloadExists: false}
                                 ],
                                 [
-                                    {_attachments: {a: {}}},
-                                    {'[ab]': {value: {name: 'b'}}}, false, [],
-                                    {_attachments: {a: {}}}
+                                    {a: {a: 2}}, {a: {a: 2}}, null,
+                                    {
+                                        newData: {a: {a: 2}},
+                                        payloadExists: false
+                                    }
+                                ],
+                                [
+                                    {['-type']: 'Test', a: 'a',},
+                                    {a: 'a'},
+                                    {a: {}},
+                                    {
+                                        newData: {'-type': 'Test'},
+                                        payloadExists: false
+                                    }
+                                ],
+                                [
+                                    {['-type']: 'Test', a: {a: 'a'}},
+                                    {a: {a: 'a'}},
+                                    {a: {a: {type: 'Test'}}},
+                                    {
+                                        newData: {'-type': 'Test'},
+                                        payloadExists: false
+                                    }
+                                ],
+                                [
+                                    {a: []}, {a: []}, null,
+                                    {
+                                        newData: {a: []},
+                                        payloadExists: false
+                                    }
+                                ],
+                                [
+                                    {a: [1]}, {a: []}, null,
+                                    {
+                                        newData: {a: [1]},
+                                        payloadExists: true
+                                    }
+                                ],
+                                [
+                                    {a: []}, {a: [1]}, null,
+                                    {
+                                        newData: {a: []},
+                                        payloadExists: true
+                                    }
+                                ],
+                                [
+                                    {['-type']: 'Test', a: now},
+                                    {a: now},
+                                    {a: {a: {type: 'Test'}}},
+                                    {
+                                        newData: {'-type': 'Test'},
+                                        payloadExists: false
+                                    }
+                                ],
+                                [
+                                    {['-type']: 'Test', a: 0},
+                                    {a: new Date(0)},
+                                    {a: {a: {type: 'Test'}}},
+                                    {
+                                        newData: {'-type': 'Test'},
+                                        payloadExists: false
+                                    }
+                                ],
+                                // TODO check model specified nested dates.
+                                [
+                                    {['-type']: 'Test', a: {a: 'a'}},
+                                    {a: {a: 'a'}},
+                                    {a: {a: {type: 'Test'}}},
+                                    {
+                                        newData: {'-type': 'Test'},
+                                        payloadExists: false
+                                    }
                                 ]
                             ])
                                 assert.deepEqual(
                                     extractRawDataPipe
-                                        ._handleAttachmentChanges(
-                                            test[0], test[1], test[2], test[3]
-                                        ), test[4])
+                                        .removeAlreadyExistingData(
+                                            test[0], test[1], test[2]),
+                                    test[3])
                             // endregion
                             // region transform
                             for (const test:Array<any> of [
-                                [
-                                    [{}, {a: {value: {length: 2, name: 'a'}}}],
-                                    {a: null}
-                                ],
-
-
                                 [[{}], null],
                                 [[{}, {}], null],
                                 [[{}, {}, false], null],
@@ -558,33 +622,28 @@ registerAngularTest(function(
                                     /* eslint-enable camelcase */
                                 }}}],
                                 [[{_attachments: {a: {data: 2, length: 2}}}, {
-                                    _attachments: {a: {value: {
-                                        name: 'a', length: 2
-                                    }}}
+                                    _attachments: {a: {name: 'a', length: 2}}
                                 }], null],
                                 [[{_attachments: {a: {
                                     /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2, length: 2
                                     /* eslint-enable camelcase */
-                                }}}, {_attachments: {a: {value: {
+                                }}}, {_attachments: {a: {
                                     /* eslint-disable camelcase */
                                     content_type: 'a/b', length: 2, name: 'a'
                                     /* eslint-enable camelcase */
-                                }}}}], null],
-                                // 34.
+                                }}}], null],
                                 [[{_attachments: {a: {data: 2, length: 2}}}, {
-                                    _attachments: {a: {value: {
+                                    _attachments: {a: {
                                         /* eslint-disable camelcase */
                                         content_type:
                                             'application/octet-stream',
                                         /* eslint-enable camelcase */
                                         length: 2, name: 'a'
-                                    }}}
+                                    }}
                                 }], null],
                                 [[{_attachments: {a: {data: 2, length: 2}}}, {
-                                    _attachments: {a: {value: {
-                                        length: 3, name: 'a'
-                                    }}}
+                                    _attachments: {a: {length: 3, name: 'a'}}
                                 }], {_attachments: {a: {
                                     /* eslint-disable camelcase */
                                     content_type: 'application/octet-stream',
@@ -595,29 +654,54 @@ registerAngularTest(function(
                                     /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2, length: 2
                                     /* eslint-enable camelcase */
-                                }}}, {_attachments: {a: {value: {
+                                }}}, {_attachments: {a: {
                                     length: 2, name: 'a'
-                                }}}}], {_attachments: {a: {
+                                }}}], {_attachments: {a: {
                                     /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2
                                     /* eslint-enable camelcase */
                                 }}}],
-                                [
-                                    [{}, {a: {value: {length: 2, name: 'a'}}}],
-                                    {a: null}
-                                ],
+                                [[{}, {a: {length: 2, name: 'a'}}], {a: null}],
                                 [[{'-type': 'Test', b: 2}], null],
                                 [
                                     [{'-type': 'Test', a: '2', b: 2}],
                                     {'-type': 'Test', a: '2'}
                                 ],
                                 [[{'-type': 'Test', a: '2', b: 2}, {
-                                    '-type': 'Test', a: {value: '2'}
+                                    '-type': 'Test', a: '2'
                                 }], null]
                             ])
                                 assert.deepEqual(
                                     extractRawDataPipe.transform(...test[0]),
                                     test[1])
+                            // endregion
+                            // region _handleAttachmentChanges
+                            for (const test:Array<any> of [
+                                [{}, {}, true, [], {}],
+                                [
+                                    {}, {a: {name: 'a'}}, true, [],
+                                    {_attachments: {a: {data: null}}}
+                                ],
+                                [
+                                    {}, {a: {name: 'a'}}, true, ['a'],
+                                    {}
+                                ],
+                                [
+                                    {_attachments: {a: {}}},
+                                    {'[ab]': {name: 'b'}}, true, [],
+                                    {_attachments: {a: {}, b: {data: null}}}
+                                ],
+                                [
+                                    {_attachments: {a: {}}},
+                                    {'[ab]': {name: 'b'}}, false, [],
+                                    {_attachments: {a: {}}}
+                                ]
+                            ])
+                                assert.deepEqual(
+                                    extractRawDataPipe
+                                        ._handleAttachmentChanges(
+                                            test[0], test[1], test[2], test[3]
+                                        ), test[4])
                             // endregion
                         })
                         self.test(`GetFilenameByPrefixPipe (${roundType})`, (
@@ -634,7 +718,6 @@ registerAngularTest(function(
                                         ...test[0]),
                                     test[1])
                         })
-
                         self.test(`IsDefinedPipe (${roundType})`, (
                             assert:Object
                         ):void => {
