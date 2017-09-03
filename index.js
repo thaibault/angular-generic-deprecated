@@ -522,8 +522,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      * @returns Nothing.
      */
     constructor(
-        equalsPipe:EqualsPipe, extractDataPipe:ExtractDataPipe,
-        initialData:InitialDataService,
+        equalsPipe:EqualsPipe, initialData:InitialDataService,
         numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe, tools:ToolsService
     ):void {
         this.equals = equalsPipe.transform.bind(equalsPipe)
