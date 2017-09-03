@@ -2437,22 +2437,19 @@ export class DataScopeService {
                 )
                     result[name].value = result[name].selection[0]
                 if (
+                    typeof result[name].value === 'number' &&
+                    (
+                        result[name].type.endsWith('Date') ||
+                        result[name].type.endsWith('Time')
+                    )
+                )
+                    // NOTE: We interpret given value as an utc timestamp.
+                    result[name].value = new Date(result[name].value * 1000)
+                else if (
                     typeof result[name].value === 'object' &&
                     result[name].value !== null
                 )
                     if (
-                        !(
-                            result[name].value instanceof Date ||
-                            result[name].value === null
-                        ) && (
-                            result[name].type.endsWith('Date') ||
-                            result[name].type.endsWith('Time')
-                        )
-                    )
-                        // NOTE: We interpret given value as an utc timestamp.
-                        result[name].value = new Date(
-                            result[name].value * 1000)
-                    else if (
                         result[name].hasOwnProperty('type') &&
                         entities.hasOwnProperty(result[name].type)
                     )
