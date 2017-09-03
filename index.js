@@ -585,7 +585,15 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             specification && typeof newData === 'object' && newData !== null
         ) {
             for (const name:string in oldData)
-                if (oldData.hasOwnProperty(name))
+                if (
+                    oldData.hasOwnProperty(name) &&
+                    !this.modelConfiguration.property.name.reserved.concat(
+                        this.specialNames.deleted,
+                        this.specialNames.id,
+                        this.specialNames.revision,
+                        this.specialNames.type
+                    ).includes(name)
+                )
                     if (newData.hasOwnProperty(name)) {
                         const result:{newData:any;payloadExists:boolean} =
                             this.removeAlreadyExistingData(
@@ -594,7 +602,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                 specification[this.specialNames.additional])
                         if (result.payloadExists) {
                             payloadExists = true
-                            newData[name] = result.newData[name]
+                            newData[name] = result.newData
                         } else
                             delete newData[name]
                     } else {
@@ -632,36 +640,36 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             for (const name:string in data)
                 if (
                     data.hasOwnProperty(name) &&
-                    ![undefined, null, ''].includes(data[name]) &&
+                    ![undefined, null, ''].includes(data[name])
+                )
+                    if (this.modelConfiguration.property.name.reserved.concat(
+                        this.specialNames.deleted,
+                        this.specialNames.id,
+                        this.specialNames.revision,
+                        this.specialNames.type
+                    ).includes(name))
+                        result[name] = data[name]
+                    else if (![
+                        this.specialNames.additional,
+                        this.specialNames.allowedRole,
+                        this.specialNames.attachment,
+                        this.specialNames.conflict,
+                        this.specialNames.constraint.execution,
+                        this.specialNames.constraint.expression,
+                        this.specialNames.deletedConflict,
+                        this.specialNames.extend,
+                        this.specialNames.localSequence,
+                        this.specialNames.maximumAggregatedSize,
+                        this.specialNames.minimumAggregatedSize,
+                        this.specialNames.revisions,
+                        this.specialNames.revisionsInformations
+                    ].includes(name) &&
                     (
-                        this.modelConfiguration.property.name.reserved.concat(
-                            this.specialNames.deleted,
-                            this.specialNames.id,
-                            this.specialNames.revision,
-                            this.specialNames.type
-                        ).includes(name) ||
-                        ![
-                            this.specialNames.additional,
-                            this.specialNames.allowedRole,
-                            this.specialNames.attachment,
-                            this.specialNames.conflict,
-                            this.specialNames.constraint.execution,
-                            this.specialNames.constraint.expression,
-                            this.specialNames.deletedConflict,
-                            this.specialNames.extend,
-                            this.specialNames.localSequence,
-                            this.specialNames.maximumAggregatedSize,
-                            this.specialNames.minimumAggregatedSize,
-                            this.specialNames.revisions,
-                            this.specialNames.revisionsInformations
-                        ].includes(name) &&
-                        (
-                            !specification ||
-                            specification.hasOwnProperty(name) ||
-                            specification.hasOwnProperty(
-                                this.specialNames.additional) &&
-                            specification[this.specialNames.additional]
-                        )
+                        !specification ||
+                        specification.hasOwnProperty(name) ||
+                        specification.hasOwnProperty(
+                            this.specialNames.additional) &&
+                        specification[this.specialNames.additional]
                     )
                 )
                     result[name] = this.removeMetaData(

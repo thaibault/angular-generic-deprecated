@@ -637,6 +637,21 @@ registerAngularTest(function(
                                         newData: {[specialNames.type]: 'Test'},
                                         payloadExists: false
                                     }
+                                ],
+                                [
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: 'a'
+                                    },
+                                    {a: 'b'},
+                                    {a: {}},
+                                    {
+                                        newData: {
+                                            [specialNames.type]: 'Test',
+                                            a: 'a'
+                                        },
+                                        payloadExists: true
+                                    }
                                 ]
                             ])
                                 assert.deepEqual(
@@ -675,136 +690,21 @@ registerAngularTest(function(
                             // endregion
                             // region transform
                             for (const test:Array<any> of [
-                                [[{}], null],
-                                [[{}, {}], null],
-                                [[{}, {}, false], null],
-                                [[{a: 2}, {}, false], {a: 2}],
-                                [[{a: undefined, b: null, c: ''}, {
-                                }, false], null],
-                                [[{a: undefined, b: null, c: '', d: {
-                                }}], {d: {}}],
-                                [[{a: undefined, b: 3}], {b: 3}],
-                                [
-                                    [{
-                                        a: undefined,
-                                        [specialNames.revisions]: 3
-                                    }],
-                                    null
-                                ],
-                                [
-                                    [{[specialNames.attachment]: undefined}],
-                                    null
-                                ],
-                                [[{[specialNames.attachment]: {a: {}}}], null],
-                                [
-                                    [{
-                                        [specialNames.attachment]: {a: {
-                                            data: 2
-                                        }}
-                                    }], {
-                                        [specialNames.attachment]: {a: {
-                                            /* eslint-disable camelcase */
-                                            content_type:
-                                                'application/octet-stream',
-                                            /* eslint-enable camelcase */
-                                            data: 2
-                                        }}
-                                    }
-                                ],
-                                [[{[specialNames.attachment]: {a: {
-                                    /* eslint-disable camelcase */
-                                    content_type: 'a/b', data: 2
-                                    /* eslint-enable camelcase */
-                                }}}], {[specialNames.attachment]: {a: {
-                                    /* eslint-disable camelcase */
-                                    content_type: 'a/b', data: 2
-                                    /* eslint-enable camelcase */
-                                }}}],
-                                [
-                                    [{
-                                        [specialNames.attachment]: {a: {
-                                            data: 2, length: 2
-                                        }}
-                                    }, {
-                                        [specialNames.attachment]: {a: {
-                                            name: 'a', length: 2
-                                        }}
-                                    }],
-                                    null
-                                ],
-                                [[{[specialNames.attachment]: {a: {
-                                    /* eslint-disable camelcase */
-                                    content_type: 'a/b', data: 2, length: 2
-                                    /* eslint-enable camelcase */
-                                }}}, {[specialNames.attachment]: {a: {
-                                    /* eslint-disable camelcase */
-                                    content_type: 'a/b', length: 2, name: 'a'
-                                    /* eslint-enable camelcase */
-                                }}}], null],
-                                [
-                                    [{[specialNames.attachment]: {a: {
-                                        data: 2, length: 2
-                                    }}}, {
-                                        [specialNames.attachment]: {a: {
-                                            /* eslint-disable camelcase */
-                                            content_type:
-                                                'application/octet-stream',
-                                            /* eslint-enable camelcase */
-                                            length: 2, name: 'a'
-                                        }}
-                                    }],
-                                    null
-                                ],
-                                [
-                                    [{[specialNames.attachment]: {a: {
-                                        data: 2, length: 2
-                                    }}}, {
-                                        [specialNames.attachment]: {a: {
-                                            length: 3, name: 'a'
-                                        }}
-                                    }], {[specialNames.attachment]: {a: {
-                                        /* eslint-disable camelcase */
-                                        content_type:
-                                            'application/octet-stream',
-                                        /* eslint-enable camelcase */
-                                        data: 2
-                                    }}}
-                                ],
-                                [[{[specialNames.attachment]: {a: {
-                                    /* eslint-disable camelcase */
-                                    content_type: 'a/b', data: 2, length: 2
-                                    /* eslint-enable camelcase */
-                                }}}, {[specialNames.attachment]: {a: {
-                                    length: 2, name: 'a'
-                                }}}], {[specialNames.attachment]: {a: {
-                                    /* eslint-disable camelcase */
-                                    content_type: 'a/b', data: 2
-                                    /* eslint-enable camelcase */
-                                }}}],
+
                                 [
                                     [
-                                        {[specialNames.type]: 'Test'},
-                                        {a: {length: 2, name: 'a'}}
+                                        {
+                                            [specialNames.type]: 'Test',
+                                            [specialNames.id]: 1,
+                                            a: 'a'
+                                        },
+                                        {[specialNames.type]: 'Test', a: '2'}
                                     ],
-                                    {[specialNames.type]: 'Test', a: null}
-                                ],
-                                [[{[specialNames.type]: 'Test', b: 2}], null],
-                                [
-                                    [{
+                                    {
                                         [specialNames.type]: 'Test',
-                                        a: '2',
-                                        b: 2
-                                    }],
-                                    {[specialNames.type]: 'Test', a: '2'}
-                                ],
-                                [
-                                    [{
-                                        [specialNames.type]: 'Test',
-                                        a: '2',
-                                        b: 2
-                                    },
-                                    {[specialNames.type]: 'Test', a: '2'}],
-                                    null
+                                        [specialNames.id]: 1,
+                                        a: 'a'
+                                    }
                                 ]
                             ])
                                 assert.deepEqual(
