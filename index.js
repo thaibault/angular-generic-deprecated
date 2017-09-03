@@ -143,6 +143,54 @@ export class ToolsService {
  * Serves initial data provided via a global variable.
  */
 export class InitialDataService {
+    static defaultScope:PlainObject = {configuration: {database: {
+        connector: {
+            /* eslint-disable camelcase */
+            auto_compaction: true,
+            revs_limit: 10
+            /* eslint-enable camelcase */
+        },
+        model: {
+            entities: {},
+            property: {
+                defaultSpecification: {
+                    minimum: 0,
+                    minimumLength: 0,
+                    minimumNumber: 0
+                },
+                name: {
+                    reserved: [],
+                    special: {
+                        allowedRole: '_allowedRoles',
+                        attachment: '_attachments',
+                        conflict: '_conflicts',
+                        constraint: {
+                            execution: '_constraintExecutions',
+                            expression: '_constraintExpressions'
+                        },
+                        deleted: '_deleted',
+                        deletedConflict: '_deleted_conflicts',
+                        extend: '_extends',
+                        id: '_id',
+                        localSequence: '_local_seq',
+                        maximumAggregatedSize:
+                            '_maximumAggregatedSize',
+                        minimumAggregatedSize:
+                            '_minimumAggregatedSize',
+                        revision: '_rev',
+                        revisions: '_revisions',
+                        revisionsInformation: '_revs_info',
+                        strategy: '_updateStrategy',
+                        type: '-type'
+                    },
+                    validatedDocumentsCache: '_validatedDocuments'
+                }
+            }
+        },
+        plugins: [],
+        url: 'generic'
+    }}}
+
     configuration:PlainObject
     tools:Tools
     /**
@@ -153,53 +201,9 @@ export class InitialDataService {
      */
     constructor(tools:ToolsService):void {
         this.tools = tools.tools
-        this.set({configuration: {database: {
-            connector: {
-                /* eslint-disable camelcase */
-                auto_compaction: true,
-                revs_limit: 10
-                /* eslint-enable camelcase */
-            },
-            model: {
-                entities: {},
-                property: {
-                    defaultSpecification: {
-                        minimum: 0,
-                        minimumLength: 0,
-                        minimumNumber: 0
-                    },
-                    name: {
-                        reserved: [],
-                        special: {
-                            allowedRole: '_allowedRoles',
-                            attachment: '_attachments',
-                            conflict: '_conflicts',
-                            constraint: {
-                                execution: '_constraintExecutions',
-                                expression: '_constraintExpressions'
-                            },
-                            deleted: '_deleted',
-                            deletedConflict: '_deleted_conflicts',
-                            extend: '_extends',
-                            id: '_id',
-                            localSequence: '_local_seq',
-                            maximumAggregatedSize:
-                                '_maximumAggregatedSize',
-                            minimumAggregatedSize:
-                                '_minimumAggregatedSize',
-                            revision: '_rev',
-                            revisions: '_revisions',
-                            revisionsInformation: '_revs_info',
-                            strategy: '_updateStrategy',
-                            type: '-type'
-                        },
-                        validatedDocumentsCache: '_validatedDocuments'
-                    }
-                }
-            },
-            plugins: [],
-            url: 'generic'
-        }}}, tools.globalContext.genericInitialData || {})
+        this.set(
+            this.constructor.defaultScope,
+            tools.globalContext.genericInitialData || {})
         if (
             'document' in tools.globalContext &&
             'querySelector' in tools.globalContext.document
@@ -582,31 +586,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             specification && typeof newData === 'object' && newData !== null
         ) {
             for (const name:string in oldData)
-                if (
-                    oldData.hasOwnProperty(name) &&
-                    !(
-                        this.modelConfiguration.property.name.reserved.concat([
-                            this.specialNames.additional,
-                            this.specialNames.allowedRole,
-                            this.specialNames.attachment,
-                            this.specialNames.conflict,
-                            this.specialNames.constraint.execution,
-                            this.specialNames.constraint.expression,
-                            this.specialNames.deleted,
-                            this.specialNames.deletedConflict,
-                            this.specialNames.extend,
-                            this.specialNames.id,
-                            this.specialNames.localSequence,
-                            this.specialNames.maximumAggregatedSize,
-                            this.specialNames.minimumAggregatedSize,
-                            this.specialNames.revision,
-                            this.specialNames.revisions,
-                            this.specialNames.revisionsInformation,
-                            this.specialNames.type
-                        ]).includes(name) ||
-                        [null, undefined].includes(oldData[name])
-                    )
-                )
+                if (oldData.hasOwnProperty(name))
                     if (newData.hasOwnProperty(name)) {
                         const result:{newData:any;payloadExists:boolean} =
                             this.removeAlreadyExistingData(
@@ -630,70 +610,68 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
     }
     /**
      * Removes all special property names with meta data from given document.
-     * @param document - To trim.
+     * @param data - To trim.
      * @param specification - Specification object for given document.
      * @returns Sliced given document.
      */
-    removeMetaData(
-        document:PlainObject, specification:?PlainObject
-    ):PlainObject {
-        const result:PlainObject = {}
-        for (const name:string in document)
-            if (
-                document.hasOwnProperty(name) &&
-                ![undefined, null, ''].includes(document[name]) &&
-                (
-                    this.modelConfiguration.property.name.reserved.concat(
-                        this.specialNames.deleted,
-                        this.specialNames.id,
-                        this.specialNames.revision,
-                        this.specialNames.type
-                    ).includes(name) ||
-                    ![
-                        this.specialNames.additional,
-                        this.specialNames.allowedRole,
-                        this.specialNames.attachment,
-                        this.specialNames.conflict,
-                        this.specialNames.constraint.execution,
-                        this.specialNames.constraint.expression,
-                        this.specialNames.deletedConflict,
-                        this.specialNames.extend,
-                        this.specialNames.localSequence,
-                        this.specialNames.maximumAggregatedSize,
-                        this.specialNames.minimumAggregatedSize,
-                        this.specialNames.revisions,
-                        this.specialNames.revisionsInformations
-                    ].includes(name) &&
+    removeMetaData(data:PlainObject, specification:?PlainObject):any {
+        if (data instanceof Date)
+            return this.numberGetUTCTimestamp(data)
+        if (Array.isArray(data)) {
+            let index:number = 0
+            for (const item:any of data) {
+                data[index] = this.removeMetaData(
+                    item, specification && (
+                        specification[name] ||
+                        specification[this.specialNames.additional]))
+                index += 1
+            }
+            return data
+        }
+        if (typeof data === 'object' && data !== null) {
+            const result:PlainObject = {}
+            for (const name:string in data)
+                if (
+                    data.hasOwnProperty(name) &&
+                    ![undefined, null, ''].includes(data[name]) &&
                     (
-                        !specification ||
-                        specification.hasOwnProperty(name) ||
-                        specification.hasOwnProperty(
-                            this.specialNames.additional) &&
-                        specification[this.specialNames.additional]
+                        this.modelConfiguration.property.name.reserved.concat(
+                            this.specialNames.deleted,
+                            this.specialNames.id,
+                            this.specialNames.revision,
+                            this.specialNames.type
+                        ).includes(name) ||
+                        ![
+                            this.specialNames.additional,
+                            this.specialNames.allowedRole,
+                            this.specialNames.attachment,
+                            this.specialNames.conflict,
+                            this.specialNames.constraint.execution,
+                            this.specialNames.constraint.expression,
+                            this.specialNames.deletedConflict,
+                            this.specialNames.extend,
+                            this.specialNames.localSequence,
+                            this.specialNames.maximumAggregatedSize,
+                            this.specialNames.minimumAggregatedSize,
+                            this.specialNames.revisions,
+                            this.specialNames.revisionsInformations
+                        ].includes(name) &&
+                        (
+                            !specification ||
+                            specification.hasOwnProperty(name) ||
+                            specification.hasOwnProperty(
+                                this.specialNames.additional) &&
+                            specification[this.specialNames.additional]
+                        )
                     )
                 )
-            )
-                if (result[name] instanceof Date)
-                    result[name] = this.numberGetUTCTimestamp(result[name])
-                else if (Array.isArray(result[name])) {
-                    let index:number = 0
-                    for (const item:any of result[name]) {
-                        result[name][index] = this.removeMetaData(
-                            item, specification && (
-                                specification[name] ||
-                                specification[this.specialNames.additional]))
-                        index += 1
-                    }
-                } else if (
-                    typeof result[name] === 'object' && result[name] !== null
-                )
                     result[name] = this.removeMetaData(
-                        result[name], specification && (
+                        data[name], specification && (
                             specification[name] ||
                             specification[this.specialNames.additional]))
-                else
-                    result[name] = document[name]
-        return result
+            return result
+        }
+        return data
     }
     /**
      * Implements the meta data removing of given document.
@@ -715,7 +693,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             this.modelConfiguration.entities.hasOwnProperty(newDocument[
                 this.specialNames.type])
         )
-            specification = this.modelConfiguration.entities[document[
+            specification = this.modelConfiguration.entities[newDocument[
                 this.specialNames.type]]
         let result:PlainObject = this.removeMetaData(
             newDocument, specification)
@@ -824,9 +802,6 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         }
         let payloadExists:boolean = false
         if (oldDocument) {
-            payloadExists = this.removeAlreadyExistingData(
-                result, oldDocument, specification
-            ).payloadExists
             // Handle attachment removes or replacements.
             if (
                 oldDocument.hasOwnProperty(this.specialNames.attachment) &&
@@ -838,6 +813,11 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                 if (this.specialNames.attachment in result)
                     payloadExists = true
             } else if (this.specialNames.attachment in result)
+                payloadExists = true
+            if (this.removeAlreadyExistingData(
+                result, this.removeMetaData(oldDocument, specification),
+                specification
+            ).payloadExists)
                 payloadExists = true
         }
         // Check if real payload exists in currently determined raw data.

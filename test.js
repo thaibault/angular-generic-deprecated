@@ -101,43 +101,6 @@ registerAngularTest(function(
     return {
         bootstrap: ():Array<Object> => {
             // region prepare services
-            $.global.genericInitialData = {configuration: {
-                database: {
-                    connector: {
-                        adapter: 'memory'
-                    },
-                    model: {
-                        entities: {Test: {
-                            [specialNames.attachment]: {'.+\\.(?:jpe?g|png)': {
-                                contentTypeRegularExpressionPattern:
-                                    '^image/.+',
-                                maximumNumber: 1,
-                                minimum: 0,
-                                minimumLength: 0,
-                                minimumNumber: 0,
-                                name: '.+\\.(?:jpe?g|png)',
-                                onCreateExpression: `{name: 'a.jpg'}`
-                            }},
-                            [specialNames.id]: {
-                                minimum: 0,
-                                minimumLength: 0,
-                                minimumNumber: 0,
-                                name: specialNames.id,
-                                mutable: false
-                            },
-                            a: {
-                                minimum: 0,
-                                minimumLength: 0,
-                                minimumNumber: 0,
-                                name: 'a'
-                            }
-                        }}
-                    },
-                    plugins: [PouchDBAdapterMemory],
-                    url: 'test'
-                },
-                test: true
-            }}
             const Module:Object = index.default
             const {
                 AbstractResolver,
@@ -170,6 +133,42 @@ registerAngularTest(function(
                 StringTemplatePipe,
                 TypePipe
             } = index
+            let specialNames:{[key:string]:string} =
+                InitialDataService.defaultScope.configuration.database.model
+                    .property.name.special
+            $.global.genericInitialData = {configuration: {
+                database: {
+                    connector: {adapter: 'memory'},
+                    model: {entities: {Test: {
+                        [specialNames.attachment]: {'.+\\.(?:jpe?g|png)': {
+                            contentTypeRegularExpressionPattern:
+                                '^image/.+',
+                            maximumNumber: 1,
+                            minimum: 0,
+                            minimumLength: 0,
+                            minimumNumber: 0,
+                            name: '.+\\.(?:jpe?g|png)',
+                            onCreateExpression: `{name: 'a.jpg'}`
+                        }},
+                        [specialNames.id]: {
+                            minimum: 0,
+                            minimumLength: 0,
+                            minimumNumber: 0,
+                            name: specialNames.id,
+                            mutable: false
+                        },
+                        a: {
+                            minimum: 0,
+                            minimumLength: 0,
+                            minimumNumber: 0,
+                            name: 'a'
+                        }
+                    }}},
+                    plugins: [PouchDBAdapterMemory],
+                    url: 'test'
+                },
+                test: true
+            }}
             // IgnoreTypeCheck
             @Injectable()
             /**
@@ -302,9 +301,8 @@ registerAngularTest(function(
                 ):void {
                     (async ():Promise<void> => {
                         await data.initialize()
-                        const specialNames:{[key:string]:string} =
-                            initialData.configuration.database.model.property
-                            .name.special
+                        specialNames = initialData.configuration.database.model
+                            .property.name.special
                         // region basic services
                         self.test(`ToolsService (${roundType})`, (
                             assert:Object
@@ -626,12 +624,19 @@ registerAngularTest(function(
                                 [{a: 2}, null, {a: 2}],
                                 [{a: 2, [specialNames.id]: 2}, null, {a: 2, [specialNames.id]: 2}],
                                 [
-                                    {a: 2, _constraintExecutions: null},
+                                    {
+                                        a: 2,
+                                        [specialNames.constraint.execution]:
+                                            null
+                                    },
                                     null, {a: 2}
                                 ],
                                 [{a: 2}, {b: {}}, {}],
                                 [{a: 2}, {a: {}}, {a: 2}],
-                                [{a: 2}, {_additionals: {}}, {a: 2}]
+                                [
+                                    {a: 2},
+                                    {[specialNames.additional]: {}},
+                                    {a: 2}]
                             ])
                                 assert.deepEqual(
                                     extractRawDataPipe.removeMetaData(
@@ -670,9 +675,18 @@ registerAngularTest(function(
                                     content_type: 'a/b', data: 2
                                     /* eslint-enable camelcase */
                                 }}}],
-                                [[{[specialNames.attachment]: {a: {data: 2, length: 2}}}, {
-                                    [specialNames.attachment]: {a: {name: 'a', length: 2}}
-                                }], null],
+                                [
+                                    [{
+                                        [specialNames.attachment]: {a: {
+                                            data: 2, length: 2
+                                        }}
+                                    }, {
+                                        [specialNames.attachment]: {a: {
+                                            name: 'a', length: 2
+                                        }}
+                                    }],
+                                    null
+                                ],
                                 [[{[specialNames.attachment]: {a: {
                                     /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2, length: 2
@@ -682,15 +696,20 @@ registerAngularTest(function(
                                     content_type: 'a/b', length: 2, name: 'a'
                                     /* eslint-enable camelcase */
                                 }}}], null],
-                                [[{[specialNames.attachment]: {a: {data: 2, length: 2}}}, {
-                                    [specialNames.attachment]: {a: {
-                                        /* eslint-disable camelcase */
-                                        content_type:
-                                            'application/octet-stream',
-                                        /* eslint-enable camelcase */
-                                        length: 2, name: 'a'
-                                    }}
-                                }], null],
+                                [
+                                    [{[specialNames.attachment]: {a: {
+                                        data: 2, length: 2
+                                    }}}, {
+                                        [specialNames.attachment]: {a: {
+                                            /* eslint-disable camelcase */
+                                            content_type:
+                                                'application/octet-stream',
+                                            /* eslint-enable camelcase */
+                                            length: 2, name: 'a'
+                                        }}
+                                    }],
+                                    null
+                                ],
                                 [[{[specialNames.attachment]: {a: {data: 2, length: 2}}}, {
                                     [specialNames.attachment]: {a: {length: 3, name: 'a'}}
                                 }], {[specialNames.attachment]: {a: {
@@ -710,7 +729,7 @@ registerAngularTest(function(
                                     content_type: 'a/b', data: 2
                                     /* eslint-enable camelcase */
                                 }}}],
-                                [[{}, {a: {length: 2, name: 'a'}}], {a: null}],
+                                [[{[specialNames.type]: 'Test'}, {a: {length: 2, name: 'a'}}], {[specialNames.type]: 'Test', a: null}],
                                 [[{[specialNames.type]: 'Test', b: 2}], null],
                                 [
                                     [{[specialNames.type]: 'Test', a: '2', b: 2}],
@@ -1415,9 +1434,13 @@ registerAngularTest(function(
                     {provide: ActivatedRoute, useClass: ActivatedRouteStub},
                     {provide: Router, useClass: RouterStub}
                 ]
-            }]
+            }, specialNames]
         },
-        component: function(TestBed:Object, roundType:string):void {
+        component: function(
+            TestBed:Object, roundType:string, targetTechnology:string,
+            $:Object, testingModule:Object, testingPlatform:Object,
+            specialNames:{[key:string]:string}
+        ):void {
             // region prepare components
             const {
                 AbstractInputComponent,

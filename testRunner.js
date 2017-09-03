@@ -187,7 +187,8 @@ export default function(
             result[1])
         await TestBed.compileComponents()
         await callback.component.call(
-            this, TestBed, roundType, targetTechnology, $, ...parameter)
+            this, TestBed, roundType, targetTechnology, $, ...parameter.concat(
+                result.slice(2)))
         // endregion
     }, roundTypes, ...additionalParameter)
 }
