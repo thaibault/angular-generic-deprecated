@@ -30,10 +30,7 @@ import registerAngularTest from './testRunner'
 registerAngularTest(function(
     ApplicationComponent:Object, roundType:string, targetTechnology:?string,
     $:any
-):{
-    bootstrap:Function;
-    component:Function;
-} {
+):{bootstrap:Function;component:Function} {
     const now:Date = new Date()
     const nowUTCTimestamp:number = Tools.numberGetUTCTimestamp(now)
     // region imports
