@@ -530,6 +530,34 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         this.tools = tools.tools
     }
     /**
+     * Converts all (nested) date object in given data structure to their
+     * corresponding utc timestamps in milliseconds.
+     * @param value - Given data structure to convert.
+     * @returns Given converted object.
+     */
+    convertDateToTimestampRecursively(value:any):any {
+        if (typeof value === 'object' && value !== null) {
+            if (value instanceof Date)
+                return this.numberGetUTCTimestamp(value)
+            if (Array.isArray(value)) {
+                const result:Array<any> = []
+                for (const subValue:any of value)
+                    result.push(this.convertDateToTimestampRecursively(
+                        subValue))
+                return result
+            }
+            if (Object.getPrototypeOf(value) === Object.prototype) {
+                const result:PlainObject = {}
+                for (const name:string in value)
+                    if (value.hasOwnProperty(name))
+                        result[name] = this.convertDateToTimestampRecursively(
+                            value[name])
+                return result
+            }
+        }
+        return value
+    }
+    /**
      * Remove already existing values and mark removed or truncated values
      * (only respect values if specified in model).
      * @param newData - Data to consider.
@@ -594,12 +622,10 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         payloadExists = true
                         newData[name] = null
                     }
-        } else {
-            if (oldData instanceof Date)
-                oldData = this.numberGetUTCTimestamp(oldData)
-            if (!this.equals(newData, oldData))
-                payloadExists = true
-        }
+        } else if (!this.equals(
+            newData, this.convertDateToTimestampRecursively(oldData)
+        ))
+            payloadExists = true
         return {newData, payloadExists}
     }
     /**

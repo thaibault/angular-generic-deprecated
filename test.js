@@ -108,7 +108,7 @@ registerAngularTest(function(
                     },
                     model: {
                         entities: {Test: {
-                            _attachments: {'.+\\.(?:jpe?g|png)': {
+                            [specialNames.attachment]: {'.+\\.(?:jpe?g|png)': {
                                 contentTypeRegularExpressionPattern:
                                     '^image/.+',
                                 maximumNumber: 1,
@@ -118,11 +118,11 @@ registerAngularTest(function(
                                 name: '.+\\.(?:jpe?g|png)',
                                 onCreateExpression: `{name: 'a.jpg'}`
                             }},
-                            _id: {
+                            [specialNames.id]: {
                                 minimum: 0,
                                 minimumLength: 0,
                                 minimumNumber: 0,
-                                name: '_id',
+                                name: specialNames.id,
                                 mutable: false
                             },
                             a: {
@@ -302,6 +302,9 @@ registerAngularTest(function(
                 ):void {
                     (async ():Promise<void> => {
                         await data.initialize()
+                        const specialNames:{[key:string]:string} =
+                            initialData.configuration.database.model.property
+                            .name.special
                         // region basic services
                         self.test(`ToolsService (${roundType})`, (
                             assert:Object
@@ -342,8 +345,8 @@ registerAngularTest(function(
                                 assert:Object
                             ):void => {
                                 for (const test:Array<any> of [
-                                    [{_attachments: {a: {data: ''}}}, 'a'],
-                                    [{_attachments: {a: {data: 'a'}}}, 'a']
+                                    [{[specialNames.attachment]: {a: {data: ''}}}, 'a'],
+                                    [{[specialNames.attachment]: {a: {data: 'a'}}}, 'a']
                                 ])
                                     assert.ok(
                                         attachmentWithPrefixExistsPipe
@@ -351,7 +354,7 @@ registerAngularTest(function(
                                 for (const test:Array<any> of [
                                     [{}, null],
                                     [{}, 'a'],
-                                    [{_attachments: {a: {data: 'a'}}}, 'b']
+                                    [{[specialNames.attachment]: {a: {data: 'a'}}}, 'b']
                                 ])
                                     assert.notOk(
                                         attachmentWithPrefixExistsPipe
@@ -374,12 +377,12 @@ registerAngularTest(function(
                                     {a: {value: 2}}
                                 ],
                                 [
-                                    {value: {a: {value: 2}, '-type': 'Test'}},
+                                    {value: {a: {value: 2}, [specialNames.type]: 'Test'}},
                                     {a: 2}
                                 ],
                                 [
                                     [{
-                                        value: {a: {value: 2}, '-type': 'Test'}
+                                        value: {a: {value: 2}, [specialNames.type]: 'Test'}
                                     }],
                                     [{a: 2}]
                                 ],
@@ -387,7 +390,7 @@ registerAngularTest(function(
                                     [{value: {
                                         a: {value: 2},
                                         metaData: true,
-                                        '-type': 'Test'
+                                        [specialNames.type]: 'Test'
                                     }}],
                                     [{a: 2}]
                                 ],
@@ -395,7 +398,7 @@ registerAngularTest(function(
                                     [[[{value: {
                                         a: {value: 2},
                                         metaData: true,
-                                        '-type': 'Test'
+                                        [specialNames.type]: 'Test'
                                     }}]]],
                                     [[[{a: 2}]]]
                                 ]
@@ -419,7 +422,7 @@ registerAngularTest(function(
                                 ],
                                 [
                                     {a: {value: {
-                                        a: {value: 2}, '-type': 'Test'
+                                        a: {value: 2}, [specialNames.type]: 'Test'
                                     }}},
                                     {a: {a: 2}}
                                 ],
@@ -427,7 +430,7 @@ registerAngularTest(function(
                                     {a: {value: {
                                         a: {value: 2},
                                         metaData: true,
-                                        '-type': 'Test'
+                                        [specialNames.type]: 'Test'
                                     }}},
                                     {a: {a: 2}}
                                 ],
@@ -435,7 +438,7 @@ registerAngularTest(function(
                                     {a: {value: [{
                                         a: {value: 2},
                                         metaData: true,
-                                        '-type': 'Test'
+                                        [specialNames.type]: 'Test'
                                     }]}},
                                     {a: [{a: 2}]}
                                 ],
@@ -443,7 +446,7 @@ registerAngularTest(function(
                                     {a: {value: [[{
                                         a: {value: 2},
                                         metaData: true,
-                                        '-type': 'Test'
+                                        [specialNames.type]: 'Test'
                                     }]]}},
                                     {a: [[{a: 2}]]}
                                 ],
@@ -452,37 +455,37 @@ registerAngularTest(function(
                                         a: {value: [[{
                                             a: {value: 2},
                                             metaData: true,
-                                            '-type': 'Test'
+                                            [specialNames.type]: 'Test'
                                         }]]},
                                         metaData: true,
-                                        '-type': 'Test'
+                                        [specialNames.type]: 'Test'
                                     }]]}},
                                     {a: [[{a: [[{a: 2}]]}]]}
                                 ],
                                 [{
                                     a: {value: 2}, b: 3, _c: {value: 4},
-                                    _attachments: null, '-type': 'Test'
+                                    [specialNames.attachment]: null, [specialNames.type]: 'Test'
                                 }, {a: 2}],
                                 [{
                                     a: {value: 2}, b: 3, _c: {value: 4},
-                                    _attachments: {}
+                                    [specialNames.attachment]: {}
                                 }, {a: 2, b: 3, _c: 4}],
-                                [{a: {value: 2}, b: 3, _attachments: {a: {
+                                [{a: {value: 2}, b: 3, [specialNames.attachment]: {a: {
                                     value: {name: 'a'}
-                                }}}, {a: 2, b: 3, _attachments: {a: {
+                                }}}, {a: 2, b: 3, [specialNames.attachment]: {a: {
                                     name: 'a'
                                 }}}],
                                 [{
                                     a: {value: 2}, b: 3, _c: {value: 4},
-                                    _id: 2,
-                                    _attachments: {a: {value: {
+                                    [specialNames.id]: 2,
+                                    [specialNames.attachment]: {a: {value: {
                                         name: 'a'
                                     }}},
-                                    '-type': 'Test'
+                                    [specialNames.type]: 'Test'
                                 }, {
                                     a: 2,
-                                    _attachments: {a: {name: 'a'}},
-                                    _id: 2
+                                    [specialNames.attachment]: {a: {name: 'a'}},
+                                    [specialNames.id]: 2
                                 }]
                             ])
                                 assert.deepEqual(
@@ -494,6 +497,32 @@ registerAngularTest(function(
                         self.test(`ExtractRawDataPipe (${roundType})`, (
                             assert:Object
                         ):void => {
+                            // region convertDateToTimestampRecursively
+                            for (const test:Array<any> of [
+                                [{}, {}],
+                                [null, null],
+                                [true, true],
+                                [2, 2],
+                                [0, 0],
+                                [[], []],
+                                [[1], [1]],
+                                [[1, 2], [1, 2]],
+                                [[1, new Date(0)], [1, 0]],
+                                [{a: 1, b: true}, {a: 1, b: true}],
+                                [{a: new Date(Date.UTC(1970, 0, 1))}, {a: 0}],
+                                [{a: new Date(0)}, {a: 0}],
+                                [
+                                    {a: new Date(0), b: [2, 3]},
+                                    {a: 0, b: [2, 3]}
+                                ],
+                                [{a: [new Date(90000)]}, {a: [90]}]
+                            ])
+                                assert.deepEqual(
+                                    extractRawDataPipe
+                                        .convertDateToTimestampRecursively(
+                                            test[0]),
+                                    test[1])
+                            // endregion
                             // region removeAlreadyExistingData
                             for (const test:Array<any> of [
                                 [
@@ -516,20 +545,20 @@ registerAngularTest(function(
                                     }
                                 ],
                                 [
-                                    {['-type']: 'Test', a: 'a',},
+                                    {[specialNames.type]: 'Test', a: 'a',},
                                     {a: 'a'},
                                     {a: {}},
                                     {
-                                        newData: {'-type': 'Test'},
+                                        newData: {[specialNames.type]: 'Test'},
                                         payloadExists: false
                                     }
                                 ],
                                 [
-                                    {['-type']: 'Test', a: {a: 'a'}},
+                                    {[specialNames.type]: 'Test', a: {a: 'a'}},
                                     {a: {a: 'a'}},
                                     {a: {a: {type: 'Test'}}},
                                     {
-                                        newData: {'-type': 'Test'},
+                                        newData: {[specialNames.type]: 'Test'},
                                         payloadExists: false
                                     }
                                 ],
@@ -555,30 +584,32 @@ registerAngularTest(function(
                                     }
                                 ],
                                 [
-                                    {['-type']: 'Test', a: now},
+                                    {[specialNames.type]: 'Test', a: now},
                                     {a: now},
                                     {a: {a: {type: 'Test'}}},
                                     {
-                                        newData: {'-type': 'Test'},
+                                        newData: {[specialNames.type]: 'Test'},
                                         payloadExists: false
                                     }
                                 ],
                                 [
-                                    {['-type']: 'Test', a: 0},
+                                    {[specialNames.type]: 'Test', a: 0},
                                     {a: new Date(0)},
                                     {a: {a: {type: 'Test'}}},
                                     {
-                                        newData: {'-type': 'Test'},
+                                        newData: {[specialNames.type]: 'Test'},
                                         payloadExists: false
                                     }
                                 ],
-                                // TODO check model specified nested dates.
                                 [
-                                    {['-type']: 'Test', a: {a: 'a'}},
-                                    {a: {a: 'a'}},
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: nowUTCTimestamp}
+                                    },
+                                    {a: {a: now}},
                                     {a: {a: {type: 'Test'}}},
                                     {
-                                        newData: {'-type': 'Test'},
+                                        newData: {[specialNames.type]: 'Test'},
                                         payloadExists: false
                                     }
                                 ]
@@ -588,6 +619,24 @@ registerAngularTest(function(
                                         .removeAlreadyExistingData(
                                             test[0], test[1], test[2]),
                                     test[3])
+                            // endregion
+                            // region removeMetaData
+                            for (const test:Array<any> of [
+                                [{}, null, {}],
+                                [{a: 2}, null, {a: 2}],
+                                [{a: 2, [specialNames.id]: 2}, null, {a: 2, [specialNames.id]: 2}],
+                                [
+                                    {a: 2, _constraintExecutions: null},
+                                    null, {a: 2}
+                                ],
+                                [{a: 2}, {b: {}}, {}],
+                                [{a: 2}, {a: {}}, {a: 2}],
+                                [{a: 2}, {_additionals: {}}, {a: 2}]
+                            ])
+                                assert.deepEqual(
+                                    extractRawDataPipe.removeMetaData(
+                                        test[0], test[1]),
+                                    test[2])
                             // endregion
                             // region transform
                             for (const test:Array<any> of [
@@ -600,11 +649,11 @@ registerAngularTest(function(
                                 [[{a: undefined, b: null, c: '', d: {
                                 }}], {d: {}}],
                                 [[{a: undefined, b: 3}], {b: 3}],
-                                [[{a: undefined, _revisions: 3}], null],
-                                [[{_attachments: undefined}], null],
-                                [[{_attachments: {a: {}}}], null],
-                                [[{_attachments: {a: {data: 2}}}], {
-                                    _attachments: {a: {
+                                [[{a: undefined, [specialNames.revisions]: 3}], null],
+                                [[{[specialNames.attachment]: undefined}], null],
+                                [[{[specialNames.attachment]: {a: {}}}], null],
+                                [[{[specialNames.attachment]: {a: {data: 2}}}], {
+                                    [specialNames.attachment]: {a: {
                                         /* eslint-disable camelcase */
                                         content_type:
                                             'application/octet-stream',
@@ -612,29 +661,29 @@ registerAngularTest(function(
                                         data: 2
                                     }}
                                 }],
-                                [[{_attachments: {a: {
+                                [[{[specialNames.attachment]: {a: {
                                     /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2
                                     /* eslint-enable camelcase */
-                                }}}], {_attachments: {a: {
+                                }}}], {[specialNames.attachment]: {a: {
                                     /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2
                                     /* eslint-enable camelcase */
                                 }}}],
-                                [[{_attachments: {a: {data: 2, length: 2}}}, {
-                                    _attachments: {a: {name: 'a', length: 2}}
+                                [[{[specialNames.attachment]: {a: {data: 2, length: 2}}}, {
+                                    [specialNames.attachment]: {a: {name: 'a', length: 2}}
                                 }], null],
-                                [[{_attachments: {a: {
+                                [[{[specialNames.attachment]: {a: {
                                     /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2, length: 2
                                     /* eslint-enable camelcase */
-                                }}}, {_attachments: {a: {
+                                }}}, {[specialNames.attachment]: {a: {
                                     /* eslint-disable camelcase */
                                     content_type: 'a/b', length: 2, name: 'a'
                                     /* eslint-enable camelcase */
                                 }}}], null],
-                                [[{_attachments: {a: {data: 2, length: 2}}}, {
-                                    _attachments: {a: {
+                                [[{[specialNames.attachment]: {a: {data: 2, length: 2}}}, {
+                                    [specialNames.attachment]: {a: {
                                         /* eslint-disable camelcase */
                                         content_type:
                                             'application/octet-stream',
@@ -642,33 +691,33 @@ registerAngularTest(function(
                                         length: 2, name: 'a'
                                     }}
                                 }], null],
-                                [[{_attachments: {a: {data: 2, length: 2}}}, {
-                                    _attachments: {a: {length: 3, name: 'a'}}
-                                }], {_attachments: {a: {
+                                [[{[specialNames.attachment]: {a: {data: 2, length: 2}}}, {
+                                    [specialNames.attachment]: {a: {length: 3, name: 'a'}}
+                                }], {[specialNames.attachment]: {a: {
                                     /* eslint-disable camelcase */
                                     content_type: 'application/octet-stream',
                                     /* eslint-enable camelcase */
                                     data: 2
                                 }}}],
-                                [[{_attachments: {a: {
+                                [[{[specialNames.attachment]: {a: {
                                     /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2, length: 2
                                     /* eslint-enable camelcase */
-                                }}}, {_attachments: {a: {
+                                }}}, {[specialNames.attachment]: {a: {
                                     length: 2, name: 'a'
-                                }}}], {_attachments: {a: {
+                                }}}], {[specialNames.attachment]: {a: {
                                     /* eslint-disable camelcase */
                                     content_type: 'a/b', data: 2
                                     /* eslint-enable camelcase */
                                 }}}],
                                 [[{}, {a: {length: 2, name: 'a'}}], {a: null}],
-                                [[{'-type': 'Test', b: 2}], null],
+                                [[{[specialNames.type]: 'Test', b: 2}], null],
                                 [
-                                    [{'-type': 'Test', a: '2', b: 2}],
-                                    {'-type': 'Test', a: '2'}
+                                    [{[specialNames.type]: 'Test', a: '2', b: 2}],
+                                    {[specialNames.type]: 'Test', a: '2'}
                                 ],
-                                [[{'-type': 'Test', a: '2', b: 2}, {
-                                    '-type': 'Test', a: '2'
+                                [[{[specialNames.type]: 'Test', a: '2', b: 2}, {
+                                    [specialNames.type]: 'Test', a: '2'
                                 }], null]
                             ])
                                 assert.deepEqual(
@@ -680,21 +729,21 @@ registerAngularTest(function(
                                 [{}, {}, true, [], {}],
                                 [
                                     {}, {a: {name: 'a'}}, true, [],
-                                    {_attachments: {a: {data: null}}}
+                                    {[specialNames.attachment]: {a: {data: null}}}
                                 ],
                                 [
                                     {}, {a: {name: 'a'}}, true, ['a'],
                                     {}
                                 ],
                                 [
-                                    {_attachments: {a: {}}},
+                                    {[specialNames.attachment]: {a: {}}},
                                     {'[ab]': {name: 'b'}}, true, [],
-                                    {_attachments: {a: {}, b: {data: null}}}
+                                    {[specialNames.attachment]: {a: {}, b: {data: null}}}
                                 ],
                                 [
-                                    {_attachments: {a: {}}},
+                                    {[specialNames.attachment]: {a: {}}},
                                     {'[ab]': {name: 'b'}}, false, [],
-                                    {_attachments: {a: {}}}
+                                    {[specialNames.attachment]: {a: {}}}
                                 ]
                             ])
                                 assert.deepEqual(
@@ -1010,26 +1059,26 @@ registerAngularTest(function(
                             const done:Function = assert.async()
                             try {
                                 const item:PlainObject = {
-                                    _id: 'a', _rev: 'upsert', '-type': 'Test',
+                                    [specialNames.id]: 'a', [specialNames.revision]: 'upsert', [specialNames.type]: 'Test',
                                     a: 'test'}
-                                item._rev = (await data.put(item)).rev
+                                item[specialNames.revision] = (await data.put(item)).rev
                                 assert.deepEqual(await data.get('a'), item)
                                 item.a = 'a'
-                                item._rev = (await data.bulkDocs([item]))[
+                                item[specialNames.revision] = (await data.bulkDocs([item]))[
                                     0
                                 ].rev
-                                item._rev = 'upsert'
-                                item._rev = (await data.bulkDocs([item]))[
+                                item[specialNames.revision] = 'upsert'
+                                item[specialNames.revision] = (await data.bulkDocs([item]))[
                                     0
                                 ].rev
-                                item._rev = 'latest'
-                                item._rev = (await data.bulkDocs([item]))[
+                                item[specialNames.revision] = 'latest'
+                                item[specialNames.revision] = (await data.bulkDocs([item]))[
                                     0
                                 ].rev
-                                item._rev = 'upsert'
-                                item._rev = (await data.put(item)).rev
-                                item._rev = 'latest'
-                                item._rev = (await data.put(item)).rev
+                                item[specialNames.revision] = 'upsert'
+                                item[specialNames.revision] = (await data.put(item)).rev
+                                item[specialNames.revision] = 'latest'
+                                item[specialNames.revision] = (await data.put(item)).rev
                                 assert.deepEqual(await data.get('a'), item)
                                 let test:boolean = false
                                 const deregister:Function = data.register(
@@ -1068,10 +1117,10 @@ registerAngularTest(function(
                                 // region generate
                                 for (const test:Array<any> of [
                                     [['Test'], {
-                                        _attachments: {'.+\\.(?:jpe?g|png)': {
+                                        [specialNames.attachment]: {'.+\\.(?:jpe?g|png)': {
                                             value: {name: 'a.jpg'}
                                         }},
-                                        _id: {value: null},
+                                        [specialNames.id]: {value: null},
                                         a: {value: null}
                                     }],
                                     [['Test', ['a']], {a: {
@@ -1089,8 +1138,8 @@ registerAngularTest(function(
                                         value: 2
                                     }}],
                                     [['Test', [
-                                        '_attachments'
-                                    ]], {_attachments: {
+                                        specialNames.attachment
+                                    ]], {[specialNames.attachment]: {
                                         '.+\\.(?:jpe?g|png)': {
                                             /* eslint-disable indent */
                                         contentTypeRegularExpressionPattern:
@@ -1104,37 +1153,37 @@ registerAngularTest(function(
                                             onCreateExpression:
                                                 initialData.configuration
                                                     .database.model.entities
-                                                    .Test._attachments[
+                                                    .Test[specialNames.attachment][
                                                         '.+\\.(?:jpe?g|png)'
                                                     ].onCreateExpression,
                                             value: {name: 'a.jpg'}
                                         }
                                     }}],
-                                    [['Test', null, {_attachments: {'b.jpg': {
+                                    [['Test', null, {[specialNames.attachment]: {'b.jpg': {
                                     }}}], {
-                                        _attachments: {'.+\\.(?:jpe?g|png)': {
+                                        [specialNames.attachment]: {'.+\\.(?:jpe?g|png)': {
                                             value: {name: 'b.jpg'}
                                         }},
-                                        _id: {value: null},
+                                        [specialNames.id]: {value: null},
                                         a: {value: null}
                                     }],
-                                    [['Test', null, {_attachments: {}}], {
-                                        _attachments: {'.+\\.(?:jpe?g|png)': {
+                                    [['Test', null, {[specialNames.attachment]: {}}], {
+                                        [specialNames.attachment]: {'.+\\.(?:jpe?g|png)': {
                                             value: null
                                         }},
-                                        _id: {value: null},
+                                        [specialNames.id]: {value: null},
                                         a: {value: null}
                                     }],
-                                    [['Test', null, {_attachments: {
+                                    [['Test', null, {[specialNames.attachment]: {
                                         'b.jpg': {test: 2}
                                     }}], {
-                                        _attachments: {'.+\\.(?:jpe?g|png)': {
+                                        [specialNames.attachment]: {'.+\\.(?:jpe?g|png)': {
                                             value: {
                                                 name: 'b.jpg',
                                                 test: 2
                                             }
                                         }},
-                                        _id: {value: null},
+                                        [specialNames.id]: {value: null},
                                         a: {value: null}
                                     }]
                                 ])
@@ -1142,7 +1191,7 @@ registerAngularTest(function(
                                         ...test[0]
                                     ), extendObjectPipe.transform(true, {
                                         _metaData: {submitted: false},
-                                        '-type': 'Test'
+                                        [specialNames.type]: 'Test'
                                     }, (
                                         test[0].length < 2 ||
                                         test[0][1] === null
@@ -1184,10 +1233,10 @@ registerAngularTest(function(
                                     'Test'
                                 ), extendObjectPipe.transform(true, {
                                     _metaData: {submitted: false},
-                                    '-type': 'Test',
+                                    [specialNames.type]: 'Test',
                                     a: {value: extendObjectPipe.transform(
                                         true, {
-                                            '-type': 'A',
+                                            [specialNames.type]: 'A',
                                             _metaData: {submitted: false},
                                             a: {
                                                 value: 'a'
@@ -1226,10 +1275,10 @@ registerAngularTest(function(
                                         .entities.Test,
                                     {
                                         _metaData: {submitted: false},
-                                        '-type': 'Test',
+                                        [specialNames.type]: 'Test',
                                         a: {value: [extendObjectPipe.transform(
                                             true, {
-                                                '-type': 'A',
+                                                [specialNames.type]: 'A',
                                                 _metaData: {submitted: false},
                                                 a: {value: 'a'}
                                             },
@@ -1244,16 +1293,16 @@ registerAngularTest(function(
                                 assert.deepEqual(await dataScope.determine(
                                     'Test'
                                 ), extendObjectPipe.transform(true, {
-                                    _attachments: {'.+\\.(?:jpe?g|png)': {
+                                    [specialNames.attachment]: {'.+\\.(?:jpe?g|png)': {
                                         name: '.+\\.(?:jpe?g|png)',
                                         value: {name: 'a.jpg'}
                                     }},
-                                    _id: {
-                                        name: '_id',
+                                    [specialNames.id]: {
+                                        name: specialNames.id,
                                         value: null
                                     },
                                     _metaData: {submitted: false},
-                                    '-type': 'Test',
+                                    [specialNames.type]: 'Test',
                                     a: {
                                         minimum: 0,
                                         minimumLength: 0,
@@ -1276,16 +1325,16 @@ registerAngularTest(function(
                         ):Promise<void> => {
                             const done:Function = assert.async()
                             try {
-                                for (const name:string of ['_id', 'a'])
+                                for (const name:string of [specialNames.id, 'a'])
                                     await data.createIndex({index: {
                                         ddoc: `Test-${name}-GenericIndex`,
-                                        fields: ['-type', name],
+                                        fields: [specialNames.type, name],
                                         name: `Test-${name}-GenericIndex`
                                     }})
                                 const item:PlainObject = {
-                                    _id: 'a', _rev: 'upsert', '-type': 'Test',
+                                    [specialNames.id]: 'a', [specialNames.revision]: 'upsert', [specialNames.type]: 'Test',
                                     a: 'test'}
-                                item._rev = (await data.put(item)).rev
+                                item[specialNames.revision] = (await data.put(item)).rev
                                 // region list
                                 assert.deepEqual(
                                     (await resolver.list([{a: 'asc'}]))[0],
@@ -1295,13 +1344,13 @@ registerAngularTest(function(
                                 assert.deepEqual(
                                     (await resolver.list([]))[0], item)
                                 assert.deepEqual((await resolver.list(
-                                    [{_id: 'asc'}], 1, 1, 'es'
+                                    [{[specialNames.id]: 'asc'}], 1, 1, 'es'
                                 ))[0], item)
                                 assert.strictEqual((await resolver.list(
-                                    [{_id: 'asc'}], 2
+                                    [{[specialNames.id]: 'asc'}], 2
                                 )).length, 0)
                                 assert.strictEqual((await resolver.list(
-                                    [{_id: 'asc'}], 1, 1, 'b'
+                                    [{[specialNames.id]: 'asc'}], 1, 1, 'b'
                                 )).length, 0)
                                 // endregion
                                 // region resolve
@@ -1547,11 +1596,11 @@ registerAngularTest(function(
                         fixture.componentInstance.items.total, 0)
                     // region applyPageConstraints/update
                     fixture.componentInstance._route.testData = {items: [{
-                        _id: 2}]}
+                        [specialNames.id]: 2}]}
                     fixture.detectChanges()
                     await fixture.whenStable()
                     assert.deepEqual(fixture.componentInstance.items, [{
-                        _id: 2}])
+                        [specialNames.id]: 2}])
                     assert.strictEqual(
                         fixture.componentInstance.items.length, 1)
                     assert.strictEqual(
@@ -1578,16 +1627,16 @@ registerAngularTest(function(
                     await fixture.whenStable()
                     assert.strictEqual(
                         fixture.componentInstance._router.url,
-                        `${fixture.componentInstance._itemsPath}/_id-asc/0/2` +
+                        `${fixture.componentInstance._itemsPath}/${specialNames.id}-asc/0/2` +
                         '/regex-test')
                     // endregion
                     await fixture.componentInstance._router.navigate([
-                        fixture.componentInstance._itemsPath, '_id-asc', 1, 2,
+                        fixture.componentInstance._itemsPath, `${specialNames.id}-asc`, 1, 2,
                         'regex-'])
                     await fixture.whenStable()
                     assert.strictEqual(
                         fixture.componentInstance._router.url,
-                        `${fixture.componentInstance._itemsPath}/_id-asc/1/2` +
+                        `${fixture.componentInstance._itemsPath}/${specialNames.id}-asc/1/2` +
                         '/regex-')
                     // region changeItemWrapperFactory
                     assert.strictEqual(
@@ -1598,20 +1647,20 @@ registerAngularTest(function(
                     await fixture.whenStable()
                     assert.strictEqual(
                         fixture.componentInstance._router.url,
-                        `${fixture.componentInstance._itemsPath}/_id-asc/0/2` +
+                        `${fixture.componentInstance._itemsPath}/${specialNames.id}-asc/0/2` +
                         '/regex-test')
                     // endregion
                     assert.deepEqual(
                         fixture.componentInstance.selectedItems, new Set())
                     assert.deepEqual(
-                        fixture.componentInstance.items, [{_id: 2}])
+                        fixture.componentInstance.items, [{[specialNames.id]: 2}])
                     // region clearSelectedItems
                     fixture.componentInstance.selectedItems.add(
                         fixture.componentInstance.items[0])
                     fixture.componentInstance.clearSelectedItems()
                     assert.deepEqual(
                         fixture.componentInstance.items,
-                        [{_id: 2, selected: false}])
+                        [{[specialNames.id]: 2, selected: false}])
                     assert.deepEqual(
                         fixture.componentInstance.selectedItems, new Set())
                     // endregion
@@ -1627,7 +1676,7 @@ registerAngularTest(function(
                     fixture.componentInstance.selectAllItems()
                     assert.deepEqual(
                         fixture.componentInstance.items,
-                        [{_id: 2, selected: true}])
+                        [{[specialNames.id]: 2, selected: true}])
                     assert.deepEqual(
                         fixture.componentInstance.selectedItems,
                         new Set(fixture.componentInstance.items))
@@ -1654,12 +1703,12 @@ registerAngularTest(function(
                 try {
                     const fixture:ComponentFixture<FileInputComponent> =
                         TestBed.createComponent(FileInputComponent)
-                    fixture.componentInstance.mapNameToField = ['_id', 'name']
+                    fixture.componentInstance.mapNameToField = [specialNames.id, 'name']
                     fixture.componentInstance.showValidationErrorMessages =
                         true
                     fixture.componentInstance.model = {
-                        _id: 'id',
-                        _attachments: {name: {
+                        [specialNames.id]: 'id',
+                        [specialNames.attachment]: {name: {
                             nullable: true,
                             value: {
                                 /* eslint-disable camelcase */
@@ -1682,7 +1731,7 @@ registerAngularTest(function(
                     assert.strictEqual(
                         fixture.componentInstance.internalName, 'name')
                     assert.deepEqual(
-                        fixture.componentInstance.model._attachments.name
+                        fixture.componentInstance.model[specialNames.attachment].name
                             .state,
                         {})
                     fixture.componentInstance.input.nativeElement
@@ -1696,23 +1745,23 @@ registerAngularTest(function(
                         fixture.componentInstance.file.type, 'image')
                     await fixture.componentInstance.remove()
                     assert.deepEqual(
-                        fixture.componentInstance.model._attachments.name
+                        fixture.componentInstance.model[specialNames.attachment].name
                             .value,
                         null)
-                    fixture.componentInstance.model._attachments.name
+                    fixture.componentInstance.model[specialNames.attachment].name
                         .nullable = false
                     assert.strictEqual(
-                        fixture.componentInstance.model._attachments.name.state
+                        fixture.componentInstance.model[specialNames.attachment].name.state
                             .errors,
                         null)
                     await fixture.componentInstance.remove()
                     assert.strictEqual(
-                        fixture.componentInstance.model._attachments.name.state
+                        fixture.componentInstance.model[specialNames.attachment].name.state
                             .errors.required,
                         true)
                     fixture.componentInstance.synchronizeImmediately = true
                     fixture.componentInstance.model = {
-                        _attachments: {name: {
+                        [specialNames.attachment]: {name: {
                             nullable: true,
                             value: {
                                 /* eslint-disable camelcase */
@@ -1722,9 +1771,9 @@ registerAngularTest(function(
                                 name: 'name'
                             }
                         }},
-                        _id: 'id',
-                        _rev: '1-a',
-                        '-type': 'Test',
+                        [specialNames.id]: 'id',
+                        [specialNames.revision]: '1-a',
+                        [specialNames.type]: 'Test',
                         name: 'name'
                     }
                     await fixture.componentInstance.ngOnChanges({
@@ -1733,7 +1782,7 @@ registerAngularTest(function(
                     fixture.componentInstance.ngAfterViewInit()
                     await fixture.componentInstance.remove()
                     assert.ok(
-                        fixture.componentInstance.model._attachments.name.state
+                        fixture.componentInstance.model[specialNames.attachment].name.state
                             .errors.database)
                 } catch (error) {
                     console.error(error)
