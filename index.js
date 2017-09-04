@@ -422,7 +422,7 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
                     this.modelConfiguration.entities.hasOwnProperty(
                         item.value[specialNames.type])
                 )
-                    return this._extractFromObject(item.value)
+                    return this._extractFromObject(item.value, item.name === 'templateScope')
                 return this.transform(item.value)
             } else if (
                 specialNames.type in item &&
@@ -439,18 +439,25 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
      * @param object - Object to use to determine data from.
      * @returns Resolved data.
      */
-    _extractFromObject(object:Object):PlainObject {
+    _extractFromObject(object:Object, a):PlainObject {
         const specialNames:PlainObject =
             this.modelConfiguration.property.name.special
         const result:PlainObject = {}
         for (const key:string in object)
             if (
                 object.hasOwnProperty(key) && (
-                    !(specialNames.type in object) ||
+                    !object.hasOwnProperty(specialNames.type) ||
                     this.modelConfiguration.entities[object[
                         specialNames.type
-                    ]].hasOwnProperty(key)
+                    ]].hasOwnProperty(key) ||
+                    this.modelConfiguration.entities[object[
+                        specialNames.type
+                    ]].hasOwnProperty(specialNames.additional) &&
+                    this.modelConfiguration.entities[object[
+                        specialNames.type
+                    ]][specialNames.additional]
                 ) && ![
+                    '_metaData',
                     specialNames.additional,
                     specialNames.allowedRole,
                     // NOTE: Will be handled later.
@@ -675,8 +682,19 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     )
                         result[name] = this.removeMetaData(
                             data[name], specification && (
-                                specification[name] ||
-                                specification[this.specialNames.additional]))
+                                specification[name] &&
+                                specification[name].hasOwnProperty(
+                                    this.specialNames.type) &&
+                                this.modelConfiguration.entities[specification[
+                                    name
+                                ][this.specialNames.type]] ||
+                                specification[this.specialNames.additional] &&
+                                specification[
+                                    this.specialNames.additional
+                                ].hasOwnProperty(this.specialNames.type) &&
+                                this.modelConfiguration.entities[specification[
+                                    this.specialNames.additional
+                                ][this.specialNames.type]]))
             return result
         }
         return data
