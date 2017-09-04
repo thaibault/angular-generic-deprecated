@@ -2393,9 +2393,10 @@ export class DataScopeService {
                     for (const type:string of [
                         'onCreateExpression', 'onCreateExecution'
                     ])
-                        if (result[name].hasOwnProperty(type) && result[name][
-                            type
-                        ]) {
+                        if (
+                            result[name].hasOwnProperty(type) &&
+                            result[name][type]
+                        ) {
                             result[name].value = (new Function(
                                 'newDocument', 'oldDocument', 'userContext',
                                 'securitySettings', 'name', 'models',
@@ -2438,6 +2439,7 @@ export class DataScopeService {
                     result[name].value = result[name].selection[0]
                 if (
                     typeof result[name].value === 'number' &&
+                    result[name].hasOwnProperty('type') &&
                     (
                         result[name].type.endsWith('Date') ||
                         result[name].type.endsWith('Time')

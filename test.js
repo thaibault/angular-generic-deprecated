@@ -1107,7 +1107,52 @@ registerAngularTest(function(
                             const done:Function = assert.async()
                             try {
                                 // region determine
-                                // TODO
+                                assert.deepEqual(await dataScope.determine(
+                                    'Test'
+                                ), extendObjectPipe.transform(true, {
+                                    [specialNames.attachment]: {
+                                        '.+\\.(?:jpe?g|png)': {
+                                            name: '.+\\.(?:jpe?g|png)',
+                                            value: {name: 'a.jpg'}
+                                        }
+                                    },
+                                    [specialNames.id]: {
+                                        name: specialNames.id,
+                                        value: null
+                                    },
+                                    _metaData: {submitted: false},
+                                    [specialNames.type]: 'Test',
+                                    a: {
+                                        minimum: 0,
+                                        minimumLength: 0,
+                                        minimumNumber: 0,
+                                        name: 'a',
+                                        value: null
+                                    }
+                                }, initialData.configuration.database.model
+                                    .entities.Test))
+                                // endregion
+                                // region determineSpecificationObject
+                                for (const test:Array<any> of [
+                                    [[{}], {}],
+                                    [[{a: {}}], {a: {
+                                        minimum: 0,
+                                        minimumLength: 0,
+                                        minimumNumber: 0
+                                    }}],
+                                    [[{a: {}}, ['a']], {a: {
+                                        minimum: 0,
+                                        minimumLength: 0,
+                                        minimumNumber: 0
+                                    }}],
+                                    [[{a: {}}, ['b']], {}]
+
+                                ])
+                                    assert.deepEqual(
+                                        await dataScope
+                                        .determineSpecificationObject(
+                                            ...test[0]
+                                        ), test[1])
                                 // endregion
                                 // region generate
                                 for (const test:Array<any> of [
@@ -1301,32 +1346,6 @@ registerAngularTest(function(
                                     }))
                                 initialData.configuration.database.model
                                     .entities = modelBackup
-                                // endregion
-                                // region set
-                                assert.deepEqual(await dataScope.determine(
-                                    'Test'
-                                ), extendObjectPipe.transform(true, {
-                                    [specialNames.attachment]: {
-                                        '.+\\.(?:jpe?g|png)': {
-                                            name: '.+\\.(?:jpe?g|png)',
-                                            value: {name: 'a.jpg'}
-                                        }
-                                    },
-                                    [specialNames.id]: {
-                                        name: specialNames.id,
-                                        value: null
-                                    },
-                                    _metaData: {submitted: false},
-                                    [specialNames.type]: 'Test',
-                                    a: {
-                                        minimum: 0,
-                                        minimumLength: 0,
-                                        minimumNumber: 0,
-                                        name: 'a',
-                                        value: null
-                                    }
-                                }, initialData.configuration.database.model
-                                    .entities.Test))
                                 // endregion
                             } catch (error) {
                                 console.error(error)
