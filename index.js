@@ -605,8 +605,28 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         const result:{newData:any;payloadExists:boolean} =
                             this.removeAlreadyExistingData(
                                 newData[name], oldData[name],
-                                specification[name] ||
-                                specification[this.specialNames.additional])
+                                specification.hasOwnProperty(name) &&
+                                specification[name].hasOwnProperty(
+                                    this.specialNames.type) &&
+                                this.modelConfiguration.entities
+                                    .hasOwnProperty(specification[name][
+                                        this.specialNames.type]) &&
+                                this.modelConfiguration.entities[specification[
+                                    name
+                                ][this.specialNames.type]] ||
+                                specification.hasOwnProperty(
+                                    this.specialNames.additional) &&
+                                specification[
+                                    this.specialNames.additional
+                                ].hasOwnProperty(this.specialNames.type) &&
+                                this.modelConfiguration.entities
+                                    .hasOwnProperty(
+                                        specification[
+                                            this.specialNames.additional
+                                        ][this.specialNames.type]) &&
+                                this.modelConfiguration.entities[specification[
+                                    name
+                                ][this.specialNames.type]])
                         if (result.payloadExists) {
                             payloadExists = true
                             newData[name] = result.newData
