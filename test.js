@@ -392,6 +392,26 @@ registerAngularTest(function(
                                     {a: 2}
                                 ],
                                 [
+                                    {value: {
+                                        a: {value: {
+                                            a: {value: 2},
+                                            [specialNames.type]: 'Test'
+                                        }},
+                                        [specialNames.type]: 'Test'}
+                                    },
+                                    {a: {a: 2}}
+                                ],
+                                [
+                                    {value: {
+                                        a: {value: {
+                                            a: {value: 2},
+                                            [specialNames.type]: 'Test'
+                                        }},
+                                        [specialNames.type]: 'Test'}
+                                    },
+                                    {a: {a: 2}}
+                                ],
+                                [
                                     [{value: {
                                         a: {value: 2},
                                         [specialNames.type]: 'Test'
@@ -651,6 +671,102 @@ registerAngularTest(function(
                                             a: 'a'
                                         },
                                         payloadExists: true
+                                    }
+                                ],
+                                [
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'a'}
+                                    },
+                                    {a: {a: 'a'}},
+                                    {a: {a: {}}},
+                                    {
+                                        newData: {[specialNames.type]: 'Test'},
+                                        payloadExists: false
+                                    }
+                                ],
+                                [
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'a'}
+                                    },
+                                    {a: {a: 'a'}},
+                                    {},
+                                    {
+                                        newData: {[specialNames.type]: 'Test'},
+                                        payloadExists: false
+                                    }
+                                ],
+                                [
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'a'}
+                                    },
+                                    {a: {a: 'a'}},
+                                    null,
+                                    {
+                                        newData: {
+                                            [specialNames.type]: 'Test',
+                                            a: {a: 'a'}
+                                        },
+                                        payloadExists: true
+                                    }
+                                ],
+                                [
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'a'}
+                                    },
+                                    {a: {a: 'b'}},
+                                    {},
+                                    {
+                                        newData: {
+                                            [specialNames.type]: 'Test',
+                                            a: {a: 'a'}
+                                        },
+                                        payloadExists: true
+                                    }
+                                ],
+                                [
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'a'}
+                                    },
+                                    {a: {a: 'a', b: 'b'}},
+                                    {a: {[specialNames.additional]: {}}},
+                                    {
+                                        newData: {
+                                            [specialNames.type]: 'Test',
+                                            a: {b: null}
+                                        },
+                                        payloadExists: true
+                                    }
+                                ],
+                                [
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'a'}
+                                    },
+                                    {a: {a: 'a', b: 'b'}},
+                                    {a: {[specialNames.additional]: {}}},
+                                    {
+                                        newData: {
+                                            [specialNames.type]: 'Test',
+                                            a: {b: null}
+                                        },
+                                        payloadExists: true
+                                    }
+                                ],
+                                [
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'a', b: 'b'}
+                                    },
+                                    {a: {a: 'a', b: 'b'}},
+                                    {a: {a: {}, b: {}}},
+                                    {
+                                        newData: {[specialNames.type]: 'Test'},
+                                        payloadExists: false
                                     }
                                 ]
                             ])
@@ -1148,8 +1264,7 @@ registerAngularTest(function(
                                     [[{a: {}}, ['b']], {}]
 
                                 ])
-                                    assert.deepEqual(
-                                        await dataScope
+                                    assert.deepEqual(await dataScope
                                         .determineSpecificationObject(
                                             ...test[0]
                                         ), test[1])
@@ -1178,6 +1293,13 @@ registerAngularTest(function(
                                         minimumNumber: 0,
                                         name: 'a',
                                         value: 2
+                                    }}],
+                                    [['Test', ['a'], {a: {a: 2}}], {a: {
+                                        minimum: 0,
+                                        minimumLength: 0,
+                                        minimumNumber: 0,
+                                        name: 'a',
+                                        value: {a: 2}
                                     }}],
                                     [['Test', [
                                         specialNames.attachment
@@ -1296,11 +1418,109 @@ registerAngularTest(function(
                                         true, {
                                             [specialNames.type]: 'A',
                                             _metaData: {submitted: false},
-                                            a: {
-                                                value: 'a'
-                                            },
-                                            b: {
-                                                value: 'b'
+                                            a: {value: 'a'},
+                                            b: {value: 'b'}
+                                        },
+                                        initialData.configuration.database
+                                            .model.entities.A
+                                    )}
+                                }, initialData.configuration.database.model
+                                    .entities.Test))
+                                assert.deepEqual(dataScope.generate(
+                                    'Test', null, {a: {a: 'A', b: 'B'}}
+                                ), extendObjectPipe.transform(true, {
+                                    _metaData: {submitted: false},
+                                    [specialNames.type]: 'Test',
+                                    a: {value: extendObjectPipe.transform(
+                                        true, {
+                                            [specialNames.type]: 'A',
+                                            _metaData: {submitted: false},
+                                            a: {value: 'A'},
+                                            b: {value: 'B'}
+                                        },
+                                        initialData.configuration.database
+                                            .model.entities.A
+                                    )}
+                                }, initialData.configuration.database.model
+                                    .entities.Test))
+                                initialData.configuration.database.model
+                                    .entities = {
+                                        A: {a: {
+                                            minimum: 0,
+                                            minimumLength: 0,
+                                            minimumNumber: 0,
+                                            name: 'a'
+                                        }},
+                                        Test: {a: {
+                                            minimum: 0,
+                                            minimumLength: 0,
+                                            minimumNumber: 0,
+                                            name: 'a',
+                                            type: 'A'
+                                        }}
+                                    }
+                                assert.deepEqual(dataScope.generate(
+                                    'Test'
+                                ), extendObjectPipe.transform(true, {
+                                    _metaData: {submitted: false},
+                                    [specialNames.type]: 'Test',
+                                    a: {value: extendObjectPipe.transform(
+                                        true, {
+                                            [specialNames.type]: 'A',
+                                            _metaData: {submitted: false},
+                                            a: {value: null}
+                                        },
+                                        initialData.configuration.database
+                                            .model.entities.A
+                                    )}
+                                }, initialData.configuration.database.model
+                                    .entities.Test))
+                                initialData.configuration.database.model
+                                    .entities = {
+                                        A: {a: {
+                                            minimum: 0,
+                                            minimumLength: 0,
+                                            minimumNumber: 0,
+                                            name: 'a',
+                                            type: 'B'
+                                        }},
+                                        B: {a: {
+                                            minimum: 0,
+                                            minimumLength: 0,
+                                            minimumNumber: 0,
+                                            name: 'a'
+                                        }},
+                                        Test: {a: {
+                                            minimum: 0,
+                                            minimumLength: 0,
+                                            minimumNumber: 0,
+                                            name: 'a',
+                                            type: 'A'
+                                        }}
+                                    }
+                                assert.deepEqual(dataScope.generate(
+                                    'Test'
+                                ), extendObjectPipe.transform(true, {
+                                    _metaData: {submitted: false},
+                                    [specialNames.type]: 'Test',
+                                    a: {value: extendObjectPipe.transform(
+                                        true, {
+                                            [specialNames.type]: 'A',
+                                            _metaData: {submitted: false},
+                                            a: {value:
+                                                extendObjectPipe.transform(
+                                                    true, {
+                                                        [
+                                                        specialNames.type
+                                                        ]: 'B',
+                                                        _metaData: {
+                                                            submitted: false
+                                                        },
+                                                        a: {value: null}
+                                                    },
+                                                    initialData.configuration
+                                                        .database.model
+                                                        .entities.B)
                                             }
                                         },
                                         initialData.configuration.database

@@ -2447,14 +2447,8 @@ export class DataScopeService {
                 )
                     // NOTE: We interpret given value as an utc timestamp.
                     result[name].value = new Date(result[name].value * 1000)
-                else if (
-                    typeof result[name].value === 'object' &&
-                    result[name].value !== null
-                )
-                    if (
-                        result[name].hasOwnProperty('type') &&
-                        entities.hasOwnProperty(result[name].type)
-                    )
+                else if (result[name].hasOwnProperty('type'))
+                    if (entities.hasOwnProperty(result[name].type))
                         result[name].value = this.generate(
                             result[name].type, null, result[name].value || {},
                             [specialNames.attachment, specialNames.id])
