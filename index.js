@@ -3054,7 +3054,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     ):void {
         super(
             changeDetectorReference, data, extendObjectPipe,
-            stringCapitalizePipem, tools)
+            stringCapitalizePipe, tools)
         this.keyCode = this._tools.keyCode
         this._route = route
         this._router = router
