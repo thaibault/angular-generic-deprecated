@@ -2852,6 +2852,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
  * observation.
  *
  * @property actions - Array if actions which have happen.
+ * @property tools - Holds the tools class from the tools service.
  *
  * @property _canceled - Indicates whether current view has been destroyed and
  * data observation should bee canceled.
@@ -2884,60 +2885,69 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     _extendObject:Function
     _liveUpdateOptions:PlainObject = {}
     _stringCapitalize:Function
+    _tools:typeof Tools
     /**
      * Saves injected service instances as instance properties.
      * @param changeDetectorReference - Model dirty checking service.
      * @param data - Data service instance.
      * @param extendObjectPipe - Extend object pipe instance.
      * @param stringCapitalizePipe - The string capitalize pipe instance.
+     * @param tools - Injected tools service instance.
      * @returns Nothing.
      */
     constructor(
         changeDetectorReference:ChangeDetectorRef, data:DataService,
         extendObjectPipe:ExtendObjectPipe,
-        stringCapitalizePipe:StringCapitalizePipe
+        stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
     ):void {
         this._changeDetectorReference = changeDetectorReference
         this._data = data
         this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this._stringCapitalize = stringCapitalizePipe.transform.bind(
             stringCapitalizePipe)
+        this._tools = tools.tools
     }
     /**
      * Initializes data observation when view has been initialized.
      * @returns Nothing.
      */
     ngOnInit():void {
-        this._changesStream = this._data.connection.changes(this._extendObject(
-            true, {},
-            {since: LAST_KNOWN_DATA.sequence},
-            this.constructor.defaultLiveUpdateOptions,
-            this._liveUpdateOptions))
-        for (const type:string of ['change', 'complete', 'error'])
-            this._changesStream.on(type, async (
-                action:PlainObject
-            ):Promise<void> => {
-                if (this._canceled)
-                    return
-                if (type === 'change') {
-                    if ('seq' in action && typeof action.seq === 'number')
-                        LAST_KNOWN_DATA.sequence = action.seq
-                    LAST_KNOWN_DATA.data[action.id] = action.doc
-                }
-                action.name = type
-                this.actions.unshift(action)
-                // IgnoreTypeCheck
-                let result:Promise<boolean>|boolean = this[
-                    `onData${this._stringCapitalize(type)}`
-                ](action)
-                if (
-                    result !== null && typeof result === 'object' &&
-                    'then' in result
-                )
-                    result = await result
-                if (result)
-                    this._changeDetectorReference.detectChanges()
-            })
+        /*
+            NOTE: We have to break out of the "zone.js" since long polling
+            themes to confuse its mocked environment.
+        */
+        this._tools.timeout(():void => {
+            this._changesStream = this._data.connection.changes(
+                this._extendObject(
+                    true, {}, {since: LAST_KNOWN_DATA.sequence},
+                    this.constructor.defaultLiveUpdateOptions,
+                    this._liveUpdateOptions))
+            for (const type:string of ['change', 'complete', 'error'])
+                this._changesStream.on(type, async (
+                    action:PlainObject
+                ):Promise<void> => {
+                    if (this._canceled)
+                        return
+                    if (type === 'change') {
+                        if ('seq' in action && typeof action.seq === 'number')
+                            LAST_KNOWN_DATA.sequence = action.seq
+                        LAST_KNOWN_DATA.data[action.id] = action.doc
+                    }
+                    action.name = type
+                    this.actions.unshift(action)
+                    // IgnoreTypeCheck
+                    let result:Promise<boolean>|boolean = this[
+                        `onData${this._stringCapitalize(type)}`
+                    ](action)
+                    if (
+                        result !== null && typeof result === 'object' &&
+                        'then' in result
+                    )
+                        result = await result
+                    if (result)
+                        this._changeDetectorReference.detectChanges()
+                })
+        })
     }
     /**
      * Marks current live data observation as canceled and closes initially
@@ -3010,6 +3020,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     debouncedUpdate:Function
     items:Array<PlainObject>
     limit:number
+    navigateAway:boolean = false
     page:number
     preventedDataUpdate:?Array<any> = null
     regularExpression:boolean = false
@@ -3024,7 +3035,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     _route:ActivatedRoute
     _router:Router
     _subscriptions:Array<ISubscription> = []
-    _tools:typeof Tools
     _toolsInstance:Tools
     /**
      * Saves injected service instances as instance properties.
@@ -3044,13 +3054,12 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     ):void {
         super(
             changeDetectorReference, data, extendObjectPipe,
-            stringCapitalizePipe)
-        this._tools = tools.tools
+            stringCapitalizePipem, tools)
         this.keyCode = this._tools.keyCode
         this._route = route
         this._router = router
         // IgnoreTypeCheck
-        this._toolsInstance = new tools.tools()
+        this._toolsInstance = new this._tools()
         /*
             NOTE: Parameter have to be read before data to ensure that all page
             constraints have been set correctly before item slicing.
@@ -3152,6 +3161,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * @returns A promise wrapping the navigation result.
      */
     goToItem(itemID:string, itemVersion:string):Promise<boolean> {
+        this.navigateAway = true
         return this._router.navigate([this._itemPath, itemID, itemVersion])
     }
     /**
@@ -3169,6 +3179,10 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * reload will be triggered.
      */
     onDataChange(...parameter:Array<any>):false {
+        /*
+            NOTE: We have to avoid that unexpected view changes do not happen
+            on remote data changes.
+        */
         if (
             this.selectedItems.size ||
             ![0, 1].includes(parseInt(this._currentParameter.page))
@@ -3212,56 +3226,32 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * @returns A boolean indicating whether route change was successful.
      */
     async update(reload:boolean = false):Promise<boolean> {
-        this.applyPageConstraints()
-        let sort:string = ''
-        for (const name:string in this.sort)
-            if (this.sort.hasOwnProperty(name))
-                sort += `${sort ? ',' : ''}${name}-${this.sort[name]}`
-        const newURL:string = this._router.serializeUrl(
-            this._router.createUrlTree([
-                this._itemsPath, sort,
-                reload && parseInt(this._currentParameter.page) !== 0 ? 0 :
-                    this.page,
-                this.limit, `${this.regularExpression ? 'regex' : 'exact'}-` +
-                encodeURIComponent(this.searchTerm)
-            ]))
-        /*
-            NOTE: If an route update to another section (no update) occurs
-            while we're waiting to update current view we should remove
-            currently running update request.
-        */
-        let update:boolean = true
-        const subscription:ISubscription = this._router.events.subscribe((
-            event:Object
-        ):void => {
-            if (event instanceof NavigationEnd && event.url !== newURL) {
-                update = false
-                subscription.unsubscribe()
-            }
-        })
-        this._subscriptions.push(subscription)
+        let result:boolean = false
         await this._toolsInstance.acquireLock(`${this.constructor.name}Update`)
-        if (!update) {
-            this._toolsInstance.releaseLock(`${this.constructor.name}Update`)
-            return false
+        if (!this.navigateAway) {
+            this.applyPageConstraints()
+            if (reload && parseInt(this._currentParameter.page) !== 0)
+                /*
+                    NOTE: Will be normalised to "1" after route reload (hack to
+                    enforce route reloading).
+                */
+                this.page = 0
+            let sort:string = ''
+            for (const name:string in this.sort)
+                if (this.sort.hasOwnProperty(name))
+                    sort += `${sort ? ',' : ''}${name}-${this.sort[name]}`
+            result = await this._router.navigate([
+                this._itemsPath, sort, this.page, this.limit,
+                `${this.regularExpression ? 'regex' : 'exact'}-` +
+                encodeURIComponent(this.searchTerm)
+            ], {
+                preserveFragment: true,
+                replaceUrl: parseInt(this._currentParameter.page) === 0,
+                skipLocationChange: this.page === 0
+            })
+            if (result)
+                this.allItemsChecked = false
         }
-        if (reload && parseInt(this._currentParameter.page) !== 0)
-            /*
-                NOTE: Will be normalised to "1" after route reload (hack to
-                enforce route reloading).
-            */
-            this.page = 0
-        const result:boolean = await this._router.navigate([
-            this._itemsPath, sort, this.page, this.limit,
-            `${this.regularExpression ? 'regex' : 'exact'}-` +
-            encodeURIComponent(this.searchTerm)
-        ], {
-            preserveFragment: true,
-            replaceUrl: parseInt(this._currentParameter.page) === 0,
-            skipLocationChange: this.page === 0
-        })
-        if (result)
-            this.allItemsChecked = false
         this._toolsInstance.releaseLock(`${this.constructor.name}Update`)
         return result
     }
