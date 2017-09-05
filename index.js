@@ -3122,7 +3122,14 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
                     subscription.unsubscribe()
                 }
             })
-            const result:any = await callback(...parameter)
+            this._subscriptions.push(subscription)
+            const result:any = callback(...parameter)
+            if (
+                typeof result === 'object' &&
+                result !== null &&
+                'then' in result
+            )
+                await result
             if (update)
                 await this.update(true)
             return result
@@ -3162,7 +3169,10 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * reload will be triggered.
      */
     onDataChange(...parameter:Array<any>):false {
-        if (this.selectedItems.size)
+        if (
+            this.selectedItems.size ||
+            ![0, 1].includes(parseInt(this._currentParameter.page))
+        )
             this.preventedDataUpdate = parameter
         else {
             this.preventedDataUpdate = null
@@ -3202,18 +3212,45 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * @returns A boolean indicating whether route change was successful.
      */
     async update(reload:boolean = false):Promise<boolean> {
-        await this._toolsInstance.acquireLock(`${this.constructor.name}Update`)
         this.applyPageConstraints()
+        let sort:string = ''
+        for (const name:string in this.sort)
+            if (this.sort.hasOwnProperty(name))
+                sort += `${sort ? ',' : ''}${name}-${this.sort[name]}`
+        const newURL:string = this._router.serializeUrl(
+            this._router.createUrlTree([
+                this._itemsPath, sort,
+                reload && parseInt(this._currentParameter.page) !== 0 ? 0 :
+                    this.page,
+                this.limit, `${this.regularExpression ? 'regex' : 'exact'}-` +
+                encodeURIComponent(this.searchTerm)
+            ]))
+        /*
+            NOTE: If an route update to another section (no update) occurs
+            while we're waiting to update current view we should remove
+            currently running update request.
+        */
+        let update:boolean = true
+        const subscription:ISubscription = this._router.events.subscribe((
+            event:Object
+        ):void => {
+            if (event instanceof NavigationEnd && event.url !== newURL) {
+                update = false
+                subscription.unsubscribe()
+            }
+        })
+        this._subscriptions.push(subscription)
+        await this._toolsInstance.acquireLock(`${this.constructor.name}Update`)
+        if (!update) {
+            this._toolsInstance.releaseLock(`${this.constructor.name}Update`)
+            return false
+        }
         if (reload && parseInt(this._currentParameter.page) !== 0)
             /*
                 NOTE: Will be normalised to "1" after route reload (hack to
                 enforce route reloading).
             */
             this.page = 0
-        let sort:string = ''
-        for (const name:string in this.sort)
-            if (this.sort.hasOwnProperty(name))
-                sort += `${sort ? ',' : ''}${name}-${this.sort[name]}`
         const result:boolean = await this._router.navigate([
             this._itemsPath, sort, this.page, this.limit,
             `${this.regularExpression ? 'regex' : 'exact'}-` +
