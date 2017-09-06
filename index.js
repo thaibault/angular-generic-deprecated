@@ -4188,7 +4188,7 @@ export class TextareaComponent extends AbstractInputComponent
                 <md-card-title>
                     <span
                         @defaultAnimation
-                        *ngIf="revision || headerText || !file?.name; else editable"
+                        *ngIf="!editableName || revision || headerText || !file?.name; else editable"
                     >
                         {{
                             headerText ||
@@ -4441,6 +4441,7 @@ export class TextareaComponent extends AbstractInputComponent
  * file should be removed.
  * @property deleteButtonText - Text for button to trigger file removing.
  * @property downloadButtonText - Text for button to download current file.
+ * @property editableName - Indicates whether file name could be edited.
  * @property file - Holds the current selected file object if present.
  * @property headerText - Header text to show instead of property description
  * or name.
@@ -4503,6 +4504,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     @Output() delete:EventEmitter<string> = new EventEmitter()
     @Input() deleteButtonText:string = 'delete'
     @Input() downloadButtonText:string = 'download'
+    @Input() editableName:boolean = true
     file:any = null
     @Output() fileChange:EventEmitter<any> = new EventEmitter()
     @Input() headerText:?string = null
