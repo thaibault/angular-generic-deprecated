@@ -1342,8 +1342,9 @@ export class NumberPercentPipe/* implements PipeTransform*/ {
  * @param options - Animations meta data options.
  * @returns Animations meta data object.
  */
-export const fadeAnimation:Function = (options:PlainObject = {
-}):AnimationTriggerMetadata => {
+export function fadeAnimation(
+    options:PlainObject = {}
+):AnimationTriggerMetadata {
     options = Tools.extendObject({
         duration: '.3s',
         enterState: ':enter',
@@ -1364,9 +1365,12 @@ export const fadeAnimation:Function = (options:PlainObject = {
  * @param options - Animations meta data options.
  * @returns Animations meta data object.
  */
-export const defaultAnimation:Function = (options:PlainObject = {
-}):AnimationTriggerMetadata => fadeAnimation(Tools.extendObject(
-    {name: 'defaultAnimation'}, options))
+export function defaultAnimation(
+    options:PlainObject = {}
+):AnimationTriggerMetadata {
+    return fadeAnimation(Tools.extendObject(
+        {name: 'defaultAnimation'}, options))
+}
 // endregion
 // region services
 // IgnoreTypeCheck
@@ -4654,9 +4658,11 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     this.internalName
                 ].state.errors = {required: true}
         }
-        if (changes.hasOwnProperty('model') || changes.hasOwnProperty(
-            'name'
-        ) || changes.hasOwnProperty('revision')) {
+        if (
+            changes.hasOwnProperty('model') ||
+            changes.hasOwnProperty('name') ||
+            changes.hasOwnProperty('revision')
+        ) {
             if (this.file) {
                 this.file.query = `?version=${this.file.digest}`
                 /*
@@ -4692,7 +4698,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                                 ) + '/' + (
                                     this._configuration.name || 'generic'
                                 ) + `/${id}/${this.file.name}` +
-                                `${this.file.query}`)
+                                `${this.file.query)
                 }
             }
             this.determinePresentationType()
