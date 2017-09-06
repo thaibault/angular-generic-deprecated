@@ -4698,7 +4698,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                                 ) + '/' + (
                                     this._configuration.name || 'generic'
                                 ) + `/${id}/${this.file.name}` +
-                                `${this.file.query)
+                                this.file.query)
                 }
             }
             this.determinePresentationType()
