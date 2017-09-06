@@ -589,7 +589,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             if (!this.equals(newData, oldData))
                 payloadExists = true
         } else if (
-            specification && typeof newData === 'object' && newData !== null
+            specification && typeof newData === 'object' && newData !== null &&
+            typeof oldData === 'object' && oldData !== null
         ) {
             for (const name:string in oldData)
                 if (
@@ -606,27 +607,14 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                             this.removeAlreadyExistingData(
                                 newData[name], oldData[name],
                                 specification.hasOwnProperty(name) &&
-                                specification[name].hasOwnProperty(
-                                    this.specialNames.type) &&
-                                this.modelConfiguration.entities
-                                    .hasOwnProperty(specification[name][
-                                        this.specialNames.type]) &&
                                 this.modelConfiguration.entities[specification[
                                     name
-                                ][this.specialNames.type]] ||
+                                ].type] ||
                                 specification.hasOwnProperty(
                                     this.specialNames.additional) &&
-                                specification[
-                                    this.specialNames.additional
-                                ].hasOwnProperty(this.specialNames.type) &&
-                                this.modelConfiguration.entities
-                                    .hasOwnProperty(
-                                        specification[
-                                            this.specialNames.additional
-                                        ][this.specialNames.type]) &&
                                 this.modelConfiguration.entities[specification[
-                                    name
-                                ][this.specialNames.type]])
+                                    this.specialNames.additional
+                                ].type])
                         if (result.payloadExists) {
                             payloadExists = true
                             newData[name] = result.newData
@@ -664,10 +652,22 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         }
         if (typeof data === 'object' && data !== null) {
             const result:PlainObject = {}
-            for (const name:string in data)
+            for (const name:string in data) {
+                const nestedSpecification:PlainObject = specification && (
+                    specification.hasOwnProperty(name) &&
+                    this.modelConfiguration.entities[specification[
+                        name
+                    ].type] ||
+                    specification.hasOwnProperty(
+                        this.specialNames.additional) &&
+                    this.modelConfiguration.entities[specification[
+                        this.specialNames.additional
+                    ].type])
                 if (
                     data.hasOwnProperty(name) &&
-                    ![undefined, null, ''].includes(data[name])
+                    ![undefined, null].concat(
+                        specification.emptyEqualsToNull ? '' : []
+                    ).includes(data[name])
                 )
                     if (this.modelConfiguration.property.name.reserved.concat(
                         this.specialNames.deleted,
@@ -696,25 +696,12 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                             !specification ||
                             specification.hasOwnProperty(name) ||
                             specification.hasOwnProperty(
-                                this.specialNames.additional) &&
-                            specification[this.specialNames.additional]
+                                this.specialNames.additional)
                         )
                     )
                         result[name] = this.removeMetaData(
-                            data[name], specification && (
-                                specification[name] &&
-                                specification[name].hasOwnProperty(
-                                    this.specialNames.type) &&
-                                this.modelConfiguration.entities[specification[
-                                    name
-                                ][this.specialNames.type]] ||
-                                specification[this.specialNames.additional] &&
-                                specification[
-                                    this.specialNames.additional
-                                ].hasOwnProperty(this.specialNames.type) &&
-                                this.modelConfiguration.entities[specification[
-                                    this.specialNames.additional
-                                ][this.specialNames.type]]))
+                            data[name], nestedSpecification)
+            }
             return result
         }
         return data
@@ -1343,8 +1330,10 @@ export class NumberPercentPipe/* implements PipeTransform*/ {
  * @returns Animations meta data object.
  */
 export function fadeAnimation(
-    options:PlainObject = {}
+    options:string|PlainObject = {}
 ):AnimationTriggerMetadata {
+    if (typeof options === 'string')
+        options = {name: options}
     options = Tools.extendObject({
         duration: '.3s',
         enterState: ':enter',
@@ -1360,17 +1349,8 @@ export function fadeAnimation(
         ])
     ])
 }
-/*
- * Fade in/out animation factory.
- * @param options - Animations meta data options.
- * @returns Animations meta data object.
- */
-export function defaultAnimation(
-    options:PlainObject = {}
-):AnimationTriggerMetadata {
-    return fadeAnimation(Tools.extendObject(
-        {name: 'defaultAnimation'}, options))
-}
+export const defaultAnimation:Function = fadeAnimation.bind(
+    {}, 'defaultAnimation')
 // endregion
 // region services
 // IgnoreTypeCheck
@@ -2787,8 +2767,11 @@ export class AbstractInputComponent/* implements OnInit*/ {
             nullable: true,
             regularExpressionPattern: '.*',
             state: {},
+            trim: true.
             type: 'string'
         }, this.model))
+        if (typeof this.model.value === 'string' && this.model.trim)
+            this.model.value === this.model.value.trim()
         for (const hookType:string of [
             'onUpdateExpression', 'onUpdateExecution'
         ])
