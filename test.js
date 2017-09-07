@@ -629,8 +629,11 @@ registerAngularTest(function(
                                     }
                                 ],
                                 [
-                                    {[specialNames.type]: 'Test', a: now},
-                                    {a: now},
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: nowUTCTimestamp
+                                    },
+                                    {a: nowUTCTimestamp},
                                     {a: {a: {type: 'Test'}}},
                                     {
                                         newData: {[specialNames.type]: 'Test'},
@@ -639,7 +642,7 @@ registerAngularTest(function(
                                 ],
                                 [
                                     {[specialNames.type]: 'Test', a: 0},
-                                    {a: new Date(0)},
+                                    {a: 0},
                                     {a: {a: {type: 'Test'}}},
                                     {
                                         newData: {[specialNames.type]: 'Test'},
@@ -651,7 +654,7 @@ registerAngularTest(function(
                                         [specialNames.type]: 'Test',
                                         a: {a: nowUTCTimestamp}
                                     },
-                                    {a: {a: now}},
+                                    {a: {a: nowUTCTimestamp}},
                                     {a: {a: {type: 'Test'}}},
                                     {
                                         newData: {[specialNames.type]: 'Test'},
@@ -737,22 +740,7 @@ registerAngularTest(function(
                                     {
                                         newData: {
                                             [specialNames.type]: 'Test',
-                                            a: {b: null}
-                                        },
-                                        payloadExists: true
-                                    }
-                                ],
-                                [
-                                    {
-                                        [specialNames.type]: 'Test',
-                                        a: {a: 'a'}
-                                    },
-                                    {a: {a: 'a', b: 'b'}},
-                                    {a: {[specialNames.additional]: {}}},
-                                    {
-                                        newData: {
-                                            [specialNames.type]: 'Test',
-                                            a: {b: null}
+                                            a: {a: 'a'}
                                         },
                                         payloadExists: true
                                     }
@@ -780,9 +768,22 @@ registerAngularTest(function(
                             for (const test:Array<any> of [
                                 [{}, null, {}],
                                 [{a: 2}, null, {a: 2}],
+                                [{a: ''}, null, {a: ''}],
+                                [{a: []}, null, {a: []}],
                                 [
-                                    {a: 2, [specialNames.id]: 2}, null,
-                                    {a: 2, [specialNames.id]: 2}
+                                    {a: ''},
+                                    {a: {emptyEqualsToNull: true}},
+                                    {}
+                                ],
+                                [
+                                    {a: []},
+                                    {a: {emptyEqualsToNull: true}},
+                                    {}
+                                ],
+                                [
+                                    {[specialNames.id]: 2, a: 2},
+                                    null,
+                                    {[specialNames.id]: 2, a: 2},
                                 ],
                                 [
                                     {
@@ -790,14 +791,16 @@ registerAngularTest(function(
                                         [specialNames.constraint.execution]:
                                             null
                                     },
-                                    null, {a: 2}
+                                    null,
+                                    {a: 2}
                                 ],
                                 [{a: 2}, {b: {}}, {}],
                                 [{a: 2}, {a: {}}, {a: 2}],
                                 [
                                     {a: 2},
                                     {[specialNames.additional]: {}},
-                                    {a: 2}]
+                                    {a: 2}
+                                ]
                             ])
                                 assert.deepEqual(
                                     extractRawDataPipe.removeMetaData(

@@ -422,7 +422,7 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
                     this.modelConfiguration.entities.hasOwnProperty(
                         item.value[specialNames.type])
                 )
-                    return this._extractFromObject(item.value, item.name === 'templateScope')
+                    return this._extractFromObject(item.value)
                 return this.transform(item.value)
             } else if (
                 specialNames.type in item &&
@@ -439,7 +439,7 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
      * @param object - Object to use to determine data from.
      * @returns Resolved data.
      */
-    _extractFromObject(object:Object, a):PlainObject {
+    _extractFromObject(object:Object):PlainObject {
         const specialNames:PlainObject =
             this.modelConfiguration.property.name.special
         const result:PlainObject = {}
@@ -452,10 +452,7 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
                     ]].hasOwnProperty(key) ||
                     this.modelConfiguration.entities[object[
                         specialNames.type
-                    ]].hasOwnProperty(specialNames.additional) &&
-                    this.modelConfiguration.entities[object[
-                        specialNames.type
-                    ]][specialNames.additional]
+                    ]].hasOwnProperty(specialNames.additional)
                 ) && ![
                     '_metaData',
                     specialNames.additional,
@@ -505,6 +502,7 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
 /**
  * Removes all meta data and already existing data (compared to an old
  * document) from a document recursively.
+ * @property dataScope - Date scope service instance.
  * @property equals - Equals pipe transform function.
  * @property modelConfiguration - Model configuration object.
  * @property numberGetUTCTimestamp - Date (and time) to unix timstamp converter
@@ -523,6 +521,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      * Gets injected services.
      * @param equalsPipe - Equals pipe instance.
      * @param initialData - Initial data service instance.
+     * @param injector - Injector service instance.
      * @param numberGetUTCTimestampPipe - Date (and time) to unix timestamp
      * conversion.
      * @param tools - Injected tools service instance.
@@ -530,8 +529,10 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      */
     constructor(
         equalsPipe:EqualsPipe, initialData:InitialDataService,
-        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe, tools:ToolsService
+        injector:Injector, numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe,
+        tools:ToolsService
     ):void {
+        this.dataScope = injector.get(DataScopeService)
         this.equals = equalsPipe.transform.bind(equalsPipe)
         this.modelConfiguration = initialData.configuration.database.model
         this.numberGetUTCTimestamp = numberGetUTCTimestampPipe.transform.bind(
@@ -606,15 +607,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         const result:{newData:any;payloadExists:boolean} =
                             this.removeAlreadyExistingData(
                                 newData[name], oldData[name],
-                                specification.hasOwnProperty(name) &&
-                                this.modelConfiguration.entities[specification[
-                                    name
-                                ].type] ||
-                                specification.hasOwnProperty(
-                                    this.specialNames.additional) &&
-                                this.modelConfiguration.entities[specification[
-                                    this.specialNames.additional
-                                ].type])
+                                this.dataScope.determineNestedSpecifcation(
+                                    name, specification))
                         if (result.payloadExists) {
                             payloadExists = true
                             newData[name] = result.newData
@@ -642,10 +636,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         if (Array.isArray(data)) {
             let index:number = 0
             for (const item:any of data) {
-                data[index] = this.removeMetaData(
-                    item, specification && (
-                        specification[name] ||
-                        specification[this.specialNames.additional]))
+                data[index] = this.removeMetaData(item, specification)
                 index += 1
             }
             return data
@@ -653,21 +644,20 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         if (typeof data === 'object' && data !== null) {
             const result:PlainObject = {}
             for (const name:string in data) {
-                const nestedSpecification:PlainObject = specification && (
+                const emptyEqualsToNull:boolean = Boolean((specification && (
                     specification.hasOwnProperty(name) &&
-                    this.modelConfiguration.entities[specification[
-                        name
-                    ].type] ||
+                    specification[name] ||
                     specification.hasOwnProperty(
                         this.specialNames.additional) &&
-                    this.modelConfiguration.entities[specification[
-                        this.specialNames.additional
-                    ].type])
+                    specification[this.specialNames.additional]
+                ) || {}).emptyEqualsToNull)
                 if (
                     data.hasOwnProperty(name) &&
-                    ![undefined, null].concat(
-                        specification.emptyEqualsToNull ? '' : []
-                    ).includes(data[name])
+                    ![undefined, null].includes(data[name]) && !(
+                        emptyEqualsToNull && (
+                            data[name] === '' ||
+                            Array.isArray(data[name]) &&
+                            data[name].length === 0))
                 )
                     if (this.modelConfiguration.property.name.reserved.concat(
                         this.specialNames.deleted,
@@ -676,31 +666,29 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         this.specialNames.type
                     ).includes(name))
                         result[name] = data[name]
-                    else if (
-                        ![
-                            this.specialNames.additional,
-                            this.specialNames.allowedRole,
-                            this.specialNames.attachment,
-                            this.specialNames.conflict,
-                            this.specialNames.constraint.execution,
-                            this.specialNames.constraint.expression,
-                            this.specialNames.deletedConflict,
-                            this.specialNames.extend,
-                            this.specialNames.localSequence,
-                            this.specialNames.maximumAggregatedSize,
-                            this.specialNames.minimumAggregatedSize,
-                            this.specialNames.revisions,
-                            this.specialNames.revisionsInformations
-                        ].includes(name) &&
-                        (
-                            !specification ||
-                            specification.hasOwnProperty(name) ||
-                            specification.hasOwnProperty(
-                                this.specialNames.additional)
-                        )
-                    )
+                    else if (![
+                        this.specialNames.additional,
+                        this.specialNames.allowedRole,
+                        this.specialNames.attachment,
+                        this.specialNames.conflict,
+                        this.specialNames.constraint.execution,
+                        this.specialNames.constraint.expression,
+                        this.specialNames.deletedConflict,
+                        this.specialNames.extend,
+                        this.specialNames.localSequence,
+                        this.specialNames.maximumAggregatedSize,
+                        this.specialNames.minimumAggregatedSize,
+                        this.specialNames.revisions,
+                        this.specialNames.revisionsInformations
+                    ].includes(name) && (
+                        !specification || specification.hasOwnProperty(name) ||
+                        specification.hasOwnProperty(
+                            this.specialNames.additional)
+                    ))
                         result[name] = this.removeMetaData(
-                            data[name], nestedSpecification)
+                            data[name],
+                            this.dataScope.determineNestedSpecifcation(
+                                name, specification))
             }
             return result
         }
@@ -1324,7 +1312,7 @@ export class NumberPercentPipe/* implements PipeTransform*/ {
 // / endregion
 // endregion
 // region animations
-/*
+/**
  * Fade in/out animation factory.
  * @param options - Animations meta data options.
  * @returns Animations meta data object.
@@ -2231,6 +2219,33 @@ export class DataScopeService {
         }
         return this.generate(modelName, propertyNames, data)
     }
+    // TODO test
+    /**
+     * Determines a nested specification object for given property name and
+     * corresponding specification object where given property is bound to.
+     * @param name - Property name to search specification for.
+     * @param specification - Parents object specification.
+     * @returns New specification object or null if it could not be determined.
+     */
+    determineNestedSpecifcation(
+        name:string, specification:?PlainObject
+    ):?PlainObject {
+        const entities:PlainObject =
+            this.configuration.database.model.entities
+        const additionalName:string =
+            this.configuration.database.model.property.name.special.additional
+        if (specification)
+            if (specification.hasOwnProperty(name)) {
+                if (entities.hasOwnProperty(specification[name].type))
+                    return entities[specification[name].type]
+            } else if (
+                specification.hasOwnProperty(additionalName) &&
+                entities.hasOwnProperty(specification[additionalName].type)
+            )
+                return entities[specification[additionalName].type]
+        return null
+    }
+
     /**
      * Determines a recursive resolved specification object for given (flat)
      * model object.
@@ -2760,6 +2775,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
     ngOnInit():void {
         this._extendObject(this.model, this._extendObject({
             disabled: false,
+            emptyEqualsToNull: true,
             maximum: Infinity,
             minimum: 0,
             maximumLength: Infinity,
@@ -2767,7 +2783,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
             nullable: true,
             regularExpressionPattern: '.*',
             state: {},
-            trim: true.
+            trim: true,
             type: 'string'
         }, this.model))
         if (typeof this.model.value === 'string' && this.model.trim)
