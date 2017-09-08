@@ -593,7 +593,11 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             specification && typeof newData === 'object' && newData !== null &&
             typeof oldData === 'object' && oldData !== null
         ) {
-            for (const name:string in oldData)
+            const newPropertyNames:Array<string> = Object.keys(newData)
+            for (const name:string in oldData) {
+                const index:number = newPropertyNames.indexOf(name)
+                if (index !== -1)
+                    newPropertyNames.splice(index, 1)
                 if (
                     oldData.hasOwnProperty(name) &&
                     !this.modelConfiguration.property.name.reserved.concat(
@@ -612,12 +616,15 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         if (result.payloadExists) {
                             payloadExists = true
                             newData[name] = result.newData
-                        } else
+                        } else if (specification.hasOwnProperty(name))
                             delete newData[name]
                     } else {
                         payloadExists = true
                         newData[name] = null
                     }
+            }
+            if (newPropertyNames.length)
+                payloadExists = true
         } else if (!this.equals(
             newData, this.convertDateToTimestampRecursively(oldData)
         ))
@@ -3541,6 +3548,8 @@ export class IntervalsInputComponent {
     ngOnInit():void {
         if (!this.additionalObjectData)
             this.additionalObjectData = this._dataScope.generate('_interval')
+        if (!this.model.value)
+            this.model.value = []
     }
     /**
      * Adds a new interval.
