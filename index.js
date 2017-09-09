@@ -3501,7 +3501,7 @@ export class IntervalInputComponent {
         >{{description || model.description || model.name}}</div>
         <div
             @defaultAnimation
-            *ngFor="let interval of model.value || []; let first = first"
+            *ngFor="let interval of (model.value || []); let first = first"
         >
             <generic-interval-input
                 [endDescription]="first ? null : ''"
@@ -3525,7 +3525,7 @@ export class IntervalInputComponent {
             class="add"
             (click)="$event.preventDefault(); $event.stopPropagation(); add()"
             href=""
-            *ngIf="model.maximumNumber === null || model.value.length < model.maximumNumber"
+            *ngIf="model.maximumNumber === null || (model.value?.length || 0) < model.maximumNumber"
         >+</a>
         <ng-template #fallback>--</ng-template>
     `
@@ -3577,8 +3577,6 @@ export class IntervalsInputComponent {
     ngOnInit():void {
         if (!this.additionalObjectData)
             this.additionalObjectData = this._dataScope.generate('_interval')
-        if (!this.model.value)
-            this.model.value = []
     }
     /**
      * Adds a new interval.
@@ -3586,11 +3584,11 @@ export class IntervalsInputComponent {
      * @returns Nothing.
      */
     add(data:PlainObject = {}):void {
-        const lastEnd:number = (
-            this.model.value && this.model.value.length
-        ) ? (new Date(
-                this.model.value[this.model.value.length - 1].end.value
-            )).getTime() : 0
+        if (!this.model.value)
+            this.model.value = []
+        const lastEnd:number = this.model.value.length ? (new Date(
+            this.model.value[this.model.value.length - 1].end.value
+        )).getTime() : 0
         this.model.value.push(this._extendObject(
             true, {}, this.additionalObjectData, {
                 // NOTE: We add one hour in milliseconds as default interval.
