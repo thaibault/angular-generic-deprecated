@@ -594,35 +594,33 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             typeof oldData === 'object' && oldData !== null
         ) {
             const newPropertyNames:Array<string> = Object.keys(newData)
-            for (const name:string in oldData) {
-                const index:number = newPropertyNames.indexOf(name)
-                if (index !== -1)
-                    newPropertyNames.splice(index, 1)
-                if (
-                    oldData.hasOwnProperty(name) &&
-                    !this.modelConfiguration.property.name.reserved.concat(
+            for (const name:string in oldData)
+                if (oldData.hasOwnProperty(name)) {
+                    const index:number = newPropertyNames.indexOf(name)
+                    if (index !== -1)
+                        newPropertyNames.splice(index, 1)
+                    if (!this.modelConfiguration.property.name.reserved.concat(
                         this.specialNames.deleted,
                         this.specialNames.id,
                         this.specialNames.revision,
                         this.specialNames.type
-                    ).includes(name)
-                )
-                    if (newData.hasOwnProperty(name)) {
-                        const result:{newData:any;payloadExists:boolean} =
-                            this.removeAlreadyExistingData(
-                                newData[name], oldData[name],
-                                this.dataScope.determineNestedSpecifcation(
-                                    name, specification))
-                        if (result.payloadExists) {
+                    ).includes(name))
+                        if (newData.hasOwnProperty(name)) {
+                            const result:{newData:any;payloadExists:boolean} =
+                                this.removeAlreadyExistingData(
+                                    newData[name], oldData[name],
+                                    this.dataScope.determineNestedSpecifcation(
+                                        name, specification))
+                            if (result.payloadExists) {
+                                payloadExists = true
+                                newData[name] = result.newData
+                            } else if (specification.hasOwnProperty(name))
+                                delete newData[name]
+                        } else {
                             payloadExists = true
-                            newData[name] = result.newData
-                        } else if (specification.hasOwnProperty(name))
-                            delete newData[name]
-                    } else {
-                        payloadExists = true
-                        newData[name] = null
-                    }
-            }
+                            newData[name] = null
+                        }
+                }
             if (newPropertyNames.length)
                 payloadExists = true
         } else if (!this.equals(
@@ -650,55 +648,60 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         }
         if (typeof data === 'object' && data !== null) {
             const result:PlainObject = {}
-            for (const name:string in data) {
-                const emptyEqualsToNull:boolean = Boolean((specification && (
-                    specification.hasOwnProperty(name) &&
-                    specification[name] ||
-                    specification.hasOwnProperty(
-                        this.specialNames.additional) &&
-                    specification[this.specialNames.additional]
-                ) || {}).emptyEqualsToNull)
-                if (
-                    data.hasOwnProperty(name) &&
-                    ![undefined, null].includes(data[name]) && !(
+            for (const name:string in data)
+                if (data.hasOwnProperty(name)) {
+                    const emptyEqualsToNull:boolean = Boolean((
+                        specification && (
+                            specification.hasOwnProperty(name) &&
+                            specification[name] ||
+                            specification.hasOwnProperty(
+                                this.specialNames.additional) &&
+                            specification[this.specialNames.additional]
+                        ) || {}).emptyEqualsToNull)
+                    if (![undefined, null].includes(data[name]) && !(
                         emptyEqualsToNull && (
                             data[name] === '' ||
                             Array.isArray(data[name]) &&
                             data[name].length === 0 ||
                             typeof data[name] === 'object' &&
                             Object.keys(data[name]).length === 0))
-                )
-                    if (this.modelConfiguration.property.name.reserved.concat(
-                        this.specialNames.deleted,
-                        this.specialNames.id,
-                        this.specialNames.revision,
-                        this.specialNames.type
-                    ).includes(name))
-                        result[name] = data[name]
-                    else if (![
-                        this.specialNames.additional,
-                        this.specialNames.allowedRole,
-                        this.specialNames.attachment,
-                        this.specialNames.conflict,
-                        this.specialNames.constraint.execution,
-                        this.specialNames.constraint.expression,
-                        this.specialNames.deletedConflict,
-                        this.specialNames.extend,
-                        this.specialNames.localSequence,
-                        this.specialNames.maximumAggregatedSize,
-                        this.specialNames.minimumAggregatedSize,
-                        this.specialNames.revisions,
-                        this.specialNames.revisionsInformations
-                    ].includes(name) && (
-                        !specification || specification.hasOwnProperty(name) ||
-                        specification.hasOwnProperty(
-                            this.specialNames.additional)
-                    ))
-                        result[name] = this.removeMetaData(
-                            data[name],
-                            this.dataScope.determineNestedSpecifcation(
-                                name, specification))
-            }
+                    )
+                        if (
+                            this.modelConfiguration.property.name.reserved
+                                .concat(
+                                    this.specialNames.deleted,
+                                    this.specialNames.id,
+                                    this.specialNames.revision,
+                                    this.specialNames.type
+                                ).includes(name)
+                        )
+                            result[name] = data[name]
+                        else if (
+                            ![
+                                this.specialNames.additional,
+                                this.specialNames.allowedRole,
+                                this.specialNames.attachment,
+                                this.specialNames.conflict,
+                                this.specialNames.constraint.execution,
+                                this.specialNames.constraint.expression,
+                                this.specialNames.deletedConflict,
+                                this.specialNames.extend,
+                                this.specialNames.localSequence,
+                                this.specialNames.maximumAggregatedSize,
+                                this.specialNames.minimumAggregatedSize,
+                                this.specialNames.revisions,
+                                this.specialNames.revisionsInformations
+                            ].includes(name) && (
+                                !specification ||
+                                specification.hasOwnProperty(name) ||
+                                specification.hasOwnProperty(
+                                    this.specialNames.additional))
+                        )
+                            result[name] = this.removeMetaData(
+                                data[name],
+                                this.dataScope.determineNestedSpecifcation(
+                                    name, specification))
+                }
             return result
         }
         return data
@@ -2583,8 +2586,12 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
      * @returns A promise wrapping retrieved data.
      */
     list(
-        sort:Array<PlainObject> = [{_id: 'asc'}], page:number = 1,
-        limit:number = 10, searchTerm:string = '',
+        sort:Array<PlainObject> = [{
+            [
+            InitialDataService.defaultScope.configuration.database.model
+                .property.name.special.id
+            ]: 'asc'
+        }], page:number = 1, limit:number = 10, searchTerm:string = '',
         additionalSelector:PlainObject = {}
     ):Promise<Array<PlainObject>> {
         if (!this.relevantKeys) {
@@ -3039,7 +3046,11 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     searchTerm:string = ''
     searchTermStream:Subject<string> = new Subject()
     selectedItems:Set<PlainObject> = new Set()
-    sort:PlainObject = {_id: 'asc'}
+    sort:PlainObject = {
+        [
+        InitialDataService.defaultScope.configuration.database.model.property
+            .name.special.id
+        ]: 'asc'}
 
     _currentParameter:PlainObject
     _itemPath:string = 'item'
@@ -3053,6 +3064,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * @param changeDetectorReference - Model dirty checking service.
      * @param data - Data stream service.
      * @param extendObjectPipe - Extend object pipe instance.
+     * @param initialData - Initial data service instance.
      * @param route - Current route configuration.
      * @param router - Injected router service instance.
      * @param stringCapitalizePipe - String capitalize pipe instance.
@@ -3061,12 +3073,18 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      */
     constructor(
         changeDetectorReference:ChangeDetectorRef, data:DataService,
-        extendObjectPipe:ExtendObjectPipe, route:ActivatedRoute, router:Router,
+        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService,
+        route:ActivatedRoute, router:Router,
         stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
     ):void {
         super(
             changeDetectorReference, data, extendObjectPipe,
             stringCapitalizePipe, tools)
+        this.idName =
+            initialData.configuration.database.model.property.name.special.id
+        this.revisionName =
+            initialDataconfiguration.database.model.property.name.special
+                .revision
         this.keyCode = this._tools.keyCode
         this._route = route
         this._router = router
@@ -3230,6 +3248,15 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             this.selectedItems.add(item)
             item.selected = true
         }
+    }
+    /**
+     * Determines an items content specific hash value combined from id and
+     * revision.
+     * @param item - Item with id and revision property.
+     * @returns Indicator string.
+     */
+    trackByIDAndRevision(item:PlainObject):string {
+        return `${item[this.idName]}/${item[this.revisionName]}`
     }
     /**
      * Applies current filter criteria to current visible item set.

@@ -814,7 +814,7 @@ registerAngularTest(function(
                                 [
                                     {[specialNames.id]: 2, a: 2},
                                     null,
-                                    {[specialNames.id]: 2, a: 2},
+                                    {[specialNames.id]: 2, a: 2}
                                 ],
                                 [
                                     {
