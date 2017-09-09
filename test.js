@@ -591,7 +591,7 @@ registerAngularTest(function(
                                 ],
                                 [
                                     {[specialNames.type]: 'Test', a: 'a'},
-                                    {a: 'a'},
+                                    {[specialNames.type]: 'Test', a: 'a'},
                                     {a: {}},
                                     {
                                         newData: {[specialNames.type]: 'Test'},
@@ -600,7 +600,7 @@ registerAngularTest(function(
                                 ],
                                 [
                                     {[specialNames.type]: 'Test', a: {a: 'a'}},
-                                    {a: {a: 'a'}},
+                                    {[specialNames.type]: 'Test', a: {a: 'a'}},
                                     {a: {a: {type: 'Test'}}},
                                     {
                                         newData: {[specialNames.type]: 'Test'},
@@ -633,7 +633,10 @@ registerAngularTest(function(
                                         [specialNames.type]: 'Test',
                                         a: nowUTCTimestamp
                                     },
-                                    {a: nowUTCTimestamp},
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: nowUTCTimestamp
+                                    },
                                     {a: {a: {type: 'Test'}}},
                                     {
                                         newData: {[specialNames.type]: 'Test'},
@@ -642,7 +645,7 @@ registerAngularTest(function(
                                 ],
                                 [
                                     {[specialNames.type]: 'Test', a: 0},
-                                    {a: 0},
+                                    {[specialNames.type]: 'Test', a: 0},
                                     {a: {a: {type: 'Test'}}},
                                     {
                                         newData: {[specialNames.type]: 'Test'},
@@ -654,7 +657,10 @@ registerAngularTest(function(
                                         [specialNames.type]: 'Test',
                                         a: {a: nowUTCTimestamp}
                                     },
-                                    {a: {a: nowUTCTimestamp}},
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: nowUTCTimestamp}
+                                    },
                                     {a: {a: {type: 'Test'}}},
                                     {
                                         newData: {[specialNames.type]: 'Test'},
@@ -666,7 +672,10 @@ registerAngularTest(function(
                                         [specialNames.type]: 'Test',
                                         a: 'a'
                                     },
-                                    {a: 'b'},
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: 'b'
+                                    },
                                     {a: {}},
                                     {
                                         newData: {
@@ -681,7 +690,10 @@ registerAngularTest(function(
                                         [specialNames.type]: 'Test',
                                         a: {a: 'a'}
                                     },
-                                    {a: {a: 'a'}},
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'a'}
+                                    },
                                     {a: {a: {}}},
                                     {
                                         newData: {[specialNames.type]: 'Test'},
@@ -693,10 +705,16 @@ registerAngularTest(function(
                                         [specialNames.type]: 'Test',
                                         a: {a: 'a'}
                                     },
-                                    {a: {a: 'a'}},
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'a'}
+                                    },
                                     {},
                                     {
-                                        newData: {[specialNames.type]: 'Test'},
+                                        newData: {
+                                            [specialNames.type]: 'Test',
+                                            a: {a: 'a'}
+                                        },
                                         payloadExists: false
                                     }
                                 ],
@@ -705,14 +723,17 @@ registerAngularTest(function(
                                         [specialNames.type]: 'Test',
                                         a: {a: 'a'}
                                     },
-                                    {a: {a: 'a'}},
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'a'}
+                                    },
                                     null,
                                     {
                                         newData: {
                                             [specialNames.type]: 'Test',
                                             a: {a: 'a'}
                                         },
-                                        payloadExists: true
+                                        payloadExists: false
                                     }
                                 ],
                                 [
@@ -720,7 +741,10 @@ registerAngularTest(function(
                                         [specialNames.type]: 'Test',
                                         a: {a: 'a'}
                                     },
-                                    {a: {a: 'b'}},
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'b'}
+                                    },
                                     {},
                                     {
                                         newData: {
@@ -735,7 +759,10 @@ registerAngularTest(function(
                                         [specialNames.type]: 'Test',
                                         a: {a: 'a'}
                                     },
-                                    {a: {a: 'a', b: 'b'}},
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'a', b: 'b'}
+                                    },
                                     {a: {[specialNames.additional]: {}}},
                                     {
                                         newData: {
@@ -750,7 +777,10 @@ registerAngularTest(function(
                                         [specialNames.type]: 'Test',
                                         a: {a: 'a', b: 'b'}
                                     },
-                                    {a: {a: 'a', b: 'b'}},
+                                    {
+                                        [specialNames.type]: 'Test',
+                                        a: {a: 'a', b: 'b'}
+                                    },
                                     {a: {a: {}, b: {}}},
                                     {
                                         newData: {[specialNames.type]: 'Test'},
@@ -770,6 +800,7 @@ registerAngularTest(function(
                                 [{a: 2}, null, {a: 2}],
                                 [{a: ''}, null, {a: ''}],
                                 [{a: []}, null, {a: []}],
+                                [{a: {}}, null, {a: {}}],
                                 [
                                     {a: ''},
                                     {a: {emptyEqualsToNull: true}},
@@ -809,7 +840,6 @@ registerAngularTest(function(
                             // endregion
                             // region transform
                             for (const test:Array<any> of [
-
                                 [
                                     [
                                         {

@@ -664,7 +664,9 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                         emptyEqualsToNull && (
                             data[name] === '' ||
                             Array.isArray(data[name]) &&
-                            data[name].length === 0))
+                            data[name].length === 0 ||
+                            typeof data[name] === 'object' &&
+                            Object.keys(data[name]).length === 0))
                 )
                     if (this.modelConfiguration.property.name.reserved.concat(
                         this.specialNames.deleted,
