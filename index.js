@@ -3083,7 +3083,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
         this.idName =
             initialData.configuration.database.model.property.name.special.id
         this.revisionName =
-            initialDataconfiguration.database.model.property.name.special
+            initialData.configuration.database.model.property.name.special
                 .revision
         this.keyCode = this._tools.keyCode
         this._route = route

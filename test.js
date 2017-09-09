@@ -54,6 +54,7 @@ registerAngularTest(function(
         AbstractItemsComponent,
         DataService,
         ExtendObjectPipe,
+        InitialDataService,
         StringCapitalizePipe,
         ToolsService
     } = index
@@ -72,6 +73,7 @@ registerAngularTest(function(
          * @param changeDetectorRef - Model dirty checking service.
          * @param data - Data stream service.
          * @param extendObjectPipe - Extend object pipe instance.
+         * @param initialData - Initial data service instance.
          * @param route - Current route state.
          * @param router - Application wide router instance.
          * @param stringCapitalizePipe - String capitalize pipe instance.
@@ -79,9 +81,9 @@ registerAngularTest(function(
          */
         constructor(
             changeDetectorRef:ChangeDetectorRef, data:DataService,
-            extendObjectPipe:ExtendObjectPipe, route:ActivatedRoute,
-            router:Router, stringCapitalizePipe:StringCapitalizePipe,
-            tools:ToolsService
+            extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService,
+            route:ActivatedRoute, router:Router,
+            stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
         ):void {
             route.testData = {items: []}
             route.testParameter = {
@@ -90,8 +92,8 @@ registerAngularTest(function(
                 searchTerm: 'exact-'
             }
             super(
-                changeDetectorRef, data, extendObjectPipe, route, router,
-                stringCapitalizePipe, tools)
+                changeDetectorRef, data, extendObjectPipe, initialData, route,
+                router, stringCapitalizePipe, tools)
         }
     }
     // endregion
@@ -110,7 +112,6 @@ registerAngularTest(function(
                 ExtractRawDataPipe,
                 fadeAnimation,
                 GetFilenameByPrefixPipe,
-                InitialDataService,
                 IsDefinedPipe,
                 LimitToPipe,
                 MapPipe,
@@ -1978,6 +1979,11 @@ registerAngularTest(function(
                     // region selectedAllItems
                     fixture.componentInstance.clearSelectedItems()
                     fixture.componentInstance.selectAllItems()
+                    assert.strictEqual(
+                        fixture.componentInstance.trackByIDAndRevision({
+                            [specialNames.id]: 'id',
+                            [specialNames.revision]: 'revision'
+                        }), 'id/revision')
                     assert.deepEqual(
                         fixture.componentInstance.items,
                         [{[specialNames.id]: 2, selected: true}])
