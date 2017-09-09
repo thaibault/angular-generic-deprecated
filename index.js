@@ -3472,7 +3472,7 @@ export class IntervalInputComponent {
         >{{description || model.description || model.name}}</div>
         <div
             @defaultAnimation
-            *ngFor="let interval of model.value; let first = first"
+            *ngFor="let interval of model.value || []; let first = first"
         >
             <generic-interval-input
                 [endDescription]="first ? null : ''"
