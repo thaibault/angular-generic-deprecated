@@ -861,34 +861,6 @@ registerAngularTest(function(
                                     extractRawDataPipe.transform(...test[0]),
                                     test[1])
                             // endregion
-                            // region _handleAttachmentChanges
-                            for (const test:Array<any> of [
-                                [{}, {}, true, [], {}],
-                                [
-                                    {}, {a: {name: 'a'}}, true, [],
-                                    {[specialNames.attachment]: {a: {
-                                        data: null
-                                    }}}
-                                ],
-                                [{}, {a: {name: 'a'}}, true, ['a'], {}],
-                                [
-                                    {[specialNames.attachment]: {a: {}}},
-                                    {'[ab]': {name: 'b'}}, true, [],
-                                    {[specialNames.attachment]: {a: {}, b: {
-                                        data: null
-                                    }}}
-                                ],
-                                [
-                                    {[specialNames.attachment]: {a: {}}},
-                                    {'[ab]': {name: 'b'}}, false, [],
-                                    {[specialNames.attachment]: {a: {}}}
-                                ]
-                            ])
-                                assert.deepEqual(extractRawDataPipe
-                                    ._handleAttachmentChanges(
-                                        test[0], test[1], test[2], test[3]
-                                    ), test[4])
-                            // endregion
                         })
                         self.test(`GetFilenameByPrefixPipe (${roundType})`, (
                             assert:Object

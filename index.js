@@ -19,7 +19,7 @@
 */
 // region imports
 import {tinymceDefaultSettings, TinyMceModule} from 'angular-tinymce'
-import {blobToBase64String} from 'blob-util'
+import {blobToBase64String, blobToBinaryString} from 'blob-util'
 import type {PlainObject} from 'clientnode'
 import Tools, {$, globalContext} from 'clientnode'
 import {
@@ -308,6 +308,27 @@ const StringEscapeRegularExpressionsPipe:PipeTransform =
 const StringFormatPipe:PipeTransform = module.exports.StringFormatPipe
 // / endregion
 // / region object
+// TODO test
+// IgnoreTypeCheck
+@Pipe({name: 'genericAttachmentsAreEqual'})
+/**
+ * Determines if given attachments are representing the same data.
+ */
+export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
+    /**
+     * Performs the actual transformations process.
+     * @param first - First attachment to compare.
+     * @param second  Second attachment to compare.
+     * @returns Comparison result.
+     */
+    async transform(first:PlainObject, second:PlainObject):Promise<boolean> {
+        // TODO use digest (md5) to compare! with
+        // "await blobToBinaryString(first.data)" and "this.tools.stringMD5(..)"
+        return first.length === second.length && (
+            first.content_type || 'application/octet-stream'
+        ) === (second.content_type || 'application/octet-stream')
+    }
+}
 // IgnoreTypeCheck
 @Pipe({name: 'genericGetFilenameByPrefix'})
 /**
@@ -502,6 +523,8 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
 /**
  * Removes all meta data and already existing data (compared to an old
  * document) from a document recursively.
+ * @property attachmentsAreEqual - Attachments are equal pips transformation
+ * method.
  * @property dataScope - Date scope service instance.
  * @property equals - Equals pipe transform function.
  * @property modelConfiguration - Model configuration object.
@@ -512,6 +535,7 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
  * @property tools - Holds the tools class from the tools service.
  */
 export class ExtractRawDataPipe/* implements PipeTransform*/ {
+    attachmentsAreEqual:Function
     equals:Function
     modelConfiguration:PlainObject
     numberGetUTCTimestamp:Function
@@ -519,6 +543,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
     tools:Tools
     /**
      * Gets injected services.
+     * @param attachmentsAreEqualPipe - Injected attachments are equal pipe
+     * instance.
      * @param equalsPipe - Equals pipe instance.
      * @param initialData - Initial data service instance.
      * @param injector - Injector service instance.
@@ -528,10 +554,12 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      * @returns Nothing.
      */
     constructor(
-        equalsPipe:EqualsPipe, initialData:InitialDataService,
-        injector:Injector, numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe,
-        tools:ToolsService
+        attachmentsAreEqualPipe:AttachmentsAreEqualPipe, equalsPipe:EqualsPipe,
+        initialData:InitialDataService, injector:Injector,
+        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe, tools:ToolsService
     ):void {
+        this.attachmentsAreEqual = attachmentsAreEqualPipe.transform.bind(
+            attachmentsAreEqualPipe)
         this.dataScope = injector.get(DataScopeService)
         this.equals = equalsPipe.transform.bind(equalsPipe)
         this.modelConfiguration = initialData.configuration.database.model
@@ -711,15 +739,13 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      * @param newDocument - Document to slice meta data from.
      * @param oldDocument - Optionally existing old document to take into
      * account.
-     * @param fileTypeReplacement - Indicates whether file type replacements
-     * and removes should be taken into account.
      * @returns The copied sliced version of given document if changes exists
-     * (checked against given old document) and "null" otherwise.
+     * (checked against given old document) and "null" otherwise. Result is
+     * wrapped into a promise to process binary data asynchronous.
      */
     transform(
-        newDocument:PlainObject, oldDocument:?PlainObject,
-        fileTypeReplacement:boolean = true
-    ):?PlainObject {
+        newDocument:PlainObject, oldDocument:?PlainObject
+    ):Promise<?PlainObject> {
         let specification:?PlainObject = null
         if (
             this.specialNames.type in newDocument &&
@@ -730,134 +756,149 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                 this.specialNames.type]]
         let result:PlainObject = this.removeMetaData(
             newDocument, specification)
-        const untouchedAttachments:Array<string> = []
-        if (
-            newDocument.hasOwnProperty(this.specialNames.attachment) &&
-            ![undefined, null, ''].includes(
-                newDocument[this.specialNames.attachment])
-        ) {
-            result[this.specialNames.attachment] = {}
-            let empty:boolean = true
-            for (const fileName:string in newDocument[
-                this.specialNames.attachment
-            ])
-                if (newDocument[this.specialNames.attachment].hasOwnProperty(
-                    fileName
-                )) {
-                    let oldAttachment:?PlainObject
-                    if (oldDocument && oldDocument.hasOwnProperty(
-                        this.specialNames.attachment
-                    ))
-                        for (const type:string in oldDocument[
-                            this.specialNames.attachment
-                        ])
-                            if (
-                                oldDocument[this.specialNames.attachment][
-                                    type
-                                ] && [
-                                    fileName,
-                                    newDocument[this.specialNames.attachment][
-                                        fileName
-                                    ].initialName
-                                ].includes(
-                                    oldDocument[this.specialNames.attachment][
-                                        type
-                                    ].name)
-                            )
-                                oldAttachment = oldDocument[
-                                    this.specialNames.attachment
-                                ][type]
-                    if (
-                        (
-                            newDocument[this.specialNames.attachment][
-                                fileName
-                            ].hasOwnProperty('data') &&
-                            newDocument[this.specialNames.attachment][
-                                fileName
-                            ].data ||
-                            newDocument[this.specialNames.attachment][
-                                fileName
-                            ].hasOwnProperty('stub') &&
-                            newDocument[this.specialNames.attachment][
-                                fileName].stub &&
-                            oldAttachment
-                        ) &&
-                        !(
-                            oldAttachment &&
-                            oldAttachment.name === fileName &&
-                            // TODO use digest to compare!
-                            newDocument[this.specialNames.attachment][
-                                fileName
-                            ].length === oldAttachment.length &&
-                            (
-                                oldAttachment.content_type ||
-                                'application/octet-stream'
-                            ) === (
-                                    newDocument[this.specialNames.attachment][
-                                        fileName
-                                    ].content_type ||
-                                    'application/octet-stream'
-                                )
-                        )
-                    ) {
-                        if (
-                            newDocument[this.specialNames.attachment][
-                                fileName
-                            ].hasOwnProperty('data') &&
-                            newDocument[this.specialNames.attachment][
-                                fileName].data
-                        )
-                            result[this.specialNames.attachment][fileName] = {
-                                /* eslint-disable camelcase */
-                                content_type: newDocument[
-                                    this.specialNames.attachment
-                                ][fileName].content_type ||
-                                /* eslint-enable camelcase */
-                                'application/octet-stream',
-                                data: newDocument[
-                                    this.specialNames.attachment
-                                ][fileName].data
-                            }
-                        else {
-                            result[this.specialNames.attachment][fileName] =
-                                this.tools.copyLimitedRecursively(
-                                    oldAttachment)
-                            result[this.specialNames.attachment][
-                                fileName
-                            ].name = fileName
-                        }
-                        empty = false
-                    } else
-                        untouchedAttachments.push(fileName)
-                }
-            if (empty)
-                delete result[this.specialNames.attachment]
-        }
         let payloadExists:boolean = false
-        if (oldDocument) {
-            // Handle attachment removes or replacements.
-            if (
-                oldDocument.hasOwnProperty(this.specialNames.attachment) &&
-                oldDocument[this.specialNames.attachment]
-            ) {
-                this._handleAttachmentChanges(result, oldDocument[
-                    this.specialNames.attachment
-                ], fileTypeReplacement, untouchedAttachments)
-                if (this.specialNames.attachment in result)
-                    payloadExists = true
-            } else if (this.specialNames.attachment in result)
-                payloadExists = true
-            if (this.removeAlreadyExistingData(
-                result, this.removeMetaData(oldDocument, specification),
-                specification
-            ).payloadExists)
+        // region handle attachment changes
+        if (specification.hasOwnProperty(this.specialNames.attachment)) {
+            result[this.specialNames.attachment] = {}
+            for (const type:string in specification[this.specialNames]) {
+                // region retrieve all type specific existing attachments
+                oldAttachments:PlainObject = {}
+                if (
+                    oldDocument &&
+                    oldDocument.hasOwnProperty(this.specialNames.attachment) &&
+                    oldDocument[this.specialNames.attachment]
+                )
+                    for (const fileName:string in oldDocument[
+                        this.specialNames.attachment
+                    ])
+                        if (
+                            oldDocument[
+                                this.specialNames.attachment
+                            ].hasOwnProperty(fileName) &&
+                            new RegExp(type).test(fileName)
+                        )
+                            oldAttachments[fileName] = oldDocument[
+                                this.specialNames.attachment
+                            ][fileName]
+                // endregion
+                if (newDocument.hasOwnProperty(this.specialNames.attachment))
+                    for (const fileName:string in newDocument[
+                        this.specialNames.attachment
+                    ])
+                        if (
+                            newDocument[
+                                this.specialNames.attachment
+                            ].hasOwnProperty(fileName) &&
+                            new RegExp(type).test(fileName)
+                        )
+                            // region determine latest attachment
+                            if (
+                                newDocument[this.specialNames.attachment][
+                                    fileName
+                                ].hasOwnProperty('data') &&
+                                newDocument[this.specialNames.attachment][
+                                    fileName
+                                ].data
+                            ) {
+                                // Insert new attachment.
+                                result[this.specialNames.attachment][
+                                    fileName
+                                ] = {
+                                    /* eslint-disable camelcase */
+                                    content_type: newDocument[
+                                        this.specialNames.attachment
+                                    ][fileName].content_type ||
+                                    /* eslint-enable camelcase */
+                                    'application/octet-stream',
+                                    data: newDocument[
+                                        this.specialNames.attachment
+                                    ][fileName].data
+                                }
+                                // region remove already existing data
+                                if (oldAttachments.hasOwnProperty(fileName)) {
+                                    if (this.attachmentsAreEqual(
+                                        newDocument[
+                                            this.specialNames.attachment
+                                        ][fileName], oldAttachments[fileName]
+                                    ))
+                                        /*
+                                            Existing attachment has not been
+                                            changed.
+                                        */
+                                        delete result[
+                                            this.specialNames.attachment
+                                        ][fileName]
+                                    delete oldAttachments[fileName]
+                                } else if (specification[
+                                    this.specialNames.attachment
+                                ].maximumNumber === 1) {
+                                    const firstOldAttachmentName:string =
+                                        Object.keys(oldAttachments)[0]
+                                    if (this.attachmentsAreEqual(
+                                        newDocument[
+                                            this.specialNames.attachment
+                                        ][fileName], oldAttachments[fileName]
+                                    ))
+                                        /*
+                                            Existing attachment has been
+                                            renamed.
+                                        */
+                                        result[this.specialNames.attachment][
+                                            fileName
+                                        ] = this.tools.copyLimitedRecursively(
+                                            oldAttachments[firstOldAttachmentName])
+                                        result[this.specialNames.attachment][
+                                            fileName
+                                        ].name = fileName
+                                    }
+                                    delete oldAttachments[
+                                        firstOldAttachmentName]
+                                }
+                                // endregion
+                            } else if (oldAttachments.hasOwnProperty(fileName))
+                                // Existing attachment has not been changed.
+                                delete oldAttachments[fileName]
+                            else if (specification[
+                                this.specialNames.attachment
+                            ].maximumNumber === 1) {
+                                // Existing attachment has been renamed.
+                                const firstOldAttachmentName:string =
+                                    Object.keys(oldAttachments)[0]
+                                result[this.specialNames.attachment][
+                                    fileName
+                                ] = this.tools.copyLimitedRecursively(
+                                    oldAttachments[firstOldAttachmentName])
+                                result[this.specialNames.attachment][
+                                    fileName
+                                ].name = fileName
+                                delete oldAttachments[firstOldAttachmentName]
+                            }
+                            // endregion
+                // region mark all not mentioned old attachments as removed
+                for (const fileName:string in oldAttachments)
+                    if (oldAttachments.hasOwnProperty(fileName))
+                        result[this.specialNames.attachment][
+                            fileName
+                        ] = {data: null}
+                // endregion
+            }
+            if (Object.keys(result[this.specialNames.attachment]).length === 0)
+                delete result[this.specialNames.attachment]
+            else
                 payloadExists = true
         }
+        // endregion
+        if (oldDocument && this.removeAlreadyExistingData(
+            result, this.removeMetaData(oldDocument, specification),
+            specification
+        ).payloadExists)
+            payloadExists = true
         // Check if real payload exists in currently determined raw data.
         if (!payloadExists)
             /*
                 NOTE: We have to check first level only since all unneeded
-                nested values should have been already removed.
+                nested values should have been already removed if not
+                necessary.
             */
             for (const name:string in result)
                 if (
@@ -873,53 +914,6 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     break
                 }
         return payloadExists ? result : null
-    }
-    /**
-     * Implements attachment changes or removes.
-     * @param newDocument - Document to slice meta data from.
-     * @param oldAttachments - Old document to take into account.
-     * @param fileTypeReplacement - Indicates whether file type replacements
-     * and removes should be taken into account.
-     * @param untouchedAttachments - List of file names which doesn't exist in
-     * given new document.
-     * @returns The sliced attachment version of given document.
-     */
-    _handleAttachmentChanges(
-        newDocument:PlainObject, oldAttachments:PlainObject,
-        fileTypeReplacement:boolean, untouchedAttachments:Array<string>
-    ):PlainObject {
-        for (const type:string in oldAttachments)
-            if (
-                oldAttachments.hasOwnProperty(type) &&
-                ![undefined, null].includes(oldAttachments[type])
-            ) {
-                if (newDocument[this.specialNames.attachment]) {
-                    if (newDocument[
-                        this.specialNames.attachment
-                    ].hasOwnProperty(oldAttachments[type].name))
-                        continue
-                } else if (!untouchedAttachments.includes(
-                    oldAttachments[type].name
-                )) {
-                    newDocument[this.specialNames.attachment] = {
-                        [oldAttachments[type].name]: {data: null}}
-                    continue
-                }
-                if (fileTypeReplacement)
-                    for (const fileName:string in newDocument[
-                        this.specialNames.attachment
-                    ])
-                        if (
-                            newDocument[
-                                this.specialNames.attachment
-                            ].hasOwnProperty(fileName) &&
-                            (new RegExp(type)).test(fileName)
-                        )
-                            newDocument[this.specialNames.attachment][
-                                oldAttachments[type].name
-                            ] = {data: null}
-            }
-        return newDocument
     }
 }
 // IgnoreTypeCheck
@@ -4560,7 +4554,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     @Input() minimumSizeText:string =
         'Filesize (${file.length} byte) is less than specified minimum of ' +
         '${model.minimumSize} byte.'
-    @Input() model:{id:?string;[key:string]:any;}
+    @Input() model:{id:?string;[key:string]:any}
     @Output() modelChange:EventEmitter<{
         id:?string;[key:string]:any;
     }> = new EventEmitter()
