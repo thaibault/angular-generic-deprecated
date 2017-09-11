@@ -364,8 +364,10 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
                 data[type].given === null
             )
                 return false
+            /* eslint-disable camelcase */
             data[type].content_type =
                 data[type].given.type || data[type].given.content_type
+            /* eslint-enable camelcase */
             data[type].data = data[type].given.data || NaN
             data[type].hash =
                 data[type].given.digest || data[type].given.hash || NaN
@@ -399,7 +401,9 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
                                 data: (
                                     'data' in data[type].given
                                 ) ? data[type].given.data : data[type].given,
+                                /* eslint-disable camelcase */
                                 content_type: 'application/octet-stream'
+                                /* eslint-enable camelcase */
                             }
                         }
                     })
@@ -714,7 +718,9 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             for (const type:string in specification[
                 this.specialNames.attachment
             ])
-                if (specification[this.specialNames.attachment]) {
+                if (specification[this.specialNames.attachment].hasOwnProperty(
+                    type
+                )) {
                     // region retrieve all type specific existing attachments
                     const oldAttachments:PlainObject = {}
                     if (
@@ -786,7 +792,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                         delete oldAttachments[fileName]
                                     } else if (specification[
                                         this.specialNames.attachment
-                                    ].maximumNumber === 1) {
+                                    ][type].maximumNumber === 1) {
                                         const firstOldAttachmentName:string =
                                             Object.keys(oldAttachments)[0]
                                         if (await this.attachmentsAreEqual(
@@ -807,8 +813,6 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                                 )
                                             result[fileName].name = fileName
                                         }
-                                        delete oldAttachments[
-                                            firstOldAttachmentName]
                                     }
                                     // endregion
                                 } else if (oldAttachments.hasOwnProperty(
@@ -818,7 +822,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                     delete oldAttachments[fileName]
                                 else if (specification[
                                     this.specialNames.attachment
-                                ].maximumNumber === 1) {
+                                ][type].maximumNumber === 1) {
                                     // Existing attachment has been renamed.
                                     const firstOldAttachmentName:string =
                                         Object.keys(oldAttachments)[0]

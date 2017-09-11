@@ -304,6 +304,10 @@ registerAngularTest(function(
                 ):void {
                     (async ():Promise<void> => {
                         await data.initialize()
+                        const getBinary:Function = (data:string):Object => (
+                            typeof Blob === undefined
+                        ) ? new Buffer(data) : new Blob([data], {
+                                type: 'application/octet-stream'})
                         specialNames = initialData.configuration.database.model
                             .property.name.special
                         // region basic services
@@ -346,12 +350,6 @@ registerAngularTest(function(
                                 assert:Object
                             ):Promise<void> => {
                                 const done:Function = assert.async()
-                                const getBinary:Function = (
-                                    data:string
-                                ):Object => (
-                                    typeof Blob === undefined
-                                ) ? new Buffer(data) : new Blob([data], {
-                                    type: 'application/octet-stream'})
                                 try {
                                     for (const test:Array<any> of [
                                         [true, true],
@@ -478,7 +476,7 @@ registerAngularTest(function(
                                         [
                                             {
                                                 data: getBinary('a'),
-                                                type: 'a/b',
+                                                type: 'a/b'
                                             },
                                             {
                                                 data: getBinary('b'),
@@ -759,6 +757,7 @@ registerAngularTest(function(
                             // endregion
                             // region removeAlreadyExistingAttachmentData
                             for (const test:Array<any> of [
+                                /* eslint-disable camelcase */
                                 [
                                     {}, {}, {},
                                     {payloadExists: false, result: {}}
@@ -780,9 +779,163 @@ registerAngularTest(function(
                                     {[specialNames.attachment]: {a: {
                                         data: 'a'
                                     }}}, {},
-                                    {[specialNames.attachment]: {}},
+                                    {[specialNames.attachment]: {a: {}}},
+                                    {payloadExists: true, result: {a: {
+                                        content_type:
+                                            'application/octet-stream',
+                                        data: 'a'
+                                    }}}
+                                ],
+                                [
+                                    {[specialNames.attachment]: {a: {
+                                        data: 'a'
+                                    }}},
+                                    {[specialNames.attachment]: {a: {
+                                        data: 'a'
+                                    }}},
+                                    {[specialNames.attachment]: {a: {}}},
                                     {payloadExists: false, result: {}}
                                 ],
+                                [
+                                    {[specialNames.attachment]: {a: {
+                                        data: getBinary('a')
+                                    }}},
+                                    {[specialNames.attachment]: {a: {
+                                        data: getBinary('a')
+                                    }}},
+                                    {[specialNames.attachment]: {a: {}}},
+                                    {payloadExists: false, result: {}}
+                                ],
+                                [
+                                    {[specialNames.attachment]: {a: {
+                                        data: getBinary('a')
+                                    }}},
+                                    {[specialNames.attachment]: {a: {
+                                        data: getBinary('a')
+                                    }}},
+                                    {[specialNames.attachment]: {'[ab]': {}}},
+                                    {payloadExists: false, result: {}}
+                                ],
+                                [
+                                    {[specialNames.attachment]: {a: {
+                                        data: getBinary('a')
+                                    }}},
+                                    {[specialNames.attachment]: {a: {
+                                        data: await blobToBase64String(
+                                            getBinary('a'))
+                                    }}},
+                                    {[specialNames.attachment]: {'[ab]': {}}},
+                                    {payloadExists: false, result: {}}
+                                ],
+                                [
+                                    {[specialNames.attachment]: {a: {
+                                        data: getBinary('a')
+                                    }}},
+                                    {[specialNames.attachment]: {a: {
+                                        digest: 'md5-DMF1ucDxtqgxw5niaXcmYQ=='
+                                    }}},
+                                    {[specialNames.attachment]: {a: {}}},
+                                    {payloadExists: false, result: {}}
+                                ],
+                                [
+                                    {[specialNames.attachment]: {a: {
+                                        content_type: 'text/plain',
+                                        data: getBinary('a')
+                                    }}},
+                                    {[specialNames.attachment]: {a: {
+                                        content_type: 'text/csv',
+                                        digest: 'md5-DMF1ucDxtqgxw5niaXcmYQ=='
+                                    }}},
+                                    {[specialNames.attachment]: {a: {}}},
+                                    {payloadExists: true, result: {
+                                        a: {
+                                            content_type: 'text/plain',
+                                            data: getBinary('a')
+                                        }
+                                    }}
+                                ],
+                                [
+                                    {[specialNames.attachment]: {b: {
+                                        data: getBinary('a')
+                                    }}},
+                                    {[specialNames.attachment]: {a: {
+                                        content_type: 'text/plain',
+                                        digest: 'md5-DMF1ucDxtqgxw5niaXcmYQ=='
+                                    }}},
+                                    {[specialNames.attachment]: {'[ab]': {
+                                        maximumNumber: 1
+                                    }}},
+                                    {payloadExists: true, result: {
+                                        a: {data: null},
+                                        b: {
+                                            content_type: 'text/plain',
+                                            digest:
+                                                'md5-DMF1ucDxtqgxw5niaXcmYQ==',
+                                            name: 'b'
+                                        }
+                                    }}
+                                ],
+                                [
+                                    {[specialNames.attachment]: {b: {
+                                        data: getBinary('b')
+                                    }}},
+                                    {[specialNames.attachment]: {a: {
+                                        data: getBinary('a')
+                                    }}},
+                                    {[specialNames.attachment]: {'[ab]': {
+                                        maximumNumber: 2
+                                    }}},
+                                    {payloadExists: true, result: {
+                                        a: {data: null},
+                                        b: {
+                                            content_type:
+                                                'application/octet-stream',
+                                            data: getBinary('b')
+                                        }
+                                    }}
+                                ],
+                                [
+                                    {[specialNames.attachment]: {b: {
+                                        content_type: 'text/plain',
+                                        data: getBinary('b')
+                                    }}},
+                                    {[specialNames.attachment]: {a: {
+                                        data: getBinary('a')
+                                    }}},
+                                    {[specialNames.attachment]: {'[ab]': {
+                                        maximumNumber: 2
+                                    }}},
+                                    {payloadExists: true, result: {
+                                        a: {data: null},
+                                        b: {
+                                            content_type: 'text/plain',
+                                            data: getBinary('b')
+                                        }
+                                    }}
+                                ],
+                                [
+                                    {[specialNames.attachment]: {
+                                        a: {
+                                            digest:
+                                                'md5-DMF1ucDxtqgxw5niaXcmYQ=='
+                                        },
+                                        b: {
+                                            data: getBinary('b')
+                                        }
+                                    }},
+                                    {[specialNames.attachment]: {a: {
+                                        data: getBinary('a')
+                                    }}},
+                                    {[specialNames.attachment]: {'[ab]': {
+                                        maximumNumber: 2
+                                    }}},
+                                    {payloadExists: true, result: {b: {
+                                        content_type:
+                                            'application/octet-stream',
+                                        data: getBinary('a')
+                                    }}}
+                                ]
+                                /* eslint-enable camelcase */
                             ])
                                 assert.deepEqual(
                                     await extractRawDataPipe
