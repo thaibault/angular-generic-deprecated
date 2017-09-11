@@ -17,6 +17,7 @@
 // region imports
 import Tools from 'clientnode'
 import type {DomNode, PlainObject} from 'clientnode'
+import {blobToBase64String} from 'blob-util'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 // NOTE: Only needed for debugging this file.
 try {
@@ -345,31 +346,162 @@ registerAngularTest(function(
                                 assert:Object
                             ):Promise<void> => {
                                 const done:Function = assert.async()
-                                for (const test:Array<any> of [
-                                    [true, true],
-                                    [false, false],
-                                    [{data: true}, {data: true}],
-                                    /* eslint-disable camelcase */
-                                    [
-                                        {content_type: 'a/b', data: 'a'},
-                                        {content_type: 'a/b', data: 'a'}
-                                    ]
-                                    // TODO
-                                    /* eslint-enable camelcase */
-                                ])
-                                    assert.ok(await attachmentsAreEqualPipe
-                                        .transform(test[0], test[1]))
-                                for (const test:Array<any> of [
-                                    /* eslint-disable camelcase */
-                                    [
-                                        {content_type: 'a/a', data: 'a'},
-                                        {content_type: 'a/b', data: 'a'}
-                                    ]
-                                    // TODO
-                                    /* eslint-enable camelcase */
-                                ])
-                                    assert.notOk(await attachmentsAreEqualPipe
-                                        .transform(test[0], test[1]))
+                                const getBinary:Function = (
+                                    data:string
+                                ):Object => (
+                                    typeof Blob === undefined
+                                ) ? new Buffer(data) : new Blob([data], {
+                                    type: 'application/octet-stream'})
+                                try {
+                                    for (const test:Array<any> of [
+                                        [true, true],
+                                        [false, false],
+                                        [{data: true}, {data: true}],
+                                        /* eslint-disable camelcase */
+                                        [
+                                            {content_type: 'a/b', data: 'a'},
+                                            {content_type: 'a/b', data: 'a'}
+                                        ],
+                                        [
+                                            {content_type: 'a/b', data: 'a'},
+                                            {content_type: 'a/b', data: 'a'}
+                                        ],
+                                        [
+                                            {
+                                                content_type: 'a/b',
+                                                data: 'a',
+                                                size: 1
+                                            },
+                                            {
+                                                content_type: 'a/b',
+                                                data: 'a',
+                                                length: 1
+                                            }
+                                        ],
+                                        [
+                                            {
+                                                type: 'a/b',
+                                                data: 'a',
+                                                size: 1
+                                            },
+                                            {
+                                                content_type: 'a/b',
+                                                data: 'a',
+                                                length: 1
+                                            }
+                                        ],
+                                        [
+                                            {data: 'a', size: 1},
+                                            {
+                                                content_type: 'a/b',
+                                                data: 'a',
+                                                length: 1
+                                            }
+                                        ],
+                                        [
+                                            {data: 'a', size: 1},
+                                            {
+                                                content_type: 'a/b',
+                                                data: 'a',
+                                                length: 1
+                                            }
+                                        ],
+                                        [
+                                            {
+                                                digest: 'md5-DMF1ucDxtqcmYQ==',
+                                                size: 1
+                                            },
+                                            {
+                                                content_type: 'a/b',
+                                                digest: 'md5-DMF1ucDxtqcmYQ==',
+                                                data: 'a',
+                                                length: 1
+                                            }
+                                        ],
+                                        [
+                                            {
+                                                digest:
+                                                    'md5-CY9rzUYh03PK3k6DJie' +
+                                                    '09g=='
+                                            },
+                                            {data: 'dGVzdA=='}
+                                        ],
+                                        [
+                                            {
+                                                digest:
+                                                    'md5-DMF1ucDxtqgxw5niaXc' +
+                                                    'mYQ==',
+                                                size: 1
+                                            },
+                                            {
+                                                content_type: 'a/b',
+                                                data: getBinary('a'),
+                                                length: 1
+                                            }
+                                        ],
+                                        [
+                                            {data: getBinary('a')},
+                                            {data: getBinary('a')}
+                                        ],
+                                        [
+                                            {data: await blobToBase64String(
+                                                getBinary('a')
+                                            )},
+                                            {data: getBinary('a')}
+                                        ]
+                                        /* eslint-enable camelcase */
+                                    ])
+                                        assert.ok(await attachmentsAreEqualPipe
+                                            .transform(test[0], test[1]))
+                                    for (const test:Array<any> of [
+                                        /* eslint-disable camelcase */
+                                        [
+                                            {content_type: 'a/a', data: 'a'},
+                                            {content_type: 'a/b', data: 'a'}
+                                        ],
+                                        [
+                                            {type: 'a/a', data: 'a'},
+                                            {content_type: 'a/b', data: 'a'}
+                                        ],
+                                        [
+                                            {data: 'a', size: 1},
+                                            {data: 'b', length: 2}
+                                        ],
+                                        [
+                                            {data: 'a', size: 1},
+                                            {data: 'b', length: 2}
+                                        ],
+                                        [
+                                            {
+                                                data: getBinary('a'),
+                                                type: 'a/b',
+                                            },
+                                            {
+                                                data: getBinary('b'),
+                                                type: 'a/b'
+                                            }
+                                        ],
+                                        [
+                                            {data: getBinary('a')},
+                                            {data: getBinary('b')}
+                                        ],
+                                        [
+                                            {data: await blobToBase64String(
+                                                getBinary('a')
+                                            )},
+                                            {data: await blobToBase64String(
+                                                getBinary('b')
+                                            )}
+                                        ]
+                                        /* eslint-enable camelcase */
+                                    ])
+                                        assert.notOk(
+                                            await attachmentsAreEqualPipe
+                                                .transform(test[0], test[1]))
+                                } catch (error) {
+                                    console.error(error)
+                                    assert.ok(false)
+                                }
                                 done()
                             })
                         self.test(`GetFilenameByPrefixPipe (${roundType})`, (
@@ -1286,7 +1418,6 @@ registerAngularTest(function(
                                 console.error(error)
                                 assert.ok(false)
                             }
-                            assert.ok(true)
                             done()
                         })
                         self.test(`DataScopeService (${roundType})`, async (

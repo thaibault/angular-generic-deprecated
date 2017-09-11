@@ -313,16 +313,29 @@ const StringMD5Pipe:PipeTransform = module.exports.StringMD5Pipe
 @Pipe({name: 'genericAttachmentsAreEqual'})
 /**
  * Determines if given attachments are representing the same data.
+ * @property data - Database service instance.
+ * @property specialNames - A mapping to database specific special property
+ * names.
  * @property stringMD5 - String md5 pipe's instance transform method.
  */
 export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
+    data:DataService
+    specialNames:PlainObject
     stringMD5:Function
     /**
      * Gets needed services injected.
+     * @param initialData - Injected initial data service instance.
+     * @param injector - Application specific injector instance.
      * @param stringMD5Pipe - Injected string md5 pipe instance.
      * @returns Nothing.
      */
-    constructor(stringMD5Pipe:StringMD5Pipe):void {
+    constructor(
+        initialData:InitialDataService, injector:Injector,
+        stringMD5Pipe:StringMD5Pipe
+    ):void {
+        this.specialNames =
+            initialData.configuration.database.model.property.name.special
+        this.data = injector.get(DataService)
         this.stringMD5 = stringMD5Pipe.transform.bind(stringMD5Pipe)
     }
     /**
@@ -336,36 +349,58 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
             Identical implies equality and should be checked first for
             performance.
         */
-        if (
-            first === second ||
-            'data' in first &&
-            'data' in second &&
-            first.data === second.data
-        )
+        if (first === second)
             return true
         // Normalize properties.
-        data = {first: {given: first}, second: {given: second}}
+        const data:Object = {first: {given: first}, second: {given: second}}
         for (const type:string of ['first', 'second']) {
+            if (
+                typeof data[type].given !== 'object' ||
+                data[type].given === null
+            )
+                return false
             data[type].content_type =
                 data[type].given.type || data[type].given.content_type
-            data[type].size = data[type].given.size || data[type].given.length
+            data[type].data = data[type].given.data || NaN
             data[type].hash =
                 data[type].given.digest || data[type].given.hash || NaN
+            data[type].size = data[type].given.size || data[type].given.length
         }
         // Search for an exclusion criterion.
-        for (const test:string of ['content_type', 'size'])
-            if (data.first[test] !== data.second[test])
+        for (const type:string of ['content_type', 'size'])
+            if (
+                ![data.first[type], data.second[type]].includes(undefined) &&
+                data.first[type] !== data.second[type]
+            )
                 return false
         // Check for a sufficient criterion.
+        if (data.first.data === data.second.data)
+            return true
         for (const type:string of ['first', 'second'])
-            if (!data[type].hash && 'data' in data[type].given)
-                if (
-                    typeof Blob !== 'undefined' &&
-                    data[type].given instanceof Blob
-                )
-                    data[type].hash = await blobToBase64String(data[type])
-                else if (typeof data[type].given === 'string')
-                    data[type].hash = this.stringMD5(data[type].given)
+            if (!data[type].hash) {
+                const name:string = 'genericTemp'
+                const databaseConnection:Object = new this.data.database(name)
+                try {
+                    await databaseConnection.put({
+                        [this.specialNames.id]: name,
+                        [this.specialNames.attachment]: {
+                            [name]: {
+                                data: (
+                                    'data' in data[type].given
+                                ) ? data[type].given.data : data[type].given,
+                                content_type: 'application/octet-stream'
+                            }
+                        }
+                    })
+                    data[type].hash = (await databaseConnection.get(name))[
+                        this.specialNames.attachment
+                    ][name].digest
+                } catch (error) {
+                    throw error
+                } finally {
+                    await databaseConnection.destroy()
+                }
+            }
         return data.first.hash === data.second.hash
     }
 }
