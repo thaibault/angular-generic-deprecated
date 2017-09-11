@@ -104,6 +104,7 @@ registerAngularTest(function(
             const {
                 AbstractResolver,
                 AlertService,
+                AttachmentsAreEqualPipe,
                 AttachmentWithPrefixExistsPipe,
                 CanDeactivateRouteLeaveGuard,
                 DataScopeService,
@@ -217,6 +218,8 @@ registerAngularTest(function(
                  * Dummy constructor to inject needed service instances and
                  * perform various tests.
                  * @param alert - Injected alert service instance.
+                 * @param attachmentsAreEqualPipe - Injected attachments are
+                 * equal pipe instance.
                  * @param attachmentWithPrefixExistsPipe - Injected attachment
                  * with prefix exists pipe instance.
                  * @param canDeactivateRouteLeave - Injected can deactivate
@@ -264,6 +267,7 @@ registerAngularTest(function(
                  */
                 constructor(
                     alert:AlertService,
+                    attachmentsAreEqualPipe:AttachmentsAreEqualPipe,
                     /* eslint-disable indent */
                 attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
                     /* eslint-enable indent */
@@ -336,6 +340,52 @@ registerAngularTest(function(
                         })
                         // / endregion
                         // / region object
+                        self.test(
+                            `AttachmentsAreEqualPipe (${roundType})`, async (
+                                assert:Object
+                            ):Promise<void> => {
+                                const done:Function = assert.async()
+                                for (const test:Array<any> of [
+                                    [true, true],
+                                    [false, false],
+                                    [{data: true}, {data: true}],
+                                    /* eslint-disable camelcase */
+                                    [
+                                        {content_type: 'a/b', data: 'a'},
+                                        {content_type: 'a/b', data: 'a'}
+                                    ]
+                                    // TODO
+                                    /* eslint-enable camelcase */
+                                ])
+                                    assert.ok(await attachmentsAreEqualPipe
+                                        .transform(test[0], test[1]))
+                                for (const test:Array<any> of [
+                                    /* eslint-disable camelcase */
+                                    [
+                                        {content_type: 'a/a', data: 'a'},
+                                        {content_type: 'a/b', data: 'a'}
+                                    ]
+                                    // TODO
+                                    /* eslint-enable camelcase */
+                                ])
+                                    assert.notOk(await attachmentsAreEqualPipe
+                                        .transform(test[0], test[1]))
+                                done()
+                            })
+                        self.test(`GetFilenameByPrefixPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                [[{}], null],
+                                [[{a: 2}], 'a'],
+                                [[{a: 2, b: 3}, 'b'], 'b'],
+                                [[{a: 2, b: 3}, 'c'], null]
+                            ])
+                                assert.strictEqual(
+                                    getFilenameByPrefixPipe.transform(
+                                        ...test[0]),
+                                    test[1])
+                        })
                         self.test(
                             `AttachmentWithPrefixExistsPipe (${roundType})`, (
                                 assert:Object
@@ -540,9 +590,10 @@ registerAngularTest(function(
                                     test[1])
                             // endregion
                         })
-                        self.test(`ExtractRawDataPipe (${roundType})`, (
+                        self.test(`ExtractRawDataPipe (${roundType})`, async (
                             assert:Object
-                        ):void => {
+                        ):Promise<void> => {
+                            const done:Function = assert.async()
                             // region convertDateToTimestampRecursively
                             for (const test:Array<any> of [
                                 [{}, {}],
@@ -568,6 +619,33 @@ registerAngularTest(function(
                                         .convertDateToTimestampRecursively(
                                             test[0]),
                                     test[1])
+                            // endregion
+                            // region removeAlreadyExistingAttachmentData
+                            for (const test:Array<any> of [
+                                [
+                                    {}, {}, {},
+                                    {payloadExists: false, result: {}}
+                                ],
+                                [
+                                    {a: 2}, {}, {},
+                                    {payloadExists: false, result: {}}
+                                ],
+                                [
+                                    {a: 2}, {}, {a: {}},
+                                    {payloadExists: false, result: {}}
+                                ],
+                                [
+                                    {[specialNames.attachment]: {a: {}}}, {},
+                                    {[specialNames.attachment]: {}},
+                                    {payloadExists: false, result: {}}
+                                ]
+                                // TODO
+                            ])
+                                assert.deepEqual(
+                                    await extractRawDataPipe
+                                        .removeAlreadyExistingAttachmentData(
+                                            test[0], test[1], test[2]),
+                                    test[3])
                             // endregion
                             // region removeAlreadyExistingData
                             for (const test:Array<any> of [
@@ -858,23 +936,11 @@ registerAngularTest(function(
                                 ]
                             ])
                                 assert.deepEqual(
-                                    extractRawDataPipe.transform(...test[0]),
-                                    test[1])
-                            // endregion
-                        })
-                        self.test(`GetFilenameByPrefixPipe (${roundType})`, (
-                            assert:Object
-                        ):void => {
-                            for (const test:Array<any> of [
-                                [[{}], null],
-                                [[{a: 2}], 'a'],
-                                [[{a: 2, b: 3}, 'b'], 'b'],
-                                [[{a: 2, b: 3}, 'c'], null]
-                            ])
-                                assert.strictEqual(
-                                    getFilenameByPrefixPipe.transform(
+                                    await extractRawDataPipe.transform(
                                         ...test[0]),
                                     test[1])
+                            // endregion
+                            done()
                         })
                         self.test(`IsDefinedPipe (${roundType})`, (
                             assert:Object
