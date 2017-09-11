@@ -444,6 +444,10 @@ registerAngularTest(function(
                                             {data: getBinary('a')}
                                         ],
                                         [
+                                            getBinary('a'),
+                                            {data: getBinary('a')}
+                                        ],
+                                        [
                                             {data: await blobToBase64String(
                                                 getBinary('a')
                                             )},
@@ -492,7 +496,8 @@ registerAngularTest(function(
                                             {data: await blobToBase64String(
                                                 getBinary('b')
                                             )}
-                                        ]
+                                        ],
+                                        [{data: 1}, {data: 2}]
                                         /* eslint-enable camelcase */
                                     ])
                                         assert.notOk(
@@ -770,8 +775,14 @@ registerAngularTest(function(
                                     {[specialNames.attachment]: {a: {}}}, {},
                                     {[specialNames.attachment]: {}},
                                     {payloadExists: false, result: {}}
-                                ]
-                                // TODO
+                                ],
+                                [
+                                    {[specialNames.attachment]: {a: {
+                                        data: 'a'
+                                    }}}, {},
+                                    {[specialNames.attachment]: {}},
+                                    {payloadExists: false, result: {}}
+                                ],
                             ])
                                 assert.deepEqual(
                                     await extractRawDataPipe

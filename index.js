@@ -314,28 +314,33 @@ const StringMD5Pipe:PipeTransform = module.exports.StringMD5Pipe
 /**
  * Determines if given attachments are representing the same data.
  * @property data - Database service instance.
+ * @property representObject - Represent object pipe's method.
  * @property specialNames - A mapping to database specific special property
  * names.
  * @property stringMD5 - String md5 pipe's instance transform method.
  */
 export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
     data:DataService
+    representObject:Function
     specialNames:PlainObject
     stringMD5:Function
     /**
      * Gets needed services injected.
      * @param initialData - Injected initial data service instance.
      * @param injector - Application specific injector instance.
+     * @param representObjectPipe - Represent object pipe instance.
      * @param stringMD5Pipe - Injected string md5 pipe instance.
      * @returns Nothing.
      */
     constructor(
         initialData:InitialDataService, injector:Injector,
-        stringMD5Pipe:StringMD5Pipe
+        representObjectPipe:RepresentObjectPipe, stringMD5Pipe:StringMD5Pipe
     ):void {
+        this.data = injector.get(DataService)
+        this.representObject = representObjectPipe.transform.bind(
+            representObjectPipe)
         this.specialNames =
             initialData.configuration.database.model.property.name.special
-        this.data = injector.get(DataService)
         this.stringMD5 = stringMD5Pipe.transform.bind(stringMD5Pipe)
     }
     /**
@@ -380,8 +385,14 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
             if (!data[type].hash) {
                 const name:string = 'genericTemp'
                 const databaseConnection:Object = new this.data.database(name)
+                const handleError:Function = (error:Error):false => {
+                    console.warn(
+                        'Given attachments for equality check are not ' +
+                        `valid: ${this.representObject(error)}`)
+                    return false
+                }
                 try {
-                    await databaseConnection.put({
+                    let result:Promise = databaseConnection.put({
                         [this.specialNames.id]: name,
                         [this.specialNames.attachment]: {
                             [name]: {
@@ -392,11 +403,21 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
                             }
                         }
                     })
-                    data[type].hash = (await databaseConnection.get(name))[
-                        this.specialNames.attachment
-                    ][name].digest
+                    try {
+                        await result
+                    } catch (error) {
+                        return handleError(error)
+                    }
+                    try {
+                        result = await databaseConnection.get(name)
+                    } catch (error) {
+                        return handleError(error)
+                    }
+                    data[type].hash = result[this.specialNames.attachment][
+                        name
+                    ].digest
                 } catch (error) {
-                    throw error
+                    return handleError(error)
                 } finally {
                     await databaseConnection.destroy()
                 }
