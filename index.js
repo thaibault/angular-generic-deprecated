@@ -333,8 +333,10 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
      * @returns Nothing.
      */
     constructor(
-        initialData:InitialDataService, injector:Injector,
-        representObjectPipe:RepresentObjectPipe, stringMD5Pipe:StringMD5Pipe
+        initialData:InitialDataService,
+        injector:Injector,
+        representObjectPipe:RepresentObjectPipe,
+        stringMD5Pipe:StringMD5Pipe
     ):void {
         this.data = injector.get(DataService)
         this.representObject = representObjectPipe.transform.bind(
@@ -653,9 +655,12 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      * @returns Nothing.
      */
     constructor(
-        attachmentsAreEqualPipe:AttachmentsAreEqualPipe, equalsPipe:EqualsPipe,
-        initialData:InitialDataService, injector:Injector,
-        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe, tools:ToolsService
+        attachmentsAreEqualPipe:AttachmentsAreEqualPipe,
+        equalsPipe:EqualsPipe,
+        initialData:InitialDataService,
+        injector:Injector,
+        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe,
+        tools:ToolsService
     ):void {
         this.attachmentsAreEqual = attachmentsAreEqualPipe.transform.bind(
             attachmentsAreEqualPipe)
@@ -1687,9 +1692,12 @@ export class DataService {
      * @returns Nothing.
      */
     constructor(
-        equalsPipe:EqualsPipe, extendObjectPipe:ExtendObjectPipe,
-        initialData:InitialDataService, @Inject(PLATFORM_ID) platformID:string,
-        stringFormatPipe:StringFormatPipe, tools:ToolsService
+        equalsPipe:EqualsPipe,
+        extendObjectPipe:ExtendObjectPipe,
+        initialData:InitialDataService,
+        @Inject(PLATFORM_ID) platformID:string,
+        stringFormatPipe:StringFormatPipe,
+        tools:ToolsService
     ):void {
         this.configuration = initialData.configuration
         if (this.configuration.database.hasOwnProperty('publicURL'))
@@ -2283,7 +2291,8 @@ export class DataScopeService {
      */
     constructor(
         attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
-        data:DataService, extendObjectPipe:ExtendObjectPipe,
+        data:DataService,
+        extendObjectPipe:ExtendObjectPipe,
         extractDataPipe:ExtractDataPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService,
@@ -2716,7 +2725,8 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     constructor(
         data:DataService,
         escapeRegularExpressionsPipe:StringEscapeRegularExpressionsPipe,
-        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService
+        extendObjectPipe:ExtendObjectPipe,
+        initialData:InitialDataService
     ):void {
         this.data = data
         this.escapeRegularExpressions =
@@ -3066,9 +3076,11 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      * @returns Nothing.
      */
     constructor(
-        changeDetectorReference:ChangeDetectorRef, data:DataService,
+        changeDetectorReference:ChangeDetectorRef,
+        data:DataService,
         extendObjectPipe:ExtendObjectPipe,
-        stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
+        stringCapitalizePipe:StringCapitalizePipe,
+        tools:ToolsService
     ):void {
         this._changeDetectorReference = changeDetectorReference
         this._data = data
@@ -3223,10 +3235,14 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * @returns Nothing.
      */
     constructor(
-        changeDetectorReference:ChangeDetectorRef, data:DataService,
-        extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService,
-        route:ActivatedRoute, router:Router,
-        stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
+        changeDetectorReference:ChangeDetectorRef,
+        data:DataService,
+        extendObjectPipe:ExtendObjectPipe,
+        initialData:InitialDataService,
+        route:ActivatedRoute,
+        router:Router,
+        stringCapitalizePipe:StringCapitalizePipe,
+        tools:ToolsService
     ):void {
         super(
             changeDetectorReference, data, extendObjectPipe,
@@ -3686,6 +3702,7 @@ export class IntervalInputComponent {
  * Represents an editable list of intervals.
  * @property additionalObjectData - Additional object data to save with current
  * interval object.
+ * @property contentTemplate - Reference to transcluded node.
  * @property description - Interval description to use as label.
  * @property model - Saves current list of intervals.
  * @property modelChange - Event emitter for interval list changes.
@@ -3693,7 +3710,6 @@ export class IntervalInputComponent {
  * @property _dataScope - Data scope service instance.
  * @property _extendObject - Holds the extend object pipe instance's transform
  * method.
- * @property _typeName - Saves current configured type name.
  */
 export class IntervalsInputComponent {
     @Input() additionalObjectData:PlainObject
@@ -3704,22 +3720,17 @@ export class IntervalsInputComponent {
 
     _dataScope:DataScopeService
     _extendObject:Function
-    _typeName:string
     /**
      * Constructs the interval list component.
      * @param dataScope - Data scope service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
-     * @param initialData - Injected initial data service instance.
      * @returns Nothing.
      */
     constructor(
-        dataScope:DataScopeService, extendObjectPipe:ExtendObjectPipe,
-        initialData:InitialDataService
+        dataScope:DataScopeService, extendObjectPipe:ExtendObjectPipe
     ):void {
         this._dataScope = dataScope
         this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
-        this._typeName =
-            initialData.configuration.database.model.property.name.special.type
     }
     /**
      * Extends additional model data with default one if nothing is provided.
@@ -3822,8 +3833,10 @@ export class CodeEditorComponent extends AbstractValueAccessor
      * @returns Nothing.
      */
     constructor(
-        elementRef:ElementRef, extendObjectPipe:ExtendObjectPipe,
-        renderer:Renderer2, tools:ToolsService
+        elementRef:ElementRef,
+        extendObjectPipe:ExtendObjectPipe,
+        renderer:Renderer2,
+        tools:ToolsService
     ):void {
         super(renderer, elementRef, null)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
@@ -4627,15 +4640,17 @@ export class TextareaComponent extends AbstractInputComponent
  *
  * @property attachmentTypeName - Current attachment type name.
  * @property change - File change event emitter.
+ * @property configuration - Configuration object.
  * @property delete - Event emitter which triggers its handler when current
  * file should be removed.
  * @property deleteButtonText - Text for button to trigger file removing.
+ * @property deletedName - Holds the deleted model field name.
  * @property downloadButtonText - Text for button to download current file.
  * @property editableName - Indicates whether file name could be edited.
  * @property file - Holds the current selected file object if present.
  * @property headerText - Header text to show instead of property description
  * or name.
- * @property showDeclarationText - Info text to click for more informations.
+ * @property idName - Name if id field.
  * @property input - Virtual file input dom node.
  * @property internalName - Technical regular expression style file type.
  * @property keyCode - Mapping from key code to their description.
@@ -4652,16 +4667,18 @@ export class TextareaComponent extends AbstractInputComponent
  * @property noPreviewText - Text to show if no preview is available.
  * @property requiredText - Required file selection validation text.
  * @property revision - Revision of given model to show.
+ * @property revisionName - Name if revision field.
+ * @property showDeclarationText - Info text to click for more informations.
  * @property showValidationErrorMessages - Indicates whether validation errors
  * should be displayed. Useful to hide error messages until user tries to
  * submit a form.
  * @property synchronizeImmediately - Indicates whether file upload should be
  * done immediately after a file was selected (or synchronously with other
  * model data).
+ * @property typeName - Name of type field.
  * @property typePatternText - File type validation text.
  *
  * @property _data - Holds the data service instance.
- * @property _deletedName - Holds the deleted model field name.
  * @property _domSanitizer - Holds the dom sanitizer service instance.
  * @property _extendObject - Holds the extend object pipe instance's transform
  * method.
@@ -4669,13 +4686,10 @@ export class TextareaComponent extends AbstractInputComponent
  * instance's transform method.
  * @property _idIsObject - Indicates whether the model document specific id is
  * provided as object and "value" named property or directly.
- * @property _idName - Name if id field.
  * @property _representObject - Holds the represent object pipe instance's
  * transform method.
- * @property _revisionName - Name if revision field.
  * @property _stringFormat - Saves the string formatting pip's transformation
  * function.
- * @property _typeName - Name of type field.
  * @property _prefixMatch - Holds the prefix match pipe instance's transform
  * method.
  */
@@ -4691,17 +4705,21 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         '(?:application/(?:x-)?shockwave-flash)$')
 
     attachmentTypeName:string
+    configuration:PlainObject
     @Output() delete:EventEmitter<string> = new EventEmitter()
     @Input() deleteButtonText:string = 'delete'
+    deletedName:string
     @Input() downloadButtonText:string = 'download'
     @Input() editableName:boolean = true
     file:any = null
     @Output() fileChange:EventEmitter<any> = new EventEmitter()
     @Input() headerText:?string = null
+    idName:string
+    @ViewChild('input') input:ElementRef
     @Input() resetNameText:string = '×'
     @Input() saveNameText:string = '✓'
     @Input() showDeclarationText:string = 'ℹ'
-    @ViewChild('input') input:ElementRef
+    typeName:string
     internalName:string
     keyCode:{[key:string]:number}
     @Input() mapNameToField:?string|?Array<string> = null
@@ -4724,24 +4742,20 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     @Input() noPreviewText:string = ''
     @Input() requiredText:string = 'Please select a file.'
     @Input() revision:?string = null
+    revisionName:string
     @Input() showValidationErrorMessages:boolean = false
     @Input() synchronizeImmediately:boolean|PlainObject = false
     @Input() typePatternText:string =
         'Filetype "${file.content_type}" doesn\'t match specified pattern "' +
         '${model.contentTypeRegularExpressionPattern}".'
 
-    _configuration:PlainObject
     _data:DataService
-    _deletedName:string
     _domSanitizer:DomSanitizer
     _extendObject:Function
     _getFilenameByPrefix:Function
     _idIsObject:boolean = false
-    _idName:string
     _representObject:Function
-    _revisionName:string
     _stringFormat:Function
-    _typeName:string
     _prefixMatch:boolean = false
     /**
      * Sets needed services as property values.
@@ -4758,35 +4772,37 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      * @returns Nothing.
      */
     constructor(
-        data:DataService, domSanitizer:DomSanitizer,
+        data:DataService,
+        domSanitizer:DomSanitizer,
         extendObjectPipe:ExtendObjectPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService,
         representObjectPipe:RepresentObjectPipe,
-        stringFormatPipe:StringFormatPipe, tools:ToolsService
+        stringFormatPipe:StringFormatPipe,
+        tools:ToolsService
     ):void {
+        this.configuration = initialData.configuration
+        this.attachmentTypeName =
+            this.configuration.database.model.property.name.special.attachment
         this.keyCode = tools.tools.keyCode
-        this._configuration = initialData.configuration
+        this.deletedName =
+            this.configuration.database.model.property.name.special.deleted
+        this.idName =
+            this.configuration.database.model.property.name.special.id
+        this.model = {[this.attachmentTypeName]: {}, id: null}
+        this.revisionName =
+            this.configuration.database.model.property.name.special.revision
+        this.typeName =
+            this.configuration.database.model.property.name.special.type
         this._data = data
-        this._deletedName =
-            this._configuration.database.model.property.name.special.deleted
         this._domSanitizer = domSanitizer
         this._extendObject = extendObjectPipe.transform.bind(
             extendObjectPipe)
         this._getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
-        this._idName =
-            this._configuration.database.model.property.name.special.id
-        this._revisionName =
-            this._configuration.database.model.property.name.special.revision
-        this._typeName =
-            this._configuration.database.model.property.name.special.type
         this._representObject = representObjectPipe.transform.bind(
             representObjectPipe)
         this._stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
-        this.attachmentTypeName =
-            this._configuration.database.model.property.name.special.attachment
-        this.model = {[this.attachmentTypeName]: {}, id: null}
     }
     /**
      * Determines which type of file we have to present.
@@ -4815,7 +4831,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      * @returns Nothing.
      */
     async ngOnChanges(changes:Object):Promise<void> {
-        if (typeof this.model[this._idName] === 'object')
+        if (typeof this.model[this.idName] === 'object')
             this._idIsObject = true
         if (changes.hasOwnProperty(
             'mapNameToField'
@@ -4858,8 +4874,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 */
                 if (!this.file.source) {
                     const id:any = this._idIsObject ? this.model[
-                        this._idName
-                    ].value : this.model[this._idName]
+                        this.idName
+                    ].value : this.model[this.idName]
                     if (
                         this.revision &&
                         changes.revision.currentValue !==
@@ -4880,9 +4896,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                         this.file.source =
                             this._domSanitizer.bypassSecurityTrustResourceUrl(
                                 this._stringFormat(
-                                    this._configuration.database.url, ''
+                                    this.configuration.database.url, ''
                                 ) + '/' + (
-                                    this._configuration.name || 'generic'
+                                    this.configuration.name || 'generic'
                                 ) + `/${id}/${this.file.name}` +
                                 this.file.query)
                 }
@@ -4925,16 +4941,16 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         if (this.synchronizeImmediately && this.file) {
             let result:PlainObject
             const update:PlainObject = {
-                [this._typeName]: this.model[this._typeName],
-                [this._idName]: this._idIsObject ? this.model[
-                    this._idName
-                ].value : this.model[this._idName],
-                [this._revisionName]: this.model[this._revisionName]
+                [this.typeName]: this.model[this.typeName],
+                [this.idName]: this._idIsObject ? this.model[
+                    this.idName
+                ].value : this.model[this.idName],
+                [this.revisionName]: this.model[this.revisionName]
             }
             if (this.mapNameToField && this.mapNameToField.includes(
-                this._idName
+                this.idName
             ))
-                update[this._deletedName] = true
+                update[this.deletedName] = true
             else
                 update[this.attachmentTypeName] = {[this.file.name]: {
                     /* eslint-disable camelcase */
@@ -4953,11 +4969,11 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 return
             }
             if (this.mapNameToField && this.mapNameToField.includes(
-                this._idName
+                this.idName
             ))
                 this.delete.emit(result)
             else
-                this.model[this._revisionName] = result.rev
+                this.model[this.revisionName] = result.rev
         }
         this.model[this.attachmentTypeName][this.internalName].state.errors =
             this.model[this.attachmentTypeName][this.internalName].value =
@@ -4976,12 +4992,12 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      */
     async rename(name:string):Promise<void> {
         const id:any = this._idIsObject ? this.model[
-            this._idName
-        ].value : this.model[this._idName]
+            this.idName
+        ].value : this.model[this.idName]
         const oldName:string = this.file.name
         if (
             this.file.stub && this.mapNameToField && id &&
-            this.mapNameToField.includes(this._idName)
+            this.mapNameToField.includes(this.idName)
         )
             try {
                 await this.retrieveAttachment(id)
@@ -5090,46 +5106,45 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
             this.attachmentTypeName
         ][this.internalName].state.errors) {
             let newData:PlainObject = {
-                [this._typeName]: this.model[this._typeName],
-                [this._idName]: this._idIsObject ? this.model[
-                    this._idName
-                ].value : this.model[this._idName]
+                [this.typeName]: this.model[this.typeName],
+                [this.idName]: this._idIsObject ? this.model[
+                    this.idName
+                ].value : this.model[this.idName]
             }
             if (this.synchronizeImmediately !== true)
                 this._extendObject(
                     true, newData, this.synchronizeImmediately)
             let id:any = this._idIsObject ? this.model[
-                this._idName
-            ].value : this.model[this._idName]
+                this.idName
+            ].value : this.model[this.idName]
             // NOTE: We want to replace old medium.
             if (oldName && oldName !== this.file.name && !(
                 this.mapNameToField && id &&
-                this.mapNameToField.includes(this._idName)
+                this.mapNameToField.includes(this.idName)
             ))
                 newData[this.attachmentTypeName] = {[oldName]: {data: null}}
-            if (![undefined, null].includes(this.model[this._revisionName]))
-                newData[this._revisionName] = this.model[
-                    this._revisionName]
+            if (![undefined, null].includes(this.model[this.revisionName]))
+                newData[this.revisionName] = this.model[this.revisionName]
             const tasks:Array<PlainObject> = []
             if (this.mapNameToField) {
                 if (
                     id && id !== this.file.name &&
-                    this.mapNameToField.includes(this._idName)
+                    this.mapNameToField.includes(this.idName)
                 ) {
-                    newData[this._deletedName] = true
+                    newData[this.deletedName] = true
                     tasks.unshift(newData)
                     newData = this._extendObject(
-                        true, {}, newData, {[this._deletedName]: false})
+                        true, {}, newData, {[this.deletedName]: false})
                 }
                 for (const name:string of this.mapNameToField) {
                     newData[name] = this.file.name
-                    if (name === this._idName && this._idIsObject)
+                    if (name === this.idName && this._idIsObject)
                         this.model[name].value = this.file.name
                     else
                         this.model[name] = this.file.name
                 }
             }
-            newData[this._revisionName] = 'upsert'
+            newData[this.revisionName] = 'upsert'
             newData[this.attachmentTypeName] = {[this.file.name]: {
                 /* eslint-disable camelcase */
                 content_type: this.file.content_type,
@@ -5148,7 +5163,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                 ) ? error.message : this._representObject(error)}
                 return
             }
-            id = newData[this._idName]
+            id = newData[this.idName]
             let revision:string
             for (const item:PlainObject of result) {
                 if (item.error) {
@@ -5161,13 +5176,13 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     revision = item.rev
             }
             if (this.file) {
-                this.file.revision = this.model[this._revisionName] = revision
+                this.file.revision = this.model[this.revisionName] = revision
                 this.file.query = `?rev=${revision}`
                 this.file.source =
                     this._domSanitizer.bypassSecurityTrustResourceUrl(
                         this._stringFormat(
-                            this._configuration.database.url, ''
-                        ) + `/${this._configuration.name}/${id}/` +
+                            this.configuration.database.url, ''
+                        ) + `/${this.configuration.name}/${id}/` +
                         `${this.file.name}${this.file.query}`)
                 this.determinePresentationType()
             }
