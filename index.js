@@ -709,7 +709,6 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         newDocument:PlainObject, oldDocument:PlainObject,
         specification:PlainObject
     ):Promise<{payloadExists:boolean;result:PlainObject}> {
-        let payloadExists:boolean = false
         const result:PlainObject = {}
         if (specification && specification.hasOwnProperty(
             this.specialNames.attachment
