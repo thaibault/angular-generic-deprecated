@@ -417,9 +417,8 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
                     } catch (error) {
                         return handleError(error)
                     }
-                    data[type].hash = result[this.specialNames.attachment][
-                        name
-                    ].digest
+                    data[type].hash =
+                        result[this.specialNames.attachment][name].digest
                 } catch (error) {
                     return handleError(error)
                 } finally {

@@ -755,7 +755,7 @@ registerAngularTest(function(
                                             test[0]),
                                     test[1])
                             // endregion
-                            // region removeAlreadyExistingAttachmentData
+                            // region getNotAlreadyExistingAttachmentData
                             for (const test:Array<any> of [
                                 /* eslint-disable camelcase */
                                 [
@@ -781,8 +781,6 @@ registerAngularTest(function(
                                     }}}, {},
                                     {[specialNames.attachment]: {a: {}}},
                                     {payloadExists: true, result: {a: {
-                                        content_type:
-                                            'application/octet-stream',
                                         data: 'a'
                                     }}}
                                 ],
@@ -887,11 +885,7 @@ registerAngularTest(function(
                                     }}},
                                     {payloadExists: true, result: {
                                         a: {data: null},
-                                        b: {
-                                            content_type:
-                                                'application/octet-stream',
-                                            data: getBinary('b')
-                                        }
+                                        b: {data: getBinary('b')}
                                     }}
                                 ],
                                 [
@@ -930,8 +924,6 @@ registerAngularTest(function(
                                         maximumNumber: 2
                                     }}},
                                     {payloadExists: true, result: {b: {
-                                        content_type:
-                                            'application/octet-stream',
                                         data: getBinary('a')
                                     }}}
                                 ]
@@ -939,7 +931,7 @@ registerAngularTest(function(
                             ])
                                 assert.deepEqual(
                                     await extractRawDataPipe
-                                        .removeAlreadyExistingAttachmentData(
+                                        .getNotAlreadyExistingAttachmentData(
                                             test[0], test[1], test[2]),
                                     test[3])
                             // endregion
