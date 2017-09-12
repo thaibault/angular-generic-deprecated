@@ -943,6 +943,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                             Array.isArray(data[name]) &&
                             data[name].length === 0 ||
                             typeof data[name] === 'object' &&
+                            !(data[name] instanceof Date) &&
                             Object.keys(data[name]).length === 0))
                     )
                         if (
