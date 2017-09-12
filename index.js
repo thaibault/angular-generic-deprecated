@@ -957,7 +957,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                 data[name] !== null
                             ) {
                                 result[name] = {}
-                                for (const fileName:string in data[name])
+                                for (const fileName:string in data[name]) {
                                     if (data[name].hasOwnProperty(fileName))
                                         result[name][fileName] = {
                                             /* eslint-disable camelcase */
@@ -967,20 +967,21 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                                 'application/octet-stream'
                                             /* eslint-enable camelcase */
                                         }
-                                if (data[name][fileName].hasOwnProperty(
-                                    'data'
-                                ))
-                                    result[name][fileName].data =
-                                        data[name][fileName].data
-                                else
-                                    for (const type:string of [
-                                        'digest', 'stub'
-                                    ])
-                                        if (result[name][
-                                            fileName
-                                        ].hasOwnProperty(type))
-                                            result[name][fileName][type] =
-                                                data[name][fileName][type]
+                                    if (data[name][fileName].hasOwnProperty(
+                                        'data'
+                                    ))
+                                        result[name][fileName].data =
+                                            data[name][fileName].data
+                                    else
+                                        for (const type:string of [
+                                            'digest', 'stub'
+                                        ])
+                                            if (data[name][
+                                                fileName
+                                            ].hasOwnProperty(type))
+                                                result[name][fileName][type] =
+                                                    data[name][fileName][type]
+                                }
                             }
                         } else if (
                             ![
