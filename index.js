@@ -706,7 +706,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      * @returns An object indicating existing data and sliced given attachment
      * data wrapped in a promise (to asynchronous compare attachment content).
      */
-    async removeAlreadyExistingAttachmentData(
+    async getNotAlreadyExistingAttachmentData(
         newDocument:PlainObject, oldDocument:PlainObject,
         specification:PlainObject
     ):Promise<{payloadExists:boolean;result:PlainObject}> {
@@ -757,23 +757,15 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                 if (
                                     newDocument[this.specialNames.attachment][
                                         fileName
-                                    ].hasOwnProperty('data') &&
+                                    ].hasOwnProperty('data') ||
                                     newDocument[this.specialNames.attachment][
                                         fileName
-                                    ].data
+                                    ].hasOwnProperty('stub')
                                 ) {
                                     // Insert new attachment.
-                                    result[fileName] = {
-                                        /* eslint-disable camelcase */
-                                        content_type: newDocument[
-                                            this.specialNames.attachment
-                                        ][fileName].content_type ||
-                                        /* eslint-enable camelcase */
-                                        'application/octet-stream',
-                                        data: newDocument[
-                                            this.specialNames.attachment
-                                        ][fileName].data
-                                    }
+                                    result[fileName] = newDocument[
+                                        this.specialNames.attachment
+                                    ][fileName]
                                     // region remove already existing data
                                     if (oldAttachments.hasOwnProperty(
                                         fileName
@@ -790,9 +782,12 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                             */
                                             delete result[fileName]
                                         delete oldAttachments[fileName]
-                                    } else if (specification[
-                                        this.specialNames.attachment
-                                    ][type].maximumNumber === 1) {
+                                    } else if (
+                                        Object.keys(oldAttachments).length &&
+                                        specification[
+                                            this.specialNames.attachment
+                                        ][type].maximumNumber === 1
+                                    ) {
                                         const firstOldAttachmentName:string =
                                             Object.keys(oldAttachments)[0]
                                         if (await this.attachmentsAreEqual(
@@ -820,9 +815,12 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                 ))
                                     // Existing attachment has not been changed.
                                     delete oldAttachments[fileName]
-                                else if (specification[
-                                    this.specialNames.attachment
-                                ][type].maximumNumber === 1) {
+                                else if (
+                                    Object.keys(oldAttachments).length &&
+                                    specification[
+                                        this.specialNames.attachment
+                                    ][type].maximumNumber === 1
+                                ) {
                                     // Existing attachment has been renamed.
                                     const firstOldAttachmentName:string =
                                         Object.keys(oldAttachments)[0]
@@ -954,11 +952,41 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                 ).includes(name)
                         )
                             result[name] = data[name]
-                        else if (
+                        else if (name === this.specialNames.attachment) {
+                            if (
+                                typeof data[name] === 'object' &&
+                                data[name] !== null
+                            ) {
+                                result[name] = {}
+                                for (const fileName:string in data[name])
+                                    if (data[name].hasOwnProperty(fileName))
+                                        result[name][fileName] = {
+                                            /* eslint-disable camelcase */
+                                            content_type:
+                                                data[name][fileName]
+                                                    .content_type ||
+                                                'application/octet-stream'
+                                            /* eslint-enable camelcase */
+                                        }
+                                if (data[name][fileName].hasOwnProperty(
+                                    'data'
+                                ))
+                                    result[name][fileName].data =
+                                        data[name][fileName].data
+                                else
+                                    for (const type:string of [
+                                        'digest', 'stub'
+                                    ])
+                                        if (result[name][
+                                            fileName
+                                        ].hasOwnProperty(type))
+                                            result[name][fileName][type] =
+                                                data[name][fileName][type]
+                            }
+                        } else if (
                             ![
                                 this.specialNames.additional,
                                 this.specialNames.allowedRole,
-                                this.specialNames.attachment,
                                 this.specialNames.conflict,
                                 this.specialNames.constraint.execution,
                                 this.specialNames.constraint.expression,
@@ -1010,8 +1038,8 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         if (oldDocument) {
             const attachmentDifference:{
                 payloadExists:boolean;result:PlainObject
-            } = this.removeAlreadyExistingAttachmentData(
-                newDocument, oldDocument, specification)
+            } = await this.getNotAlreadyExistingAttachmentData(
+                result, oldDocument, specification)
             if (attachmentDifference.payloadExists) {
                 result[this.specialNames.attachment] =
                     attachmentDifference.result
