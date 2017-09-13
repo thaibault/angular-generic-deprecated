@@ -3150,7 +3150,6 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
             NOTE: We have to break out of the "zone.js" since long polling
             themes to confuse its mocked environment.
         */
-        // TODO try ngZone.runOutsideAngular
         this._tools.timeout(():void => {
             this._changesStream = this._data.connection.changes(
                 this._extendObject(
