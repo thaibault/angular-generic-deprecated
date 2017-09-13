@@ -43,6 +43,7 @@ import {
     Injector,
     Input,
     NgModule,
+    NgZone,
     // OnChanges,
     // OnInit,
     /* eslint-disable no-unused-vars */
@@ -356,6 +357,7 @@ const StringMD5Pipe:PipeTransform = module.exports.StringMD5Pipe
 /**
  * Determines if given attachments are representing the same data.
  * @property data - Database service instance.
+ * @property ngZone - Execution context service instance.
  * @property representObject - Represent object pipe's method.
  * @property specialNames - A mapping to database specific special property
  * names.
@@ -363,6 +365,7 @@ const StringMD5Pipe:PipeTransform = module.exports.StringMD5Pipe
  */
 export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
     data:DataService
+    ngZone:NgZone
     representObject:Function
     specialNames:PlainObject
     stringMD5:Function
@@ -370,6 +373,7 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
      * Gets needed services injected.
      * @param initialData - Injected initial data service instance.
      * @param injector - Application specific injector instance.
+     * @param ngZone - Injected execution context service instance.
      * @param representObjectPipe - Represent object pipe instance.
      * @param stringMD5Pipe - Injected string md5 pipe instance.
      * @returns Nothing.
@@ -377,10 +381,12 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
     constructor(
         initialData:InitialDataService,
         injector:Injector,
+        ngZone:NgZone,
         representObjectPipe:RepresentObjectPipe,
         stringMD5Pipe:StringMD5Pipe
     ):void {
         this.data = injector.get(DataService)
+        this.ngZone = ngZone
         this.representObject = representObjectPipe.transform.bind(
             representObjectPipe)
         this.specialNames =
@@ -412,7 +418,9 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
             data[type].content_type =
                 data[type].given.type || data[type].given.content_type
             /* eslint-enable camelcase */
-            data[type].data = data[type].given.data || NaN
+            data[type].data = ((
+                'data' in data[type].given
+            ) ? data[type].given.data : data[type].given) || NaN
             data[type].hash =
                 data[type].given.digest || data[type].given.hash || NaN
             data[type].size = data[type].given.size || data[type].given.length
@@ -429,42 +437,36 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
             return true
         for (const type:string of ['first', 'second'])
             if (!data[type].hash) {
+                if (data[type].data === null || !['object', 'string'].includes(
+                    typeof data[type].data
+                ))
+                    return false
                 const name:string = 'genericTemp'
                 const databaseConnection:Object = new this.data.database(name)
-                const handleError:Function = (error:Error):false => {
-                    console.warn(
-                        'Given attachments for equality check are not ' +
-                        `valid: ${this.representObject(error)}`)
-                    return false
-                }
                 try {
-                    let result:Promise = databaseConnection.put({
+                    await databaseConnection.put({
                         [this.specialNames.id]: name,
                         [this.specialNames.attachment]: {
                             [name]: {
-                                data: (
-                                    'data' in data[type].given
-                                ) ? data[type].given.data : data[type].given,
+                                data: data[type].data,
                                 /* eslint-disable camelcase */
                                 content_type: 'application/octet-stream'
                                 /* eslint-enable camelcase */
                             }
                         }
                     })
-                    try {
-                        await result
-                    } catch (error) {
-                        return handleError(error)
-                    }
-                    try {
-                        result = await databaseConnection.get(name)
-                    } catch (error) {
-                        return handleError(error)
-                    }
-                    data[type].hash =
-                        result[this.specialNames.attachment][name].digest
+                    data[type].hash = (await databaseConnection.get(
+                        name
+                    ))[this.specialNames.attachment][name].digest
                 } catch (error) {
-                    return handleError(error)
+                    let message:string = 'unknown'
+                    try {
+                        message = this.representObject(error)
+                    } catch (error) {}
+                    console.warn(
+                        'Given attachments for equality check are not ' +
+                        `valid: ${message}`)
+                    return false
                 } finally {
                     await databaseConnection.destroy()
                 }
@@ -1680,6 +1682,7 @@ export class AlertService {
  * resolved before synchronisation for local database starts.
  * @property middlewares - Mapping of post and pre callback arrays to trigger
  * before or after each database transaction.
+ * @property ngZone - Execution service instance.
  * @property platformID - Platform identification string.
  * @property remoteConnection - The current remote database connection
  * instance.
@@ -1704,12 +1707,14 @@ export class DataService {
         'query',
         'remove', 'removeAttachment'
     ]
+
     connection:PouchDB
     configuration:PlainObject
     database:typeof PouchDB
     equals:Function
     extendObject:Function
     interceptSynchronisationPromise:?Promise<any> = null
+    ngZone:ngZone
     middlewares:{
         pre:{[key:string]:Array<Function>};
         post:{[key:string]:Array<Function>};
@@ -1730,6 +1735,7 @@ export class DataService {
      * @param equalsPipe - Equals pipe service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
+     * @param ngZone - Injected execution context service instance.
      * @param platformID - Platform identification string.
      * @param stringFormatPipe - Injected string format pipe instance.
      * @param tools - Injected tools service instance.
@@ -1739,6 +1745,7 @@ export class DataService {
         equalsPipe:EqualsPipe,
         extendObjectPipe:ExtendObjectPipe,
         initialData:InitialDataService,
+        ngZone:NgZone,
         @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe,
         tools:ToolsService
@@ -1750,6 +1757,7 @@ export class DataService {
         this.database = PouchDB
         this.equals = equalsPipe.transform.bind(equalsPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.ngZone = ngZone
         this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.tools = tools.tools
@@ -3142,6 +3150,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
             NOTE: We have to break out of the "zone.js" since long polling
             themes to confuse its mocked environment.
         */
+        // TODO try ngZone.runOutsideAngular
         this._tools.timeout(():void => {
             this._changesStream = this._data.connection.changes(
                 this._extendObject(

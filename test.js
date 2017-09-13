@@ -536,7 +536,7 @@ registerAngularTest(function(
                                             await attachmentsAreEqualPipe
                                                 .transform(test[0], test[1]))
                                 } catch (error) {
-                                    console.error(error)
+                                    console.warn(error)
                                     assert.ok(false)
                                 }
                                 done()
@@ -1605,7 +1605,7 @@ registerAngularTest(function(
                                 await data.destroy()
                                 await data.initialize()
                             } catch (error) {
-                                console.error(error)
+                                console.warn(error)
                                 assert.ok(false)
                             }
                             done()
@@ -1961,7 +1961,7 @@ registerAngularTest(function(
                                     .entities = modelBackup
                                 // endregion
                             } catch (error) {
-                                console.error(error)
+                                console.warn(error)
                                 assert.ok(false)
                             }
                             done()
@@ -2052,7 +2052,7 @@ registerAngularTest(function(
                                 await data.initialize()
                                 assert.ok(true)
                             } catch (error) {
-                                console.error(error)
+                                console.warn(error)
                                 assert.ok(false)
                             }
                             done()
@@ -2109,7 +2109,7 @@ registerAngularTest(function(
                     assert.strictEqual(instance.dialogReference, null)
                     assert.strictEqual(instance.okText, 'OK')
                 } catch (error) {
-                    console.error(error)
+                    console.warn(error)
                     assert.ok(false)
                 }
                 done()
@@ -2212,7 +2212,7 @@ registerAngularTest(function(
                                 assert.strictEqual(instance.model.value, 2)
                             }
                         } catch (error) {
-                            console.error(error)
+                            console.warn(error)
                             assert.ok(false)
                         }
                         done()
@@ -2325,7 +2325,7 @@ registerAngularTest(function(
                     assert.ok(test)
                     // endregion
                 } catch (error) {
-                    console.error(error)
+                    console.warn(error)
                     assert.ok(false)
                 }
                 done()
@@ -2412,7 +2412,7 @@ registerAngularTest(function(
                         specialNames.attachment
                     ].name.state.errors.database)
                 } catch (error) {
-                    console.error(error)
+                    console.warn(error)
                     assert.ok(false)
                 }
                 done()
@@ -2490,7 +2490,7 @@ registerAngularTest(function(
                     ):boolean => !name.startsWith('ng-')).sort(),
                     ['current', 'even', 'page-3'])
                 } catch (error) {
-                    console.error(error)
+                    console.warn(error)
                     assert.ok(false)
                 }
                 done()
