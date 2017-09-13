@@ -2753,6 +2753,8 @@ export class DataScopeService {
  * names to their specification.
  * @property relevantKeys - Saves a list of relevant key names to take into
  * account during resolving.
+ * @property relevantSearchKeys - Saves a list of relevant key names to take
+ * into during searching.
  * @property specialNames - mapping of special database field names.
  * @property type - Model name to handle. Should be overwritten in concrete
  * implementations.
@@ -2763,6 +2765,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     extendObject:Function
     modelConfiguration:PlainObject
     relevantKeys:?Array<string> = null
+    relevantSearchKeys:?Array<string> = null
     specialNames:{[key:string]:string}
     type:string = 'Item'
     /**
@@ -2807,20 +2810,20 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         }], page:number = 1, limit:number = 10, searchTerm:string = '',
         additionalSelector:PlainObject = {}
     ):Promise<Array<PlainObject>> {
-        if (!this.relevantKeys) {
-            this.relevantKeys =
+        if (!this.relevantSearchKeys) {
+            this.relevantSearchKeys =
                 DataService.determineGenericIndexablePropertyNames(
                     this.modelConfiguration,
                     this.modelConfiguration.entities[this.type])
-            this.relevantKeys.splice(
-                this.relevantKeys.indexOf(this.specialNames.revision), 1)
+            this.relevantSearchKeys.splice(
+                this.relevantSearchKeys.indexOf(this.specialNames.revision), 1)
         }
         const selector:PlainObject = {[this.specialNames.type]: this.type}
         if (searchTerm || Object.keys(additionalSelector).length) {
             if (sort.length)
                 selector[Object.keys(sort[0])[0]] = {$gt: null}
             selector.$or = []
-            for (const name:string of this.relevantKeys)
+            for (const name:string of this.relevantSearchKeys)
                 selector.$or.push({[name]: {$regex: searchTerm}})
             if (
                 additionalSelector.hasOwnProperty('$or') &&
@@ -2840,6 +2843,8 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
             set size for pagination.
         */
         const options:PlainObject = {skip: Math.max(page - 1, 0) * limit}
+        if (this.relevantKeys)
+            options.fields = this.relevantKeys
         if (options.skip === 0)
             delete options.skip
         if (sort.length)
