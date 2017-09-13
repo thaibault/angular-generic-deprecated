@@ -36,7 +36,12 @@ registerAngularTest(function(
     const nowUTCTimestamp:number = Tools.numberGetUTCTimestamp(now)
     // region imports
     const {
-        ChangeDetectorRef, Component, Injectable, NgModule, SimpleChange
+        ChangeDetectorRef,
+        Component,
+        Injectable,
+        NgModule,
+        SimpleChange,
+        ViewChild
     } = require(
         '@angular/core')
     const {ComponentFixture} = require('@angular/core/testing')
@@ -56,6 +61,7 @@ registerAngularTest(function(
         DataService,
         ExtendObjectPipe,
         InitialDataService,
+        PaginationComponent,
         StringCapitalizePipe,
         ToolsService
     } = index
@@ -96,6 +102,34 @@ registerAngularTest(function(
                 changeDetectorRef, data, extendObjectPipe, initialData, route,
                 router, stringCapitalizePipe, tools)
         }
+    }
+    // endregion
+    // region test components for testing on push change strategies
+    // IgnoreTypeCheck
+    @Component({
+        template: `
+            <generic-pagination
+                [itemsPerPage]="itemsPerPage"
+                [page]="page"
+                [pageRangeLimit]="pageRangeLimit"
+                [total]="total"
+            ></generic-pagination>
+        `
+    })
+    /**
+     * Mock host component to test pagination on push change detection.
+     * @property instance - Reference to hosted component instance.
+     * @property itemsPerPage - Forwarded.
+     * @property page - Forwarded.
+     * @property pageRangeLimit - Forwarded.
+     * @property total - Forwarded.
+     */
+    class PaginationHostComponent {
+        @ViewChild(PaginationComponent) instance:PaginationComponent
+        itemsPerPage:number = 20
+        page:number = 1
+        pageRangeLimit:number = 4
+        total:number = 0
     }
     // endregion
     return {
@@ -2033,6 +2067,7 @@ registerAngularTest(function(
             return [TestModule, {
                 declarations: [
                     ItemsComponent,
+                    PaginationHostComponent,
                     RouterOutletStubComponent
                 ],
                 imports: moduleImports,
@@ -2053,22 +2088,21 @@ registerAngularTest(function(
                 ConfirmComponent,
                 FileInputComponent,
                 InputComponent,
-                PaginationComponent,
                 SimpleInputComponent,
                 TextareaComponent
             } = index
             // endregion
             // region test components
             this.module(`Module.components (${roundType})`)
-            // /  region confirm
+            // / region confirm
             this.test(`ConfirmComponent (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
+                const fixture:ComponentFixture<ConfirmComponent> =
+                    TestBed.createComponent(ConfirmComponent)
+                const instance:Object = fixture.componentInstance
                 try {
-                    const fixture:ComponentFixture<ConfirmComponent> =
-                        TestBed.createComponent(ConfirmComponent)
-                    const instance:Object = fixture.componentInstance
                     fixture.detectChanges()
                     await fixture.whenStable()
                     assert.strictEqual(instance.cancelText, 'Cancel')
@@ -2089,11 +2123,11 @@ registerAngularTest(function(
                     `AbstractInputComponent/${component.name} (${roundType})`,
                     async (assert:Object):Promise<void> => {
                         const done:Function = assert.async()
+                        const fixture:
+                            ComponentFixture<AbstractInputComponent> =
+                            TestBed.createComponent(component)
+                        const instance:Object = fixture.componentInstance
                         try {
-                            const fixture:
-                                ComponentFixture<AbstractInputComponent> =
-                                TestBed.createComponent(component)
-                            const instance:Object = fixture.componentInstance
                             instance.model = {
                                 disabled: true, name: 'test', trim: true,
                                 onUpdateExpression:
@@ -2139,7 +2173,6 @@ registerAngularTest(function(
                             instance.showValidationErrorMessages = true
                             fixture.detectChanges()
                             await fixture.whenStable()
-                            /*
                             assert.strictEqual(fixture.debugElement.query(
                                 By.css('span[generic-error] p')
                             ).nativeElement.textContent.trim().replace(
@@ -2178,7 +2211,6 @@ registerAngularTest(function(
                                 await fixture.whenStable()
                                 assert.strictEqual(instance.model.value, 2)
                             }
-                            */
                         } catch (error) {
                             console.error(error)
                             assert.ok(false)
@@ -2191,10 +2223,10 @@ registerAngularTest(function(
                 `${roundType})`
             this.test(testName, async (assert:Object):Promise<void> => {
                 const done:Function = assert.async()
+                const fixture:ComponentFixture<ItemsComponent> =
+                    TestBed.createComponent(ItemsComponent)
+                const instance:Object = fixture.componentInstance
                 try {
-                    const fixture:ComponentFixture<ItemsComponent> =
-                        TestBed.createComponent(ItemsComponent)
-                    const instance:Object = fixture.componentInstance
                     fixture.detectChanges()
                     await fixture.whenStable()
                     assert.deepEqual(typeof instance._changesStream, 'object')
@@ -2302,10 +2334,10 @@ registerAngularTest(function(
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
+                const fixture:ComponentFixture<FileInputComponent> =
+                    TestBed.createComponent(FileInputComponent)
+                const instance:Object = fixture.componentInstance
                 try {
-                    const fixture:ComponentFixture<FileInputComponent> =
-                        TestBed.createComponent(FileInputComponent)
-                    const instance:Object = fixture.componentInstance
                     instance.mapNameToField = [specialNames.id, 'name']
                     instance.showValidationErrorMessages = true
                     instance.model = {
@@ -2385,39 +2417,41 @@ registerAngularTest(function(
                 }
                 done()
             })
-            // /  region pagination
+            // / region pagination
             this.test(`PaginationComponent (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
+                const fixture:ComponentFixture<PaginationComponent> =
+                    TestBed.createComponent(PaginationHostComponent)
+                const instance:Object = fixture.componentInstance
                 try {
-                    const fixture:ComponentFixture<PaginationComponent> =
-                        TestBed.createComponent(PaginationComponent)
-                    const instance:Object = fixture.componentInstance
                     instance.total = 10
                     fixture.detectChanges()
                     await fixture.whenStable()
                     assert.strictEqual(
-                        fixture.debugElement.query(By.css('*')), null)
+                        fixture.debugElement.query(By.css('*')).query(By.css),
+                        null)
                     instance.itemsPerPage = 2
                     fixture.detectChanges()
                     await fixture.whenStable()
                     assert.strictEqual(fixture.debugElement.queryAll(By.css(
                         'ul li a'
                     )).length, 7)
-                    assert.strictEqual(instance.lastPage, 5)
-                    assert.deepEqual(instance.pagesRange, [1, 2, 3, 4, 5])
-                    assert.strictEqual(instance.previousPage, 1)
-                    assert.strictEqual(instance.nextPage, 2)
+                    assert.strictEqual(instance.instance.lastPage, 5)
+                    assert.deepEqual(
+                        instance.instance.pagesRange, [1, 2, 3, 4, 5])
+                    assert.strictEqual(instance.instance.previousPage, 1)
+                    assert.strictEqual(instance.instance.nextPage, 2)
                     assert.deepEqual(fixture.debugElement.query(By.css(
                         '.current'
                     )).nativeElement.className.split(' ').filter((
                         name:string
                     ):boolean => !name.startsWith('ng-')).sort(),
                     ['current', 'even', 'page-1', 'previous'])
-                    instance.change(dummyEvent, 3)
-                    assert.strictEqual(instance.previousPage, 2)
-                    assert.strictEqual(instance.nextPage, 4)
+                    instance.instance.change(dummyEvent, 3)
+                    assert.strictEqual(instance.instance.previousPage, 2)
+                    assert.strictEqual(instance.instance.nextPage, 4)
                     fixture.detectChanges()
                     await fixture.whenStable()
                     assert.deepEqual(fixture.debugElement.query(By.css(

@@ -99,6 +99,11 @@ try {
 } catch (error) {}
 // endregion
 declare var UTC_BUILD_TIMESTAMP:number
+if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
+    /* eslint-disable no-var */
+    var CHANGE_DETECTION_STRATEGY_NAME:string = 'default'
+    /* eslint-enable no-var */
+declare var UTC_BUILD_TIMESTAMP:number
 let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
@@ -3667,7 +3672,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-interval-input',
     template: `
         <generic-input
@@ -3701,7 +3706,7 @@ export class IntervalInputComponent {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-intervals-input',
     /* eslint-disable max-len */
     template: `
@@ -3819,7 +3824,7 @@ export class IntervalsInputComponent {
 // // region text/selection
 @Component({
     animations: [defaultAnimation()],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     providers: [{
         provide: NG_VALUE_ACCESSOR,
         useExisting: forwardRef(():CodeEditorComponent => CodeEditorComponent),
@@ -4112,7 +4117,7 @@ const inputContent:string = `
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-input',
     template: `
         <generic-textarea
@@ -4181,7 +4186,7 @@ export class InputComponent extends AbstractInputComponent {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-simple-input',
     template: `
         <ng-container
@@ -4250,7 +4255,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-textarea',
     template: `
         <ng-container *ngIf="activeEditor; else plain">
@@ -4428,7 +4433,7 @@ export class TextareaComponent extends AbstractInputComponent
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-file-input',
     template: `
         <md-card>
@@ -5298,6 +5303,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
  * @property pageRangeLimit - Number of concrete page links to show.
  * @property total - Contains total number of pages.
  *
+ * @property _changeDetectorReference - Current views change detector reference
+ * service instance.
  * @property _makeRangePipe - Saves the make range pipe transformation
  * function.
  */
@@ -5308,13 +5315,19 @@ export class PaginationComponent {
     @Input() pageRangeLimit:number = 4
     @Input() total:number = 0
 
+    _changeDetectorReference:ChangeDetectorRef
     _makeRange:Function
     /**
      * Sets needed services as property values.
+     * @param changeDetectorReference - Model dirty checking service.
      * @param makeRangePipe - Saves the make range pipe instance.
      * @returns Nothing.
      */
-    constructor(makeRangePipe:ArrayMakeRangePipe):void {
+    constructor(
+        changeDetectorReference:ChangeDetectorRef,
+        makeRangePipe:ArrayMakeRangePipe
+    ):void {
+        this._changeDetectorReference = changeDetectorReference
         this._makeRange = makeRangePipe.transform.bind(makeRangePipe)
     }
     /**
@@ -5325,6 +5338,7 @@ export class PaginationComponent {
      */
     change(event:Object, newPage:number):void {
         event.preventDefault()
+        this._changeDetectorReference.markForCheck()
         this.page = newPage
         this.pageChange.emit(this.page)
     }
