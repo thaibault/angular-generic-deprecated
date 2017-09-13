@@ -26,29 +26,66 @@ import {
     animate, AnimationTriggerMetadata, style, transition, trigger
 } from '@angular/animations'
 import {
-    /* AfterViewInit,*/ APP_INITIALIZER, ChangeDetectorRef, Component,
+    // AfterViewInit,
+    APP_INITIALIZER,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    ContentChild,
+    Directive,
+    ElementRef,
+    EventEmitter,
+    forwardRef,
+    Injectable,
     /* eslint-disable no-unused-vars */
-    ContentChild, Directive, ElementRef, EventEmitter, forwardRef, Injectable,
-    Inject, Injector, Input, NgModule, /* OnChanges, OnInit,*/ Optional,
-    Output, Pipe, PipeTransform, PLATFORM_ID, ReflectiveInjector, Renderer2,
-    TemplateRef, ViewChild
-    /* eslint-enyyable no-unused-vars */
+    Inject,
+    /* eslint-enable no-unused-vars */
+    Injector,
+    Input,
+    NgModule,
+    // OnChanges,
+    // OnInit,
+    /* eslint-disable no-unused-vars */
+    Optional,
+    /* eslint-enable no-unused-vars */
+    Output,
+    Pipe,
+    PipeTransform,
+    /* eslint-disable no-unused-vars */
+    PLATFORM_ID,
+    /* eslint-enable no-unused-vars */
+    ReflectiveInjector,
+    Renderer2,
+    TemplateRef,
+    ViewChild
 } from '@angular/core'
 import {isPlatformServer} from '@angular/common'
 import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
 import {
-    /* eslint-disable no-unused-vars */
     // IgnoreTypeCheck
-    MdButtonModule, MdCardModule, MD_DIALOG_DATA, MdDialog, MdDialogRef,
+    MdButtonModule,
+    MdCardModule,
+    /* eslint-disable no-unused-vars */
+    MD_DIALOG_DATA,
     /* eslint-enable no-unused-vars */
-    MdDialogModule, MdInputModule, MdSelectModule, MdTooltipModule
+    MdDialog,
+    MdDialogRef,
+    MdDialogModule,
+    MdInputModule,
+    MdSelectModule,
+    MdTooltipModule
 } from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {
-    ActivatedRoute, ActivatedRouteSnapshot, /* CanDeactivate,*/ NavigationEnd,
-    /* Resolve,*/ Router, RouterStateSnapshot
+    ActivatedRoute,
+    ActivatedRouteSnapshot,
+    // CanDeactivate,
+    // NavigationEnd,
+    // Resolve,
+    Router,
+    RouterStateSnapshot
 } from '@angular/router'
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
@@ -1533,6 +1570,7 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-confirm',
     template: `
         <h2 @defaultAnimation md-dialog-title *ngIf="title">{{title}}</h2>
@@ -3628,6 +3666,8 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
 // // / region interval
 // IgnoreTypeCheck
 @Component({
+    animations: [defaultAnimation()],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-interval-input',
     template: `
         <generic-input
@@ -3661,6 +3701,7 @@ export class IntervalInputComponent {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-intervals-input',
     /* eslint-disable max-len */
     template: `
@@ -3777,6 +3818,8 @@ export class IntervalsInputComponent {
 // // endregion
 // // region text/selection
 @Component({
+    animations: [defaultAnimation()],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [{
         provide: NG_VALUE_ACCESSOR,
         useExisting: forwardRef(():CodeEditorComponent => CodeEditorComponent),
@@ -4039,7 +4082,7 @@ const inputContent:string = `
             >plain</a>
         </span>
     </md-hint>
-    <span @defaultAnimation generic-error *ngIf="showValidationErrorMessages">
+    <span generic-error *ngIf="showValidationErrorMessages">
         <p @defaultAnimation *ngIf="model.state?.errors?.maxlength">
             {{maximumLengthText | genericStringTemplate:model}}
         </p>
@@ -4069,6 +4112,7 @@ const inputContent:string = `
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-input',
     template: `
         <generic-textarea
@@ -4137,6 +4181,7 @@ export class InputComponent extends AbstractInputComponent {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-simple-input',
     template: `
         <ng-container
@@ -4205,6 +4250,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-textarea',
     template: `
         <ng-container *ngIf="activeEditor; else plain">
@@ -4382,6 +4428,7 @@ export class TextareaComponent extends AbstractInputComponent
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-file-input',
     template: `
         <md-card>
@@ -5213,6 +5260,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
 // IgnoreTypeCheck
 @Component({
     animations: [defaultAnimation()],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-pagination',
     template: `
         <ul @defaultAnimation *ngIf="lastPage > 1">
