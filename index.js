@@ -3414,7 +3414,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * @param itemVersion - Version of item to switch to.
      * @returns A promise wrapping the navigation result.
      */
-    goToItem(itemID:string, itemVersion:string):Promise<boolean> {
+    goToItem(itemID:string, itemVersion:string = 'latest'):Promise<boolean> {
         this.navigateAway = true
         return this._router.navigate([this._itemPath, itemID, itemVersion])
     }
