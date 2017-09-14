@@ -5322,7 +5322,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
  * function.
  */
 export class PaginationComponent {
-    @Input() itemsPerPage:number = 20
+    @Input() itemsPerPage:number = 10
     @Input() page:number = 1
     @Output() pageChange:EventEmitter<number> = new EventEmitter()
     @Input() pageRangeLimit:number = 4

@@ -126,7 +126,7 @@ registerAngularTest(function(
      */
     class PaginationHostComponent {
         @ViewChild(PaginationComponent) instance:PaginationComponent
-        itemsPerPage:number = 20
+        itemsPerPage:number = 10
         page:number = 1
         pageRangeLimit:number = 4
         total:number = 0
