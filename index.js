@@ -2820,7 +2820,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     data:PlainObject
     databaseBaseURL:string
     databaseURL:string
-    databaseURLCache:{[key:string]:string}
+    databaseURLCache:{[key:string]:string} = {}
     domSanitizer:DomSanitizer
     escapeRegularExpressions:Function
     extendObject:Function
