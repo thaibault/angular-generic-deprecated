@@ -2879,7 +2879,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         ) ? item[this.specialNames.id].value : item[this.specialNames.id])
         // NOTE: We cache sanitized urls to avoid reloads.
         if (!this.databaseURLCache.hasOwnProperty(url))
-            this.databseURLCache[url] =
+            this.databaseURLCache[url] =
                 this.domSanitizer.bypassSecurityTrustResourceUrl(url)
         return this.databaseURLCache[url]
     }
