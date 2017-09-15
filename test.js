@@ -36,14 +36,12 @@ registerAngularTest(function(
     const nowUTCTimestamp:number = Tools.numberGetUTCTimestamp(now)
     // region imports
     const {
-        ChangeDetectorRef,
         Component,
-        Injectable,
+        Injector,
         NgModule,
         SimpleChange,
         ViewChild
-    } = require(
-        '@angular/core')
+    } = require('@angular/core')
     const {ComponentFixture} = require('@angular/core/testing')
     const {By} = require('@angular/platform-browser')
     const {NoopAnimationsModule} = require(
@@ -54,17 +52,51 @@ registerAngularTest(function(
         ActivatedRouteStub, dummyEvent, getNativeEvent,
         RouterOutletStubComponent, RouterStub
     } = require('./mockup')
+    const {
+        AbstractInputComponent,
+        AbstractItemsComponent,
+        AbstractResolver,
+        AlertService,
+        AttachmentsAreEqualPipe,
+        AttachmentWithPrefixExistsPipe,
+        CanDeactivateRouteLeaveGuard,
+        ConfirmComponent,
+        DataScopeService,
+        DataService,
+        defaultAnimation,
+        ExtendObjectPipe,
+        ExtractDataPipe,
+        ExtractRawDataPipe,
+        fadeAnimation,
+        FileInputComponent,
+        GetFilenameByPrefixPipe,
+        InitialDataService,
+        InputComponent,
+        IsDefinedPipe,
+        LimitToPipe,
+        MapPipe,
+        NumberPercentPipe,
+        ObjectKeysPipe,
+        PaginationComponent,
+        ReversePipe,
+        SimpleInputComponent,
+        StringEndsWithPipe,
+        StringHasTimeSuffixPipe,
+        StringMatchPipe,
+        StringMaximumLengthPipe,
+        StringMD5Pipe,
+        StringReplacePipe,
+        StringShowIfPatternMatchesPipe,
+        StringSliceMatchPipe,
+        StringStartsWithPipe,
+        StringTemplatePipe,
+        TextareaComponent,
+        ToolsService,
+        TypePipe
+    } = index
+    const Module:Object = index.default
     // endregion
     // region extend abstract components
-    const {
-        AbstractItemsComponent,
-        DataService,
-        ExtendObjectPipe,
-        InitialDataService,
-        PaginationComponent,
-        StringCapitalizePipe,
-        ToolsService
-    } = index
     // IgnoreTypeCheck
     @Component({
         selector: 'items',
@@ -75,36 +107,23 @@ registerAngularTest(function(
      */
     class ItemsComponent extends AbstractItemsComponent {
         /**
-         * Sets service instances as instance property values and test route
-         * parameter.
-         * @param changeDetectorRef - Model dirty checking service.
-         * @param data - Data stream service.
-         * @param extendObjectPipe - Extend object pipe instance.
-         * @param initialData - Initial data service instance.
+         * Sets route test parameter.
+         * @param injector - Injected injector service instance.
          * @param route - Current route state.
-         * @param router - Application wide router instance.
-         * @param stringCapitalizePipe - String capitalize pipe instance.
-         * @param tools - Tools service instance.
+         * @returns Nothing.
          */
-        constructor(
-            changeDetectorRef:ChangeDetectorRef, data:DataService,
-            extendObjectPipe:ExtendObjectPipe, initialData:InitialDataService,
-            route:ActivatedRoute, router:Router,
-            stringCapitalizePipe:StringCapitalizePipe, tools:ToolsService
-        ):void {
+        constructor(injector:Injector, route:ActivatedRoute):void {
             route.testData = {items: []}
             route.testParameter = {
                 limit: 10,
                 page: 1,
                 searchTerm: 'exact-'
             }
-            super(
-                changeDetectorRef, data, extendObjectPipe, initialData, route,
-                router, stringCapitalizePipe, tools)
+            super(injector)
         }
     }
     // endregion
-    // region test components for testing on push change strategies
+    // region host components for simulating on push change detection strategy
     // IgnoreTypeCheck
     @Component({
         template: `
@@ -135,38 +154,6 @@ registerAngularTest(function(
     return {
         bootstrap: ():Array<Object> => {
             // region prepare services
-            const Module:Object = index.default
-            const {
-                AbstractResolver,
-                AlertService,
-                AttachmentsAreEqualPipe,
-                AttachmentWithPrefixExistsPipe,
-                CanDeactivateRouteLeaveGuard,
-                DataScopeService,
-                defaultAnimation,
-                ExtractDataPipe,
-                ExtractRawDataPipe,
-                fadeAnimation,
-                GetFilenameByPrefixPipe,
-                IsDefinedPipe,
-                LimitToPipe,
-                MapPipe,
-                NumberPercentPipe,
-                ObjectKeysPipe,
-                ReversePipe,
-                StringEndsWithPipe,
-                StringEscapeRegularExpressionsPipe,
-                StringHasTimeSuffixPipe,
-                StringMatchPipe,
-                StringMaximumLengthPipe,
-                StringMD5Pipe,
-                StringReplacePipe,
-                StringShowIfPatternMatchesPipe,
-                StringSliceMatchPipe,
-                StringStartsWithPipe,
-                StringTemplatePipe,
-                TypePipe
-            } = index
             let specialNames:PlainObject =
                 InitialDataService.defaultScope.configuration.database.model
                     .property.name.special
@@ -203,44 +190,13 @@ registerAngularTest(function(
                 },
                 test: true
             }}
-            // IgnoreTypeCheck
-            @Injectable()
-            /**
-             * Dummy resolver to test the abstract resolver class.
-             */
-            class Resolver extends AbstractResolver {
-                type:string = 'Test'
-                /**
-                 * Initializes the abstract resolver class.
-                 * @param data - Injected data service instance.
-                 * @param escapeRegularExpressionsPipe - Injected regular
-                 * expression escape pipe instance.
-                 * @param extendObjectPipe - Injected extend object pipe
-                 * instance.
-                 * @param initialData - Injected initial data service instance.
-                 * @returns Nothing.
-                 */
-                constructor(
-                    data:DataService,
-                    /* eslint-disable indent */
-            escapeRegularExpressionsPipe:StringEscapeRegularExpressionsPipe,
-                    /* eslint-enable indent */
-                    extendObjectPipe:ExtendObjectPipe,
-                    initialData:InitialDataService
-                ):void {
-                    super(
-                        data, escapeRegularExpressionsPipe, extendObjectPipe,
-                        initialData)
-                }
-            }
             const self:Object = this
             const moduleImports:Array<Object> = [Module, NoopAnimationsModule]
             // IgnoreTypeCheck
             @NgModule({
                 bootstrap: [ApplicationComponent],
                 declarations: [ApplicationComponent, ItemsComponent],
-                imports: moduleImports,
-                providers: [Resolver]
+                imports: moduleImports
             })
             // endregion
             // region test services
@@ -252,92 +208,71 @@ registerAngularTest(function(
                 /**
                  * Dummy constructor to inject needed service instances and
                  * perform various tests.
-                 * @param alert - Injected alert service instance.
-                 * @param attachmentsAreEqualPipe - Injected attachments are
-                 * equal pipe instance.
-                 * @param attachmentWithPrefixExistsPipe - Injected attachment
-                 * with prefix exists pipe instance.
-                 * @param canDeactivateRouteLeave - Injected can deactivate
-                 * route leave guard instance.
                  * @param data - Injected data service instance.
-                 * @param dataScope - Injected data scope service instance.
-                 * @param extractDataPipe - Injected extract data pipe
-                 * instance.
-                 * @param extractRawDataPipe - Injected extract raw data pipe
-                 * instance.
-                 * @param extendObjectPipe - Injected extend object data pipe.
-                 * @param getFilenameByPrefixPipe - Injected filename getter
-                 * pipe instance.
                  * @param initialData - Injected initial data service instance.
-                 * @param isDefinedPipe - Injected is defined pipe instance.
-                 * @param limitToPipe - Injected limit to pipe instance.
-                 * @param mapPipe - Injected map pipe instance.
-                 * @param numberPercentPipe - Injected number percent pipe
-                 * instance.
-                 * @param objectKeysPipe - Injected object keys pipe instance.
-                 * @param resolver - Injected resolver service instance.
-                 * @param reversePipe - Injected reverse pipe instance.
-                 * @param stringEndsWithPipe - Injected string ends with pipe
-                 * instance.
-                 * @param stringHasTimeSuffixPipe - Injected string has time
-                 * suffix pipe instance.
-                 * @param stringMatchPipe - Injected string match pipe
-                 * instance.
-                 * @param stringMaximumLengthPipe - Inject string prefix
-                 * description pipe instance.
-                 * @param stringMD5Pipe - Injected md5 pipe instance.
-                 * @param stringReplacePipe - Injected string replace pipe
-                 * instance.
-                 * @param stringShowIfPatternMatchesPipe - Injected string show
-                 * pipe instance.
-                 * @param stringSliceMatchPipe - Injected string slice match
-                 * pipe instance.
-                 * @param stringStartsWithPipe - Injected start starts with
-                 * pipe instances.
-                 * @param stringTemplatePipe - Injected string template pipe
-                 * instance.
-                 * @param tools - Injected tools service instance.
-                 * @param typePipe - Injected type pipe instance.
+                 * @param injector - Injected injector service instance.
                  * @returns Nothing.
                  */
                 constructor(
-                    alert:AlertService,
-                    attachmentsAreEqualPipe:AttachmentsAreEqualPipe,
-                    /* eslint-disable indent */
-                attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
-                    /* eslint-enable indent */
-                    canDeactivateRouteLeave:CanDeactivateRouteLeaveGuard,
-                    data:DataService,
-                    dataScope:DataScopeService,
-                    extractDataPipe:ExtractDataPipe,
-                    extractRawDataPipe:ExtractRawDataPipe,
-                    extendObjectPipe:ExtendObjectPipe,
-                    getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-                    initialData:InitialDataService,
-                    isDefinedPipe:IsDefinedPipe,
-                    limitToPipe:LimitToPipe,
-                    mapPipe:MapPipe,
-                    numberPercentPipe:NumberPercentPipe,
-                    objectKeysPipe:ObjectKeysPipe,
-                    resolver:Resolver,
-                    reversePipe:ReversePipe,
-                    stringEndsWithPipe:StringEndsWithPipe,
-                    stringHasTimeSuffixPipe:StringHasTimeSuffixPipe,
-                    stringMatchPipe:StringMatchPipe,
-                    stringMaximumLengthPipe:StringMaximumLengthPipe,
-                    stringMD5Pipe:StringMD5Pipe,
-                    stringReplacePipe:StringReplacePipe,
-                    /* eslint-disable indent */
-                stringShowIfPatternMatchesPipe:StringShowIfPatternMatchesPipe,
-                    /* eslint-enable indent */
-                    stringSliceMatchPipe:StringSliceMatchPipe,
-                    stringStartsWithPipe:StringStartsWithPipe,
-                    stringTemplatePipe:StringTemplatePipe,
-                    tools:ToolsService,
-                    typePipe:TypePipe
+                    data:DataService, initialData:InitialDataService,
+                    injector:Injector
                 ):void {
+                    initialData.constructor.injectors.add(injector)
+                    const get:Function = injector.get.bind(injector);
                     (async ():Promise<void> => {
                         await data.initialize()
+                        const alert:AlertService = get(AlertService)
+                        const attachmentsAreEqualPipe:AttachmentsAreEqualPipe =
+                            get(AttachmentsAreEqualPipe)
+                        /* eslint-disable indent */
+        const attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe =
+                            get(AttachmentWithPrefixExistsPipe)
+                const canDeactivateRouteLeave:CanDeactivateRouteLeaveGuard =
+                            get(CanDeactivateRouteLeaveGuard)
+                        /* eslint-enable indent */
+                        const dataScope:DataScopeService = get(
+                            DataScopeService)
+                        const extractDataPipe:ExtractDataPipe = get(
+                            ExtractDataPipe)
+                        const extractRawDataPipe:ExtractRawDataPipe = get(
+                            ExtractRawDataPipe)
+                        const extendObjectPipe:ExtendObjectPipe = get(
+                            ExtendObjectPipe)
+                        const getFilenameByPrefixPipe:GetFilenameByPrefixPipe =
+                            get(GetFilenameByPrefixPipe)
+                        const isDefinedPipe:IsDefinedPipe = get(IsDefinedPipe)
+                        const limitToPipe:LimitToPipe = get(LimitToPipe)
+                        const mapPipe:MapPipe = get(MapPipe)
+                        const numberPercentPipe:NumberPercentPipe = get(
+                            NumberPercentPipe)
+                        const objectKeysPipe:ObjectKeysPipe = get(
+                            ObjectKeysPipe)
+                        const resolver:AbstractResolver = get(AbstractResolver)
+                        resolver.type = 'Test'
+                        const reversePipe:ReversePipe = get(ReversePipe)
+                        const stringEndsWithPipe:StringEndsWithPipe = get(
+                            StringEndsWithPipe)
+                        const stringHasTimeSuffixPipe:StringHasTimeSuffixPipe =
+                            get(StringHasTimeSuffixPipe)
+                        const stringMatchPipe:StringMatchPipe = get(
+                            StringMatchPipe)
+                        const stringMaximumLengthPipe:StringMaximumLengthPipe =
+                            get(StringMaximumLengthPipe)
+                        const stringMD5Pipe:StringMD5Pipe = get(StringMD5Pipe)
+                        const stringReplacePipe:StringReplacePipe = get(
+                            StringReplacePipe)
+                        /* eslint-disable indent */
+        const stringShowIfPatternMatchesPipe:StringShowIfPatternMatchesPipe =
+                            get(StringShowIfPatternMatchesPipe)
+                        /* eslint-enable indent */
+                        const stringSliceMatchPipe:StringSliceMatchPipe = get(
+                            StringSliceMatchPipe)
+                        const stringStartsWithPipe:StringStartsWithPipe = get(
+                            StringStartsWithPipe)
+                        const stringTemplatePipe:StringTemplatePipe = get(
+                            StringTemplatePipe)
+                        const tools:ToolsService = get(ToolsService)
+                        const typePipe:TypePipe = get(TypePipe)
                         const getBinary:Function = (data:string):Object => (
                             typeof Blob === undefined
                         ) ? new Buffer(data) : new Blob([data], {
@@ -2082,16 +2017,6 @@ registerAngularTest(function(
             $:Object, testingModule:Object, testingPlatform:Object,
             specialNames:PlainObject
         ):void {
-            // region prepare components
-            const {
-                AbstractInputComponent,
-                ConfirmComponent,
-                FileInputComponent,
-                InputComponent,
-                SimpleInputComponent,
-                TextareaComponent
-            } = index
-            // endregion
             // region test components
             this.module(`Module.components (${roundType})`)
             // / region confirm

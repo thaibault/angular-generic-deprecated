@@ -76,6 +76,8 @@ import {
     MdDialogModule,
     MdInputModule,
     MdSelectModule,
+    MdSnackBar,
+    MdSnackBarConfig,
     MdTooltipModule
 } from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
@@ -233,6 +235,7 @@ export class InitialDataService {
         plugins: [],
         url: 'generic'
     }}}
+    static injectors:Set<Injector> = new Set()
 
     configuration:PlainObject
     tools:Tools
@@ -251,6 +254,7 @@ export class InitialDataService {
             'document' in tools.globalContext &&
             'querySelector' in tools.globalContext.document
         ) {
+            // TODO how to get right dom node?
             const domNode:DomNode = tools.globalContext.document.querySelector(
                 'application')
             if (domNode && domNode.getAttribute('initialData')) {
@@ -269,6 +273,36 @@ export class InitialDataService {
     set(...parameter:Array<PlainObject>):InitialDataService {
         return this.tools.extendObject(true, this, ...parameter)
     }
+}
+/**
+ * Helper function to easy create abstract classes without tight bounds.
+ * @param injector - Application specific injector to use instead auto
+ * detected one.
+ * @param instance - Instance reference to determine corresponding responsible
+ * injector.
+ * @param constructor - Matched to given instance to try to inject for each
+ * known injector instance.
+ * @returns Nothing.
+ */
+export const determineInjector:Function = (
+    injector:?Injector, instance:?Object, constructor:?Object
+):?Function => {
+    if (injector)
+        return injector.get.bind(injector)
+    for (const injector:Injector of InitialDataService.injectors)
+        try {
+            if (injector.get(constructor) === instance)
+                return injector.get.bind(injector)
+        } catch (error) {}
+    if (InitialDataService.injectors.size === 1) {
+        console.warn(
+            'Could not determine injector, but using the only registered ' +
+            'one. This will fail an multiple application instances.')
+        const injector:Injector = Array.from(InitialDataService.injectors)[0]
+        return injector.get.bind(injector)
+    }
+    throw new Error(
+        'No unambiguously injector could be determined automatically.')
 }
 // endregion
 // region pipes
@@ -1944,31 +1978,37 @@ export class DataService {
             const nativeMethod:Function = this.connection[pluginName].bind(
                 this.connection)
             this.connection[pluginName] = async function(
-                firstParameter:any, ...parameter:Array<any>
+                firstParameter:any, secondParameter:any,
+                ...parameter:Array<any>
             ):Promise<any> {
                 try {
-                    return await nativeMethod(firstParameter, ...parameter)
+                    return await nativeMethod(
+                        firstParameter, secondParameter, ...parameter)
                 } catch (error) {
+                    const id:string = (
+                        typeof firstParameter === 'object' &&
+                        idName in firstParameter
+                    ) ? firstParameter[idName] : firstParameter
                     if (
-                        idName in firstParameter &&
+                        id &&
                         configuration.database.ignoreNoChangeError &&
                         'name' in error &&
                         error.name === 'forbidden' &&
                         'message' in error &&
                         error.message.startsWith('NoChange:')
                     ) {
-                        const result:PlainObject = {
-                            id: firstParameter[idName],
-                            ok: true
-                        }
+                        const result:PlainObject = {id, ok: true}
+                        const revision:string = (
+                            typeof secondParameter === 'object' &&
+                            revisionName in secondParameter
+                        ) ? secondParameter[revisionName] : secondParameter
                         try {
                             result.rev =
                                 revisionName in firstParameter &&
                                 !['latest', 'upsert'].includes(
-                                    firstParameter[revisionName]
-                                ) ? firstParameter[revisionName] : (
-                                    await this.get(result.id)
-                                )[revisionName]
+                                    revision
+                                ) ? revision : (await this.get(result.id))[
+                                    revisionName]
                         } catch (error) {
                             throw error
                         }
@@ -2278,6 +2318,15 @@ export class DataService {
      */
     remove(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.remove(...parameter)
+    }
+    /**
+     * Removes specified attachment from entity in database.
+     * @param parameter - All parameter will be forwarded to the underlining
+     * pouchdb's "removeAttachment()" method.
+     * @returns Whatever pouchdb's "removeAttachment()" method return.
+     */
+    removeAttachment(...parameter:Array<any>):Promise<PlainObject> {
+        return this.connection.removeAttachment(...parameter)
     }
     /**
      * Starts synchronisation between a local and remote database.
@@ -2741,56 +2790,98 @@ export class DataScopeService {
     }
 }
 // / region abstract
+// IgnoreTypeCheck
+@Injectable()
 /**
  * Helper class to extend from to have some basic methods to deal with database
  * entities.
  * @property data - Holds currently retrieved data.
+ * @property databaseBaseURL - Determined database base url.
+ * @property databaseURL - Determined database url.
+ * @property domSanitizer - Dom sanitizer service instance.
  * @property escapeRegularExpressions - Holds the escape regular expressions's
  * pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
+ * @property message - Message box service.
+ * @property messageConfiguration - Plain message box configuration object.
  * @property modelConfiguration - Saves a mapping from all available model
  * names to their specification.
  * @property relevantKeys - Saves a list of relevant key names to take into
  * account during resolving.
  * @property relevantSearchKeys - Saves a list of relevant key names to take
  * into during searching.
+ * @property representObject - Represent object pipe transformation function.
  * @property specialNames - mapping of special database field names.
  * @property type - Model name to handle. Should be overwritten in concrete
  * implementations.
  */
 export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     data:PlainObject
+    databaseBaseURL:string
+    databaseURL:string
+    databaseURLCache:{[key:string]:string}
+    domSanitizer:DomSanitizer
     escapeRegularExpressions:Function
     extendObject:Function
+    message:Function
+    messageConfiguration:PlainObject = new MdSnackBarConfig()
     modelConfiguration:PlainObject
     relevantKeys:?Array<string> = null
     relevantSearchKeys:?Array<string> = null
+    representObject:Function
     specialNames:{[key:string]:string}
     type:string = 'Item'
     /**
      * Sets all needed injected services as instance properties.
-     * @param data - Injected data service instance.
-     * @param escapeRegularExpressionsPipe - Injected escape regular expression
-     * pipe instance.
-     * @param extendObjectPipe - Injected extend object pipe instance.
-     * @param initialData - Injected initial data service instance.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
      * @returns Nothing.
      */
-    constructor(
-        data:DataService,
-        escapeRegularExpressionsPipe:StringEscapeRegularExpressionsPipe,
-        extendObjectPipe:ExtendObjectPipe,
-        initialData:InitialDataService
-    ):void {
-        this.data = data
+    constructor(@Optional() injector:Injector):void {
+        const get:Function = determineInjector(
+            injector, this, this.constructor)
+        this.data = get(DataService)
+        this.domSanitizer = get(DomSanitizer)
+        const databaseBaseURL:string = get(StringFormatPipe).transform(
+            get(InitialDataService).configuration.database.url, ''
+        ) + '/'
+        this.databaseBaseURL =
+            `${databaseBaseURL}_utils/#database/` +
+            `${get(InitialDataService).configuration.name}/`
+        this.databaseURL =
+            databaseBaseURL + get(InitialDataService).configuration.name
         this.escapeRegularExpressions =
-            escapeRegularExpressionsPipe.transform.bind(
-                escapeRegularExpressionsPipe)
-        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
-        this.modelConfiguration = initialData.configuration.database.model
-        this.specialNames = initialData.configuration.database.model.property
-            .name.special
+            get(StringEscapeRegularExpressionsPipe).transform.bind(get(
+                StringEscapeRegularExpressionsPipe))
+        this.extendObject = get(ExtendObjectPipe).transform.bind(get(
+            ExtendObjectPipe))
+        this.messageConfiguration.duration = 5 * 1000
+        this.message = (message:string):void =>
+            get(MdSnackBar).open(message, false, this.messageConfiguration)
+        this.modelConfiguration = get(
+            InitialDataService
+        ).configuration.database.model
+        this.representObject = get(RepresentObjectPipe).transform.bind(get(
+            RepresentObjectPipe))
+        this.specialNames = get(
+            InitialDataService
+        ).configuration.database.model.property.name.special
+    }
+    /**
+     * Determines item specific database url by given item data object.
+     * @param item - Given item object.
+     * @returns Determined url.
+     */
+    getDatabaseURL(item:PlainObject):string {
+        const url:string = this.databaseBaseURL + ((
+            typeof item[this.specialNames.id] === 'object'
+        ) ? item[this.specialNames.id].value : item[this.specialNames.id])
+        // NOTE: We cache sanitized urls to avoid reloads.
+        if (!this.databaseURLCache.hasOwnProperty(url))
+            this.databseURLCache[url] =
+                this.domSanitizer.bypassSecurityTrustResourceUrl(url)
+        return this.databaseURLCache[url]
     }
     /**
      * List items which matches given filter criteria.
@@ -2853,6 +2944,15 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
             true, selector, additionalSelector
         ), options)
     }
+    /**
+     * Removes given item.
+     * @param item - Item or id to delete.
+     * @param message - Message to show after successful removement.
+     * @returns Nothing.
+     */
+    remove(item:PlainObject, message:string = ''):Promise<boolean> {
+        return this.update(item, {[this.specialNames.deleted]: true}, message)
+    }
     /* eslint-disable no-unused-vars */
     /**
      * Implements the resolver method which converts route informations into
@@ -2897,6 +2997,40 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         return this.list(sort, parseInt(
             route.params.page || 1
         ), parseInt(route.params.limit || 10), searchTerm)
+    }
+    /**
+     * Updates given item.
+     * @param item - Item to update.
+     * @param data - Optional given data to update into given item.
+     * @param message - Message to should if process was successfully.
+     * @returns Nothing.
+     */
+    async update(
+        item:PlainObject, data:?PlainObject, message:string = ''
+    ):Promise<void> {
+        let newData:PlainObject
+        if (data)
+            newData = this.extendObject({
+                [this.specialNames.id]: (
+                    typeof item[this.specialNames.id] === 'object'
+                ) ? item[this.specialNames.id].value :
+                    item[this.specialNames.id],
+                [this.specialNames.revision]: 'latest',
+                [this.specialNames.type]: item[this.specialNames.type]
+            }, data)
+        else
+            newData = item
+        try {
+            item[this.specialNames.revision] =
+                (await this.data.put(newData)).rev
+        } catch (error) {
+            this.message(
+                'message' in error ? error.message : this.representObject(
+                    error))
+            return
+        }
+        if (message)
+            this.message(message)
     }
 }
 // / endregion
@@ -2975,32 +3109,26 @@ export class AbstractInputComponent/* implements OnInit*/ {
     _numberGetUTCTimestamp:Function
     /**
      * Sets needed services as property values.
-     * @param attachmentWithPrefixExistsPipe - Saves the attachment by prefix
-     * name checker pipe instance.
-     * @param extendObjectPipe - Injected extend object pipe instance.
-     * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
-     * pipe instance.
-     * @param initialData - Injected initial data service instance.
-     * @param numberGetUTCTimestampPipe - Injected date (and time) to unix
-     * timestamp converter pip's instance.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
      * @returns Nothing.
      */
-    constructor(
-        attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
-        extendObjectPipe:ExtendObjectPipe,
-        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-        initialData:InitialDataService,
-        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe
-    ):void {
-        this._attachmentWithPrefixExists =
-            attachmentWithPrefixExistsPipe.transform.bind(
-                attachmentWithPrefixExistsPipe)
-        this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
-        this._getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
-            getFilenameByPrefixPipe)
-        this._modelConfiguration = initialData.configuration.database.model
-        this._numberGetUTCTimestamp = numberGetUTCTimestampPipe.transform.bind(
-            numberGetUTCTimestampPipe)
+    constructor(@Optional() injector:Injector):void {
+        const get:Function = determineInjector(
+            injector, this, this.constructor)
+        this._attachmentWithPrefixExists = get(
+            AttachmentWithPrefixExistsPipe
+        ).transform.bind(get(AttachmentWithPrefixExistsPipe))
+        this._extendObject = get(ExtendObjectPipe).transform.bind(get(
+            ExtendObjectPipe))
+        this._getFilenameByPrefix = get(
+            GetFilenameByPrefixPipe
+        ).transform.bind(get(GetFilenameByPrefixPipe))
+        this._modelConfiguration =
+            get(InitialDataService).configuration.database.model
+        this._numberGetUTCTimestamp = get(
+            NumberGetUTCTimestampPipe
+        ).transform.bind(get(NumberGetUTCTimestampPipe))
     }
     /**
      * Triggers after input values have been resolved.
@@ -3125,26 +3253,20 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     _tools:typeof Tools
     /**
      * Saves injected service instances as instance properties.
-     * @param changeDetectorReference - Model dirty checking service.
-     * @param data - Data service instance.
-     * @param extendObjectPipe - Extend object pipe instance.
-     * @param stringCapitalizePipe - The string capitalize pipe instance.
-     * @param tools - Injected tools service instance.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
      * @returns Nothing.
      */
-    constructor(
-        changeDetectorReference:ChangeDetectorRef,
-        data:DataService,
-        extendObjectPipe:ExtendObjectPipe,
-        stringCapitalizePipe:StringCapitalizePipe,
-        tools:ToolsService
-    ):void {
-        this._changeDetectorReference = changeDetectorReference
-        this._data = data
-        this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
-        this._stringCapitalize = stringCapitalizePipe.transform.bind(
-            stringCapitalizePipe)
-        this._tools = tools.tools
+    constructor(@Optional() injector:Injector):void {
+        const get:Function = determineInjector(
+            injector, this, this.constructor)
+        this._changeDetectorReference = get(ChangeDetectorRef)
+        this._data = get(DataService)
+        this._extendObject = get(ExtendObjectPipe).transform.bind(get(
+            ExtendObjectPipe))
+        this._stringCapitalize = get(StringCapitalizePipe).transform.bind(get(
+            StringCapitalizePipe))
+        this._tools = get(ToolsService).tools
     }
     /**
      * Initializes data observation when view has been initialized.
@@ -3281,37 +3403,22 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     _toolsInstance:Tools
     /**
      * Saves injected service instances as instance properties.
-     * @param changeDetectorReference - Model dirty checking service.
-     * @param data - Data stream service.
-     * @param extendObjectPipe - Extend object pipe instance.
-     * @param initialData - Initial data service instance.
-     * @param route - Current route configuration.
-     * @param router - Injected router service instance.
-     * @param stringCapitalizePipe - String capitalize pipe instance.
-     * @param tools - Injected tools service instance.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
      * @returns Nothing.
      */
-    constructor(
-        changeDetectorReference:ChangeDetectorRef,
-        data:DataService,
-        extendObjectPipe:ExtendObjectPipe,
-        initialData:InitialDataService,
-        route:ActivatedRoute,
-        router:Router,
-        stringCapitalizePipe:StringCapitalizePipe,
-        tools:ToolsService
-    ):void {
-        super(
-            changeDetectorReference, data, extendObjectPipe,
-            stringCapitalizePipe, tools)
-        this.idName =
-            initialData.configuration.database.model.property.name.special.id
-        this.revisionName =
-            initialData.configuration.database.model.property.name.special
-                .revision
+    constructor(@Optional() injector:Injector):void {
+        super(injector)
+        const get:Function = determineInjector(injector)
+        this.idName = get(
+            InitialDataService
+        ).configuration.database.model.property.name.special.id
+        this.revisionName = get(
+            InitialDataService
+        ).configuration.database.model.property.name.special.revision
         this.keyCode = this._tools.keyCode
-        this._route = route
-        this._router = router
+        this._route = get(ActivatedRoute)
+        this._router = get(Router)
         // IgnoreTypeCheck
         this._toolsInstance = new this._tools()
         /*
@@ -3537,6 +3644,16 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
     onTouchedCallback:Function = Tools.noop
     @Input() type:?string
     /**
+     * Initializes and forwards needed services to the default value accessor
+     * constructor.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
+     * @returns Nothing.
+     */
+    constructor(injector:Injector):void {
+        super(injector.get(Renderer2), injector.get(ElementRef), null)
+    }
+    /**
      * Manipulates editable value representation.
      * @param value - Value to manipulate.
      * @returns Given and transformed value.
@@ -3617,14 +3734,12 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
  */
 export class DateTimeValueAccessor extends AbstractValueAccessor {
     /**
-     * Initializes and forwards needed services to the default value accesor
-     * constructor.
-     * @param elementRef - Host element reference.
-     * @param renderer - Angular's dom abstraction layer.
+     * Delegates injected injector service instance to the super constructor.
+     * @param injector - Injected injector service instance.
      * @returns Nothing.
      */
-    constructor(elementRef:ElementRef, renderer:Renderer2):void {
-        super(renderer, elementRef, null)
+    constructor(injector:Injector):void {
+        super(injector)
     }
     /**
      * Manipulates editable value representation.
@@ -3888,19 +4003,18 @@ export class CodeEditorComponent extends AbstractValueAccessor
     tools:ToolsService
     /**
      * Initializes the code mirror resource loading if not available yet.
-     * @param elementRef - Host element reference.
      * @param extendObjectPipe - Injected extend object pipe instance.
-     * @param renderer - Angular's dom abstraction layer.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
      * @param tools - Tools service instance.
      * @returns Nothing.
      */
     constructor(
-        elementRef:ElementRef,
         extendObjectPipe:ExtendObjectPipe,
-        renderer:Renderer2,
+        @Optional() injector:Injector,
         tools:ToolsService
     ):void {
-        super(renderer, elementRef, null)
+        super(injector)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.tools = tools
         if (this.tools.globalContext.CodeMirror)
@@ -4171,28 +4285,12 @@ export class InputComponent extends AbstractInputComponent {
     @Input() selectableEditor:?boolean = null
     @Input() type:?string
     /**
-     * Forwards injected service instances to the abstract input component's
-     * constructor.
-     * @param attachmentWithPrefixExistsPipe - Saves the attachment by prefix
-     * pipe instance.
-     * @param extendObjectPipe - Injected extend object pipe instance.
-     * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
-     * pipe instance.
-     * @param initialData - Injected initial data service instance.
-     * @param numberGetUTCTimestampPipe - Injected date (and time) to unix
-     * timestamp converter pip's instance.
+     * Delegates injected injector service instance to the super constructor.
+     * @param injector - Injected injector service instance.
      * @returns Nothing.
      */
-    constructor(
-        attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
-        extendObjectPipe:ExtendObjectPipe,
-        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-        initialData:InitialDataService,
-        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe
-    ):void {
-        super(
-            attachmentWithPrefixExistsPipe, extendObjectPipe,
-            getFilenameByPrefixPipe, initialData, numberGetUTCTimestampPipe)
+    constructor(injector:Injector):void {
+        super(injector)
     }
 }
 /* eslint-disable max-len */
@@ -4240,28 +4338,12 @@ export class SimpleInputComponent extends AbstractInputComponent {
     @Input() labels:{[key:string]:string} = {}
     @Input() type:?string
     /**
-     * Forwards injected service instances to the abstract input component's
-     * constructor.
-     * @param attachmentWithPrefixExistsPipe - Saves the attachment by prefix
-     * pipe instance.
-     * @param extendObjectPipe - Injected extend object pipe instance.
-     * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
-     * pipe instance.
-     * @param initialData - Injected initial data service instance.
-     * @param numberGetUTCTimestampPipe - Injected date (and time) to unix
-     * timestamp converter pip's instance.
+     * Delegates injected injector service instance to the super constructor.
+     * @param injector - Injected injector service instance.
      * @returns Nothing.
      */
-    constructor(
-        attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
-        extendObjectPipe:ExtendObjectPipe,
-        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-        initialData:InitialDataService,
-        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe
-    ):void {
-        super(
-            attachmentWithPrefixExistsPipe, extendObjectPipe,
-            getFilenameByPrefixPipe, initialData, numberGetUTCTimestampPipe)
+    constructor(injector:Injector):void {
+        super(injector)
     }
 }
 /* eslint-disable max-len */
@@ -4342,26 +4424,13 @@ export class TextareaComponent extends AbstractInputComponent
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
-     * @param attachmentWithPrefixExistsPipe - Saves the attachment by prefix
-     * pipe instance.
-     * @param extendObjectPipe - Injected extend object pipe instance.
-     * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
-     * pipe instance.
      * @param initialData - Injected initial data service instance.
-     * @param numberGetUTCTimestampPipe - Injected date (and time) to unix
-     * timestamp converter pip's instance.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
      * @returns Nothing.
      */
-    constructor(
-        attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
-        extendObjectPipe:ExtendObjectPipe,
-        getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
-        initialData:InitialDataService,
-        numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe
-    ):void {
-        super(
-            attachmentWithPrefixExistsPipe, extendObjectPipe,
-            getFilenameByPrefixPipe, initialData, numberGetUTCTimestampPipe)
+    constructor(initialData:InitialDataService, injector:Injector):void {
+        super(injector)
         if (initialData.configuration.hasOwnProperty(
             'defaultEditorOptions'
         ) && typeof initialData.configuration.defaultEditorOptions ===
@@ -5414,10 +5483,8 @@ export const determineDeclarations:Function = (module:Object):Array<Object> =>
     )).map((name:string):Object => module.exports[name]))
 export const determineProviders:Function = (module:Object):Array<Object> =>
     Object.keys(module.exports).filter((name:string):boolean =>
-        !name.startsWith('Abstract') && (
-            name.endsWith('Resolver') || name.endsWith('Pipe') ||
-            name.endsWith('Guard') || name.endsWith('Service')
-        )
+        name.endsWith('Resolver') || name.endsWith('Pipe') ||
+        name.endsWith('Guard') || name.endsWith('Service')
     ).map((name:string):Object => module.exports[name])
 // IgnoreTypeCheck
 @NgModule({
@@ -5435,13 +5502,17 @@ export const determineProviders:Function = (module:Object):Array<Object> =>
         MdTooltipModule,
         TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
     ],
-    providers: determineProviders(module).concat({
-        deps: [DataService],
+    providers: determineProviders(module).concat([{
+        deps: [DataService, InitialDataService, Injector],
         multi: true,
         provide: APP_INITIALIZER,
-        useFactory: (data:DataService):Function => ():Promise<void> =>
-            data.initialize()
-    })
+        useFactory: (
+            data:DataService, initialData:InitialDataService, injector:Injector
+        ):Function => ():Promise<void> => {
+            initialData.constructor.injectors.add(injector)
+            return data.initialize()
+        }
+    }])
 })
 /**
  * Represents the importable angular module.
