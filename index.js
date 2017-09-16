@@ -290,7 +290,7 @@ export const determineInjector:Function = (
 ):?Function => {
     if (injector)
         return injector.get.bind(injector)
-    const symbol:Symbol = Symbol()
+    const symbol:string = `${new Date().getTime()}/${Math.random()}`
     if (currentInstanceToSearchInjectorFor === this)
         throw symbol
     currentInstanceToSearchInjectorFor = this
