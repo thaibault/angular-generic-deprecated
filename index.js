@@ -291,20 +291,20 @@ export const determineInjector:Function = (
     if (injector)
         return injector.get.bind(injector)
     const symbol:Symbol = Symbol()
-    if (currentSearch === this)
+    if (currentInstanceToSearchInjectorFor === this)
         throw symbol
-    currentSearch = this
+    currentInstanceToSearchInjectorFor = this
     for (const injector:Injector of InitialDataService.injectors)
         try {
             if (injector.get(constructor, NaN) === instance)
                 return injector.get.bind(injector)
         } catch (error) {
-            currentSearch = null
+            currentInstanceToSearchInjectorFor = null
             if (error === symbol)
                 return injector.get.bind(injector)
             throw error
         }
-    currentSearch = null
+    currentInstanceToSearchInjectorFor = null
     if (InitialDataService.injectors.size === 1) {
         console.warn(
             'Could not determine injector, but using the only registered ' +
