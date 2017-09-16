@@ -107,9 +107,11 @@ if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
     var CHANGE_DETECTION_STRATEGY_NAME:string = 'default'
     /* eslint-enable no-var */
 declare var UTC_BUILD_TIMESTAMP:number
-let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
+export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
+export let currentInstanceToSearchInjectorFor:?Object = null
+export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
 // region configuration
 export const CODE_MIRROR_DEFAULT_OPTIONS:PlainObject = {
     // region paths
@@ -274,7 +276,6 @@ export class InitialDataService {
         return this.tools.extendObject(true, this, ...parameter)
     }
 }
-export let currentInstanceToSearchInjectorFor:?Object = null
 /**
  * Helper function to easy create abstract classes without tight bounds.
  * @param injector - Application specific injector to use instead auto
@@ -290,9 +291,8 @@ export const determineInjector:Function = (
 ):?Function => {
     if (injector)
         return injector.get.bind(injector)
-    const symbol:string = `${new Date().getTime()}/${Math.random()}`
     if (currentInstanceToSearchInjectorFor === this)
-        throw symbol
+        throw SYMBOL
     currentInstanceToSearchInjectorFor = this
     for (const injector:Injector of InitialDataService.injectors)
         try {
@@ -300,7 +300,7 @@ export const determineInjector:Function = (
                 return injector.get.bind(injector)
         } catch (error) {
             currentInstanceToSearchInjectorFor = null
-            if (error === symbol)
+            if (error === SYMBOL)
                 return injector.get.bind(injector)
             throw error
         }
