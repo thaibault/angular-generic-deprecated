@@ -274,6 +274,7 @@ export class InitialDataService {
         return this.tools.extendObject(true, this, ...parameter)
     }
 }
+export let currentInstanceToSearchInjectorFor:?Object = null
 /**
  * Helper function to easy create abstract classes without tight bounds.
  * @param injector - Application specific injector to use instead auto
@@ -289,11 +290,21 @@ export const determineInjector:Function = (
 ):?Function => {
     if (injector)
         return injector.get.bind(injector)
+    const symbol:Symbol = Symbol()
+    if (currentSearch === this)
+        throw symbol
+    currentSearch = this
     for (const injector:Injector of InitialDataService.injectors)
         try {
-            if (injector.get(constructor) === instance)
+            if (injector.get(constructor, NaN) === instance)
                 return injector.get.bind(injector)
-        } catch (error) {}
+        } catch (error) {
+            currentSearch = null
+            if (error === symbol)
+                return injector.get.bind(injector)
+            throw error
+        }
+    currentSearch = null
     if (InitialDataService.injectors.size === 1) {
         console.warn(
             'Could not determine injector, but using the only registered ' +
@@ -2847,7 +2858,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
             get(InitialDataService).configuration.database.url, ''
         ) + '/'
         this.databaseBaseURL =
-            `${databaseBaseURL}_utils/#database/` +
+            `${databaseBaseURL}_utils/#/database/` +
             `${get(InitialDataService).configuration.name}/`
         this.databaseURL =
             databaseBaseURL + get(InitialDataService).configuration.name
@@ -3003,11 +3014,11 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
      * @param item - Item to update.
      * @param data - Optional given data to update into given item.
      * @param message - Message to should if process was successfully.
-     * @returns Nothing.
+     * @returns A boolean indicating if requested update was successful.
      */
     async update(
         item:PlainObject, data:?PlainObject, message:string = ''
-    ):Promise<void> {
+    ):Promise<boolean> {
         let newData:PlainObject
         if (data)
             newData = this.extendObject({
@@ -3027,10 +3038,11 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
             this.message(
                 'message' in error ? error.message : this.representObject(
                     error))
-            return
+            return false
         }
         if (message)
             this.message(message)
+        return true
     }
 }
 // / endregion
