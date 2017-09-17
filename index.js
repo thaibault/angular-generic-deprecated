@@ -2608,15 +2608,18 @@ export class DataScopeService {
                 specialNames.deletedConflict,
                 specialNames.localSequence,
                 specialNames.revision,
-                specialNames.revisionsInformation,
                 specialNames.revisions,
+                specialNames.revisionsInformation,
                 specialNames.type)
         const specification:PlainObject = this.determineSpecificationObject(
             modelSpecification, propertyNames,
             propertyNamesToIgnore.concat(reservedNames))
         if (!propertyNames) {
             propertyNames = Object.keys(specification).filter(
-                (key:string):boolean => typeof specification[key] === 'object')
+                (key:string):boolean =>
+                    typeof specification[key] === 'object' &&
+                    typeof specification[key] !== null &&
+                    !Array.isArray(specification[key]))
             propertyNames = propertyNames.concat(Object.keys(data).filter((
                 name:string
             // IgnoreTypeCheck
@@ -3926,6 +3929,12 @@ export class IntervalsInputComponent {
     ngOnInit():void {
         if (!this.additionalObjectData)
             this.additionalObjectData = this._dataScope.generate('_interval')
+        if (this.model.value)
+            this.model.value.sort((
+                first:PlainObject, second:PlainObject
+            ):number => first.start.value - second.start.value)
+        else
+            this.model.value = []
     }
     /**
      * Adds a new interval.
