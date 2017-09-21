@@ -3079,15 +3079,6 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * should be suppressed or be shown automatically. Useful to prevent error
  * component from showing error messages before the user has submit the form.
  * @property type - Type of given input.
- *
- * @property _attachmentWithPrefixExists - Holds the attachment by prefix
- * checker pipe instance
- * @property _extendObject - Holds the extend object's pipe transformation
- * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
- * transformation method.
- * @property _modelConfiguration - All model configurations.
- * @property _numberGetUTCTimestamp - Date (and time) to unix timstamp
- * converter pipe transform method.
  */
 export class AbstractInputComponent/* implements OnInit*/ {
     @Input() declaration:?string = null
@@ -3116,7 +3107,22 @@ export class AbstractInputComponent/* implements OnInit*/ {
     @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
     @Input() type:string
-
+}
+/* eslint-disable brace-style */
+/**
+ * Generic input component.
+ * @property _attachmentWithPrefixExists - Holds the attachment by prefix
+ * checker pipe instance
+ * @property _extendObject - Holds the extend object's pipe transformation
+ * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
+ * transformation method.
+ * @property _modelConfiguration - All model configurations.
+ * @property _numberGetUTCTimestamp - Date (and time) to unix timstamp
+ * converter pipe transform method.
+ */
+export class AbstractNativeInputComponent extends AbstractInputComponent
+/* implements OnInit*/ {
+/* eslint-enable brace-style */
     _attachmentWithPrefixExists:Function
     _extendObject:Function
     _getFilenameByPrefix:Function
@@ -3129,6 +3135,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
      * @returns Nothing.
      */
     constructor(@Optional() injector:Injector):void {
+        super(injector)
         const get:Function = determineInjector(
             injector, this, this.constructor)
         this._attachmentWithPrefixExists = get(
@@ -3819,14 +3826,36 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
     selector: 'generic-interval-input',
     template: `
         <generic-input
+            [declaration]="startDeclaration"
             [description]="startDescription"
+            [disabled]="startDisabled"
+            [showDeclarationText]="startShowDeclarationText"
+            [maximum]="startMaximum"
+            [maximumText]="startMaximumText"
+            [minimum]="startMinimum"
+            [required]="startRequired"
+            [requiredText]="startRequiredText"
+            [minimumText]="startMinimumText"
             [model]="model.start"
+            (model)="change($event, 'start')"
+            [showValidationErrorMessages]="startShowValidationErrorMessages"
             type="time"
         ></generic-input>
         <ng-content></ng-content>
         <generic-input
+            [declaration]="endDeclaration"
             [description]="endDescription"
-            [model]="model.end"
+            [disabled]="endDisabled"
+            [showDeclarationText]="endShowDeclarationText"
+            [maximum]="endMaximum"
+            [maximumText]="endMaximumText"
+            [minimum]="endMinimum"
+            [required]="endRequired"
+            [requiredText]="endRequiredText"
+            [minimumText]="endMinimumText"
+            [model]="model.start"
+            (model)="change($event, 'start')"
+            [showValidationErrorMessages]="endShowValidationErrorMessages"
             type="time"
         ></generic-input>
     `
@@ -3839,11 +3868,55 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
  * milliseconds.
  */
 export class IntervalInputComponent {
+    @Input() endDeclaration:?string = null
+    @Input() startDeclaration:?string = null
+
     @Input() endDescription:?string = null
     @Input() startDescription:?string = null
+
+    @Input() endDisabled:?boolean = null
+    @Input() startDisabled:?boolean = null
+
+    @Input() endMaximum:?number = null
+    @Input() startMaximum:?number = null
+
+    @Input() endMaximumText:string =
+        'Please give a number less or equal than ${model.maximum}.'
+    @Input() startMaximumText:string =
+        'Please give a number less or equal than ${model.maximum}.'
+
+    @Input() endMinimum:?number = null
+    @Input() startMinimum:?number = null
+
+    @Input() endMinimumText:string =
+        'Please given a number at least or equal to {{model.minimum}}.'
+    @Input() startMinimumText:string =
+        'Please given a number at least or equal to {{model.minimum}}.'
+
+    @Input() endRequired:?boolean = null
+    @Input() startRequired:?boolean = null
+
+    @Input() endRequiredText:string = 'Please fill this field.'
+    @Input() startRequiredText:string = 'Please fill this field.'
+
+    @Input() endShowDeclarationText:string = 'ℹ'
+    @Input() startShowDeclarationText:string = 'ℹ'
+
+    @Input() endShowValidationErrorMessages:boolean = false
+    @Input() startShowValidationErrorMessages:boolean = false
+
     @Input() model:{end:number;start:number} = {
         end: {value: new Date(1970, 0, 1)},
         start: {value: new Date(1970, 0, 1)}
+    }
+    @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
+    /**
+     * Triggers on any change events of any nested input.
+     * @param parameter - List of given parameter.
+     * @returns Nothing.
+     */
+    change(...parameter:Array<any>):void {
+        this.modelChange.emit(...parameter)
     }
 }
 // IgnoreTypeCheck
@@ -4192,12 +4265,12 @@ const propertyContent:PlainObject = {
         [maximumText]="maximumText"
         [minimum]="minimum"
         [minimumLength]="minimumLength"
+        [minimumLengthText]="minimumLengthText"
+        [minimumText]="minimumText"
         [model]="model"
         [pattern]="pattern"
         [required]="required"
         [requiredText]="requiredText"
-        [minimumLengthText]="minimumLengthText"
-        [minimumText]="minimumText"
         [patternText]="patternText"
         [showValidationErrorMessages]="showValidationErrorMessages"
         [type]="type"
@@ -4355,7 +4428,7 @@ export class InputComponent extends AbstractInputComponent {
  * @property labels - Defines some selectable value labels.
  * @property type - Optionally defines an input type explicitly.
  */
-export class SimpleInputComponent extends AbstractInputComponent {
+export class SimpleInputComponent extends AbstractNativeInputComponent {
     @Input() labels:{[key:string]:string} = {}
     @Input() type:?string
     /**
@@ -4427,7 +4500,7 @@ export class SimpleInputComponent extends AbstractInputComponent {
  * @property rows - Number of rows to show.
  * @property selectableEditor - Indicates whether an editor is selectable.
  */
-export class TextareaComponent extends AbstractInputComponent
+export class TextareaComponent extends AbstractNativeInputComponent
 /* implements OnInit*/{
 /* eslint-enable brace-style */
     static defaultEditorOptions:{code:PlainObject;markup:PlainObject} = {
