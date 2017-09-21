@@ -3065,7 +3065,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * @property minimum - Minimum allowed number.
  * @property minimumLength - Minimum allowed number of symbols.
  * @property minimumLengthText - Minimum number validation text.
- * @property minimumText - Minimum number of symbols validation text.
+ * @property minimumText - Minimum number validation text.
  * @property model - Holds model informations including actual value and
  * metadata.
  * @property modelChange - Model event emitter emitting events on each model
@@ -3862,10 +3862,52 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
 })
 /**
  * Represents an interval input.
+ * @property endDeclaration - End declaration info text.
+ * @property startDeclaration - End declaration info text.
+ *
  * @property endDescription - Description for end input.
  * @property startDescription - Description for start input.
+ *
+ * @property endDisabled - Sets end disabled state.
+ * @property startDisabled - Sets start disabled state.
+ *
+ * @property endMaximum - Maximum allowed number end value.
+ * @property startMaximum - Maximum allowed number start value.
+ *
+ * @property endMaximumText - Maximum number validation end text.
+ * @property startMaximumText - Maximum number validation start text.
+ *
+ * @property endMinimum - Minimum allowed end number.
+ * @property endMinimum - Minimum allowed start number.
+ *
+ * @property endMinimumText - Minimum end number validation text.
+ * @property startMinimumText - Minimum start number validation text.
+ *
+ * @property endRequired - Indicates whether end input have to be filled.
+ * @property startRequired - Indicates whether start input have to be filled.
+ *
+ * @property endRequiredText - Required validation end text.
+ * @property startRequiredText - Required validation start text.
+ *
+ * @property endShowDeclarationText - Info text to click for more end input
+ * informations.
+ * @property startShowDeclarationText - Info text to click for more start input
+ * informations.
+ *
+ * @property endShowDeclarationText - Info text to click for more end input
+ * informations.
+ * @property startShowDeclarationText - Info text to click for more
+ * start input informations.
+ *
+ * @property endShowValidationErrorMessages - Indicates whether validation
+ * errors should be suppressed or be shown automatically for end input.
+ * @property startShowValidationErrorMessages - Indicates whether validation
+ * errors should be suppressed or be shown automatically for start input.
+ *
  * @property model - Object that saves start and end time as unix timestamp in
- * milliseconds.
+ * milliseconds.*
+ * @property modelChange - Model event emitter emitting events on each model
+ * change.
  */
 export class IntervalInputComponent {
     @Input() endDeclaration:?string = null
@@ -3912,11 +3954,12 @@ export class IntervalInputComponent {
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
     /**
      * Triggers on any change events of any nested input.
-     * @param parameter - List of given parameter.
+     * @param event - Events payload data.
+     * @param type - Indicates which input field has changed.
      * @returns Nothing.
      */
-    change(...parameter:Array<any>):void {
-        this.modelChange.emit(...parameter)
+    change(event:any, type:'end'|'start'):void {
+        this.modelChange.emit({value: event, type})
     }
 }
 // IgnoreTypeCheck
@@ -3931,12 +3974,44 @@ export class IntervalInputComponent {
         >{{description || model.description || model.name}}</div>
         <div
             @defaultAnimation
-            *ngFor="let interval of (model.value || []); let first = first"
+            *ngFor="let interval of (model.value || []); let first = first; let index = index"
         >
             <generic-interval-input
-                [endDescription]="first ? null : ''"
+                [endDisabled]="endDisabled"
+                [startDisabled]="startDisabled"
+
+                [endShowDeclarationText]="endShowDeclarationText"
+                [startShowDeclarationText]="startShowDeclarationText"
+
+                [endMaximum]="endMaximum"
+                [startMaximum]="startMaximum"
+
+                [endMaximumText]="endMaximumText"
+                [startMaximumText]="startMaximumText"
+
+                [endMinimum]="endMinimum"
+                [startMinimum]="startMinimum"
+
+                [endRequired]="endRequired"
+                [startRequired]="startRequired"
+
+                [endRequiredText]="endRequiredText"
+                [startRequiredText]="startRequiredText"
+
+                [endMinimumText]="endMinimumText"
+                [startMinimumText]="startMinimumText"
+
+                [endDescription]="first ? endDescription : ''"
+                [startDescription]="first ? startDescription : ''"
+
                 [model]="interval"
-                [startDescription]="first ? null : ''"
+                (model)="change($event, index)"
+
+                [endDeclaration]="endDeclaration"
+                [startDeclaration]="startDeclaration"
+
+                [endShowValidationErrorMessages]="endShowValidationErrorMessages"
+                [startShowValidationErrorMessages]="startShowValidationErrorMessages"
             >
                 <ng-container *ngIf="contentTemplate; else fallback">
                     <ng-container
@@ -3967,6 +4042,49 @@ export class IntervalInputComponent {
  * interval object.
  * @property contentTemplate - Reference to transcluded node.
  * @property description - Interval description to use as label.
+ *
+ * @property endDeclaration - End declaration info text.
+ * @property startDeclaration - End declaration info text.
+ *
+ * @property endDescription - Description for end input.
+ * @property startDescription - Description for start input.
+ *
+ * @property endDisabled - Sets end disabled state.
+ * @property startDisabled - Sets start disabled state.
+ *
+ * @property endMaximum - Maximum allowed number end value.
+ * @property startMaximum - Maximum allowed number start value.
+ *
+ * @property endMaximumText - Maximum number validation end text.
+ * @property startMaximumText - Maximum number validation start text.
+ *
+ * @property endMinimum - Minimum allowed end number.
+ * @property endMinimum - Minimum allowed start number.
+ *
+ * @property endMinimumText - Minimum end number validation text.
+ * @property startMinimumText - Minimum start number validation text.
+ *
+ * @property endRequired - Indicates whether end input have to be filled.
+ * @property startRequired - Indicates whether start input have to be filled.
+ *
+ * @property endRequiredText - Required validation end text.
+ * @property startRequiredText - Required validation start text.
+ *
+ * @property endShowDeclarationText - Info text to click for more end input
+ * informations.
+ * @property startShowDeclarationText - Info text to click for more start input
+ * informations.
+ *
+ * @property endShowDeclarationText - Info text to click for more end input
+ * informations.
+ * @property startShowDeclarationText - Info text to click for more
+ * start input informations.
+ *
+ * @property endShowValidationErrorMessages - Indicates whether validation
+ * errors should be suppressed or be shown automatically for end input.
+ * @property startShowValidationErrorMessages - Indicates whether validation
+ * errors should be suppressed or be shown automatically for start input.
+ *
  * @property model - Saves current list of intervals.
  * @property modelChange - Event emitter for interval list changes.
  *
@@ -3978,8 +4096,46 @@ export class IntervalsInputComponent {
     @Input() additionalObjectData:PlainObject
     @ContentChild(TemplateRef) contentTemplate:TemplateRef
     @Input() description:?string = null
+
+    @Input() endDeclaration:?string = null
+    @Input() startDeclaration:?string = null
+
+    @Input() endDescription:?string = null
+    @Input() startDescription:?string = null
+
+    @Input() endDisabled:?boolean = null
+    @Input() startDisabled:?boolean = null
+
+    @Input() endMaximum:?number = null
+    @Input() startMaximum:?number = null
+
+    @Input() endMaximumText:string =
+        'Please give a number less or equal than ${model.maximum}.'
+    @Input() startMaximumText:string =
+        'Please give a number less or equal than ${model.maximum}.'
+
+    @Input() endMinimum:?number = null
+    @Input() startMinimum:?number = null
+
+    @Input() endMinimumText:string =
+        'Please given a number at least or equal to {{model.minimum}}.'
+    @Input() startMinimumText:string =
+        'Please given a number at least or equal to {{model.minimum}}.'
+
+    @Input() endRequired:?boolean = null
+    @Input() startRequired:?boolean = null
+
+    @Input() endRequiredText:string = 'Please fill this field.'
+    @Input() startRequiredText:string = 'Please fill this field.'
+
+    @Input() endShowDeclarationText:string = 'ℹ'
+    @Input() startShowDeclarationText:string = 'ℹ'
+
+    @Input() endShowValidationErrorMessages:boolean = false
+    @Input() startShowValidationErrorMessages:boolean = false
+
     @Input() model:PlainObject = {value: []}
-    @Output() modelChange:EventEmitter<Array<PlainObject>> = new EventEmitter()
+    @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
 
     _dataScope:DataScopeService
     _extendObject:Function
@@ -3994,6 +4150,15 @@ export class IntervalsInputComponent {
     ):void {
         this._dataScope = dataScope
         this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+    }
+    /**
+     * Triggers on any change events of any nested input.
+     * @param event - Events payload data.
+     * @param index - Indicates which input field has changed.
+     * @returns Nothing.
+     */
+    change(event:any, index:number):void {
+        this.modelChange.emit({value: event, index})
     }
     /**
      * Extends additional model data with default one if nothing is provided.
