@@ -53,8 +53,8 @@ registerAngularTest(function(
         RouterOutletStubComponent, RouterStub
     } = require('./mockup')
     const {
-        AbstractInputComponent,
         AbstractItemsComponent,
+        AbstractNativeInputComponent,
         AbstractResolver,
         AlertService,
         AttachmentsAreEqualPipe,
@@ -2041,15 +2041,56 @@ registerAngularTest(function(
             })
             // / endregion
             // / region input/select/textarea
-            for (const component:AbstractInputComponent of [
-                InputComponent, TextareaComponent, SimpleInputComponent
+            this.test(`${InputComponent.name} (${roundType})`, async (
+                assert:Object
+            ):Promise<void> => {
+                const done:Function = assert.async()
+                const fixture:ComponentFixture<InputComponent> =
+                    TestBed.createComponent(InputComponent)
+                const instance:Object = fixture.componentInstance
+                try {
+                    instance.model = {
+                        disabled: true, name: 'test', trim: true,
+                        onUpdateExpression:
+                            `typeof newDocument[name] === 'string' ?` +
+                            ` newDocument[name].replace('c', 'C') : ` +
+                            'newDocument[name]'
+                    }
+                    assert.strictEqual(instance.model.disabled, true)
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.strictEqual(fixture.debugElement.query(By.css(
+                        'label'
+                    )).nativeElement.textContent.trim(), 'test')
+                    const inputDomNode:DomNode = fixture.debugElement.query(
+                        By.css('input, select, textarea')
+                    ).nativeElement
+                    inputDomNode.value = 'aa'
+                    inputDomNode.dispatchEvent(getNativeEvent('input'))
+                    await fixture.whenStable()
+                    assert.strictEqual(instance.model.value, 'aa')
+                    instance.model = Tools.extendObject(
+                        {}, instance.model, {maximumLength: 2})
+                    fixture.detectChanges()
+                    await fixture.whenStable()
+                    assert.strictEqual(
+                        inputDomNode.attributes.maxlength.value, '2')
+                } catch (error) {
+                    console.warn(error)
+                    assert.ok(false)
+                }
+                done()
+            })
+            for (const component:AbstractNativeInputComponent of [
+                TextareaComponent, SimpleInputComponent
             ])
                 this.test(
-                    `AbstractInputComponent/${component.name} (${roundType})`,
+                    `${AbstractNativeInputComponent.name}/${component.name} ` +
+                        `(${roundType})`,
                     async (assert:Object):Promise<void> => {
                         const done:Function = assert.async()
                         const fixture:
-                            ComponentFixture<AbstractInputComponent> =
+                            ComponentFixture<AbstractNativeInputComponent> =
                             TestBed.createComponent(component)
                         const instance:Object = fixture.componentInstance
                         try {
