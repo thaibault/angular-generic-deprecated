@@ -245,13 +245,19 @@ export class InitialDataService {
      * Sets all properties of given initial data as properties to this
      * initializing instance.
      * @param tools - Saves the generic tools service instance.
+     * @param removeFoundData - Indicates whether found data should be removed
+     * to free memory.
      * @returns Nothing.
      */
-    constructor(tools:ToolsService):void {
+    constructor(tools:ToolsService, removeFoundData:boolean = true):void {
+        if (!tools)
+            tools = new ToolsService()
         this.tools = tools.tools
         this.set(
             this.constructor.defaultScope,
             tools.globalContext.genericInitialData || {})
+        if (removeFoundData)
+            delete tools.globalContext.genericInitialData
         if (
             'document' in tools.globalContext &&
             'querySelector' in tools.globalContext.document
@@ -261,8 +267,8 @@ export class InitialDataService {
                 'application')
             if (domNode && domNode.getAttribute('initialData')) {
                 this.set(JSON.parse(domNode.getAttribute('initialData')))
-                // NOTE: Free memory.
-                domNode.removeAttribute('initialData')
+                if (removeFoundData)
+                    domNode.removeAttribute('initialData')
             }
         }
     }
