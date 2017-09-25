@@ -188,6 +188,14 @@ export class ToolsService {
 @Injectable()
 /**
  * Serves initial data provided via a global variable.
+ * @property static:defaultScope - Saves all minimal needed environment
+ * variables.
+ * @property static:injectors - Saves a set of all root injectors.
+ * @property static:removeFoundData - Indicates whether to remove found data to
+ * tidy up global scope or free memory (by removing dom node attributes).
+ *
+ * @property configuration - Expected initial data name.
+ * @property tools - Injected or given tools service instance.
  */
 export class InitialDataService {
     static defaultScope:PlainObject = {configuration: {database: {
@@ -238,6 +246,7 @@ export class InitialDataService {
         url: 'generic'
     }}}
     static injectors:Set<Injector> = new Set()
+    static removeFoundData:boolean = true
 
     configuration:PlainObject
     tools:Tools
@@ -245,18 +254,16 @@ export class InitialDataService {
      * Sets all properties of given initial data as properties to this
      * initializing instance.
      * @param tools - Saves the generic tools service instance.
-     * @param removeFoundData - Indicates whether found data should be removed
-     * to free memory.
      * @returns Nothing.
      */
-    constructor(tools:ToolsService, removeFoundData:boolean = true):void {
+    constructor(tools:ToolsService):void {
         if (!tools)
             tools = new ToolsService()
         this.tools = tools.tools
         this.set(
             this.constructor.defaultScope,
             tools.globalContext.genericInitialData || {})
-        if (removeFoundData)
+        if (this.constructo.removeFoundData)
             delete tools.globalContext.genericInitialData
         if (
             'document' in tools.globalContext &&
@@ -267,7 +274,7 @@ export class InitialDataService {
                 'application')
             if (domNode && domNode.getAttribute('initialData')) {
                 this.set(JSON.parse(domNode.getAttribute('initialData')))
-                if (removeFoundData)
+                if (this.constructo.removeFoundData)
                     domNode.removeAttribute('initialData')
             }
         }
