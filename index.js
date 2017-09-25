@@ -263,7 +263,7 @@ export class InitialDataService {
         this.set(
             this.constructor.defaultScope,
             tools.globalContext.genericInitialData || {})
-        if (this.constructo.removeFoundData)
+        if (this.constructor.removeFoundData)
             delete tools.globalContext.genericInitialData
         if (
             'document' in tools.globalContext &&
@@ -274,7 +274,7 @@ export class InitialDataService {
                 'application')
             if (domNode && domNode.getAttribute('initialData')) {
                 this.set(JSON.parse(domNode.getAttribute('initialData')))
-                if (this.constructo.removeFoundData)
+                if (this.constructor.removeFoundData)
                     domNode.removeAttribute('initialData')
             }
         }
