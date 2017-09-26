@@ -3866,8 +3866,8 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
             [required]="endRequired"
             [requiredText]="endRequiredText"
             [minimumText]="endMinimumText"
-            [model]="model.start"
-            (model)="change($event, 'start')"
+            [model]="model.end"
+            (model)="change($event, 'end')"
             [showValidationErrorMessages]="endShowValidationErrorMessages"
             type="time"
         ></generic-input>
