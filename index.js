@@ -3252,7 +3252,8 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
  * observation.
  *
  * @property actions - Array if actions which have happen.
- * @property tools - Holds the tools class from the tools service.
+ * @property autoRestartOnError - Indicates whether we should re-initialize
+ * the changes stream on errors.
  *
  * @property _canceled - Indicates whether current view has been destroyed and
  * data observation should bee canceled.
@@ -3264,6 +3265,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
  * @property _liveUpdateOptions - Options for database observation.
  * @property _stringCapitalize - String capitalize pipe transformation
  * function.
+ * @property _tools - Holds the tools class from the tools service.
  */
 export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     static defaultLiveUpdateOptions:PlainObject = {
@@ -3277,6 +3279,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
     }
 
     actions:Array<PlainObject> = []
+    autoRestartOnError:boolean = true
 
     _canceled:boolean = false
     _changeDetectorReference:ChangeDetectorRef
@@ -3308,11 +3311,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      * @returns Nothing.
      */
     ngOnInit():void {
-        /*
-            NOTE: We have to break out of the "zone.js" since long polling
-            themes to confuse its mocked environment.
-        */
-        this._tools.timeout(():void => {
+        const initialize:Function = ():void => {
             this._changesStream = this._data.connection.changes(
                 this._extendObject(
                     true, {}, {since: LAST_KNOWN_DATA.sequence},
@@ -3328,7 +3327,8 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
                         if ('seq' in action && typeof action.seq === 'number')
                             LAST_KNOWN_DATA.sequence = action.seq
                         LAST_KNOWN_DATA.data[action.id] = action.doc
-                    }
+                    } else if (type === 'error' && this.autoRestartOnError)
+                        initialize()
                     action.name = type
                     this.actions.unshift(action)
                     // IgnoreTypeCheck
@@ -3343,7 +3343,12 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
                     if (result)
                         this._changeDetectorReference.detectChanges()
                 })
-        })
+        }
+        /*
+            NOTE: We have to break out of the "zone.js" since long polling
+            themes to confuse its mocked environment.
+        */
+        this._tools.timeout(initialize)
     }
     /**
      * Marks current live data observation as canceled and closes initially
