@@ -4774,7 +4774,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
             if (typeof this.model.selectableEditor === 'boolean')
                 this.selectableEditor = this.model.selectableEditor
             else
-                this.selectableEditor = true
+               this.selectableEditor = true
         if (typeof this.editor === 'object' && this.editor !== null)
             if (this.editorType.startsWith('code') || this.editor.indentUnit)
                 this.editor = this._extendObject(
@@ -4784,6 +4784,8 @@ export class TextareaComponent extends AbstractNativeInputComponent
                 this.editor = this._extendObject(
                     true, {}, TINY_MCE_DEFAULT_OPTIONS,
                     this.constructor.defaultEditorOptions.markup, this.editor)
+        else
+            this.selectableEditor = false
     }
 }
 // // endregion
