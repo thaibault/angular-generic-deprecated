@@ -4774,7 +4774,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
             if (typeof this.model.selectableEditor === 'boolean')
                 this.selectableEditor = this.model.selectableEditor
             else
-               this.selectableEditor = true
+                this.selectableEditor = true
         if (typeof this.editor === 'object' && this.editor !== null)
             if (this.editorType.startsWith('code') || this.editor.indentUnit)
                 this.editor = this._extendObject(
