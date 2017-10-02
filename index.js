@@ -1473,6 +1473,86 @@ export class StringReplacePipe/* implements PipeTransform*/ {
     }
 }
 // IgnoreTypeCheck
+@Pipe({name: 'genericStringSafeHTML'})
+/**
+ * Provides angular dom html sanitizer.
+ * @property transform - Binded dom sanitizer's validation marker.
+ */
+export class StringSafeHTMLPipe/* implements PipeTransform*/ {
+    /**
+     * @param domSanitizer - Injected dom sanitizer service instance.
+     * @returns Nothing.
+     */
+    constructor(domSanitizer:DomSanitizer):void {
+        this.transform = this.domSanitizer.bypassSecurityTrustHtml.bind(
+            this.domSanitizer)
+    }
+}
+// IgnoreTypeCheck
+@Pipe({name: 'genericStringSafeResourceURL'})
+/**
+ * Provides angular dom html sanitizer.
+ * @property transform - Binded dom sanitizer's validation marker.
+ */
+export class StringSafeResourceURL/* implements PipeTransform*/ {
+    /**
+     * @param domSanitizer - Injected dom sanitizer service instance.
+     * @returns Nothing.
+     */
+    constructor(domSanitizer:DomSanitizer):void {
+        this.transform = this.domSanitizer.bypassSecurityTrustResourceUrl.bind(
+            this.domSanitizer)
+    }
+}
+// IgnoreTypeCheck
+@Pipe({name: 'genericStringSafeScript'})
+/**
+ * Provides angular dom html sanitizer.
+ * @property transform - Binded dom sanitizer's validation marker.
+ */
+export class StringSafeScript/* implements PipeTransform*/ {
+    /**
+     * @param domSanitizer - Injected dom sanitizer service instance.
+     * @returns Nothing.
+     */
+    constructor(domSanitizer:DomSanitizer):void {
+        this.transform = this.domSanitizer.bypassSecurityTrustScript.bind(
+            this.domSanitizer)
+    }
+}
+// IgnoreTypeCheck
+@Pipe({name: 'genericStringSafeStyle'})
+/**
+ * Provides angular dom html sanitizer.
+ * @property transform - Binded dom sanitizer's validation marker.
+ */
+export class StringSafeStyle/* implements PipeTransform*/ {
+    /**
+     * @param domSanitizer - Injected dom sanitizer service instance.
+     * @returns Nothing.
+     */
+    constructor(domSanitizer:DomSanitizer):void {
+        this.transform = this.domSanitizer.bypassSecurityTrustStyle.bind(
+            this.domSanitizer)
+    }
+}
+// IgnoreTypeCheck
+@Pipe({name: 'genericStringSafeURL'})
+/**
+ * Provides angular dom html sanitizer.
+ * @property transform - Binded dom sanitizer's validation marker.
+ */
+export class StringSafeURL/* implements PipeTransform*/ {
+    /**
+     * @param domSanitizer - Injected dom sanitizer service instance.
+     * @returns Nothing.
+     */
+    constructor(domSanitizer:DomSanitizer):void {
+        this.transform = this.domSanitizer.bypassSecurityTrustUrl.bind(
+            this.domSanitizer)
+    }
+}
+// IgnoreTypeCheck
 @Pipe({name: 'genericStringShowIfPatternMatches'})
 /**
  * Returns given string if it matches given pattern.
