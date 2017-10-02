@@ -1484,7 +1484,7 @@ export class StringSafeHTMLPipe/* implements PipeTransform*/ {
      * @returns Nothing.
      */
     constructor(domSanitizer:DomSanitizer):void {
-        this.transform = this.domSanitizer.bypassSecurityTrustHtml.bind(
+        this.transform = domSanitizer.bypassSecurityTrustHtml.bind(
             this.domSanitizer)
     }
 }
@@ -1500,7 +1500,7 @@ export class StringSafeResourceURL/* implements PipeTransform*/ {
      * @returns Nothing.
      */
     constructor(domSanitizer:DomSanitizer):void {
-        this.transform = this.domSanitizer.bypassSecurityTrustResourceUrl.bind(
+        this.transform = domSanitizer.bypassSecurityTrustResourceUrl.bind(
             this.domSanitizer)
     }
 }
@@ -1516,7 +1516,7 @@ export class StringSafeScript/* implements PipeTransform*/ {
      * @returns Nothing.
      */
     constructor(domSanitizer:DomSanitizer):void {
-        this.transform = this.domSanitizer.bypassSecurityTrustScript.bind(
+        this.transform = domSanitizer.bypassSecurityTrustScript.bind(
             this.domSanitizer)
     }
 }
@@ -1532,7 +1532,7 @@ export class StringSafeStyle/* implements PipeTransform*/ {
      * @returns Nothing.
      */
     constructor(domSanitizer:DomSanitizer):void {
-        this.transform = this.domSanitizer.bypassSecurityTrustStyle.bind(
+        this.transform = domSanitizer.bypassSecurityTrustStyle.bind(
             this.domSanitizer)
     }
 }
@@ -1548,7 +1548,7 @@ export class StringSafeURL/* implements PipeTransform*/ {
      * @returns Nothing.
      */
     constructor(domSanitizer:DomSanitizer):void {
-        this.transform = this.domSanitizer.bypassSecurityTrustUrl.bind(
+        this.transform = domSanitizer.bypassSecurityTrustUrl.bind(
             this.domSanitizer)
     }
 }
