@@ -3892,12 +3892,12 @@ export class GenericDateDirective {
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
     }
+    @Input('genericDate')
     /**
      * Options setter to merge into options interactively.
      * @param options - Options object to merge into.
      * @returns Nothing.
      */
-    @Input('genericDate')
     set insertOptions(options:PlainObject = {}):void {
         this.extendObject(true, this.options, options)
     }
