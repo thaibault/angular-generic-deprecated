@@ -58,9 +58,10 @@ import {
     ReflectiveInjector,
     Renderer2,
     TemplateRef,
-    ViewChild
+    ViewChild,
+    ViewContainerRef
 } from '@angular/core'
-import {isPlatformServer} from '@angular/common'
+import {DatePipe, isPlatformServer} from '@angular/common'
 import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
@@ -3843,6 +3844,108 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
 // / endregion
 // // region date/time
 // IgnoreTypeCheck
+@Directive({selector: '[genericDate]'})
+/**
+ * Displays dates and/or times formated with markup and through angular date
+ * pipe.
+ * @property dateFormatter - Angular's date pipe transformation method.
+ * @property extendObjectPipe - Extend object pipe's transform method.
+ * @property options - Given formatting and update options.
+ * @property templateReference - Reference to given template.
+ * @property timerID - Interval id to cancel it on destroy life cycle hook.
+ * @property viewContainerReference - View container reference to embed
+ * rendered template instance into.
+ */
+export class GenericDateDirective {
+    dateFormatter:Function
+    extendObjectPipe:Function
+    options:{
+        date:Date|number|string;
+        format:string;
+        freeze:boolean;
+        updateIntervalInMilliseconds:number;
+    } = {
+        date: 'now',
+        format: 'HH:mm:ss',
+        freeze: false,
+        updateIntervalInMilliseconds: 1000
+    }
+    templateReference:Object
+    timerID:any
+    viewContainerReference:Object
+    /**
+     * Saves injected services as instance properties.
+     * @param datePipe - Injected date pipe service instance.
+     * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param templateReference - Specified template reference.
+     * @param viewContainerReference - Injected view container reference.
+     * @returns Nothing.
+     */
+    constructor(
+        datePipe:DatePipe,
+        extendObjectPipe:ExtendObjectPipe,
+        templateReference:TemplateRef<any>,
+        viewContainerReference:ViewContainerRef
+    ):void {
+        this.dateFormatter = datePipe.transform.bind(datePipe)
+        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.templateReference = templateReference
+        this.viewContainerReference = viewContainerReference
+    }
+    /**
+     * Options setter to merge into options interactively.
+     * @param options - Options object to merge into.
+     * @returns Nothing.
+     */
+    @Input('genericDate')
+    set insertOptions(options:PlainObject = {}):void {
+        this.extendObject(true, this.options, options)
+    }
+    /**
+     * Inserts a rendered template instance into current view.
+     * @returns Nothing.
+     */
+    insert():void {
+        let dateTime:Date
+        if (
+            ['now', '', null, undefined].includes(this.options.date) ||
+            isNaN(this.options.date)
+        )
+            dateTime = Date.now()
+        else if (
+            typeof this.options.date === 'string' &&
+            `${parseFloat(this.options.date)}` === this.options.date
+        )
+            dateTime = parseFloat(this.options.date)
+        this.viewContainerReference.createEmbeddedView(
+            this.templateReference, {
+                date: this.dateFormatter(dateTime, this.options.format)
+            })
+    }
+    /**
+     * On destroy life cycle hook to cancel initialized interval timer.
+     * @returns Nothing.
+     */
+    ngOnDestroy():void {
+        if (this.timerID)
+            clearInterval(this.timerID)
+    }
+    /**
+     * Initializes interval timer and inserts initial template instance into
+     * current view.
+     * @returns Nothing.
+     */
+    ngOnInit():void {
+        this.timerID = setInterval(():void => {
+            if (!this.options.freeze) {
+                this.viewContainerReference.remove()
+                this.insert()
+            }
+        }, this.options.updateIntervalInMilliseconds)
+        this.insert()
+    }
+}
+// IgnoreTypeCheck
 @Directive(Tools.extendObject(true, {
 }, DefaultValueAccessor.decorators[0].args[0], {providers: [{
     provide: NG_VALUE_ACCESSOR,
@@ -5861,7 +5964,7 @@ export const determineProviders:Function = (module:Object):Array<Object> =>
         MdTooltipModule,
         TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
     ],
-    providers: determineProviders(module).concat([{
+    providers: determineProviders(module).concat({
         deps: [DataService, InitialDataService, Injector],
         multi: true,
         provide: APP_INITIALIZER,
@@ -5871,7 +5974,7 @@ export const determineProviders:Function = (module:Object):Array<Object> =>
             initialData.constructor.injectors.add(injector)
             return data.initialize()
         }
-    }])
+    })
 })
 /**
  * Represents the importable angular module.
