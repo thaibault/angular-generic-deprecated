@@ -1495,7 +1495,7 @@ export class StringSafeHTMLPipe/* implements PipeTransform*/ {
  * Provides angular dom html sanitizer.
  * @property transform - Binded dom sanitizer's validation marker.
  */
-export class StringSafeResourceURL/* implements PipeTransform*/ {
+export class StringSafeResourceURLPipe/* implements PipeTransform*/ {
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
@@ -1511,7 +1511,7 @@ export class StringSafeResourceURL/* implements PipeTransform*/ {
  * Provides angular dom html sanitizer.
  * @property transform - Binded dom sanitizer's validation marker.
  */
-export class StringSafeScript/* implements PipeTransform*/ {
+export class StringSafeScriptPipe/* implements PipeTransform*/ {
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
@@ -1527,7 +1527,7 @@ export class StringSafeScript/* implements PipeTransform*/ {
  * Provides angular dom html sanitizer.
  * @property transform - Binded dom sanitizer's validation marker.
  */
-export class StringSafeStyle/* implements PipeTransform*/ {
+export class StringSafeStylePipe/* implements PipeTransform*/ {
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
@@ -1543,7 +1543,7 @@ export class StringSafeStyle/* implements PipeTransform*/ {
  * Provides angular dom html sanitizer.
  * @property transform - Binded dom sanitizer's validation marker.
  */
-export class StringSafeURL/* implements PipeTransform*/ {
+export class StringSafeURLPipe/* implements PipeTransform*/ {
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
