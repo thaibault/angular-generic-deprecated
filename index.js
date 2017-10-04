@@ -3899,6 +3899,13 @@ export class GenericDateDirective {
      * @returns Nothing.
      */
     set insertOptions(options:PlainObject = {}):void {
+        if (
+            ['string', 'number'].includes(typeof options) ||
+            [null, undefined].includes(options) ||
+            typeof options === 'object' &&
+            options instanceof Date
+        )
+            options = {dateTime: options}
         this.extendObject(true, this.options, options)
     }
     /**
@@ -3906,17 +3913,14 @@ export class GenericDateDirective {
      * @returns Nothing.
      */
     insert():void {
-        let dateTime:Date
-        if (
-            ['now', '', null, undefined].includes(this.options.dateTime) ||
-            isNaN(this.options.dateTime)
-        )
+        let dateTime:Date = this.options.dateTime
+        if (['now', '', null, undefined].includes(dateTime) || isNaN(dateTime))
             dateTime = Date.now()
         else if (
-            typeof this.options.dateTime === 'string' &&
-            `${parseFloat(this.options.dateTime)}` === this.options.dateTime
+            typeof dateTime === 'string' &&
+            `${parseFloat(dateTime)}` === dateTime
         )
-            dateTime = parseFloat(this.options.dateTime)
+            dateTime = parseFloat(dateTime)
         this.viewContainerReference.createEmbeddedView(
             this.templateReference, {
                 dateTime: this.dateFormatter(dateTime, this.options.format)
