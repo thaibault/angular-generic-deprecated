@@ -5964,17 +5964,22 @@ export const determineProviders:Function = (module:Object):Array<Object> =>
         MdTooltipModule,
         TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
     ],
-    providers: determineProviders(module).concat({
-        deps: [DataService, InitialDataService, Injector],
-        multi: true,
-        provide: APP_INITIALIZER,
-        useFactory: (
-            data:DataService, initialData:InitialDataService, injector:Injector
-        ):Function => ():Promise<void> => {
-            initialData.constructor.injectors.add(injector)
-            return data.initialize()
+    providers: determineProviders(module).concat(
+        DatePipe,
+        {
+            deps: [DataService, InitialDataService, Injector],
+            multi: true,
+            provide: APP_INITIALIZER,
+            useFactory: (
+                data:DataService,
+                initialData:InitialDataService,
+                injector:Injector
+            ):Function => ():Promise<void> => {
+                initialData.constructor.injectors.add(injector)
+                return data.initialize()
+            }
         }
-    })
+    )
 })
 /**
  * Represents the importable angular module.
