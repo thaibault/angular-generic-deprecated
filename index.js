@@ -3849,7 +3849,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
  * Displays dates and/or times formated with markup and through angular date
  * pipe.
  * @property dateFormatter - Angular's date pipe transformation method.
- * @property extendObjectPipe - Extend object pipe's transform method.
+ * @property extendObject - Extend object pipe's transform method.
  * @property options - Given formatting and update options.
  * @property templateReference - Reference to given template.
  * @property timerID - Interval id to cancel it on destroy life cycle hook.
@@ -3858,14 +3858,14 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
  */
 export class GenericDateDirective {
     dateFormatter:Function
-    extendObjectPipe:Function
+    extendObject:Function
     options:{
-        date:Date|number|string;
+        dateTime:Date|number|string;
         format:string;
         freeze:boolean;
         updateIntervalInMilliseconds:number;
     } = {
-        date: 'now',
+        dateTime: 'now',
         format: 'HH:mm:ss',
         freeze: false,
         updateIntervalInMilliseconds: 1000
@@ -3908,18 +3908,18 @@ export class GenericDateDirective {
     insert():void {
         let dateTime:Date
         if (
-            ['now', '', null, undefined].includes(this.options.date) ||
-            isNaN(this.options.date)
+            ['now', '', null, undefined].includes(this.options.dateTime) ||
+            isNaN(this.options.dateTime)
         )
             dateTime = Date.now()
         else if (
-            typeof this.options.date === 'string' &&
-            `${parseFloat(this.options.date)}` === this.options.date
+            typeof this.options.dateTime === 'string' &&
+            `${parseFloat(this.options.dateTime)}` === this.options.dateTime
         )
-            dateTime = parseFloat(this.options.date)
+            dateTime = parseFloat(this.options.dateTime)
         this.viewContainerReference.createEmbeddedView(
             this.templateReference, {
-                date: this.dateFormatter(dateTime, this.options.format)
+                dateTime: this.dateFormatter(dateTime, this.options.format)
             })
     }
     /**
