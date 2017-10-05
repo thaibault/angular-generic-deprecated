@@ -3985,7 +3985,7 @@ export class GenericSliderDirective {
         step: 1,
         freeze: false,
         slides: [],
-        updateIntervalInMilliseconds: 3000
+        updateIntervalInMilliseconds: 6000
     }
     templateReference:Object
     timerID:any
