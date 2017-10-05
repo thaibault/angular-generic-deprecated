@@ -1364,6 +1364,23 @@ export class TypePipe/* implements PipeTransform*/ {
     }
 }
 // / endregion
+// region array
+// IgnoreTypeCheck
+@Pipe({name: 'genericArrayDependentConcat'})
+/**
+ * TODO
+ */
+export class ArrayDependentConcatPipe/* immplements PipeTransform*/ {
+    /**
+     * TODO
+     */
+    transform(array:Array<any>, indicator:boolean, item:any):Array<any> {
+        if (indicator)
+            return array.concat(item)
+        return array
+    }
+}
+// endregion
 // region string
 // IgnoreTypeCheck
 @Pipe({name: 'genericStringEndsWith'})
@@ -3947,6 +3964,94 @@ export class GenericDateDirective {
             }
         }, this.options.updateIntervalInMilliseconds)
         this.insert()
+    }
+}
+// IgnoreTypeCheck
+@Directive({selector: '[genericSlider]'})
+/**
+ * TODO
+ */
+export class GenericSliderDirective {
+    extendObject:Function
+    index:number = 0
+    options:{
+        startIndex:number;
+        step:number;
+        freeze:boolean;
+        slides:Array<any>;
+        updateIntervalInMilliseconds:number;
+    } = {
+        startIndex: 0,
+        step: 1,
+        freeze: false,
+        slides: [],
+        updateIntervalInMilliseconds: 3000
+    }
+    templateReference:Object
+    timerID:any
+    viewContainerReference:Object
+    /**
+     * Saves injected services as instance properties.
+     * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param templateReference - Specified template reference.
+     * @param viewContainerReference - Injected view container reference.
+     * @returns Nothing.
+     */
+    constructor(
+        extendObjectPipe:ExtendObjectPipe,
+        templateReference:TemplateRef<any>,
+        viewContainerReference:ViewContainerRef
+    ):void {
+        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.templateReference = templateReference
+        this.viewContainerReference = viewContainerReference
+    }
+    @Input('genericSlider')
+    /**
+     * Options setter to merge into options interactively.
+     * @param options - Options object to merge into.
+     * @returns Nothing.
+     */
+    set insertOptions(options:Array<any>|PlainObject = {}):void {
+        if (Array.isArray(options))
+            options = {slides: options}
+        this.extendObject(true, this.options, options)
+    }
+    /**
+     * Inserts a rendered template instance into current view.
+     * @returns Nothing.
+     */
+    update():void {
+        if (this.options.slides.length)
+            this.viewContainerReference.createEmbeddedView(
+                this.templateReference, {
+                    slide: this.options.slides[this.index]
+                })
+    }
+    /**
+     * On destroy life cycle hook to cancel initialized interval timer.
+     * @returns Nothing.
+     */
+    ngOnDestroy():void {
+        if (this.timerID)
+            clearInterval(this.timerID)
+    }
+    /**
+     * Initializes interval timer and inserts initial template instance into
+     * current view.
+     * @returns Nothing.
+     */
+    ngOnInit():void {
+        this.timerID = setInterval(():void => {
+            if (!this.options.freeze) {
+                this.viewContainerReference.remove()
+                this.index = (this.index + this.options.step) %
+                    this.options.slides.length
+                this.update()
+            }
+        }, this.options.updateIntervalInMilliseconds)
+        this.index = this.options.startIndex
+        this.update()
     }
 }
 // IgnoreTypeCheck
