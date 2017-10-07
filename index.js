@@ -4043,7 +4043,9 @@ export class GenericSliderDirective {
      */
     ngOnInit():void {
         this.timerID = setInterval(():void => {
-            if (!this.options.freeze) {
+            const newIndex:number = (this.index + this.options.step) %
+                this.options.slides.length
+            if (!this.options.freeze && newIndex !== this.index) {
                 this.viewContainerReference.remove()
                 this.index = (this.index + this.options.step) %
                     this.options.slides.length
