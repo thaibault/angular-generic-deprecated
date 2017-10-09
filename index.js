@@ -67,19 +67,19 @@ import {
 } from '@angular/forms'
 import {
     // IgnoreTypeCheck
-    MdButtonModule,
-    MdCardModule,
+    MatButtonModule,
+    MatCardModule,
     /* eslint-disable no-unused-vars */
-    MD_DIALOG_DATA,
+    MAT_DIALOG_DATA,
     /* eslint-enable no-unused-vars */
-    MdDialog,
-    MdDialogRef,
-    MdDialogModule,
-    MdInputModule,
-    MdSelectModule,
-    MdSnackBar,
-    MdSnackBarConfig,
-    MdTooltipModule
+    MatDialog,
+    MatDialogRef,
+    MatDialogModule,
+    MatInputModule,
+    MatSelectModule,
+    MatSnackBar,
+    MatSnackBarConfig,
+    MatTooltipModule
 } from '@angular/material'
 import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {
@@ -1736,18 +1736,18 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
     changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-confirm',
     template: `
-        <h2 @defaultAnimation md-dialog-title *ngIf="title">{{title}}</h2>
-        <md-dialog-content @defaultAnimation *ngIf="message">
+        <h2 @defaultAnimation mat-dialog-title *ngIf="title">{{title}}</h2>
+        <mat-dialog-content @defaultAnimation *ngIf="message">
             {{message}}
-        </md-dialog-content>
-        <md-dialog-actions>
-            <button (click)="dialogReference.close(true)" md-raised-button>
+        </mat-dialog-content>
+        <mat-dialog-actions>
+            <button (click)="dialogReference.close(true)" mat-raised-button>
                 {{okText}}
             </button>
-            <button (click)="dialogReference.close(false)" md-raised-button>
+            <button (click)="dialogReference.close(false)" mat-raised-button>
                 {{cancelText}}
             </button>
-        </md-dialog-actions>
+        </mat-dialog-actions>
     `
 })
 /**
@@ -1758,7 +1758,7 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
  */
 export class ConfirmComponent {
     @Input() cancelText:string = 'Cancel'
-    dialogReference:?MdDialogRef<ConfirmComponent> = null
+    dialogReference:?MatDialogRef<ConfirmComponent> = null
     @Input() okText:string = 'OK'
     /**
      * Gets needed component data injected.
@@ -1771,8 +1771,8 @@ export class ConfirmComponent {
      */
     constructor(
         /* eslint-disable indent */
-        @Optional() @Inject(MD_DIALOG_DATA) data:any,
-        @Optional() dialogReference:MdDialogRef<ConfirmComponent>
+        @Optional() @Inject(MAT_DIALOG_DATA) data:any,
+        @Optional() dialogReference:MatDialogRef<ConfirmComponent>
         /* eslint-enable indent */
     ):void {
         this.dialogReference = dialogReference
@@ -1790,14 +1790,14 @@ export class ConfirmComponent {
  * @property dialogReference - Reference to the dialog service instance.
  */
 export class AlertService {
-    dialog:MdDialog
-    dialogReference:MdDialogRef<any>
+    dialog:MatDialog
+    dialogReference:MatDialogRef<any>
     /**
      * Gets needed component dialog service instance injected.
      * @param dialog - Reference to the dialog component instance.
      * @returns Nothing.
      */
-    constructor(dialog:MdDialog):void {
+    constructor(dialog:MatDialog):void {
         this.dialog = dialog
     }
     /**
@@ -2950,7 +2950,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     escapeRegularExpressions:Function
     extendObject:Function
     message:Function
-    messageConfiguration:PlainObject = new MdSnackBarConfig()
+    messageConfiguration:PlainObject = new MatSnackBarConfig()
     modelConfiguration:PlainObject
     relevantKeys:?Array<string> = null
     relevantSearchKeys:?Array<string> = null
@@ -2983,7 +2983,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
             ExtendObjectPipe))
         this.messageConfiguration.duration = 5 * 1000
         this.message = (message:string):void =>
-            get(MdSnackBar).open(message, false, this.messageConfiguration)
+            get(MatSnackBar).open(message, false, this.messageConfiguration)
         this.modelConfiguration = get(
             InitialDataService
         ).configuration.database.model
@@ -4754,7 +4754,7 @@ const propertyContent:PlainObject = {
     `
 }
 const inputContent:string = `
-    <md-hint align="start" @defaultAnimation mdTooltip="info">
+    <mat-hint align="start" @defaultAnimation matTooltip="info">
         <span
             [class.active]="showDeclaration"
             (click)="showDeclaration = !showDeclaration"
@@ -4784,7 +4784,7 @@ const inputContent:string = `
                 href=""
             >plain</a>
         </span>
-    </md-hint>
+    </mat-hint>
     <span generic-error *ngIf="showValidationErrorMessages">
         <p @defaultAnimation *ngIf="model.state?.errors?.maxlength">
             {{maximumLengthText | genericStringTemplate:model}}
@@ -4805,11 +4805,11 @@ const inputContent:string = `
             {{requiredText | genericStringTemplate:model}}
         </p>
     </span>
-    <md-hint
+    <mat-hint
         align="end"
         @defaultAnimation
         *ngIf="!model.selection && model.type === 'string' && model.maximumLength !== null && model.maximumLength < 100"
-    >{{model.value?.length}} / {{model.maximumLength}}</md-hint>
+    >{{model.value?.length}} / {{model.maximumLength}}</mat-hint>
 `
 /* eslint-enable max-len */
 // IgnoreTypeCheck
@@ -4874,28 +4874,28 @@ export class InputComponent extends AbstractInputComponent {
         <ng-container
             @defaultAnimation *ngIf="model.selection; else textInput"
         >
-            <md-select [(ngModel)]="model.value" ${propertyContent.nativ}>
-                <md-option
+            <mat-select [(ngModel)]="model.value" ${propertyContent.nativ}>
+                <mat-option
                     *ngFor="let value of model.selection" [value]="value"
                 >
                     {{labels.hasOwnProperty(value) ? labels[value] : value}}
-                </md-option>
-            </md-select>
+                </mat-option>
+            </mat-select>
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
-        <ng-template #textInput><md-form-field>
+        <ng-template #textInput><mat-form-field>
             <input
                 ${propertyContent.nativ}
                 ${propertyContent.nativText}
                 [max]="maximum === null ? (model.type === 'number' ? model.maximum : null) : maximum"
-                mdInput
+                matInput
                 [min]="minimum === null ? (model.type === 'number' ? model.minimum : null) : minimum"
                 [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
             />
             ${inputContent}
             <ng-content></ng-content>
-        </md-form-field></ng-template>
+        </mat-form-field></ng-template>
     `
 })
 /* eslint-enable max-len */
@@ -4947,19 +4947,19 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
-        <ng-template #plain><md-form-field @defaultAnimation>
+        <ng-template #plain><mat-form-field @defaultAnimation>
             <textarea
                 ${propertyContent.nativ}
                 ${propertyContent.nativText}
-                [mdAutosizeMaxRows]="maximumNumberOfRows"
-                [mdAutosizeMinRows]="minimumNumberOfRows"
-                mdInput
-                mdTextareaAutosize
+                [matAutosizeMaxRows]="maximumNumberOfRows"
+                [matAutosizeMinRows]="minimumNumberOfRows"
+                matInput
+                matTextareaAutosize
                 [rows]="rows"
             ></textarea>
             ${inputContent}
             <ng-content></ng-content>
-        </md-form-field></ng-template>
+        </mat-form-field></ng-template>
     `
 })
 /* eslint-enable max-len */
@@ -5091,12 +5091,12 @@ export class TextareaComponent extends AbstractNativeInputComponent
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-file-input',
     template: `
-        <md-card>
-            <md-card-header
+        <mat-card>
+            <mat-card-header
                 @defaultAnimation
                 *ngIf="headerText !== '' && (headerText || file?.name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description || name)"
             >
-                <md-card-title>
+                <mat-card-title>
                     <span
                         @defaultAnimation
                         *ngIf="!editableName || revision || headerText || !file?.name; else editable"
@@ -5112,20 +5112,20 @@ export class TextareaComponent extends AbstractNativeInputComponent
                     </span>
                     <ng-template #editable>
                         <ng-container *ngIf="synchronizeImmediately; else parent">
-                            <md-form-field
+                            <mat-form-field
                                 [class.dirty]="editedName && editedName !== file.name"
-                                mdTooltip="Focus to edit."
+                                matTooltip="Focus to edit."
                             >
                                 <input
-                                    mdInput
+                                    matInput
                                     [ngModel]="editedName || file.name"
                                     (ngModelChange)="editedName = $event"
                                 />
-                                <md-hint
+                                <mat-hint
                                     [class.active]="showDeclaration"
                                     (click)="showDeclaration = !showDeclaration"
                                     @defaultAnimation
-                                    mdTooltip="info"
+                                    matTooltip="info"
                                     *ngIf="model[attachmentTypeName][internalName]?.declaration"
                                 >
                                     <a
@@ -5144,8 +5144,8 @@ export class TextareaComponent extends AbstractNativeInputComponent
                                             ].declaration
                                         }}
                                     </span>
-                                </md-hint>
-                            </md-form-field>
+                                </mat-hint>
+                            </mat-form-field>
                             <ng-container
                                 *ngIf="editedName && editedName !== file.name"
                             >
@@ -5161,21 +5161,21 @@ export class TextareaComponent extends AbstractNativeInputComponent
                                 >{{resetNameText}}</a>
                             </ng-container>
                         </ng-container>
-                        <ng-template #parent><md-form-field
+                        <ng-template #parent><mat-form-field
                             [class.dirty]="file.initialName !== file.name"
                             @defaultAnimation
-                            mdTooltip="Focus to edit."
+                            matTooltip="Focus to edit."
                             *ngIf="!synchronizeImmediately"
                         >
                             <input
-                                mdInput [ngModel]="file.name"
+                                matInput [ngModel]="file.name"
                                 (ngModelChange)="file.name = $event;modelChange.emit(this.model); fileChange.emit(file)"
                             />
-                            <md-hint
+                            <mat-hint
                                 [class.active]="showDeclaration"
                                 (click)="showDeclaration = !showDeclaration"
                                 @defaultAnimation
-                                mdTooltip="info"
+                                matTooltip="info"
                                 *ngIf="model[attachmentTypeName][internalName]?.declaration"
                             >
                                 <a
@@ -5194,12 +5194,12 @@ export class TextareaComponent extends AbstractNativeInputComponent
                                         ].declaration
                                     }}
                                 </span>
-                            </md-hint>
-                        </md-form-field></ng-template>
+                            </mat-hint>
+                        </mat-form-field></ng-template>
                     </ng-template>
-                </md-card-title>
-            </md-card-header>
-            <img md-card-image
+                </mat-card-title>
+            </mat-card-header>
+            <img mat-card-image
                 [attr.alt]="name"
                 [attr.src]="file.source"
                 @defaultAnimation
@@ -5208,7 +5208,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
             <video
                 autoplay
                 @defaultAnimation
-                md-card-image
+                mat-card-image
                 muted
                 *ngIf="file?.type === 'video' && file?.source"
                 loop
@@ -5224,10 +5224,10 @@ export class TextareaComponent extends AbstractNativeInputComponent
             ></iframe>
             <div
                 @defaultAnimation
-                md-card-image
+                mat-card-image
                 *ngIf="(!file?.type && (file?.source || (file?.source | genericType) === 'string') ? noPreviewText : noFileText) as text"
             ><p>{{text}}</p></div>
-            <md-card-content>
+            <mat-card-content>
                 <ng-content></ng-content>
                 <div
                     @defaultAnimation
@@ -5310,29 +5310,29 @@ export class TextareaComponent extends AbstractNativeInputComponent
                         }}
                     </p>
                 </div>
-            </md-card-content>
-            <md-card-actions>
+            </mat-card-content>
+            <mat-card-actions>
                 <input #input style="display: none" type="file" />
                 <button
                     @defaultAnimation
                     (click)="input.click()"
-                    md-raised-button
+                    mat-raised-button
                     *ngIf="newButtonText"
                 >{{newButtonText}}</button>
                 <button
                     (click)="remove()"
                     @defaultAnimation
-                    md-raised-button
+                    mat-raised-button
                     *ngIf="deleteButtonText && file"
                 >{{deleteButtonText}}</button>
-                <button md-raised-button
+                <button mat-raised-button
                     @defaultAnimation
                     *ngIf="downloadButtonText && file"
                 ><a [download]="file.name" [href]="file.source">
                     {{downloadButtonText}}
                 </a></button>
-            </md-card-actions>
-        </md-card>
+            </mat-card-actions>
+        </mat-card>
     `
 })
 /* eslint-enable max-len */
@@ -6067,12 +6067,12 @@ export const determineProviders:Function = (module:Object):Array<Object> =>
     imports: [
         BrowserModule.withServerTransition({appId: 'generic-universal'}),
         FormsModule,
-        MdButtonModule,
-        MdCardModule,
-        MdDialogModule,
-        MdInputModule,
-        MdSelectModule,
-        MdTooltipModule,
+        MatButtonModule,
+        MatCardModule,
+        MatDialogModule,
+        MatInputModule,
+        MatSelectModule,
+        MatTooltipModule,
         TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
     ],
     providers: determineProviders(module).concat(
