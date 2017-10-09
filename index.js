@@ -3901,7 +3901,7 @@ export class GenericDateDirective {
     constructor(
         datePipe:DatePipe,
         extendObjectPipe:ExtendObjectPipe,
-        templateReference:TemplateRef<any>,
+        templateReference:TemplateRef,
         viewContainerReference:ViewContainerRef
     ):void {
         this.dateFormatter = datePipe.transform.bind(datePipe)
@@ -3999,7 +3999,7 @@ export class GenericSliderDirective {
      */
     constructor(
         extendObjectPipe:ExtendObjectPipe,
-        templateReference:TemplateRef<any>,
+        templateReference:TemplateRef,
         viewContainerReference:ViewContainerRef
     ):void {
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
