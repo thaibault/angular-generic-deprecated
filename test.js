@@ -97,14 +97,13 @@ registerAngularTest(function(
     const Module:Object = index.default
     // endregion
     // region extend abstract components
-    // IgnoreTypeCheck
+    /**
+     * Mockup component to test their abstract ancestor.
+     */
     @Component({
         selector: 'items',
         template: '<div></div>'
     })
-    /**
-     * Mockup component to test their abstract ancestor.
-     */
     class ItemsComponent extends AbstractItemsComponent {
         /**
          * Sets route test parameter.
@@ -124,7 +123,14 @@ registerAngularTest(function(
     }
     // endregion
     // region host components for simulating on push change detection strategy
-    // IgnoreTypeCheck
+    /**
+     * Mock host component to test pagination on push change detection.
+     * @property instance - Reference to hosted component instance.
+     * @property itemsPerPage - Forwarded.
+     * @property page - Forwarded.
+     * @property pageRangeLimit - Forwarded.
+     * @property total - Forwarded.
+     */
     @Component({
         template: `
             <generic-pagination
@@ -135,14 +141,6 @@ registerAngularTest(function(
             ></generic-pagination>
         `
     })
-    /**
-     * Mock host component to test pagination on push change detection.
-     * @property instance - Reference to hosted component instance.
-     * @property itemsPerPage - Forwarded.
-     * @property page - Forwarded.
-     * @property pageRangeLimit - Forwarded.
-     * @property total - Forwarded.
-     */
     class PaginationHostComponent {
         @ViewChild(PaginationComponent) instance:PaginationComponent
         itemsPerPage:number = 10
@@ -192,18 +190,17 @@ registerAngularTest(function(
             }}
             const self:Object = this
             const moduleImports:Array<Object> = [Module, NoopAnimationsModule]
-            // IgnoreTypeCheck
-            @NgModule({
-                bootstrap: [ApplicationComponent],
-                declarations: [ApplicationComponent, ItemsComponent],
-                imports: moduleImports
-            })
             // endregion
             // region test services
             /**
              * Dummy module to inject services to test and test if
              * bootstrapping works.
              */
+            @NgModule({
+                bootstrap: [ApplicationComponent],
+                declarations: [ApplicationComponent, ItemsComponent],
+                imports: moduleImports
+            })
             class TestModule {
                 /**
                  * Dummy constructor to inject needed service instances and

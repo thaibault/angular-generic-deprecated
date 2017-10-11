@@ -1368,11 +1368,15 @@ export class TypePipe/* implements PipeTransform*/ {
 // IgnoreTypeCheck
 @Pipe({name: 'genericArrayDependentConcat'})
 /**
- * TODO
+ * Dependently concatenate given data to piped data.
  */
 export class ArrayDependentConcatPipe/* immplements PipeTransform*/ {
     /**
-     * TODO
+     * Does the given array transformation logic.
+     * @param array - Array to transform.
+     * @param indicator - Indicator to decide if concatenation should be done.
+     * @param item - Object(s) to concatenate.
+     * @returns Transformed given array.
      */
     transform(array:Array<any>, indicator:boolean, item:any):Array<any> {
         if (indicator)
@@ -3909,12 +3913,12 @@ export class GenericDateDirective {
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
     }
-    @Input('genericDate')
     /**
      * Options setter to merge into options interactively.
      * @param options - Options object to merge into.
      * @returns Nothing.
      */
+    @Input('genericDate')
     set insertOptions(options:PlainObject = {}):void {
         if (
             ['string', 'number'].includes(typeof options) ||
@@ -4006,12 +4010,12 @@ export class GenericSliderDirective {
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
     }
-    @Input('genericSlider')
     /**
      * Options setter to merge into options interactively.
      * @param options - Options object to merge into.
      * @returns Nothing.
      */
+    @Input('genericSlider')
     set insertOptions(options:Array<any>|PlainObject = {}):void {
         if (Array.isArray(options))
             options = {slides: options}

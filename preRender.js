@@ -197,15 +197,14 @@ export default function(
         // endregion
         console.info(`Found ${urls.length} pre-renderable urls.`)
         // region create server pre-renderable module
-        // IgnoreTypeCheck
+        /**
+         * Dummy server compatible root application module to pre-render.
+         */
         @NgModule({
             bootstrap: [ApplicationComponent],
             imports: [ApplicationModule, ServerModule],
             providers: [{provide: APP_BASE_HREF, useValue: basePath}]
         })
-        /**
-         * Dummy server compatible root application module to pre-render.
-         */
         class ApplicationServerModule {}
         // endregion
         enableProdMode()
