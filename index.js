@@ -1775,6 +1775,7 @@ export class ConfirmComponent {
      */
     constructor(
         /* eslint-disable indent */
+        // IgnoreTypeCheck
         @Optional() @Inject(MAT_DIALOG_DATA) data:any,
         @Optional() dialogReference:MatDialogRef<ConfirmComponent>
         /* eslint-enable indent */
@@ -4875,10 +4876,10 @@ export class InputComponent extends AbstractInputComponent {
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-simple-input',
     template: `
-        <mat-form-field>
-            <ng-container
-                @defaultAnimation *ngIf="model.selection; else textInput"
-            >
+        <ng-container
+            @defaultAnimation *ngIf="model.selection; else textInput"
+        >
+            <mat-form-field>
                 <mat-select [(ngModel)]="model.value" ${propertyContent.nativ}>
                     <mat-option
                         *ngFor="let value of model.selection" [value]="value"
@@ -4886,22 +4887,22 @@ export class InputComponent extends AbstractInputComponent {
                         {{labels.hasOwnProperty(value) ? labels[value] : value}}
                     </mat-option>
                 </mat-select>
-                ${inputContent}
-                <ng-content></ng-content>
-            </ng-container>
-            <ng-template #textInput>
-                <input
-                    ${propertyContent.nativ}
-                    ${propertyContent.nativText}
-                    [max]="maximum === null ? (model.type === 'number' ? model.maximum : null) : maximum"
-                    matInput
-                    [min]="minimum === null ? (model.type === 'number' ? model.minimum : null) : minimum"
-                    [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
-                />
-                ${inputContent}
-                <ng-content></ng-content>
-            </ng-template>
-        </mat-form-field>
+            </mat-form-field>
+            ${inputContent}
+            <ng-content></ng-content>
+        </ng-container>
+        <ng-template #textInput><mat-form-field>
+            <input
+                ${propertyContent.nativ}
+                ${propertyContent.nativText}
+                [max]="maximum === null ? (model.type === 'number' ? model.maximum : null) : maximum"
+                matInput
+                [min]="minimum === null ? (model.type === 'number' ? model.minimum : null) : minimum"
+                [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+            />
+            ${inputContent}
+            <ng-content></ng-content>
+        </mat-form-field></ng-template>
     `
 })
 /* eslint-enable max-len */
