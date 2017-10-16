@@ -4012,6 +4012,16 @@ export class GenericSliderDirective {
         this.viewContainerReference = viewContainerReference
     }
     /**
+     * Calculates next index from given reference point.
+     * @param startIndex - Reference index.
+     * @returns New calculated index.
+     */
+    getNextIndex(startIndex:number = -1):number {
+        if (startIndex === -1)
+            startIndex = this.index
+        return (startIndex + this.options.step) % this.options.slides.length
+    }
+    /**
      * Options setter to merge into options interactively.
      * @param options - Options object to merge into.
      * @returns Nothing.
@@ -4030,6 +4040,8 @@ export class GenericSliderDirective {
         if (this.options.slides.length)
             this.viewContainerReference.createEmbeddedView(
                 this.templateReference, {
+                    getNextIndex: this.getNextIndex.bind(this),
+                    index: this.index,
                     options: this.options,
                     slide: this.options.slides[this.index],
                     slides: this.options.slides
@@ -4054,8 +4066,7 @@ export class GenericSliderDirective {
                 this.options.slides.length
             if (!this.options.freeze && newIndex !== this.index) {
                 this.viewContainerReference.remove()
-                this.index = (this.index + this.options.step) %
-                    this.options.slides.length
+                this.index = this.getNextIndex()
                 this.update()
             }
         }, this.options.updateIntervalInMilliseconds)
