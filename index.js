@@ -4030,7 +4030,9 @@ export class GenericSliderDirective {
         if (this.options.slides.length)
             this.viewContainerReference.createEmbeddedView(
                 this.templateReference, {
-                    slide: this.options.slides[this.index]
+                    options: this.options,
+                    slide: this.options.slides[this.index],
+                    slides: this.options.slides
                 })
     }
     /**
