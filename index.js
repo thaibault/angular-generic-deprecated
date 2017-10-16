@@ -4064,7 +4064,13 @@ export class GenericSliderDirective {
         this.timerID = setInterval(():void => {
             const newIndex:number = (this.index + this.options.step) %
                 this.options.slides.length
-            if (!this.options.freeze && newIndex !== this.index) {
+            if (
+                this.options.freeze !== true &&
+                newIndex !== this.index && !(
+                    typeof this.options.freeze === 'number' &&
+                    this.options.freeze >= this.options.slides.length
+                )
+            ) {
                 this.viewContainerReference.remove()
                 this.index = this.getNextIndex()
                 this.update()
