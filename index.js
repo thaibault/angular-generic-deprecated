@@ -3980,15 +3980,15 @@ export class GenericSliderDirective {
     extendObject:Function
     index:number = 0
     options:{
+        freeze:boolean;
         startIndex:number;
         step:number;
-        freeze:boolean;
         slides:Array<any>;
         updateIntervalInMilliseconds:number;
     } = {
+        freeze: false,
         startIndex: 0,
         step: 1,
-        freeze: false,
         slides: [],
         updateIntervalInMilliseconds: 6000
     }
