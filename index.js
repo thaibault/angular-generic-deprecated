@@ -3414,7 +3414,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      * @returns Nothing.
      */
     ngOnInit():void {
-        const initialize:Function = ():void => {
+        const initialize:Function = this._tools.debounce(():void => {
             this._changesStream = this._data.connection.changes(
                 this._extendObject(
                     true, {}, {since: LAST_KNOWN_DATA.sequence},
@@ -3430,8 +3430,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
                         if ('seq' in action && typeof action.seq === 'number')
                             LAST_KNOWN_DATA.sequence = action.seq
                         LAST_KNOWN_DATA.data[action.id] = action.doc
-                    } else if (type === 'error' && this.autoRestartOnError)
-                        initialize()
+                    }
                     action.name = type
                     this.actions.unshift(action)
                     // IgnoreTypeCheck
@@ -3445,8 +3444,12 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
                         result = await result
                     if (result)
                         this._changeDetectorReference.detectChanges()
+                    if (type === 'error' && this.autoRestartOnError) {
+                        console.log('EE')
+                        initialize()
+                    }
                 })
-        }
+        }, 3000)
         /*
             NOTE: We have to break out of the "zone.js" since long polling
             themes to confuse its mocked environment.
