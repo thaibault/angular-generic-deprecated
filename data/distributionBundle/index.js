@@ -1796,7 +1796,7 @@ export class ConfirmComponent {
  */
 export class AlertService {
     dialog:MatDialog
-    dialogReference:MatDialogRef<any>
+    dialogReference:MatDialogRef
     /**
      * Gets needed component dialog service instance injected.
      * @param dialog - Reference to the dialog component instance.
