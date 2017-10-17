@@ -3942,7 +3942,7 @@ export class GenericDateDirective {
             typeof dateTime === 'string' &&
             `${parseFloat(dateTime)}` === dateTime
         )
-            dateTime = parseFloat(dateTime)
+            dateTime = parseFloat(dateTime) * 1000
         this.viewContainerReference.createEmbeddedView(
             this.templateReference, {
                 dateTime: this.dateFormatter(dateTime, this.options.format)
