@@ -34,7 +34,7 @@
     "build:test": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types --presets modern-browsers,es2017,stage-0 --source-maps inline --out-file testRunner.compiled.js testRunner.js",
     "clear": "webOptimizer clear",
     "document": "webOptimizer document",
-    "export": "webOptimizer build '{development:{tool:false},module:{preprocessor:{javaScript:{options:{plugins:{__remove__:\"transform-runtime\"}}}}}}' && npm run build:test",
+    "export": "webOptimizer build '{development:{tool:false},module:{preprocessor:{javaScript:{options:{plugins:{__remove__:\"transform-runtime\"}}}}}}' && npm run build:pre-render && npm run build:test",
     "lint": "webOptimizer check:type; webOptimizer lint",
     "prepare": "npm run build",
     "serve": "webOptimizer serve",
