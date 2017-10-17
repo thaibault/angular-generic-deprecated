@@ -95,7 +95,7 @@
     "babel-plugin-angular2-annotations": "^5.1.0",
     "babel-plugin-transform-decorators-legacy": "^1.3.4",
     "babel-polyfill": "^6.26.0",
-    "documentation-website": "^1.0.69",
+    "documentation-website": "^1.0.70",
     "eslint": "^4.9.0",
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.36.0",
