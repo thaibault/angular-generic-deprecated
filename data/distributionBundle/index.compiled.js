@@ -1,907 +1,563 @@
 'use strict';
-(function webpackUniversalModuleDefinition(root, factory) {
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("@angular/core"), require("@angular/router"), require("@angular/forms"), require("@angular/material"), require("@angular/platform-browser"), require("clientnode"), require("pouchdb-find/dist/pouchdb.find.min.js"), require("pouchdb-validation"), require("pouchdb/dist/pouchdb.min.js"), require("rxjs"), require("rxjs/Observable"));
-	else if(typeof define === 'function' && define.amd)
-		define("index", ["@angular/core", "@angular/router", "@angular/forms", "@angular/material", "@angular/platform-browser", "clientnode", "pouchdb-find/dist/pouchdb.find.min.js", "pouchdb-validation", "pouchdb/dist/pouchdb.min.js", "rxjs", "rxjs/Observable"], factory);
-	else if(typeof exports === 'object')
-		exports["index"] = factory(require("@angular/core"), require("@angular/router"), require("@angular/forms"), require("@angular/material"), require("@angular/platform-browser"), require("clientnode"), require("pouchdb-find/dist/pouchdb.find.min.js"), require("pouchdb-validation"), require("pouchdb/dist/pouchdb.min.js"), require("rxjs"), require("rxjs/Observable"));
-	else
-		root["index"] = factory(root["@angular/core"], root["@angular/router"], root["@angular/forms"], root["@angular/material"], root["@angular/platform-browser"], root["clientnode"], root["pouchdb-find/dist/pouchdb.find.min.js"], root["pouchdb-validation"], root["pouchdb/dist/pouchdb.min.js"], root["rxjs"], root["rxjs/Observable"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_1__, __WEBPACK_EXTERNAL_MODULE_5__, __WEBPACK_EXTERNAL_MODULE_6__, __WEBPACK_EXTERNAL_MODULE_7__, __WEBPACK_EXTERNAL_MODULE_8__, __WEBPACK_EXTERNAL_MODULE_9__, __WEBPACK_EXTERNAL_MODULE_10__, __WEBPACK_EXTERNAL_MODULE_11__, __WEBPACK_EXTERNAL_MODULE_12__, __WEBPACK_EXTERNAL_MODULE_14__) {
-return /******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
+(function(e,t){'object'==typeof exports&&'object'==typeof module?module.exports=t(require('@angular/core'),require('@angular/router'),require('rxjs'),require('angular-tinymce/bundles/angular-tinymce.umd.min.js'),require('blob-util/dist/blob-util.min.js'),require('clientnode'),require('@angular/animations'),require('@angular/common'),require('@angular/forms'),require('@angular/material'),require('@angular/platform-browser'),require('pouchdb/dist/pouchdb.min.js'),require('pouchdb-find'),require('pouchdb-validation'),require('rxjs/Observable'),require('rxjs/Subscription')):'function'==typeof define&&define.amd?define('index',['@angular/core','@angular/router','rxjs','angular-tinymce/bundles/angular-tinymce.umd.min.js','blob-util/dist/blob-util.min.js','clientnode','@angular/animations','@angular/common','@angular/forms','@angular/material','@angular/platform-browser','pouchdb/dist/pouchdb.min.js','pouchdb-find','pouchdb-validation','rxjs/Observable','rxjs/Subscription'],t):'object'==typeof exports?exports.index=t(require('@angular/core'),require('@angular/router'),require('rxjs'),require('angular-tinymce/bundles/angular-tinymce.umd.min.js'),require('blob-util/dist/blob-util.min.js'),require('clientnode'),require('@angular/animations'),require('@angular/common'),require('@angular/forms'),require('@angular/material'),require('@angular/platform-browser'),require('pouchdb/dist/pouchdb.min.js'),require('pouchdb-find'),require('pouchdb-validation'),require('rxjs/Observable'),require('rxjs/Subscription')):e.index=t(e['@angular/core'],e['@angular/router'],e.rxjs,e['angular-tinymce/bundles/angular-tinymce.umd.min.js'],e['blob-util/dist/blob-util.min.js'],e.clientnode,e['@angular/animations'],e['@angular/common'],e['@angular/forms'],e['@angular/material'],e['@angular/platform-browser'],e['pouchdb/dist/pouchdb.min.js'],e['pouchdb-find'],e['pouchdb-validation'],e['rxjs/Observable'],e['rxjs/Subscription'])})(this,function(e,t,a,n,i,r,o,s,m,l,d,p,c,u,f,g){return function(e){function t(n){if(a[n])return a[n].exports;var i=a[n]={i:n,l:!1,exports:{}};return e[n].call(i.exports,i,i.exports,t),i.l=!0,i.exports}var a={};return t.m=e,t.c=a,t.d=function(e,a,n){t.o(e,a)||Object.defineProperty(e,a,{configurable:!1,enumerable:!0,get:n})},t.n=function(e){var a=e&&e.__esModule?function(){return e['default']}:function(){return e};return t.d(a,'a',a),a},t.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},t.p='',t(t.s=3)}([function(t){t.exports=e},function(e){e.exports=t},function(e){e.exports=a},function(e,t,a){e.exports=a(4)},function(e,t,a){'use strict';(function(e){function n(e){return e&&e.__esModule?e:{default:e}}function i(e,t,a,n){a&&Object.defineProperty(e,t,{enumerable:a.enumerable,configurable:a.configurable,writable:a.writable,value:a.initializer?a.initializer.call(n):void 0})}function r(e,t,a,n,i){var r={};return Object.keys(n).forEach(function(e){r[e]=n[e]}),r.enumerable=!!r.enumerable,r.configurable=!!r.configurable,('value'in r||r.initializer)&&(r.writable=!0),r=a.slice().reverse().reduce(function(a,n){return n(e,t,a)||a},r),i&&void 0!==r.initializer&&(r.value=r.initializer?r.initializer.call(i):void 0,r.initializer=void 0),void 0===r.initializer&&(Object.defineProperty(e,t,r),r=null),r}function o(e){return function(){var t=e.apply(this,arguments);return new Promise(function(e,a){function n(i,r){try{var o=t[i](r),s=o.value}catch(e){return void a(e)}return o.done?void e(s):Promise.resolve(s).then(function(e){n('next',e)},function(e){n('throw',e)})}return n('next')})}}function s(e={}){return'string'==typeof e&&(e={name:e}),e=go.default.extendObject({duration:'.3s',enterState:':enter',leaveState:':leave',name:'fadeAnimation'},e),(0,yo.trigger)(e.name,[(0,yo.transition)(e.enterState,[(0,yo.style)({opacity:0}),(0,yo.animate)(e.duration,(0,yo.style)({opacity:1}))]),(0,yo.transition)(e.leaveState,[(0,yo.style)({opacity:1}),(0,yo.animate)(e.duration,(0,yo.style)({opacity:0}))])])}var m=Math.min,l=Math.ceil,d=Math.max;t.__esModule=!0,t.default=t.determineProviders=t.determineDeclarations=t.determineExports=t.PaginationComponent=t.FileInputComponent=t.TextareaComponent=t.SimpleInputComponent=t.InputComponent=t.CodeEditorComponent=t.IntervalsInputComponent=t.IntervalInputComponent=t.DateTimeValueAccessor=t.GenericSliderDirective=t.GenericDateDirective=t.AbstractValueAccessor=t.AbstractItemsComponent=t.AbstractLiveDataComponent=t.AbstractNativeInputComponent=t.AbstractInputComponent=t.AbstractResolver=t.DataScopeService=t.DataService=t.AlertService=t.ConfirmComponent=t.CanDeactivateRouteLeaveGuard=t.defaultAnimation=t.NumberPercentPipe=t.StringTemplatePipe=t.StringStartsWithPipe=t.StringSliceMatchPipe=t.StringShowIfPatternMatchesPipe=t.StringSafeURLPipe=t.StringSafeStylePipe=t.StringSafeScriptPipe=t.StringSafeResourceURLPipe=t.StringSafeHTMLPipe=t.StringReplacePipe=t.StringMaximumLengthPipe=t.StringMatchPipe=t.StringHasTimeSuffixPipe=t.StringEndsWithPipe=t.ArrayDependentConcatPipe=t.TypePipe=t.ReversePipe=t.ObjectKeysPipe=t.MapPipe=t.LimitToPipe=t.IsDefinedPipe=t.ExtractRawDataPipe=t.ExtractDataPipe=t.AttachmentWithPrefixExistsPipe=t.GetFilenameByPrefixPipe=t.AttachmentsAreEqualPipe=t.determineInjector=t.InitialDataService=t.ToolsService=t.TINY_MCE_DEFAULT_OPTIONS=t.CODE_MIRROR_DEFAULT_OPTIONS=t.SYMBOL=t.currentInstanceToSearchInjectorFor=t.LAST_KNOWN_DATA=void 0;var p,c,u,f,g,y,b,h,x,v,N,T,P,I,_,O,S,C,w,D,E,z,j,R,M,A,k,L,q,F,U,W,G,B,V,$,H,K,Y,Z,J,Q,X,ee,te,ae,ne,ie,re,oe,se,me,le,de,pe,ce,ue,fe,ge,ye,be,he,xe,ve,Ne,Te,Pe,Ie,_e,Oe,Se,Ce,we,De,Ee,ze,je,Re,Me,Ae,ke,Le,qe,Fe,Ue,We,Ge,Be,Ve,$e,He,Ke,Ye,Ze,Je,Qe,Xe,et,tt,at,nt,it,rt,ot,st,mt,lt,dt,pt,ct,ut,ft,gt,yt,bt,ht,xt,vt,Nt,Tt,Pt,It,_t,Ot,St,Ct,wt,Dt,Et,zt,jt,Rt,Mt,At,kt,Lt,qt,Ft,Ut,Wt,Gt,Bt,Vt,$t,Ht,Kt,Yt,Zt,Jt,Qt,Xt,ea,ta,aa,na,ia,ra,oa,sa,ma,la,da,pa,ca,ua,fa,ga,ya,ba,ha,xa,va,Na,Ta,Pa,Ia,_a,Oa,Sa,Ca,wa,Da,Ea,za,ja,Ra,Ma,Aa,ka,La,qa,Fa,Ua,Wa,Ga,Ba,Va,$a,Ha,Ka,Ya,Za,Ja,Qa,Xa,en,tn,an,nn,rn,on,sn,mn,ln,dn,pn,cn,un,fn,gn,yn,bn,hn,xn,vn,Nn,Tn,Pn,In,_n,On,Sn,Cn,wn,Dn,En,zn,jn,Rn,Mn,An,kn,Ln,qn,Fn,Un,Wn,Gn,Bn,Vn,$n,Hn,Kn,Yn,Zn,Jn,Qn,Xn,ei,ti,ai,ni,ii,ri,oi,si,mi,li,di,pi,ci,ui,fi,gi,yi,bi,hi,xi,vi,Ni,Ti,Pi,Ii,_i,Oi,Si,Ci,wi,Di,Ei,zi,ji,Ri,Mi,Ai,ki,Li,qi,Fi,Ui,Wi,Gi,Bi,Vi,$i,Hi,Ki,Yi,Zi,Ji,Qi,Xi,er,tr,ar,nr,ir,rr,or,sr,mr,lr,dr,pr,cr,ur,fr,gr,yr,br,hr,xr,vr,Nr,Tr,Pr,Ir,_r,Or,Sr,Cr,wr,Dr,Er,zr,jr,Rr,Mr,Ar,kr,Lr,qr,Fr,Ur,Wr,Gr,Br,Vr,$r,Hr,Kr,Yr,Zr,Jr,Qr,Xr,eo,to,ao,no,io,ro,oo,so,mo,lo,po;t.fadeAnimation=s;var co=a(6),uo=a(7),fo=a(8),go=n(fo),yo=a(9),bo=a(0),ho=a(10),xo=a(11),vo=a(12),No=a(13),To=a(1),Po=a(14),Io=n(Po),_o=a(15),Oo=n(_o),So=a(16),Co=n(So),wo=a(2),Do=a(17),Eo=a(18);try{e.require('source-map-support/register')}catch(e){}if('undefined'==typeof zo)var zo='default';let jo=t.LAST_KNOWN_DATA={data:{},sequence:'now'},Ro=t.currentInstanceToSearchInjectorFor=null;const Mo=t.SYMBOL=`${new Date().getTime()}/${Math.random()}`,Ao=t.CODE_MIRROR_DEFAULT_OPTIONS={path:{cascadingStyleSheet:'lib/codemirror.css',base:'/codemirror/',mode:'mode/{mode}/{mode}.js',script:'lib/codemirror.js'},indentUnit:4,tabSize:4,indentWithTabs:!1,lineWrapping:!1,lineNumbers:!0,scrollbarStyle:'native'},ko='/tinymce/',Lo=t.TINY_MCE_DEFAULT_OPTIONS=go.default.extendObject(!0,co.tinymceDefaultSettings,{baseURL:ko,skin_url:`${ko}skins/lightgray`,theme_url:`${ko}themes/modern/theme.min.js`,tinymceScriptURL:`${ko}tinymce.min.js`,allow_conditional_comments:!1,allow_script_urls:!1,cache_suffix:`?version=${1508255143.41}`,convert_fonts_to_spans:!0,document_base_url:'/',element_format:'xhtml',entity_encoding:'raw',fix_list_elements:!0,forced_root_block:null,hidden_input:!1,invalid_elements:'em',invalid_styles:'color font-size line-height',keep_styles:!1,menubar:!1,plugins:'fullscreen link code hr nonbreaking searchreplace visualblocks',relative_urls:!1,remove_script_host:!1,remove_trailing_brs:!0,schema:'html5',toolbar1:'cut copy paste | undo redo removeformat | styleselect formatselect fontselect fontsizeselect | searchreplace visualblocks fullscreen code',toolbar2:'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',trim:!0});let qo=t.ToolsService=(p=(0,bo.Injectable)(),p(c=class{constructor(){this.$=fo.$,this.globalContext=fo.globalContext,this.tools=go.default}})||c),Fo=t.InitialDataService=(u=(0,bo.Injectable)(),u(f=(y=g=class{constructor(e){if(this.configuration=this.configuration,this.tools=this.tools,e||(e=new qo),this.tools=e.tools,this.set(this.constructor.defaultScope,e.globalContext.genericInitialData||{}),this.constructor.removeFoundData&&delete e.globalContext.genericInitialData,'document'in e.globalContext&&'querySelector'in e.globalContext.document){const t=e.globalContext.document.querySelector('application');t&&t.getAttribute('initialData')&&(this.set(JSON.parse(t.getAttribute('initialData'))),this.constructor.removeFoundData&&t.removeAttribute('initialData'))}}set(...e){return this.tools.extendObject(!0,this,...e)}},g.defaultScope={configuration:{database:{connector:{auto_compaction:!0,revs_limit:10},model:{entities:{},property:{defaultSpecification:{minimum:0,minimumLength:0,minimumNumber:0},name:{reserved:[],special:{allowedRole:'_allowedRoles',attachment:'_attachments',conflict:'_conflicts',constraint:{execution:'_constraintExecutions',expression:'_constraintExpressions'},deleted:'_deleted',deletedConflict:'_deleted_conflicts',extend:'_extends',id:'_id',localSequence:'_local_seq',maximumAggregatedSize:'_maximumAggregatedSize',minimumAggregatedSize:'_minimumAggregatedSize',revision:'_rev',revisions:'_revisions',revisionsInformation:'_revs_info',strategy:'_updateStrategy',type:'-type'},validatedDocumentsCache:'_validatedDocuments'}}},plugins:[],url:'generic'}}},g.injectors=new Set,g.removeFoundData=!0,y))||f);Reflect.defineMetadata('design:paramtypes',[qo],Fo);const Uo=t.determineInjector=function(e,a,n){if(e)return e.get.bind(e);if(void 0===Ro)throw Mo;t.currentInstanceToSearchInjectorFor=Ro=void 0;for(const i of Fo.injectors)try{if(i.get(n,NaN)===a)return i.get.bind(i)}catch(e){if(t.currentInstanceToSearchInjectorFor=Ro=null,e===Mo)return i.get.bind(i);throw e}if(t.currentInstanceToSearchInjectorFor=Ro=null,1===Fo.injectors.size){console.warn('Could not determine injector, but using the only registered one. This will fail an multiple application instances.');const e=Array.from(Fo.injectors)[0];return e.get.bind(e)}throw new Error('No unambiguously injector could be determined automatically.')},Wo=['array'],Go={"":['convertCircularObjectToJSON','equals','extendObject','representObject','sort'],array:'*',number:'*',string:'*'};for(const t in Go)if(Go.hasOwnProperty(t)){let a=[];if('*'===Go[t])for(const e of Object.getOwnPropertyNames(go.default))go.default.hasOwnProperty(e)&&go.default.hasOwnProperty(e)&&new RegExp(`^${t}[A-Z0-9]`).test(e)&&a.push(e);else a=Go[t];for(const n of a){const a=go.default.stringCapitalize(n);e.exports[`${a}Pipe`]=class{transform(...e){return bo.ReflectiveInjector.resolveAndCreate([qo]).get(qo).tools[n](...e)}},(0,bo.Pipe)({name:`generic${a}`})(e.exports[`${a}Pipe`]),Wo.includes(t)&&(e.exports[`${a}InvertedPipe`]=class{transform(...e){const t=bo.ReflectiveInjector.resolveAndCreate([qo]).get(qo).tools;return t.invertArrayFilter(t[n])(...e)}},(0,bo.Pipe)({name:`generic${a}Inverted`})(e.exports[`${a}InvertedPipe`]))}}const Bo=e.exports.ArrayMakeRangePipe,Vo=e.exports.EqualsPipe,$o=e.exports.ExtendObjectPipe,Ho=e.exports.NumberGetUTCTimestampPipe,Ko=e.exports.RepresentObjectPipe,Yo=e.exports.StringCapitalizePipe,Zo=e.exports.StringEscapeRegularExpressionsPipe,Jo=e.exports.StringFormatPipe,Qo=e.exports.StringMD5Pipe;let Xo=t.AttachmentsAreEqualPipe=(b=(0,bo.Pipe)({name:'genericAttachmentsAreEqual'}),b(h=class{constructor(e,t,a,n,i){this.data=this.data,this.ngZone=this.ngZone,this.representObject=this.representObject,this.specialNames=this.specialNames,this.stringMD5=this.stringMD5,this.data=t.get(Ds),this.ngZone=a,this.representObject=n.transform.bind(n),this.specialNames=e.configuration.database.model.property.name.special,this.stringMD5=i.transform.bind(i)}transform(e,t){var a=this;return o(function*(){if(e===t)return!0;const n={first:{given:e},second:{given:t}};for(const e of['first','second']){if('object'!=typeof n[e].given||null===n[e].given)return!1;n[e].content_type=n[e].given.type||n[e].given.content_type,n[e].data=('data'in n[e].given?n[e].given.data:n[e].given)||NaN,n[e].hash=n[e].given.digest||n[e].given.hash||NaN,n[e].size=n[e].given.size||n[e].given.length}for(const e of['content_type','size'])if(![n.first[e],n.second[e]].includes(void 0)&&n.first[e]!==n.second[e])return!1;if(n.first.data===n.second.data)return!0;for(const e of['first','second'])if(!n[e].hash){if(null===n[e].data||!['object','string'].includes(typeof n[e].data))return!1;const t='genericTemp',i=new a.data.database(t);try{yield i.put({[a.specialNames.id]:t,[a.specialNames.attachment]:{[t]:{data:n[e].data,content_type:'application/octet-stream'}}}),n[e].hash=(yield i.get(t))[a.specialNames.attachment][t].digest}catch(e){let t='unknown';try{t=a.representObject(e)}catch(e){}return console.warn('Given attachments for equality check are not '+`valid: ${t}`),!1}finally{yield i.destroy()}}return n.first.hash===n.second.hash})()}})||h);Reflect.defineMetadata('design:paramtypes',[Fo,bo.Injector,bo.NgZone,Ko,Qo],Xo);let es=t.GetFilenameByPrefixPipe=(x=(0,bo.Pipe)({name:'genericGetFilenameByPrefix'}),x(v=class{transform(e,t){if(t){for(const a in e)if(e.hasOwnProperty(a)&&a.startsWith(t))return a;}else{const t=Object.keys(e);if(t.length)return t[0]}return null}})||v),ts=t.AttachmentWithPrefixExistsPipe=(N=(0,bo.Pipe)({name:'genericAttachmentWithPrefixExists'}),N(T=class{constructor(e,t){this.attachmentName=this.attachmentName,this.getFilenameByPrefix=this.getFilenameByPrefix,this.attachmentName=t.configuration.database.model.property.name.special.attachment,this.getFilenameByPrefix=e.transform.bind(e)}transform(e,t){if(e.hasOwnProperty(this.attachmentName)){const a=this.getFilenameByPrefix(e[this.attachmentName],t);if(a)return e[this.attachmentName][a].hasOwnProperty('data')&&![void 0,null].includes(e[this.attachmentName][a].data)}return!1}})||T);Reflect.defineMetadata('design:paramtypes',[es,Fo],ts);let as=t.ExtractDataPipe=(P=(0,bo.Pipe)({name:'genericExtractData'}),P(I=class{constructor(e){this.modelConfiguration=this.modelConfiguration,this.modelConfiguration=e.configuration.database.model}transform(e){if(Array.isArray(e)){const t=[];for(const a of e)t.push(this.transform(a));return t}if('object'==typeof e&&null!==e){const t=this.modelConfiguration.property.name.special;return e.hasOwnProperty('value')?'object'==typeof e.value&&null!==e.value&&t.type in e.value&&this.modelConfiguration.entities.hasOwnProperty(e.value[t.type])?this._extractFromObject(e.value):this.transform(e.value):t.type in e&&this.modelConfiguration.entities.hasOwnProperty(e[t.type])?this._extractFromObject(e):e}return e}_extractFromObject(e){const t=this.modelConfiguration.property.name.special,a={};for(const n in e)e.hasOwnProperty(n)&&(!e.hasOwnProperty(t.type)||this.modelConfiguration.entities[e[t.type]].hasOwnProperty(n)||this.modelConfiguration.entities[e[t.type]].hasOwnProperty(t.additional))&&!['_metaData',t.additional,t.allowedRole,t.attachment,t.conflict,t.constraint.execution,t.constraint.expression,t.deletedConflict,t.extend,t.localSequence,t.maximumAggregatedSize,t.minimumAggregatedSize,t.revisions,t.revisionsInformations].includes(n)&&(a[n]=this.transform(e[n]));if(e.hasOwnProperty(t.attachment)&&e[t.attachment])for(const n in e[t.attachment])e[t.attachment].hasOwnProperty(n)&&'object'==typeof e[t.attachment][n]&&null!==e[t.attachment][n]&&'hasOwnProperty'in e[t.attachment]&&e[t.attachment][n].hasOwnProperty('value')&&e[t.attachment][n].value&&(a[t.attachment]||(a[t.attachment]={}),a[t.attachment][e[t.attachment][n].value.name]=e[t.attachment][n].value);return a}})||I);Reflect.defineMetadata('design:paramtypes',[Fo],as);let ns=t.ExtractRawDataPipe=(_=(0,bo.Pipe)({name:'genericExtractRawData'}),_(O=class{constructor(e,t,a,n,i,r){this.attachmentsAreEqual=this.attachmentsAreEqual,this.equals=this.equals,this.modelConfiguration=this.modelConfiguration,this.numberGetUTCTimestamp=this.numberGetUTCTimestamp,this.specialNames=this.specialNames,this.tools=this.tools,this.attachmentsAreEqual=e.transform.bind(e),this.dataScope=n.get(Es),this.equals=t.transform.bind(t),this.modelConfiguration=a.configuration.database.model,this.numberGetUTCTimestamp=i.transform.bind(i),this.specialNames=this.modelConfiguration.property.name.special,this.tools=r.tools}convertDateToTimestampRecursively(e){if('object'==typeof e&&null!==e){if(e instanceof Date)return this.numberGetUTCTimestamp(e);if(Array.isArray(e)){const t=[];for(const a of e)t.push(this.convertDateToTimestampRecursively(a));return t}if(Object.getPrototypeOf(e)===Object.prototype){const t={};for(const a in e)e.hasOwnProperty(a)&&(t[a]=this.convertDateToTimestampRecursively(e[a]));return t}}return e}getNotAlreadyExistingAttachmentData(e,t,a){var n=this;return o(function*(){const i={};if(a&&a.hasOwnProperty(n.specialNames.attachment))for(const r in a[n.specialNames.attachment])if(a[n.specialNames.attachment].hasOwnProperty(r)){const o={};if(t.hasOwnProperty(n.specialNames.attachment)&&t[n.specialNames.attachment])for(const e in t[n.specialNames.attachment])t[n.specialNames.attachment].hasOwnProperty(e)&&new RegExp(r).test(e)&&(o[e]=t[n.specialNames.attachment][e]);if(e.hasOwnProperty(n.specialNames.attachment))for(const t in e[n.specialNames.attachment])if(e[n.specialNames.attachment].hasOwnProperty(t)&&new RegExp(r).test(t))if(e[n.specialNames.attachment][t].hasOwnProperty('data')||e[n.specialNames.attachment][t].hasOwnProperty('stub')){if(i[t]=e[n.specialNames.attachment][t],o.hasOwnProperty(t))(yield n.attachmentsAreEqual(e[n.specialNames.attachment][t],o[t]))&&delete i[t],delete o[t];else if(Object.keys(o).length&&1===a[n.specialNames.attachment][r].maximumNumber){const a=Object.keys(o)[0];(yield n.attachmentsAreEqual(e[n.specialNames.attachment][t],o[a]))&&(i[t]=n.tools.copyLimitedRecursively(o[a]),i[t].name=t)}}else if(o.hasOwnProperty(t))delete o[t];else if(Object.keys(o).length&&1===a[n.specialNames.attachment][r].maximumNumber){const e=Object.keys(o)[0];i[t]=n.tools.copyLimitedRecursively(o[e]),i[t].name=t,delete o[e]}for(const e in o)o.hasOwnProperty(e)&&(i[e]={data:null})}return{payloadExists:0!==Object.keys(i).length,result:i}})()}removeAlreadyExistingData(e,t,a){let n=!1;if(Array.isArray(e))this.equals(e,t)||(n=!0);else if(a&&'object'==typeof e&&null!==e&&'object'==typeof t&&null!==t){const i=Object.keys(e);for(const r in t)if(t.hasOwnProperty(r)){const o=i.indexOf(r);if(-1!==o&&i.splice(o,1),!this.modelConfiguration.property.name.reserved.concat(this.specialNames.deleted,this.specialNames.id,this.specialNames.revision,this.specialNames.type).includes(r))if(e.hasOwnProperty(r)){const i=this.removeAlreadyExistingData(e[r],t[r],this.dataScope.determineNestedSpecifcation(r,a));i.payloadExists?(n=!0,e[r]=i.newData):a.hasOwnProperty(r)&&delete e[r]}else n=!0,e[r]=null}i.length&&(n=!0)}else this.equals(e,this.convertDateToTimestampRecursively(t))||(n=!0);return{newData:e,payloadExists:n}}removeMetaData(e,t){if(e instanceof Date)return this.numberGetUTCTimestamp(e);if(Array.isArray(e)){let a=0;for(const n of e)e[a]=this.removeMetaData(n,t),a+=1;return e}if('object'==typeof e&&null!==e){const a={};for(const n in e)if(e.hasOwnProperty(n)){const i=!!(t&&(t.hasOwnProperty(n)&&t[n]||t.hasOwnProperty(this.specialNames.additional)&&t[this.specialNames.additional])||{}).emptyEqualsToNull;if(![void 0,null].includes(e[n])&&!(i&&(''===e[n]||Array.isArray(e[n])&&0===e[n].length||'object'==typeof e[n]&&!(e[n]instanceof Date)&&0===Object.keys(e[n]).length)))if(this.modelConfiguration.property.name.reserved.concat(this.specialNames.deleted,this.specialNames.id,this.specialNames.revision,this.specialNames.type).includes(n))a[n]=e[n];else if(n!==this.specialNames.attachment)![this.specialNames.additional,this.specialNames.allowedRole,this.specialNames.conflict,this.specialNames.constraint.execution,this.specialNames.constraint.expression,this.specialNames.deletedConflict,this.specialNames.extend,this.specialNames.localSequence,this.specialNames.maximumAggregatedSize,this.specialNames.minimumAggregatedSize,this.specialNames.revisions,this.specialNames.revisionsInformations].includes(n)&&(!t||t.hasOwnProperty(n)||t.hasOwnProperty(this.specialNames.additional))&&(a[n]=this.removeMetaData(e[n],this.dataScope.determineNestedSpecifcation(n,t)));else if('object'==typeof e[n]&&null!==e[n])for(const t in a[n]={},e[n])if(e[n].hasOwnProperty(t)&&(a[n][t]={content_type:e[n][t].content_type||'application/octet-stream'}),e[n][t].hasOwnProperty('data'))a[n][t].data=e[n][t].data;else for(const i of['digest','stub'])e[n][t].hasOwnProperty(i)&&(a[n][t][i]=e[n][t][i])}return a}return e}transform(e,t){var a=this;return o(function*(){let n=null;a.specialNames.type in e&&a.modelConfiguration.entities.hasOwnProperty(e[a.specialNames.type])&&(n=a.modelConfiguration.entities[e[a.specialNames.type]]);let i=a.removeMetaData(e,n),r=!1;if(t){const e=yield a.getNotAlreadyExistingAttachmentData(i,t,n);e.payloadExists&&(i[a.specialNames.attachment]=e.result,r=e.payloadExists),a.removeAlreadyExistingData(i,a.removeMetaData(t,n),n).payloadExists&&(r=!0)}if(!r)for(const e in i)if(i.hasOwnProperty(e)&&!a.modelConfiguration.property.name.reserved.concat(a.specialNames.deleted,a.specialNames.id,a.specialNames.revision,a.specialNames.type).includes(e)){r=!0;break}return r?i:null})()}})||O);Reflect.defineMetadata('design:paramtypes',[Xo,Vo,Fo,bo.Injector,Ho,qo],ns);let is=t.IsDefinedPipe=(S=(0,bo.Pipe)({name:'genericIsDefined'}),S(C=class{transform(e,t=!1){return!(e===void 0||t&&null===e)}})||C),rs=t.LimitToPipe=(w=(0,bo.Pipe)({name:'genericLimitTo'}),w(D=class{transform(e,t,a){return(t=Math.abs(+t)===Infinity?+t:parseInt(t),isNaN(t))?e:('number'==typeof e?e=e.toString():'object'==typeof e&&null!==e&&!Array.isArray(e)&&(e=Object.keys(e).sort()),!(Array.isArray(e)||'string'==typeof e))?e:(a=!a||isNaN(a)?0:parseInt(a),0>a&&(a=d(0,e.length+a)),0<=t)?e.slice(a,a+t):0===a?e.slice(t,e.length):e.slice(d(0,a+t),a)}})||D),os=t.MapPipe=(E=(0,bo.Pipe)({name:'genericMap'}),E(z=class{constructor(e){this.injector=this.injector,this.injector=e}transform(e,t,...a){const n=this.injector.get(t);if(Array.isArray(e)){const t=[];for(const i of e)t.push(n.transform(i,...a));return t}const i={};for(const r in e)e.hasOwnProperty(r)&&(i[r]=n.transform.transform(e[r],r,...a));return i}})||z);Reflect.defineMetadata('design:paramtypes',[bo.Injector],os);let ss=t.ObjectKeysPipe=(j=(0,bo.Pipe)({name:'genericObjectKeys'}),j(R=class{transform(e,t=!1,a=!1,n=!1){if('object'==typeof e&&null!==e){const i=Object.keys(e);return t?(Array.isArray(t)||(t=n?[function(e,t){return(e=parseInt(e),t=parseInt(t),isNaN(e))?isNaN(t)?0:1:isNaN(t)?-1:e-t}]:[]),i.sort(...t),a&&i.reverse(),i):i}return[]}})||R),ms=t.ReversePipe=(M=(0,bo.Pipe)({name:'genericReverse'}),M(A=class{transform(e,t=!1){return e?t&&(e=e.slice()):e=[],'reverse'in e&&e.reverse(),e}})||A),ls=t.TypePipe=(k=(0,bo.Pipe)({name:'genericType'}),k(L=class{transform(e){return typeof e}})||L),ds=t.ArrayDependentConcatPipe=(q=(0,bo.Pipe)({name:'genericArrayDependentConcat'}),q(F=class{transform(e,t,a){return t?e.concat(a):e}})||F),ps=t.StringEndsWithPipe=(U=(0,bo.Pipe)({name:'genericStringEndsWith'}),U(W=class{transform(e,t){return'string'==typeof e&&'string'==typeof t&&e.endsWith(t)}})||W),cs=t.StringHasTimeSuffixPipe=(G=(0,bo.Pipe)({name:'genericStringHasTimeSuffix'}),G(B=class{transform(e){return!('string'!=typeof e)&&(e.endsWith('Date')||e.endsWith('Time')||'timestamp'===e)}})||B),us=t.StringMatchPipe=(V=(0,bo.Pipe)({name:'genericStringMatch'}),V($=class{transform(e,t,a=''){return new RegExp(e,a).test(t)}})||$),fs=t.StringMaximumLengthPipe=(H=(0,bo.Pipe)({name:'genericStringMaximumLength'}),H(K=class{transform(e,t=100,a='...'){return e?(e.length>t&&e.length-1>a.length&&(e=e.substring(0,d(1,t-a.length))+a),e):''}})||K),gs=t.StringReplacePipe=(Y=(0,bo.Pipe)({name:'genericStringReplace'}),Y(Z=class{transform(e,t,a='',n='g'){return e.replace(new RegExp(t,n),a)}})||Z),ys=t.StringSafeHTMLPipe=(J=(0,bo.Pipe)({name:'genericStringSafeHTML'}),J(Q=class{constructor(e){this.transform=e.bypassSecurityTrustHtml.bind(this.domSanitizer)}})||Q);Reflect.defineMetadata('design:paramtypes',[No.DomSanitizer],ys);let bs=t.StringSafeResourceURLPipe=(X=(0,bo.Pipe)({name:'genericStringSafeResourceURL'}),X(ee=class{constructor(e){this.transform=e.bypassSecurityTrustResourceUrl.bind(this.domSanitizer)}})||ee);Reflect.defineMetadata('design:paramtypes',[No.DomSanitizer],bs);let hs=t.StringSafeScriptPipe=(te=(0,bo.Pipe)({name:'genericStringSafeScript'}),te(ae=class{constructor(e){this.transform=e.bypassSecurityTrustScript.bind(this.domSanitizer)}})||ae);Reflect.defineMetadata('design:paramtypes',[No.DomSanitizer],hs);let xs=t.StringSafeStylePipe=(ne=(0,bo.Pipe)({name:'genericStringSafeStyle'}),ne(ie=class{constructor(e){this.transform=e.bypassSecurityTrustStyle.bind(this.domSanitizer)}})||ie);Reflect.defineMetadata('design:paramtypes',[No.DomSanitizer],xs);let vs=t.StringSafeURLPipe=(re=(0,bo.Pipe)({name:'genericStringSafeURL'}),re(oe=class{constructor(e){this.transform=e.bypassSecurityTrustUrl.bind(this.domSanitizer)}})||oe);Reflect.defineMetadata('design:paramtypes',[No.DomSanitizer],vs);let Ns=t.StringShowIfPatternMatchesPipe=(se=(0,bo.Pipe)({name:'genericStringShowIfPatternMatches'}),se(me=class{transform(e,t,a=!1,n=''){let i=new RegExp(t,n).test(e);return a&&(i=!i),i?e:''}})||me),Ts=t.StringSliceMatchPipe=(le=(0,bo.Pipe)({name:'genericStringSliceMatch'}),le(de=class{transform(e,t,a=0,n=''){if('string'==typeof e){const i=e.match(new RegExp(t,n));if(i&&'string'==typeof i[a])return i[a]}return''}})||de),Ps=t.StringStartsWithPipe=(pe=(0,bo.Pipe)({name:'genericStringStartsWith'}),pe(ce=class{transform(e,t){return'string'==typeof e&&'string'==typeof t&&e.startsWith(t)}})||ce),Is=t.StringTemplatePipe=(ue=(0,bo.Pipe)({name:'genericStringTemplate'}),ue(fe=class{transform(e='',t={}){return new Function(Object.keys(t),`return \`${e}\``)(...Object.values(t))}})||fe),_s=t.NumberPercentPipe=(ge=(0,bo.Pipe)({name:'genericNumberPercent'}),ge(ye=class{transform(e,t){return 100*(e/t)}})||ye);const Os=t.defaultAnimation=s.bind({},'defaultAnimation');let Ss=t.CanDeactivateRouteLeaveGuard=(be=(0,bo.Injectable)(),be(he=class{canDeactivate(e){return!('canDeactivate'in e)||e.canDeactivate()}})||he),Cs=t.ConfirmComponent=(xe=(0,bo.Component)({animations:[Os()],changeDetection:bo.ChangeDetectionStrategy.OnPush,selector:'generic-confirm',template:`
+        <h2 @defaultAnimation mat-dialog-title *ngIf="title">{{title}}</h2>
+        <mat-dialog-content @defaultAnimation *ngIf="message">
+            {{message}}
+        </mat-dialog-content>
+        <mat-dialog-actions>
+            <button (click)="dialogReference.close(true)" mat-raised-button>
+                {{okText}}
+            </button>
+            <button (click)="dialogReference.close(false)" mat-raised-button>
+                {{cancelText}}
+            </button>
+        </mat-dialog-actions>
+    `}),ve=(0,bo.Input)(),Ne=(0,bo.Input)(),xe(Te=(Pe=class{constructor(e,t){if(i(this,'cancelText',Ie,this),this.dialogReference=null,i(this,'okText',_e,this),this.dialogReference=t,'object'==typeof e&&null!==e)for(const t in e)e.hasOwnProperty(t)&&(this[t]=e[t])}},Ie=r(Pe.prototype,'cancelText',[ve],{enumerable:!0,initializer:function(){return'Cancel'}}),_e=r(Pe.prototype,'okText',[Ne],{enumerable:!0,initializer:function(){return'OK'}}),Pe))||Te);(0,bo.Optional)()(Cs,null,0),(0,bo.Inject)(vo.MAT_DIALOG_DATA)(Cs,null,0),(0,bo.Optional)()(Cs,null,1),Reflect.defineMetadata('design:paramtypes',[,vo.MatDialogRef],Cs);let ws=t.AlertService=(Oe=(0,bo.Injectable)(),Oe(Se=class{constructor(e){this.dialog=this.dialog,this.dialogReference=this.dialogReference,this.dialog=e}confirm(e){return'string'==typeof e?e={data:{message:e}}:('object'!=typeof e||null===e||!e.hasOwnProperty('data'))&&(e={data:e}),this.dialogReference=this.dialog.open(Cs,e),this.dialogReference.afterClosed().toPromise()}})||Se);Reflect.defineMetadata('design:paramtypes',[vo.MatDialog],ws);let Ds=t.DataService=(Ce=(0,bo.Injectable)(),Ce(we=(Ee=De=class e{constructor(e,t,a,n,i,r,s){this.connection=this.connection,this.configuration=this.configuration,this.database=this.database,this.equals=this.equals,this.extendObject=this.extendObject,this.interceptSynchronisationPromise=null,this.ngZone=this.ngZone,this.middlewares={post:{},pre:{}},this.platformID=this.platformID,this.remoteConnection=null,this.runningRequests=[],this.runningRequestsStream=new wo.Subject,this.stringFormat=this.stringFormat,this.synchronisation=this.synchronisation,this.tools=this.tools,this.configuration=a.configuration,this.configuration.database.hasOwnProperty('publicURL')&&(this.configuration.database.url=this.configuration.database.publicURL),this.database=Io.default,this.equals=e.transform.bind(e),this.extendObject=t.transform.bind(t),this.ngZone=n,this.platformID=i,this.stringFormat=r.transform.bind(r),this.tools=s.tools;const m=this.configuration.database.model.property.name.special.id,l=this.configuration.database.model.property.name.special.revision,d=this.database.prototype.bulkDocs,p=this;this.database.plugin({bulkDocs:function(){var e=o(function*(e,...t){!Array.isArray(e)&&'object'==typeof e&&null!==e&&e.hasOwnProperty(m)&&(e=[e]);let a=[];try{a=yield d.call(this,e,...t)}catch(n){if('bad_request'===n.name){for(const t of e)if(['latest','upsert'].includes(t[l]))try{t[l]=(yield this.get(t[m]))[l]}catch(e){if('not_found'===e.name)delete t[l];else throw e}try{a=yield d.call(this,e,...t)}catch(e){throw e}}else throw n}const n=[],i=[];let r=0;for(const o of a){if('object'==typeof e[r]&&null!==e)if(l in e[r]&&'conflict'===o.name&&['latest','upsert'].includes(e[r][l]))i.push(o),n.push(r);else if(m in e[r]&&p.configuration.database.ignoreNoChangeError&&'name'in o&&'forbidden'===o.name&&'message'in o&&o.message.startsWith('NoChange:')){a[r]={id:e[r][m],ok:!0};try{a[r].rev=l in e[r]&&!['latest','upsert'].includes(e[r][l])?e[r][l]:(yield this.get(a[r].id))[l]}catch(e){throw e}}r+=1}if(i.length){e=i;const r=yield this.bulkDocs(e,...t);for(const e of r)a[n.shift()]=e}return a});return function(){return e.apply(this,arguments)}}()}),this.database.plugin(Oo.default).plugin(Co.default);for(const o of this.configuration.database.plugins)this.database.plugin(o)}static determineGenericIndexablePropertyNames(e,t){const a=e.property.name.special;return Object.keys(t).filter(function(n){return t[n].index||!(e.property.name.reserved.concat(a.additional,a.allowedRole,a.attachment,a.conflict,a.constraint.execution,a.constraint.expression,a.deleted,a.deleted_conflict,a.extend,a.id,a.maximumAggregatedSize,a.minimumAggregatedSize,a.revision,a.revisions,a.revisionsInformation,a.type).includes(n)||t[n].type&&('string'==typeof t[n].type&&t[n].type.endsWith('[]')||Array.isArray(t[n].type)&&t[n].type.length&&Array.isArray(t[n].type[0])||e.entities.hasOwnProperty(t[n].type)))}).concat(a.id,a.revision)}initialize(){var t=this;return o(function*(){const a=t.extendObject(!0,{skip_setup:!0},t.configuration.database.connector||{}),n=t.configuration.name||'generic';(0,ho.isPlatformServer)(t.platformID)||(t.remoteConnection=new t.database(t.stringFormat(t.configuration.database.url,'')+`/${n}`,a)),t.connection=t.configuration.database.local||(0,ho.isPlatformServer)(t.platformID)?new t.database(n,a):t.remoteConnection;const i=t.configuration,r=t.configuration.database.model.property.name.special.id,s=t.configuration.database.model.property.name.special.revision;for(const e of['post','put']){const a=t.connection[e].bind(t.connection);t.connection[e]=function(){var e=o(function*(e,t,...n){try{return yield a(e,t,...n)}catch(a){const n='object'==typeof e&&r in e?e[r]:e;if(n&&i.database.ignoreNoChangeError&&'name'in a&&'forbidden'===a.name&&'message'in a&&a.message.startsWith('NoChange:')){const a={id:n,ok:!0},i='object'==typeof t&&s in t?t[s]:t;try{a.rev=s in e&&!['latest','upsert'].includes(i)?i:(yield this.get(a.id))[s]}catch(e){throw e}return a}throw a}});return function(){return e.apply(this,arguments)}}()}for(const e in t.connection)if(t.constructor.wrappableMethodNames.includes(e)&&'function'==typeof t.connection[e]){const a=t.connection[e];t.connection[e]=function(){var n=o(function*(...n){const i={name:e,parameter:n};t.runningRequests.push(i),t.runningRequestsStream.next(t.runningRequests);const r=function(){const e=t.runningRequests.indexOf(i);-1!==e&&t.runningRequests.splice(e,1),t.runningRequestsStream.next(t.runningRequests)};for(const a of[e,'_all'])if(t.middlewares.pre.hasOwnProperty(a))for(const i of t.middlewares.pre[a])if(n=i.apply(t.connection,n.concat('_all'===a?e:[])),'then'in n)try{n=yield n}catch(e){throw r(),e}i.wrappedParameter=n;const o=function(e=t.connection,i=n){return a.apply(e,i)};let s=o();for(const a of[e,'_all'])if(t.middlewares.post.hasOwnProperty(a))for(const i of t.middlewares.post[a])if(s=i.call(t.connection,s,o,...n.concat('_all'===a?e:[])),'then'in s)try{s=yield s}catch(e){throw r(),e}if('then'in s)try{s=yield s}catch(e){throw r(),e}return r(),s});return function(){return n.apply(this,arguments)}}()}if(t.connection.installValidationMethods(),t.configuration.database.local&&t.remoteConnection&&t.tools.timeout(o(function*(){t.interceptSynchronisationPromise&&(yield t.interceptSynchronisationPromise),t.startSynchronisation()})),(0,ho.isPlatformServer)(t.platformID)&&t.configuration.database.createGenericFlatIndex){for(const a in t.configuration.database.model.entities)if(t.configuration.database.model.entities.hasOwnProperty(a)&&new RegExp(t.configuration.database.model.property.name.typeRegularExpressionPattern.public).test(a))for(const n of e.determineGenericIndexablePropertyNames(t.configuration.database.model,t.configuration.database.model.entities[a]))try{yield t.connection.createIndex({index:{ddoc:`${a}-${n}-GenericIndex`,fields:[t.configuration.database.model.property.name.special.type,n],name:`${a}-${n}-GenericIndex`}})}catch(e){throw e}let a;try{a=(yield t.connection.getIndexes()).indexes}catch(e){throw e}for(const n of a)if(n.name.endsWith('-GenericIndex')){let a=!1;for(const i in t.configuration.database.model.entities)if(n.name.startsWith(`${i}-`)){for(const r of e.determineGenericIndexablePropertyNames(t.configuration.database.model,t.configuration.database.model.entities[i]))`${i}-${r}-GenericIndex`===n.name&&(a=!0);break}if(!a)try{yield t.connection.deleteIndex(n)}catch(e){throw e}}}})()}createIndex(...e){return this.connection.createIndex(...e)}bulkDocs(...e){return this.connection.bulkDocs(...e)}destroy(...e){this.synchronisation&&this.synchronisation.cancel();const t=this.connection.destroy(...e);return this.middlewares={post:{},pre:{}},t}find(e,t={}){var a=this;return o(function*(){return(yield a.connection.find(a.extendObject(!0,{selector:e},t))).docs})()}get(...e){var t=this;return o(function*(){const a=t.configuration.database.model.property.name.special.id,n=t.configuration.database.model.property.name.special.revision,i=yield t.connection.get(...e);return jo.data.hasOwnProperty(i[a])&&1<e.length&&(t.equals(e[1],{rev:'latest'})||t.equals(e[1],{latest:!0})||t.equals(e[1],{latest:!0,rev:'latest'}))&&parseInt(i[n].match(t.constructor.revisionNumberRegularExpression)[1])<parseInt(jo.data[i[a]][n].match(t.constructor.revisionNumberRegularExpression)[1])?jo.data[i[a]]:i})()}getAttachment(...e){return this.connection.getAttachment(...e)}put(...e){return this.connection.put(...e)}putAttachment(...e){return this.connection.putAttachment(...e)}register(e,t,a='post'){var n=this;Array.isArray(e)||(e=[e]);for(const n of e)this.middlewares[a].hasOwnProperty(n)||(this.middlewares[a][n]=[]),this.middlewares[a][n].push(t);return function(){for(const i of e){const e=n.middlewares[a][i].indexOf(t);-1!==e&&n.middlewares[a][i].splice(e,1),0===n.middlewares[a][i].length&&delete n.middlewares[a][i]}}}remove(...e){return this.connection.remove(...e)}removeAttachment(...e){return this.connection.removeAttachment(...e)}startSynchronisation(){return this.synchronisation=this.connection.sync(this.remoteConnection,{live:!0,retry:!0}).on('change',function(e){return console.info('change',e)}).on('paused',function(){return console.info('paused')}).on('active',function(){return console.info('active')}).on('denied',function(e){return console.warn('denied',e)}).on('complete',function(e){return console.info('complete',e)}).on('error',function(e){return console.error('error',e)})}},De.revisionNumberRegularExpression=/^([0-9]+)-/,De.wrappableMethodNames=['allDocs','bulkDocs','bulkGet','close','compact','compactDocument','createIndex','deleteIndexs','destroy','find','get','getAttachment','getIndexes','info','post','put','putAttachment','query','remove','removeAttachment'],Ee))||we);(0,bo.Inject)(bo.PLATFORM_ID)(Ds,null,4),Reflect.defineMetadata('design:paramtypes',[Vo,$o,Fo,bo.NgZone,String,Jo,qo],Ds);let Es=t.DataScopeService=(ze=(0,bo.Injectable)(),ze(je=class{constructor(e,t,a,n,i,r,o,s,m){this.attachmentWithPrefixExists=this.attachmentWithPrefixExists,this.configuration=this.configuration,this.data=this.data,this.extendObject=this.extendObject,this.extractData=this.extractData,this.getFilenameByPrefix=this.getFilenameByPrefix,this.numberGetUTCTimestamp=this.numberGetUTCTimestamp,this.representObject=this.representObject,this.tools=this.tools,this.attachmentWithPrefixExists=e.transform.bind(e),this.configuration=r.configuration,this.data=t,this.extendObject=a.transform.bind(a),this.extractData=n.transform.bind(n),this.getFilenameByPrefix=i.transform.bind(i),this.numberGetUTCTimestamp=o.transform.bind(o),this.representObject=s.transform.bind(s),this.tools=m.tools}determine(e,t=null,a=null,n='latest',i=!1){var r=this;return o(function*(){let o={};if(t){const s={};'latest'===n?(s.latest=!0,i&&(s.revs_info=!0)):s.rev=n;try{o=yield r.data.get(t,s)}catch(e){throw new Error(`Document with given id "${t}" and revision "`+`${n}" isn't available: `+('message'in e?e.message:r.representObject(e)))}if(i){const i=r.configuration.database.model.property.name.special.revisionsInformation;let m,l;if('latest'!==n){delete s.rev,s.revs_info=!0;try{l=yield r.data.get(t,s)}catch(e){throw new Error(`Document with given id "${t}" and revision "`+`${n}" isn't available: `+('message'in e?e.message:r.representObject(e)))}m=l[i],delete l[i]}else m=o[i];o[i]={};let d=!0;for(const e of m)'available'===e.status&&(o[i][d?'latest':e.rev]={revision:e.rev},d=!1);l&&(o[i].latest.scope=r.generate(e,a,l))}}return r.generate(e,a,o)})()}determineNestedSpecifcation(e,t){const a=this.configuration.database.model.entities,n=this.configuration.database.model.property.name.special.additional;if(t)if(t.hasOwnProperty(e)){if(a.hasOwnProperty(t[e].type))return a[t[e].type];}else if(t.hasOwnProperty(n)&&a.hasOwnProperty(t[n].type))return a[t[n].type];return null}determineSpecificationObject(e,t,a=[]){t||(t=Object.keys(e));const n={};for(const i of t)if(e.hasOwnProperty(i)&&!a.includes(i))if(i===this.configuration.database.model.property.name.special.attachment)for(const t in n[i]={},e[i])e[i].hasOwnProperty(t)&&(n[i][t]=this.extendObject(!0,this.tools.copyLimitedRecursively(this.configuration.database.model.property.defaultSpecification),e[i][t]));else n[i]=this.extendObject(!0,this.tools.copyLimitedRecursively(this.configuration.database.model.property.defaultSpecification),e[i]),this.configuration.database.model.entities.hasOwnProperty(n[i].type)&&(n[i].value=this.determineSpecificationObject(this.configuration.database.model.entities[n[i].type]));return n}generate(e,t,a={},n){const i=this.configuration.database.model.entities,r=i[e],o=this.configuration.database.model.property.name.special;n||(n=e.startsWith('_')?[o.id,o.attachment]:[]);const s=this.configuration.database.model.property.name.reserved.concat(o.conflict,o.deleted,o.deletedConflict,o.localSequence,o.revision,o.revisions,o.revisionsInformation,o.type),m=this.determineSpecificationObject(r,t,n.concat(s));t||(t=Object.keys(m).filter(function(e){return'object'==typeof m[e]&&null!==typeof m[e]&&!Array.isArray(m[e])}),t=t.concat(Object.keys(a).filter(function(e){return!t.concat(s).includes(e)})));const l={};for(const s of t){if(n.includes(s))continue;l[s]=m.hasOwnProperty(s)?this.tools.copyLimitedRecursively(m[s]):this.tools.copyLimitedRecursively('additional'in o&&o.additional?m[o.additional]:{});const t=new Date,d=this.numberGetUTCTimestamp(t);if(s===o.attachment){for(const n in m[s])if(m[s].hasOwnProperty(n)){if(l[s][n].name=n,l[s][n].value=null,0===Object.keys(a).length)for(const o of['onCreateExecution','onCreateExpression'])l[s][n].hasOwnProperty(o)&&l[s][n][o]&&(l[s][n].value=new Function('newDocument','oldDocument','userContext','securitySettings','name','models','modelConfiguration','serialize','modelName','model','propertySpecification','now','nowUTCTimestamp','getFilenameByPrefix','attachmentWithPrefixExists',(o.endsWith('Expression')?'return ':'')+l[s][n][o])(a,null,{},{},n,i,this.configuration.database.model,function(e){return JSON.stringify(e,null,4)},e,r,l[s][n],t,d,this.getFilenameByPrefix,this.attachmentWithPrefixExists.bind(a,a),l[s][n]),l[s][n].hasOwnProperty('value')&&void 0===l[s][n].value&&delete l[s][n].value);let o=!1;if(a.hasOwnProperty(s)&&![void 0,null].includes(a[s]))for(const e in a[s])if(l[s].hasOwnProperty(n)&&new RegExp(n).test(e)){o=!0,l[s][n].value=a[s][e],l[s][n].value.name=e;break}o||!l[s][n].hasOwnProperty('default')||[void 0,null].includes(l[s][n].default)||(l[s][n].value=this.tools.copyLimitedRecursively({},l[s][n].default))}}else{if(l[s].name=s,l[s].value=null,0===Object.keys(a).length)for(const n of['onCreateExpression','onCreateExecution'])l[s].hasOwnProperty(n)&&l[s][n]&&(l[s].value=new Function('newDocument','oldDocument','userContext','securitySettings','name','models','modelConfiguration','serialize','modelName','model','propertySpecification','now','nowUTCTimestamp','getFilenameByPrefix','attachmentWithPrefixExists',(n.endsWith('Expression')?'return ':'')+l[s][n])(a,null,{},{},s,i,this.configuration.database.model,function(e){return JSON.stringify(e,null,4)},e,r,l[s],t,d,this.getFilenameByPrefix,this.attachmentWithPrefixExists.bind(a,a),l[s]),void 0===l[s].value&&(l[s].value=null));if(a.hasOwnProperty(s)&&![void 0,null].includes(a[s])?l[s].value=a[s]:l[s].hasOwnProperty('default')&&![void 0,null].includes(l[s].default)?l[s].value=this.tools.copyLimitedRecursively(l[s].default):l[s].hasOwnProperty('selection')&&Array.isArray(l[s].selection)&&l[s].selection.length&&(l[s].value=l[s].selection[0]),'number'==typeof l[s].value&&l[s].hasOwnProperty('type')&&(l[s].type.endsWith('Date')||l[s].type.endsWith('Time')))l[s].value=new Date(1e3*l[s].value);else if(l[s].hasOwnProperty('type'))if(i.hasOwnProperty(l[s].type))l[s].value=this.generate(l[s].type,null,l[s].value||{},[o.attachment,o.id]);else if(l[s].type.endsWith('[]')){const e=l[s].type.substring(0,l[s].type.length-2);if(Array.isArray(l[s].value)&&i.hasOwnProperty(e)){let t=0;for(const a of l[s].value)l[s].value[t]=this.generate(e,null,a||{},[o.attachment,o.id]),t+=1}}}}for(const i of s)a.hasOwnProperty(i)?l[i]=a[i]:i===o.type&&(l[i]=e);return l._metaData={submitted:!1},l}})||je);Reflect.defineMetadata('design:paramtypes',[ts,Ds,$o,as,es,Fo,Ho,Ko,qo],Es);let zs=t.AbstractResolver=(Re=(0,bo.Injectable)(),Re(Me=class{constructor(e){var t=this;this.data=this.data,this.databaseBaseURL=this.databaseBaseURL,this.databaseURL=this.databaseURL,this.databaseURLCache={},this.domSanitizer=this.domSanitizer,this.escapeRegularExpressions=this.escapeRegularExpressions,this.extendObject=this.extendObject,this.message=this.message,this.messageConfiguration=new vo.MatSnackBarConfig,this.modelConfiguration=this.modelConfiguration,this.relevantKeys=null,this.relevantSearchKeys=null,this.representObject=this.representObject,this.specialNames=this.specialNames,this.type='Item';const a=Uo(e,this,this.constructor);this.data=a(Ds),this.domSanitizer=a(No.DomSanitizer);const n=a(Jo).transform(a(Fo).configuration.database.url,'')+'/';this.databaseBaseURL=`${n}_utils/#/database/`+`${a(Fo).configuration.name}/`,this.databaseURL=n+a(Fo).configuration.name,this.escapeRegularExpressions=a(Zo).transform.bind(a(Zo)),this.extendObject=a($o).transform.bind(a($o)),this.messageConfiguration.duration=5000,this.message=function(e){return a(vo.MatSnackBar).open(e,!1,t.messageConfiguration)},this.modelConfiguration=a(Fo).configuration.database.model,this.representObject=a(Ko).transform.bind(a(Ko)),this.specialNames=a(Fo).configuration.database.model.property.name.special}getDatabaseURL(e){const t=this.databaseBaseURL+('object'==typeof e[this.specialNames.id]?e[this.specialNames.id].value:e[this.specialNames.id]);return this.databaseURLCache.hasOwnProperty(t)||(this.databaseURLCache[t]=this.domSanitizer.bypassSecurityTrustResourceUrl(t)),this.databaseURLCache[t]}list(e=[{[Fo.defaultScope.configuration.database.model.property.name.special.id]:'asc'}],t=1,a=10,n='',i={}){this.relevantSearchKeys||(this.relevantSearchKeys=Ds.determineGenericIndexablePropertyNames(this.modelConfiguration,this.modelConfiguration.entities[this.type]),this.relevantSearchKeys.splice(this.relevantSearchKeys.indexOf(this.specialNames.revision),1));const r={[this.specialNames.type]:this.type};if(n||Object.keys(i).length){e.length&&(r[Object.keys(e[0])[0]]={$gt:null}),r.$or=[];for(const e of this.relevantSearchKeys)r.$or.push({[e]:{$regex:n}});if(i.hasOwnProperty('$or')&&i.$or.length){for(const e of r.$or)e.$or=i.$or;delete i.$or}}const o={skip:d(t-1,0)*a};return this.relevantKeys&&(o.fields=this.relevantKeys),0===o.skip&&delete o.skip,e.length&&(o.sort=[{[this.specialNames.type]:'asc'}].concat(e)),this.data.find(this.extendObject(!0,r,i),o)}remove(e,t=''){return this.update(e,{[this.specialNames.deleted]:!0},t)}resolve(e){let t='';if('searchTerm'in e.params){const a=decodeURIComponent(e.params.searchTerm);if(a.startsWith('exact-'))t=this.escapeRegularExpressions(a.substring(6));else if(a.startsWith('regex-')){t=a.substring(6);try{new RegExp(t)}catch(e){t=''}}}let a=[];return'sort'in e.params&&(a=e.params.sort.split(',').map(function(e){const t=e.lastIndexOf('-');let a='asc';return-1!==t&&(e=e.substring(0,t),a=e.substring(t+1)||a),{[e]:a}})),this.list(a,parseInt(e.params.page||1),parseInt(e.params.limit||10),t)}update(e,t,a=''){var n=this;return o(function*(){let i=t?n.extendObject({[n.specialNames.id]:'object'==typeof e[n.specialNames.id]?e[n.specialNames.id].value:e[n.specialNames.id],[n.specialNames.revision]:'latest',[n.specialNames.type]:e[n.specialNames.type]},t):e;try{e[n.specialNames.revision]=(yield n.data.put(i)).rev}catch(e){return n.message('message'in e?e.message:n.representObject(e)),!1}return a&&n.message(a),!0})()}})||Me);(0,bo.Optional)()(zs,null,0),Reflect.defineMetadata('design:paramtypes',[bo.Injector],zs);let js=t.AbstractInputComponent=(Ae=(0,bo.Input)(),ke=(0,bo.Input)(),Le=(0,bo.Input)(),qe=(0,bo.Input)(),Fe=(0,bo.Input)(),Ue=(0,bo.Input)(),We=(0,bo.Input)(),Ge=(0,bo.Input)(),Be=(0,bo.Input)(),Ve=(0,bo.Input)(),$e=(0,bo.Input)(),He=(0,bo.Input)(),Ke=(0,bo.Output)(),Ye=(0,bo.Input)(),Ze=(0,bo.Input)(),Je=(0,bo.Input)(),Qe=(0,bo.Input)(),Xe=(0,bo.Input)(),et=(0,bo.Input)(),tt=(0,bo.Input)(),at=class{constructor(){i(this,'declaration',nt,this),i(this,'description',it,this),i(this,'disabled',rt,this),i(this,'maximum',ot,this),i(this,'maximumLength',st,this),i(this,'maximumLengthText',mt,this),i(this,'maximumText',lt,this),i(this,'minimum',dt,this),i(this,'minimumLength',pt,this),i(this,'minimumLengthText',ct,this),i(this,'minimumText',ut,this),i(this,'model',ft,this),i(this,'modelChange',gt,this),i(this,'pattern',yt,this),i(this,'patternText',bt,this),i(this,'required',ht,this),i(this,'requiredText',xt,this),i(this,'showDeclarationText',vt,this),i(this,'showValidationErrorMessages',Nt,this),i(this,'type',Tt,this)}},nt=r(at.prototype,'declaration',[Ae],{enumerable:!0,initializer:function(){return null}}),it=r(at.prototype,'description',[ke],{enumerable:!0,initializer:function(){return null}}),rt=r(at.prototype,'disabled',[Le],{enumerable:!0,initializer:function(){return null}}),ot=r(at.prototype,'maximum',[qe],{enumerable:!0,initializer:function(){return null}}),st=r(at.prototype,'maximumLength',[Fe],{enumerable:!0,initializer:function(){return null}}),mt=r(at.prototype,'maximumLengthText',[Ue],{enumerable:!0,initializer:function(){return'Please type less or equal than ${model.maximumLength} symbols.'}}),lt=r(at.prototype,'maximumText',[We],{enumerable:!0,initializer:function(){return'Please give a number less or equal than ${model.maximum}.'}}),dt=r(at.prototype,'minimum',[Ge],{enumerable:!0,initializer:function(){return null}}),pt=r(at.prototype,'minimumLength',[Be],{enumerable:!0,initializer:function(){return null}}),ct=r(at.prototype,'minimumLengthText',[Ve],{enumerable:!0,initializer:function(){return'Please type at least or equal ${model.minimumLength} symbols.'}}),ut=r(at.prototype,'minimumText',[$e],{enumerable:!0,initializer:function(){return'Please given a number at least or equal to {{model.minimum}}.'}}),ft=r(at.prototype,'model',[He],{enumerable:!0,initializer:function(){return{}}}),gt=r(at.prototype,'modelChange',[Ke],{enumerable:!0,initializer:function(){return new bo.EventEmitter}}),yt=r(at.prototype,'pattern',[Ye],{enumerable:!0,initializer:function(){return this.pattern}}),bt=r(at.prototype,'patternText',[Ze],{enumerable:!0,initializer:function(){return'Your string have to match the regular expression: "${model.regularExpressionPattern}".'}}),ht=r(at.prototype,'required',[Je],{enumerable:!0,initializer:function(){return null}}),xt=r(at.prototype,'requiredText',[Qe],{enumerable:!0,initializer:function(){return'Please fill this field.'}}),vt=r(at.prototype,'showDeclarationText',[Xe],{enumerable:!0,initializer:function(){return'\u2139'}}),Nt=r(at.prototype,'showValidationErrorMessages',[et],{enumerable:!0,initializer:function(){return!1}}),Tt=r(at.prototype,'type',[tt],{enumerable:!0,initializer:function(){return this.type}}),at),Rs=t.AbstractNativeInputComponent=class extends js{constructor(e){super(e),this._attachmentWithPrefixExists=this._attachmentWithPrefixExists,this._extendObject=this._extendObject,this._getFilenameByPrefix=this._getFilenameByPrefix,this._modelConfiguration=this._modelConfiguration,this._numberGetUTCTimestamp=this._numberGetUTCTimestamp;const t=Uo(e,this,this.constructor);this._attachmentWithPrefixExists=t(ts).transform.bind(t(ts)),this._extendObject=t($o).transform.bind(t($o)),this._getFilenameByPrefix=t(es).transform.bind(t(es)),this._modelConfiguration=t(Fo).configuration.database.model,this._numberGetUTCTimestamp=t(Ho).transform.bind(t(Ho))}ngOnInit(){this._extendObject(this.model,this._extendObject({disabled:!1,emptyEqualsToNull:!0,maximum:Infinity,minimum:0,maximumLength:Infinity,minimumLength:0,nullable:!0,regularExpressionPattern:'.*',state:{},trim:!0,type:'string'},this.model)),'string'==typeof this.model.value&&this.model.trim&&this.model.value===this.model.value.trim();for(const e of['onUpdateExpression','onUpdateExecution'])this.model.hasOwnProperty(e)&&this.model[e]&&'function'!=typeof this.model[e]&&(this.model[e]=new Function('newDocument','oldDocument','userContext','securitySettings','name','models','modelConfiguration','serialize','modelName','model','propertySpecification','now','nowUTCTimestamp','getFilenameByPrefix','attachmentWithPrefixExists',(e.endsWith('Expression')?'return ':'')+this.model[e]))}onChange(e,t){'integer'===this.model.type?e=parseInt(e):'number'===this.model.type?e=parseFloat(e):e&&'string'===this.model.type&&this.model.trim&&(e=e.trim());const a=new Date,n=this._numberGetUTCTimestamp(a),i={[this.model.name]:e};for(const r of['onUpdateExpression','onUpdateExecution'])this.model.hasOwnProperty(r)&&this.model[r]&&'function'==typeof this.model[r]&&(e=this.model[r](i,null,{},{},this.model.name,this._modelConfiguration.entities,this._modelConfiguration,function(e){return JSON.stringify(e,null,4)},'generic',{generic:{[this.model.name]:this.model}},this.model,a,n,this._getFilenameByPrefix,this._attachmentWithPrefixExists.bind(i,i),e),!(e instanceof Date)&&(this.model.type.endsWith('Date')||this.model.type.endsWith('Time'))&&(e*=1e3));return this.model.state=t,e}};(0,bo.Optional)()(Rs,null,0),Reflect.defineMetadata('design:paramtypes',[bo.Injector],Rs);let Ms=t.AbstractLiveDataComponent=(It=Pt=class{constructor(e){this.actions=[],this.autoRestartOnError=!0,this._canceled=!1,this._changeDetectorReference=this._changeDetectorReference,this._changesStream=this._changesStream,this._data=this._data,this._extendObject=this._extendObject,this._liveUpdateOptions={},this._stringCapitalize=this._stringCapitalize,this._tools=this._tools;const t=Uo(e,this,this.constructor);this._changeDetectorReference=t(bo.ChangeDetectorRef),this._data=t(Ds),this._extendObject=t($o).transform.bind(t($o)),this._stringCapitalize=t(Yo).transform.bind(t(Yo)),this._tools=t(qo).tools}ngOnInit(){var e=this;const t=this._tools.debounce(function(){e._changesStream=e._data.connection.changes(e._extendObject(!0,{},{since:jo.sequence},e.constructor.defaultLiveUpdateOptions,e._liveUpdateOptions));for(const a of['change','complete','error'])e._changesStream.on(a,function(){var n=o(function*(n){if(e._canceled)return;'change'===a&&('seq'in n&&'number'==typeof n.seq&&(jo.sequence=n.seq),jo.data[n.id]=n.doc),n.name=a,e.actions.unshift(n);let i=e[`onData${e._stringCapitalize(a)}`](n);null!==i&&'object'==typeof i&&'then'in i&&(i=yield i),i&&e._changeDetectorReference.detectChanges(),'error'===a&&e.autoRestartOnError&&(console.log('EE'),t())});return function(){return n.apply(this,arguments)}}())},3e3);this._tools.timeout(t)}ngOnDestroy(){this._canceled=!0,this._changesStream&&this._changesStream.cancel()}onDataChange(){return!0}onDataComplete(){return!1}onDataError(){return!1}},Pt.defaultLiveUpdateOptions={heartbeat:1e4,include_docs:!0,live:!0,since:'now',timeout:!1},It);(0,bo.Optional)()(Ms,null,0),Reflect.defineMetadata('design:paramtypes',[bo.Injector],Ms);let As=t.AbstractItemsComponent=class extends Ms{constructor(e){var t;t=super(e),this.allItems=this.allItems,this.allItemsChecked=!1,this.debouncedUpdate=this.debouncedUpdate,this.items=this.items,this.limit=this.limit,this.navigateAway=!1,this.page=this.page,this.preventedDataUpdate=null,this.regularExpression=!1,this.searchTerm='',this.searchTermStream=new wo.Subject,this.selectedItems=new Set,this.sort={[Fo.defaultScope.configuration.database.model.property.name.special.id]:'asc'},this._currentParameter=this._currentParameter,this._itemPath='item',this._itemsPath='items',this._route=this._route,this._router=this._router,this._subscriptions=[],this._toolsInstance=this._toolsInstance;const a=Uo(e);this.idName=a(Fo).configuration.database.model.property.name.special.id,this.revisionName=a(Fo).configuration.database.model.property.name.special.revision,this.keyCode=this._tools.keyCode,this._route=a(To.ActivatedRoute),this._router=a(To.Router),this._toolsInstance=new this._tools,this._subscriptions.push(this._route.params.subscribe(function(e){t._currentParameter=e,t.limit=parseInt(t._currentParameter.limit),t.page=parseInt(t._currentParameter.page);const a=/(regex|exact)-(.*)/.exec(t._currentParameter.searchTerm);a&&(t.regularExpression='regex'===a[1],t.searchTerm=decodeURIComponent(a[2]))})),this._subscriptions.push(this._route.data.subscribe(function(e){t.limit=d(1,t.limit||1);const a=e.items.length+(d(1,t.page||1)-1)*t.limit;t.allItems=e.items.slice(),e.items.length>t.limit&&e.items.splice(t.limit,e.items.length-t.limit),t.items=e.items,t.items.total=a,t.applyPageConstraints()&&t.update()})),this._subscriptions.push(this.searchTermStream.debounceTime(200).distinctUntilChanged().subscribe(function(){return t.page=1,t.update()})),this.debouncedUpdate=this._tools.debounce(this.update.bind(this))}applyPageConstraints(){const e=this.page,t=this.limit;return this.limit=d(1,this.limit||1),this.page=d(1,m(this.page,l(this.items.total/this.limit))),this.page!==e||this.limit!==t}changeItemWrapperFactory(e){var t=this;return function(){var a=o(function*(...a){let n=!0;const i=t._router.events.subscribe(function(e){e instanceof NavigationEnd&&(n=!1,i.unsubscribe())});t._subscriptions.push(i);const r=e(...a);return'object'==typeof r&&null!==r&&'then'in r&&(yield r),n&&(yield t.update(!0)),r});return function(){return a.apply(this,arguments)}}()}clearSelectedItems(){for(const e of this.items)this.selectedItems.delete(e),e.selected=!1}goToItem(e,t='latest'){return this.navigateAway=!0,this._router.navigate([this._itemPath,e,t])}ngAfterContentChecked(){this.preventedDataUpdate&&this.onDataChange(...this.preventedDataUpdate)}onDataChange(...e){return this.selectedItems.size||![0,1].includes(parseInt(this._currentParameter.page))?this.preventedDataUpdate=e:(this.preventedDataUpdate=null,this.debouncedUpdate(!0)),!1}ngOnDestroy(...e){const t=super.ngOnDestroy(...e);for(const t of this._subscriptions)t.unsubscribe();return t}selectAllItems(){for(const e of this.items)this.selectedItems.add(e),e.selected=!0}trackByIDAndRevision(e){return`${e[this.idName]}/${e[this.revisionName]}`}update(e=!1){var t=this;return o(function*(){let a=!1;if(yield t._toolsInstance.acquireLock(`${t.constructor.name}Update`),!t.navigateAway){t.applyPageConstraints(),e&&0!==parseInt(t._currentParameter.page)&&(t.page=0);let n='';for(const e in t.sort)t.sort.hasOwnProperty(e)&&(n+=`${n?',':''}${e}-${t.sort[e]}`);a=yield t._router.navigate([t._itemsPath,n,t.page,t.limit,`${t.regularExpression?'regex':'exact'}-`+encodeURIComponent(t.searchTerm)],{preserveFragment:!0,replaceUrl:0===parseInt(t._currentParameter.page),skipLocationChange:0===t.page}),a&&(t.allItemsChecked=!1)}return t._toolsInstance.releaseLock(`${t.constructor.name}Update`),a})()}updateSearch(){this.searchTermStream.next(this.searchTerm)}};(0,bo.Optional)()(As,null,0),Reflect.defineMetadata('design:paramtypes',[bo.Injector],As);let ks=t.AbstractValueAccessor=(_t=(0,bo.Input)(),Ot=class extends xo.DefaultValueAccessor{constructor(e){super(e.get(bo.Renderer2),e.get(bo.ElementRef),null),this.onChangeCallback=go.default.noop,this.onTouchedCallback=go.default.noop,i(this,'type',St,this)}export(e){return e}import(e){return e}registerOnChange(e,...t){return this.onChangeCallback=e,super.registerOnChange(e,...t)}registerOnTouched(e,...t){return this.onTouchedCallback=e,super.registerOnTouched(e,...t)}writeValue(e,...t){return super.writeValue(this.export(e,...t),...t)}_handleInput(e,...t){return super._handleInput(this.import(e,...t),...t)}},St=r(Ot.prototype,'type',[_t],{enumerable:!0,initializer:function(){return this.type}}),Ot);Reflect.defineMetadata('design:paramtypes',[bo.Injector],ks);let Ls=t.GenericDateDirective=(Ct=(0,bo.Directive)({selector:'[genericDate]'}),wt=(0,bo.Input)('genericDate'),Ct(Dt=(Et=class{constructor(e,t,a,n){this.dateFormatter=this.dateFormatter,this.extendObject=this.extendObject,this.options={dateTime:'now',format:'HH:mm:ss',freeze:!1,updateIntervalInMilliseconds:1e3},this.templateReference=this.templateReference,this.timerID=this.timerID,this.viewContainerReference=this.viewContainerReference,this.dateFormatter=e.transform.bind(e),this.extendObject=t.transform.bind(t),this.templateReference=a,this.viewContainerReference=n}set insertOptions(e={}){(['string','number'].includes(typeof e)||[null,void 0].includes(e)||'object'==typeof e&&e instanceof Date)&&(e={dateTime:e}),this.extendObject(!0,this.options,e)}insert(){let e=this.options.dateTime;['now','',null,void 0].includes(e)||isNaN(e)?e=Date.now():'string'==typeof e&&`${parseFloat(e)}`===e&&(e=1e3*parseFloat(e)),this.viewContainerReference.createEmbeddedView(this.templateReference,{dateTime:this.dateFormatter(e,this.options.format)})}ngOnDestroy(){this.timerID&&clearInterval(this.timerID)}ngOnInit(){var e=this;this.timerID=setInterval(function(){e.options.freeze||(e.viewContainerReference.remove(),e.insert())},this.options.updateIntervalInMilliseconds),this.insert()}},r(Et.prototype,'insertOptions',[wt],Object.getOwnPropertyDescriptor(Et.prototype,'insertOptions'),Et.prototype),Et))||Dt);Reflect.defineMetadata('design:paramtypes',[ho.DatePipe,$o,bo.TemplateRef,bo.ViewContainerRef],Ls);let qs=t.GenericSliderDirective=(zt=(0,bo.Directive)({selector:'[genericSlider]'}),jt=(0,bo.Input)('genericSlider'),zt(Rt=(Mt=class{constructor(e,t,a){this.extendObject=this.extendObject,this.index=0,this.options={freeze:!1,startIndex:0,step:1,slides:[],updateIntervalInMilliseconds:6e3},this.templateReference=this.templateReference,this.timerID=this.timerID,this.viewContainerReference=this.viewContainerReference,this.extendObject=e.transform.bind(e),this.templateReference=t,this.viewContainerReference=a}getNextIndex(e=-1){return-1===e&&(e=this.index),(e+this.options.step)%this.options.slides.length}set insertOptions(e={}){Array.isArray(e)&&(e={slides:e}),this.extendObject(!0,this.options,e)}update(){this.options.slides.length&&this.viewContainerReference.createEmbeddedView(this.templateReference,{getNextIndex:this.getNextIndex.bind(this),index:this.index,options:this.options,slide:this.options.slides[this.index],slides:this.options.slides})}ngOnDestroy(){this.timerID&&clearInterval(this.timerID)}ngOnInit(){var e=this;this.timerID=setInterval(function(){const t=(e.index+e.options.step)%e.options.slides.length;!0===e.options.freeze||t===e.index||'number'==typeof e.options.freeze&&e.options.freeze>=e.options.slides.length||(e.viewContainerReference.remove(),e.index=e.getNextIndex(),e.update())},this.options.updateIntervalInMilliseconds),this.index=this.options.startIndex,this.update()}},r(Mt.prototype,'insertOptions',[jt],Object.getOwnPropertyDescriptor(Mt.prototype,'insertOptions'),Mt.prototype),Mt))||Rt);Reflect.defineMetadata('design:paramtypes',[$o,bo.TemplateRef,bo.ViewContainerRef],qs);let Fs=t.DateTimeValueAccessor=(At=(0,bo.Directive)(go.default.extendObject(!0,{},xo.DefaultValueAccessor.decorators[0].args[0],{providers:[{provide:xo.NG_VALUE_ACCESSOR,useExisting:(0,bo.forwardRef)(function(){return Fs}),multi:!0}]})),At(kt=class extends ks{constructor(e){super(e)}export(e){if(![void 0,null].includes(e)&&['date','time'].includes(this.type)){const t=new Date(e);if(isNaN(t.getDate()))return;if('time'===this.type){let e=`${t.getHours()}`;1===e.length&&(e=`0${e}`);let a=`${t.getMinutes()}`;return 1===a.length&&(a=`0${a}`),`${e}:${a}`}if('date'===this.type){let e=`${t.getMonth()+1}`;1===e.length&&(e=`0${e}`);let a=`${t.getDate()}`;return 1===a.length&&(a=`0${a}`),`${t.getFullYear()}-${e}-${a}`}}return e}import(e){if('string'==typeof e)if('time'===this.type){const t=/^([0-9]{2}):([0-9]{2})$/.exec(e);if(t)return new Date(1970,0,1,parseInt(t[1]),parseInt(t[2]))}else if('date'===this.type){const t=/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(e);if(t)return new Date(parseInt(t[1]),parseInt(t[2])-1,parseInt(t[3]))}return e}})||kt);Reflect.defineMetadata('design:paramtypes',[bo.Injector],Fs);let Us=t.IntervalInputComponent=(Lt=(0,bo.Component)({animations:[Os()],changeDetection:bo.ChangeDetectionStrategy[zo],selector:'generic-interval-input',template:`
+        <generic-input
+            [declaration]="startDeclaration"
+            [description]="startDescription"
+            [disabled]="startDisabled"
+            [showDeclarationText]="startShowDeclarationText"
+            [maximum]="startMaximum"
+            [maximumText]="startMaximumText"
+            [minimum]="startMinimum"
+            [required]="startRequired"
+            [requiredText]="startRequiredText"
+            [minimumText]="startMinimumText"
+            [model]="model.start"
+            (model)="change($event, 'start')"
+            [showValidationErrorMessages]="startShowValidationErrorMessages"
+            type="time"
+        ></generic-input>
+        <ng-content></ng-content>
+        <generic-input
+            [declaration]="endDeclaration"
+            [description]="endDescription"
+            [disabled]="endDisabled"
+            [showDeclarationText]="endShowDeclarationText"
+            [maximum]="endMaximum"
+            [maximumText]="endMaximumText"
+            [minimum]="endMinimum"
+            [required]="endRequired"
+            [requiredText]="endRequiredText"
+            [minimumText]="endMinimumText"
+            [model]="model.end"
+            (model)="change($event, 'end')"
+            [showValidationErrorMessages]="endShowValidationErrorMessages"
+            type="time"
+        ></generic-input>
+    `}),qt=(0,bo.Input)(),Ft=(0,bo.Input)(),Ut=(0,bo.Input)(),Wt=(0,bo.Input)(),Gt=(0,bo.Input)(),Bt=(0,bo.Input)(),Vt=(0,bo.Input)(),$t=(0,bo.Input)(),Ht=(0,bo.Input)(),Kt=(0,bo.Input)(),Yt=(0,bo.Input)(),Zt=(0,bo.Input)(),Jt=(0,bo.Input)(),Qt=(0,bo.Input)(),Xt=(0,bo.Input)(),ea=(0,bo.Input)(),ta=(0,bo.Input)(),aa=(0,bo.Input)(),na=(0,bo.Input)(),ia=(0,bo.Input)(),ra=(0,bo.Input)(),oa=(0,bo.Input)(),sa=(0,bo.Input)(),ma=(0,bo.Output)(),Lt(la=(da=class{constructor(){i(this,'endDeclaration',pa,this),i(this,'startDeclaration',ca,this),i(this,'endDescription',ua,this),i(this,'startDescription',fa,this),i(this,'endDisabled',ga,this),i(this,'startDisabled',ya,this),i(this,'endMaximum',ba,this),i(this,'startMaximum',ha,this),i(this,'endMaximumText',xa,this),i(this,'startMaximumText',va,this),i(this,'endMinimum',Na,this),i(this,'startMinimum',Ta,this),i(this,'endMinimumText',Pa,this),i(this,'startMinimumText',Ia,this),i(this,'endRequired',_a,this),i(this,'startRequired',Oa,this),i(this,'endRequiredText',Sa,this),i(this,'startRequiredText',Ca,this),i(this,'endShowDeclarationText',wa,this),i(this,'startShowDeclarationText',Da,this),i(this,'endShowValidationErrorMessages',Ea,this),i(this,'startShowValidationErrorMessages',za,this),i(this,'model',ja,this),i(this,'modelChange',Ra,this)}change(e,t){this.modelChange.emit({value:e,type:t})}},pa=r(da.prototype,'endDeclaration',[qt],{enumerable:!0,initializer:function(){return null}}),ca=r(da.prototype,'startDeclaration',[Ft],{enumerable:!0,initializer:function(){return null}}),ua=r(da.prototype,'endDescription',[Ut],{enumerable:!0,initializer:function(){return null}}),fa=r(da.prototype,'startDescription',[Wt],{enumerable:!0,initializer:function(){return null}}),ga=r(da.prototype,'endDisabled',[Gt],{enumerable:!0,initializer:function(){return null}}),ya=r(da.prototype,'startDisabled',[Bt],{enumerable:!0,initializer:function(){return null}}),ba=r(da.prototype,'endMaximum',[Vt],{enumerable:!0,initializer:function(){return null}}),ha=r(da.prototype,'startMaximum',[$t],{enumerable:!0,initializer:function(){return null}}),xa=r(da.prototype,'endMaximumText',[Ht],{enumerable:!0,initializer:function(){return'Please give a number less or equal than ${model.maximum}.'}}),va=r(da.prototype,'startMaximumText',[Kt],{enumerable:!0,initializer:function(){return'Please give a number less or equal than ${model.maximum}.'}}),Na=r(da.prototype,'endMinimum',[Yt],{enumerable:!0,initializer:function(){return null}}),Ta=r(da.prototype,'startMinimum',[Zt],{enumerable:!0,initializer:function(){return null}}),Pa=r(da.prototype,'endMinimumText',[Jt],{enumerable:!0,initializer:function(){return'Please given a number at least or equal to {{model.minimum}}.'}}),Ia=r(da.prototype,'startMinimumText',[Qt],{enumerable:!0,initializer:function(){return'Please given a number at least or equal to {{model.minimum}}.'}}),_a=r(da.prototype,'endRequired',[Xt],{enumerable:!0,initializer:function(){return null}}),Oa=r(da.prototype,'startRequired',[ea],{enumerable:!0,initializer:function(){return null}}),Sa=r(da.prototype,'endRequiredText',[ta],{enumerable:!0,initializer:function(){return'Please fill this field.'}}),Ca=r(da.prototype,'startRequiredText',[aa],{enumerable:!0,initializer:function(){return'Please fill this field.'}}),wa=r(da.prototype,'endShowDeclarationText',[na],{enumerable:!0,initializer:function(){return'\u2139'}}),Da=r(da.prototype,'startShowDeclarationText',[ia],{enumerable:!0,initializer:function(){return'\u2139'}}),Ea=r(da.prototype,'endShowValidationErrorMessages',[ra],{enumerable:!0,initializer:function(){return!1}}),za=r(da.prototype,'startShowValidationErrorMessages',[oa],{enumerable:!0,initializer:function(){return!1}}),ja=r(da.prototype,'model',[sa],{enumerable:!0,initializer:function(){return{end:{value:new Date(1970,0,1)},start:{value:new Date(1970,0,1)}}}}),Ra=r(da.prototype,'modelChange',[ma],{enumerable:!0,initializer:function(){return new bo.EventEmitter}}),da))||la),Ws=t.IntervalsInputComponent=(Ma=(0,bo.Component)({animations:[Os()],changeDetection:bo.ChangeDetectionStrategy[zo],selector:'generic-intervals-input',template:`
+        <div
+            *ngIf="description !== '' && (description || model.description || model.name)"
+        >{{description || model.description || model.name}}</div>
+        <div
+            @defaultAnimation
+            *ngFor="let interval of (model.value || []); let first = first; let index = index"
+        >
+            <generic-interval-input
+                [endDisabled]="endDisabled"
+                [startDisabled]="startDisabled"
 
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
+                [endShowDeclarationText]="endShowDeclarationText"
+                [startShowDeclarationText]="startShowDeclarationText"
 
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
-/******/ 			return installedModules[moduleId].exports;
+                [endMaximum]="endMaximum"
+                [startMaximum]="startMaximum"
 
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
+                [endMaximumText]="endMaximumText"
+                [startMaximumText]="startMaximumText"
 
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+                [endMinimum]="endMinimum"
+                [startMinimum]="startMinimum"
 
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
+                [endRequired]="endRequired"
+                [startRequired]="startRequired"
 
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
+                [endRequiredText]="endRequiredText"
+                [startRequiredText]="startRequiredText"
 
+                [endMinimumText]="endMinimumText"
+                [startMinimumText]="startMinimumText"
 
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
+                [endDescription]="first ? endDescription : ''"
+                [startDescription]="first ? startDescription : ''"
 
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
+                [model]="interval"
+                (model)="change($event, index)"
 
-/******/ 	// identity function for calling harmony imports with the correct context
-/******/ 	__webpack_require__.i = function(value) { return value; };
+                [endDeclaration]="endDeclaration"
+                [startDeclaration]="startDeclaration"
 
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, {
-/******/ 				configurable: false,
-/******/ 				enumerable: true,
-/******/ 				get: getter
-/******/ 			});
-/******/ 		}
-/******/ 	};
-
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 15);
-/******/ })
-/************************************************************************/
-/******/ ([
-/* 0 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_0__;
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_1__;
-
-/***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-/* WEBPACK VAR INJECTION */(function(module) {// #!/usr/bin/env node
-// -*- coding: utf-8 -*-
-/** @module angularGeneric *//* !
-    region header
-    [Project page](http://torben.website/angularGeneric)
-
-    Copyright Torben Sickert (info["~at~"]torben.website) 16.12.2012
-
-    License
-    -------
-
-    This library written by Torben Sickert stand under a creative commons
-    naming 3.0 unported license.
-    See http://creativecommons.org/licenses/by/3.0/deed.de
-    endregion
-*/// region imports
-exports.__esModule=true;exports.default=exports.GenericPaginationComponent=exports.GenericFileInputComponent=exports.GenericTextareaComponent=exports.GenericInputComponent=exports.AbstractItemsComponent=exports.AbstractInputComponent=exports.AbstractResolver=exports.GenericDataScopeService=exports.GenericDataService=exports.GenericCanDeactivateRouteLeaveGuard=exports.GenericNumberPercentPipe=exports.GenericStringSliceMatchPipe=exports.GenericStringStartsWithPipe=exports.GenericStringShowIfPatternMatchesPipe=exports.GenericStringReplacePipe=exports.GenericStringMatchPipe=exports.GenericStringHasTimeSuffixPipe=exports.GenericStringEndsWithPipe=exports.GenericTypePipe=exports.GenericMapPipe=exports.GenericGetFilenameByPrefixPipe=exports.GenericIsDefinedPipe=exports.GenericExtractRawDataPipe=exports.GenericInitialDataService=exports.GenericToolsService=undefined;var _dec,_class,_dec2,_class3,_dec3,_class5,_dec4,_class6,_dec5,_class7,_dec6,_class8,_dec7,_class10,_dec8,_class11,_dec9,_class12,_dec10,_class13,_dec11,_class14,_dec12,_class15,_dec13,_class16,_dec14,_class17,_dec15,_class18,_dec16,_class19,_dec17,_class20,_class21,_temp,_dec18,_class22,_dec19,_dec20,_dec21,_desc,_value,_class25,_descriptor,_descriptor2,_descriptor3,_dec22,_dec23,_class28,_desc2,_value2,_class29,_descriptor4,_dec24,_class31,_dec25,_dec26,_dec27,_dec28,_dec29,_dec30,_dec31,_dec32,_dec33,_dec34,_class32,_desc3,_value3,_class33,_descriptor5,_descriptor6,_descriptor7,_descriptor8,_descriptor9,_descriptor10,_descriptor11,_descriptor12,_descriptor13,_class34,_temp2,_dec35,_dec36,_dec37,_dec38,_dec39,_dec40,_class35,_desc4,_value4,_class36,_descriptor14,_descriptor15,_descriptor16,_descriptor17,_descriptor18,_dec41,_class38;var _clientnode=__webpack_require__(8);var _clientnode2=_interopRequireDefault(_clientnode);var _core=__webpack_require__(0);var _forms=__webpack_require__(5);var _material=__webpack_require__(6);var _platformBrowser=__webpack_require__(7);var _router=__webpack_require__(1);var _pouchdb=__webpack_require__(11);var _pouchdb2=_interopRequireDefault(_pouchdb);var _pouchdbFind=__webpack_require__(9);var _pouchdbFind2=_interopRequireDefault(_pouchdbFind);var _pouchdbValidation=__webpack_require__(10);var _pouchdbValidation2=_interopRequireDefault(_pouchdbValidation);var _rxjs=__webpack_require__(12);var _Observable=__webpack_require__(14);function _interopRequireDefault(obj){return obj&&obj.__esModule?obj:{default:obj}}function _initDefineProp(target,property,descriptor,context){if(!descriptor)return;Object.defineProperty(target,property,{enumerable:descriptor.enumerable,configurable:descriptor.configurable,writable:descriptor.writable,value:descriptor.initializer?descriptor.initializer.call(context):void 0})}function _applyDecoratedDescriptor(target,property,decorators,descriptor,context){var desc={};Object['ke'+'ys'](descriptor).forEach(function(key){desc[key]=descriptor[key]});desc.enumerable=!!desc.enumerable;desc.configurable=!!desc.configurable;if('value'in desc||desc.initializer){desc.writable=true}desc=decorators.slice().reverse().reduce(function(desc,decorator){return decorator(target,property,desc)||desc},desc);if(context&&desc.initializer!==void 0){desc.value=desc.initializer?desc.initializer.call(context):void 0;desc.initializer=undefined}if(desc.initializer===void 0){Object['define'+'Property'](target,property,desc);desc=null}return desc}function _initializerWarningHelper(descriptor,context){throw new Error('Decorating class property failed. Please ensure that transform-class-properties is enabled.')}function _asyncToGenerator(fn){return function(){var gen=fn.apply(this,arguments);return new Promise(function(resolve,reject){function step(key,arg){try{var info=gen[key](arg);var value=info.value}catch(error){reject(error);return}if(info.done){resolve(value)}else{return Promise.resolve(value).then(function(value){step('next',value)},function(err){step('throw',err)})}}return step('next')})}}// NOTE: Only needed for debugging this file.
-try{module.require('source-map-support/register')}catch(error){}// endregion
-// region basic services
-// IgnoreTypeCheck
-/**
- * Injectable angular service for the tools class.
- * @property $ - Holds an instance of a generic dom abstraction layer like
- * jquery.
- * @property globalContext - Hold a reference to the environment specific
- * global scope.
- * @property tools - Holds a reference to the wrapped tools class.
- */let GenericToolsService=exports.GenericToolsService=(_dec=(0,_core.Injectable)(),_dec(_class=class GenericToolsService{constructor(){this.$=_clientnode.$;this.globalContext=_clientnode.globalContext;this.tools=_clientnode2.default}})||_class);// IgnoreTypeCheck
-/**
- * Serves initial data provided via a global variable.
- */let GenericInitialDataService=exports.GenericInitialDataService=(_dec2=(0,_core.Injectable)(),_dec2(_class3=class GenericInitialDataService{/**
-     * Sets all properties of given initial data as properties to this
-     * initializing instance.
-     * @param tools - Saves the generic tools service.
-     * @returns Nothing.
-     */constructor(tools){this.configuration=this.configuration;for(const key in tools.globalContext.genericInitialData)if(tools.globalContext.genericInitialData.hasOwnProperty(key))// IgnoreTypeCheck
-this[key]=tools.globalContext.genericInitialData[key]}})||_class3);// endregion
-// region pipes
-// / region forwarded methods
-Reflect.defineMetadata('design:paramtypes',[GenericToolsService],GenericInitialDataService);const reference={};for(const name of Object.getOwnPropertyNames(_clientnode2.default))if(!['caller','arguments'].includes(name))// IgnoreTypeCheck
-reference[name]=_clientnode2.default[name];for(const configuration of[{invert:['array'],methodGroups:{string:['encodeURIComponent'],number:['pow']},reference:window},{invert:['array'],methodGroups:{'':['convertCircularObjectToJSON','equals','extendObject','representObject','sort'],array:'*',number:'*',string:'*'},reference:reference}])for(const methodTypePrefix in configuration.methodGroups)if(configuration.methodGroups.hasOwnProperty(methodTypePrefix)){let methodNames=[];if(configuration.methodGroups[methodTypePrefix]==='*'){for(const name in configuration.reference)if(configuration.reference.hasOwnProperty(name)&&configuration.reference.hasOwnProperty(name)&&new RegExp(`^${methodTypePrefix}[A-Z0-9]`).test(name))methodNames.push(name)}else methodNames=configuration.methodGroups[methodTypePrefix];for(const methodName of methodNames){const pipeName=_clientnode2.default.stringCapitalize(methodName);module.exports[`Generic${pipeName}Pipe`]=class{/**
-                     * Performs the concrete conversion logic.
-                     * @param parameter - Saves all generic parameter to
-                     * forward it for triggering the underlying tools utility.
-                     * @returns Whatever the underlying tools function returns.
-                     */transform(...parameter){return _core.ReflectiveInjector.resolveAndCreate([GenericToolsService]).get(GenericToolsService).tools[methodName](...parameter)}};(0,_core.Pipe)({name:`generic${pipeName}`})(module.exports[`Generic${pipeName}Pipe`]);if(configuration.invert.includes(methodTypePrefix)){module.exports[`generic${pipeName}InvertedPipe`]=class{/**
-                         * Performs the concrete conversion logic.
-                         * @param parameter - Saves all generic parameter to
-                         * forward it for triggering the underlying tools
-                         * utility.
-                         * @returns Whatever the underlying tools function
-                         * returns.
-                         */transform(...parameter){const tools=_core.ReflectiveInjector.resolveAndCreate([GenericToolsService]).get(GenericToolsService).tools;// IgnoreTypeCheck
-return tools.invertArrayFilter(tools[methodName])(...parameter)}};(0,_core.Pipe)({name:`generic${pipeName}Inverted`})(module.exports[`generic${pipeName}InvertedPipe`])}}}// / endregion
-// / region object
-// IgnoreTypeCheck
-/**
- * Removes all meta data from documents.
- */let GenericExtractRawDataPipe/* implements PipeTransform*/=exports.GenericExtractRawDataPipe=(_dec3=(0,_core.Pipe)({name:'genericExtractRawData'}),_dec3(_class5=class GenericExtractRawDataPipe{/**
-     * Implements attachment changes or removes.
-     * @param newDocument - Document to slice meta data from.
-     * @param oldAttachments - Old document to take into account.
-     * @param fileTypeReplacement - Indicates weather file type replacements
-     * and removes should be taken into account.
-     * @param untouchedAttachments - List of file names which doesn't exist in
-     * given new document.
-     * @returns The sliced attachment version of given document.
-     */_handleAttachmentChanges(newDocument,oldAttachments,fileTypeReplacement,untouchedAttachments){for(const type in oldAttachments)if(oldAttachments.hasOwnProperty(type)&&![undefined,null].includes(oldAttachments[type].value)){if(newDocument._attachments){if(newDocument._attachments.hasOwnProperty(oldAttachments[type].value.name))continue}else if(!untouchedAttachments.includes(oldAttachments[type].value.name)){newDocument._attachments={[oldAttachments[type].value.name]:{data:null}};continue}if(fileTypeReplacement)for(const fileName in newDocument._attachments)if(newDocument._attachments.hasOwnProperty(fileName)&&new RegExp(type).test(fileName))newDocument._attachments[oldAttachments[type].value.name]={data:null}}return newDocument}/**
-     * Implements the meta data removing of given document.
-     * @param newDocument - Document to slice meta data from.
-     * @param oldDocument - Optionally existing old document to take into
-     * account.
-     * @param fileTypeReplacement - Indicates weather file type replacements
-     * and removes should be taken into account.
-     * @returns The copies sliced version of given document.
-     */transform(newDocument,oldDocument,fileTypeReplacement=true){const result={};const untouchedAttachments=[];for(const name in newDocument)if(newDocument.hasOwnProperty(name)&&![undefined,null,''].includes(newDocument[name])&&name!=='_revisions')if(name==='_attachments'){result[name]={};let empty=true;for(const fileName in newDocument[name])if(newDocument[name].hasOwnProperty(fileName))if(newDocument[name][fileName].hasOwnProperty('data')&&!(oldDocument&&oldDocument.hasOwnProperty(name)&&oldDocument[name].hasOwnProperty(fileName)&&newDocument[name][fileName].data===oldDocument[name][fileName].data&&(oldDocument[name][fileName].content_type||'application/octet-stream')===(newDocument[name][fileName].content_type||'application/octet-stream'))){result[name][fileName]={content_type:newDocument[name][fileName].content_type||'application/octet-stream',data:newDocument[name][fileName].data};empty=false}else untouchedAttachments.push(fileName);if(empty)delete result[name]}else result[name]=newDocument[name];// Handle attachment removes or replacements.
-if(oldDocument&&oldDocument.hasOwnProperty('_attachments')&&oldDocument._attachments)this._handleAttachmentChanges(result,oldDocument._attachments,fileTypeReplacement,untouchedAttachments);return result}})||_class5);// IgnoreTypeCheck
-/**
- * Checks if given reference is defined.
- */let GenericIsDefinedPipe/* implements PipeTransform*/=exports.GenericIsDefinedPipe=(_dec4=(0,_core.Pipe)({name:'genericIsDefined'}),_dec4(_class6=class GenericIsDefinedPipe{/**
-     * Performs the actual comparison.
-     * @param object - Object to compare against "undefined" or "null".
-     * @param nullIsUndefined - Indicates weather "null" should be handles as
-     * "undefined".
-     * @returns The comparison result.
-     */transform(object,nullIsUndefined=false){return!(object===undefined||nullIsUndefined&&object===null)}})||_class6);// IgnoreTypeCheck
-/**
- * Retrieves a matching filename by given filename prefix.
- */let GenericGetFilenameByPrefixPipe/* implements PipeTransform*/=exports.GenericGetFilenameByPrefixPipe=(_dec5=(0,_core.Pipe)({name:'genericGetFilenameByPrefix'}),_dec5(_class7=class GenericGetFilenameByPrefixPipe{/**
-     * Performs the actual transformations process.
-     * @param attachments - Documents attachments object to determine file with
-     * matching file name prefix.
-     * @param prefix - Prefix or nothing to search for. If nothing given first
-     * file name will be returned.
-     * @returns Matching file name or null if no file matches.
-     */transform(attachments,prefix){if(prefix){for(const name in attachments)if(attachments.hasOwnProperty(name)&&name.startsWith(prefix))return name}else{const keys=Object.keys(attachments);if(keys.length)return keys[0]}return null}})||_class7);// IgnoreTypeCheck
-/**
- * Returns a copy of given object where each item was processed through given
- * function.
- * @property injector - Pipe specific injector to determine pipe dynamically at
- * runtime.
- */let GenericMapPipe/* implements PipeTransform*/=exports.GenericMapPipe=(_dec6=(0,_core.Pipe)({name:'genericMap'}),_dec6(_class8=class GenericMapPipe{/**
-     * Injects the injector and saves as instance property.
-     * @param injector - Pipe injector service instance.
-     * @returns Nothing.
-     */constructor(injector){this.injector=this.injector;this.injector=injector}/**
-     * Performs the actual transformation.
-     * @param object - Iterable item where given pipe should be applied to each
-     * value.
-     * @param pipeName - Pipe to apply to each value.
-     * @param additionalArguments - All additional arguments will be forwarded
-     * to given pipe (after the actual value).
-     * @returns Given transform copied object.
-     */transform(object,pipeName,...additionalArguments){const pipe=this.injector.get(pipeName);if(Array.isArray(object)){const result=[];for(const item of object)result.push(pipe.transform(item,...additionalArguments));return result}const result={};for(const key in object)if(object.hasOwnProperty(key))result[key]=pipe.transform.transform(object[key],key,...additionalArguments);return result}})||_class8);// IgnoreTypeCheck
-Reflect.defineMetadata('design:paramtypes',[_core.Injector],GenericMapPipe);/**
- * Determines type of given object.
- */let GenericTypePipe/* implements PipeTransform*/=exports.GenericTypePipe=(_dec7=(0,_core.Pipe)({name:'genericType'}),_dec7(_class10=class GenericTypePipe{/**
-     * Returns type of given object.
-     * @param object - Object to determine type of.
-     * @returns Type name.
-     */transform(object){return typeof object}})||_class10);// / endregion
-// region string
-// IgnoreTypeCheck
-/**
- * Forwards javaScript's native "stringEndsWith" method.
- */let GenericStringEndsWithPipe/* implements PipeTransform*/=exports.GenericStringEndsWithPipe=(_dec8=(0,_core.Pipe)({name:'genericStringEndsWith'}),_dec8(_class11=class GenericStringEndsWithPipe{/**
-     * Performs the actual indicator method.
-     * @param string - To check.
-     * @param needle - Suffix to search for.
-     * @returns The boolean result.
-     */transform(string,needle){return typeof string==='string'&&typeof needle==='string'&&string.endsWith(needle)}})||_class11);// IgnoreTypeCheck
-/**
- * Determines if given string has a time indicating suffix.
- */let GenericStringHasTimeSuffixPipe/* implements PipeTransform*/=exports.GenericStringHasTimeSuffixPipe=(_dec9=(0,_core.Pipe)({name:'genericStringHasTimeSuffix'}),_dec9(_class12=class GenericStringHasTimeSuffixPipe{/**
-     * Performs the actual string suffix check.
-     * @param string - To search in.
-     * @returns The boolean result.
-     */transform(string){if(typeof string!=='string')return false;return string.endsWith('Date')||string.endsWith('Time')||string==='timestamp'}})||_class12);// IgnoreTypeCheck
-/**
- * Tests if given pattern matches against given subject.
- */let GenericStringMatchPipe/* implements PipeTransform*/=exports.GenericStringMatchPipe=(_dec10=(0,_core.Pipe)({name:'genericStringMatch'}),_dec10(_class13=class GenericStringMatchPipe{/**
-     * Performs the actual matching.
-     * @param pattern - String or regular expression to search for.
-     * @param subject - String to search in.
-     * @param modifier - Regular expression modifier (second argument to the
-     * "RegExp" constructor).
-     * @returns Boolean test result.
-     */transform(pattern,subject,modifier=''){// IgnoreTypeCheck
-return new RegExp(pattern,modifier).test(subject)}})||_class13);// IgnoreTypeCheck
-/**
- * Provides javascript's native string replacement method as pipe.
- */let GenericStringReplacePipe/* implements PipeTransform*/=exports.GenericStringReplacePipe=(_dec11=(0,_core.Pipe)({name:'genericStringReplace'}),_dec11(_class14=class GenericStringReplacePipe{/**
-     * Performs the actual replacement.
-     * @param string - String to replace content.
-     * @param search - String or regular expression to us as matcher.
-     * @param replacement - String to replace with matching parts in given
-     * "string".
-     * @param modifier - Regular expression modifier (second argument to the
-     * "RegExp" constructor).
-     * @returns A new string with replacements done.
-     */transform(string,search,replacement='',modifier='g'){// IgnoreTypeCheck
-return string.replace(new RegExp(search,modifier),replacement)}})||_class14);// IgnoreTypeCheck
-/**
- * Returns given string if it matches given pattern.
- */let GenericStringShowIfPatternMatchesPipe/* implements PipeTransform*/=exports.GenericStringShowIfPatternMatchesPipe=(_dec12=(0,_core.Pipe)({name:'genericStringShowIfPatternMatches'}),_dec12(_class15=class GenericStringShowIfPatternMatchesPipe{/**
-     * Performs the actual matching.
-     * @param string - String to replace content.
-     * @param pattern - String or regular expression to us as matcher.
-     * @param invert - Indicates weather given string should be shown if given
-     * pattern matches or not.
-     * @param modifier - Regular expression modifier (second argument to the
-     * "RegExp" constructor).
-     * @returns Given string if matching indicator was successful.
-     */transform(string,pattern,invert=false,modifier=''){// IgnoreTypeCheck
-let indicator=new RegExp(pattern,modifier).test(string);if(invert)indicator=!indicator;return indicator?string:''}})||_class15);// IgnoreTypeCheck
-/**
- * Forwards javascript's native "stringStartsWith" method.
- */let GenericStringStartsWithPipe/* implements PipeTransform*/=exports.GenericStringStartsWithPipe=(_dec13=(0,_core.Pipe)({name:'genericStringStartsWith'}),_dec13(_class16=class GenericStringStartsWithPipe{/**
-     * Performs the actual indicator method.
-     * @param string - To check.
-     * @param needle - Prefix to search for.
-     * @returns The boolean result.
-     */transform(string,needle){return typeof string==='string'&&typeof needle==='string'&&string.startsWith(needle)}})||_class16);// IgnoreTypeCheck
-/**
- * Returns a matched part of given subject with given pattern. Default is the
- * whole (zero) matched part.
- */let GenericStringSliceMatchPipe/* implements PipeTransform*/=exports.GenericStringSliceMatchPipe=(_dec14=(0,_core.Pipe)({name:'genericStringSliceMatch'}),_dec14(_class17=class GenericStringSliceMatchPipe{/**
-     * Performs the actual matching.
-     * @param subject - String to search in.
-     * @param pattern - String or regular expression to search for.
-     * @param index - Match group to extract.
-     * @param modifier - Regular expression modifier (second argument to the
-     * "RegExp" constructor).
-     * @returns Matching group.
-     */transform(subject,pattern,index=0,modifier=''){if(typeof subject==='string'){const match=subject.match(new RegExp(// IgnoreTypeCheck
-pattern,modifier));if(match&&typeof match[index]==='string')return match[index]}return''}})||_class17);// / endregion
-// / region number
-// IgnoreTypeCheck
-/**
- * Returns part in percent of all.
- */let GenericNumberPercentPipe/* implements PipeTransform*/=exports.GenericNumberPercentPipe=(_dec15=(0,_core.Pipe)({name:'genericNumberPercent'}),_dec15(_class18=class GenericNumberPercentPipe{/**
-     * Performs the actual calculation.
-     * @param part - Part to divide "all" through.
-     * @param all - Reference value to calculate part of.
-     * @returns The calculated part.
-     */transform(part,all){return part/all*100}})||_class18);// / endregion
-// endregion
-const GenericArrayMakeRangePipe=module.exports.GenericArrayMakeRangePipe;const GenericStringEscapeRegularExpressionsPipe=module.exports.GenericStringEscapeRegularExpressionsPipe;const GenericExtendObjectPipe=module.exports.GenericExtendObjectPipe;const GenericRepresentObjectPipe=module.exports.GenericRepresentObjectPipe;const GenericStringFormatPipe=module.exports.GenericStringFormatPipe;// region services
-// IgnoreTypeCheck
-/**
- * A generic guard which prevents from switching to route if its component's
- * "canDeactivate()" method returns "false", a promise or observable wrapping
- * a boolean.
- */let GenericCanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/=exports.GenericCanDeactivateRouteLeaveGuard=(_dec16=(0,_core.Injectable)(),_dec16(_class19=class GenericCanDeactivateRouteLeaveGuard{/**
-     * Calls the component specific "canDeactivate()" method.
-     * @param component - Component instance of currently selected route.
-     * @returns A boolean, promise or observable which wraps the indicator.
-     */canDeactivate(component){return'canDeactivate'in component?component.canDeactivate():true}})||_class19);// IgnoreTypeCheck
-let/**
- * A generic database connector.
- * @property connection - The current database connection instance.
- * @property database - The entire database constructor.
- * @property extendObject - Holds the extend object's pipe transformation
- * method.
- * @property middlewares - Mapping of post and pre callback arrays to trigger
- * before or after each database transaction.
- * @property synchronisation - This synchronisation instance represents the
- * active synchronisation process if a local offline database is in use.
- * @property stringFormat - Holds the string format's pipe transformation
- * method.
- */GenericDataService=exports.GenericDataService=(_dec17=(0,_core.Injectable)(),_dec17(_class20=(_temp=_class21=class GenericDataService{/**
-     * Creates the database constructor applies all plugins instantiates
-     * the connection instance and registers all middlewares.
-     * @param extendObject - Injected extend object pipe instance.
-     * @param initialData - Injected initial data service instance.
-     * @param stringFormat - Injected string format pipe instance.
-     * @returns Nothing.
-     */constructor(extendObject,initialData,stringFormat){this.connection=this.connection;this.configuration=this.configuration;this.database=this.database;this.extendObject=this.extendObject;this.middlewares={post:{},pre:{}};this.stringFormat=this.stringFormat;this.synchronisation=this.synchronisation;this.database=_pouchdb2.default.plugin(_pouchdbFind2.default).plugin(_pouchdbValidation2.default);this.extendObject=extendObject.transform.bind(extendObject);this.configuration=initialData.configuration;this.stringFormat=stringFormat.transform.bind(stringFormat);for(const plugin of this.configuration.database.plugins||[])this.database=this.database.plugin(plugin);this.initialize()}/**
-     * Initializes database connection and synchronisation if needed.
-     * @returns Nothing.
-     */initialize(){var _this=this;const type=this.configuration.database.local?'local':this.configuration.database.url;this.connection=new this.database(this.stringFormat(type,'')+(/^[a-z]+:\/\/.+$/g.test(type)?`/${this.configuration.name||'generic'}`:''),this.extendObject(true,{skip_setup:true},this.configuration.database.options||{}));for(const name in this.connection)if(this.constructor.wrappableMethodNames.includes(name)&&typeof this.connection[name]==='function'){const method=this.connection[name];this.connection[name]=function(...parameter){for(const methodName of[name,'_all'])if(_this.middlewares.pre.hasOwnProperty(methodName))for(const interceptor of _this.middlewares.pre[methodName])parameter=interceptor.apply(_this.connection,parameter.concat(methodName==='_all'?name:[]));let result=method.apply(_this.connection,parameter);for(const methodName of[name,'_all'])if(_this.middlewares.post.hasOwnProperty(methodName))for(const interceptor of _this.middlewares.post[methodName])result=interceptor.call(_this.connection,result,...parameter.concat(methodName==='_all'?name:[]));return result}}this.connection.installValidationMethods();if(this.configuration.database.local)this.synchronisation=_pouchdb2.default.sync(this.stringFormat(this.configuration.database.url,`${this.configuration.database.user.name}:`+`${this.configuration.database.user.password}@`)+`/${this.configuration.name}`,'local',{live:true,retry:true}).on('change',function(info){return console.info('change',info)}).on('paused',function(error){return console.info('paused',error)}).on('active',function(){return console.info('active')}).on('denied',function(error){return console.warn('denied',error)}).on('complete',function(info){return console.info('complete',info)}).on('error',function(error){return console.error('error',error)})}/**
-     * Creates a database index.
-     * @param parameter - All parameter will be forwarded to the underlining
-     * pouchdb-find's "createIndex()" method.
-     * @returns Whatever pouchdb-find's "createIndex()" method returns.
-     */createIndex(...parameter){return this.connection.createIndex(...parameter)}/**
-     * Removes current active database.
-     * @param parameter - All parameter will be forwarded to the underlining
-     * pouchdb's "destroy()" method.
-     * @returns Whatever pouchdb's "destroy()" method returns.
-     */destroy(...parameter){if(this.synchronisation)this.synchronisation.cancel();const result=this.connection.destroy(...parameter);this.middlewares={post:{},pre:{}};return result}/**
-     * Retrieves a database resource determined by given selector.
-     * @param selector - Selector object in mango.
-     * @param options - Options to use during selecting items.
-     * @returns A promise with resulting array of retrieved resources.
-     */find(selector,options={}){var _this2=this;return _asyncToGenerator(function*(){return(yield _this2.connection.find(_this2.extendObject(true,{selector},options))).docs})()}/**
-     * Retrieves a resource by id.
-     * @param parameter - All parameter will be forwarded to the underlining
-     * pouchdb's "get()" method.
-     * @returns Whatever pouchdb's "get()" method returns.
-     */get(...parameter){return this.connection.get(...parameter)}/**
-     * Creates or updates given data.
-     * @param parameter - All parameter will be forwarded to the underlining
-     * pouchdb's "put()" method.
-     * @returns Whatever pouchdb's "put()" method returns.
-     */put(...parameter){return this.connection.put(...parameter)}/**
-     * Registers a new middleware.
-     * @param names - Event names to intercept.
-     * @param callback - Callback function to trigger when specified event
-     * happens.
-     * @param type - Specifies weather callback should be triggered before or
-     * after specified event has happened.
-     * @returns A cancel function which will deregister given middleware.
-     */register(names,callback,type='post'){var _this3=this;if(!Array.isArray(names))names=[names];for(const name of names){if(!this.middlewares[type].hasOwnProperty(name))this.middlewares[type][name]=[];this.middlewares[type][name].push(callback)}return function(){for(const name of names){const index=_this3.middlewares[type][name].indexOf(callback);if(index!==-1)_this3.middlewares[type][name].splice(index,1);if(_this3.middlewares[type][name].length===0)delete _this3.middlewares[type][name]}}}/**
-     * Removes specified entities in database.
-     * @param parameter - All parameter will be forwarded to the underlining
-     * pouchdb's "remove()" method.
-     * @returns Whatever pouchdb's "remove()" method return.
-     */remove(...parameter){return this.connection.remove(...parameter)}},_class21.wrappableMethodNames=['allDocs','bulkDocs','bulkGet','changes','close','compact','compactDocument','createIndex','deleteIndexs','destroy','find','get','getAttachment','getIndexes','info','post','put','putAttachment','query','remove','removeAttachment','sync'],_temp))||_class20);// IgnoreTypeCheck
-Reflect.defineMetadata('design:paramtypes',[GenericExtendObjectPipe,GenericInitialDataService,GenericStringFormatPipe],GenericDataService);/**
- * Auto generates a components scope environment for a specified model.
- * @property configuration - Holds the configuration service instance.
- * @property data - Holds the data exchange service instance.
- * @property extendObject - Holds the extend object's pipe transformation
- * method.
- * @property tools - Holds the tools class from the tools service.
- */let GenericDataScopeService=exports.GenericDataScopeService=(_dec18=(0,_core.Injectable)(),_dec18(_class22=class GenericDataScopeService{/**
-     * Saves alle needed services as property values.
-     * @param data - Injected data service instance.
-     * @param extendObject - Injected extend object pipe instance.
-     * @param initialData - Injected initial data service instance.
-     * @param tools - Injected tools service instance.
-     * @returns Nothing.
-     */constructor(data,extendObject,initialData,tools){this.configuration=this.configuration;this.data=this.data;this.extendObject=this.extendObject;this.tools=this.tools;this.configuration=initialData.configuration;this.data=data;this.extendObject=extendObject.transform.bind(extendObject);this.tools=tools.tools}/**
-     * Retrieves needed data for given scope.
-     * @param scope - Scope to use to determine which data is needed.
-     * @returns Resolved data.
-     */get(scope){const result={};for(const key in scope)if(scope.hasOwnProperty(key)&&!key.startsWith('_')&&typeof scope[key]==='object'&&scope[key]!==null&&'hasOwnProperty'in scope&&scope[key].hasOwnProperty('value'))result[key]=scope[key].value;if(scope.hasOwnProperty('_attachments')&&scope._attachments)for(const key in scope._attachments)if(scope._attachments.hasOwnProperty(key)&&typeof scope._attachments[key]==='object'&&scope._attachments[key]!==null&&'hasOwnProperty'in scope._attachments&&scope._attachments[key].hasOwnProperty('value')&&scope._attachments[key].value){if(!result._attachments)result._attachments={};result._attachments[scope._attachments[key].value.name]=scope._attachments[key].value}for(const name of['_id','_rev','-type'])if(scope.hasOwnProperty(name))result[name]=scope[name];return result}/**
-     * Generates a scope object for given model with given property names and
-     * property value mapping data.
-     * @param modelName - Name of model to generate scope for.
-     * @param propertyNames - List of property names to generate meta data in
-     * scope for. If "null" is given all properties in given model will be
-     * taken into account.
-     * @param data - Data to use for given properties.
-     * @returns The generated scope object.
-     */generate(modelName,propertyNames=null,data={}){const modelSpecification=this.configuration.modelConfiguration.models[modelName];for(const name in modelSpecification)if(modelSpecification.hasOwnProperty(name))if(name==='_attachments'){for(const fileName in modelSpecification[name])if(modelSpecification[name].hasOwnProperty(fileName))modelSpecification[name][fileName]=this.extendObject(true,this.tools.copyLimitedRecursively(this.configuration.modelConfiguration.default.propertySpecification),modelSpecification[name][fileName])}else modelSpecification[name]=this.extendObject(true,this.tools.copyLimitedRecursively(this.configuration.modelConfiguration.default.propertySpecification),modelSpecification[name]);if(!propertyNames)propertyNames=Object.keys(modelSpecification);const result={};for(const name of propertyNames){if(modelSpecification.hasOwnProperty(name))result[name]=this.tools.copyLimitedRecursively(modelSpecification[name]);else result[name]={};if(name==='_attachments'){for(const type in modelSpecification[name])if(modelSpecification[name].hasOwnProperty(type)){result[name][type].name=type;result[name][type].value=null;if(Object.keys(data).length===0)for(const hookType of['onCreateExpression','onCreateExecution'])if(result[name][type].hasOwnProperty(hookType)&&result[name][type][hookType]){result[name][type].value=new Function('newDocument','oldDocument','userContext','securitySettings','name','models','modelConfiguration','serialize','modelName','model','propertySpecification',(hookType.endsWith('Expression')?'return ':'')+result[name][type][hookType])(data,null,{},{},type,this.configuration.modelConfiguration.models,modelSpecification,function(object){return JSON.stringify(object,null,4)},modelName,modelSpecification,result[name][type]);if(result[name][type].hasOwnProperty('value')&&result[name][type].value===undefined)delete result[name][type].value}let fileFound=false;if(data.hasOwnProperty(name)&&![undefined,null].includes(data[name]))for(const fileName in data[name])if(result[name].hasOwnProperty(type)&&new RegExp(type).test(fileName)){fileFound=true;result[name][type].value=data[name][fileName];result[name][type].value.name=fileName;break}if(!fileFound&&result[name][type].hasOwnProperty('default')&&![undefined,null].includes(result[name][type].default))result[name][type].value=result[name][type].default}}else if(!name.startsWith('_')){result[name].name=name;result[name].value=null;if(Object.keys(data).length===0)for(const type of['onCreateExpression','onCreateExecution'])if(result[name].hasOwnProperty(type)&&result[name][type])result[name].value=new Function('newDocument','oldDocument','userContext','securitySettings','name','models','modelConfiguration','serialize','modelName','model','propertySpecification',(type.endsWith('Expression')?'return ':'')+result[name][type])(data,null,{},{},name,this.configuration.modelConfiguration.models,this.configuration.modelConfiguration,function(object){return JSON.stringify(object,null,4)},modelName,modelSpecification,result[name]);if(data.hasOwnProperty(name)&&![undefined,null].includes(data[name]))result[name].value=data[name];else if(result[name].hasOwnProperty('default')&&![undefined,null].includes(result[name].default))result[name].value=result[name].default;else if(result[name].hasOwnProperty('selection')&&Array.isArray(result[name].selection)&&result[name].selection.length)result[name].value=result[name].selection[0];if(!(result[name].value instanceof Date)&&(name.endsWith('Time')||name.endsWith('Date')))result[name].value=new Date(result[name].value)}}for(const name of['_id','_rev','-type'])if(data.hasOwnProperty(name))result[name]=data[name];else if(name==='-type')result[name]=modelName;result._metaData={submitted:false};return result}/**
-     * Useful to sets route specific data in a resolver.
-     * @param modelName - Name of model to retrieve data from.
-     * @param scope - Scope or array of scopes to extend and set retrieved
-     * values in.
-     * @param id - ID of an entity to retrieve data from.
-     * @param propertyNames - List of property names to retrieve data from.
-     * @param options - To use for retrieving needed data from data service.
-     * @returns A promise wrapping requested data.
-     */set(modelName,scope=null,id=null,propertyNames=null,options={}){var _this4=this;return _asyncToGenerator(function*(){if(propertyNames&&!options.hasOwnProperty('fields'))options.fields=propertyNames;let data={};if(id){const result=yield _this4.data.find({'-type':modelName,_id:id},options);if(result.length===0)throw new Error(`Document with given id "${id}" isn't available.`);data=result[0]}const result=_this4.generate(modelName,propertyNames,data);if(scope){if(!Array.isArray(scope))scope=[scope];for(const object of scope)_this4.extendObject(true,object,result);return result}return result})()}})||_class22);// / region abstract
-/**
- * Helper class to extend from to have some basic methods to deal with database
- * entities.
- * @property _type - Model name to handle /should be overwritten in concrete
- * implementations.
- * @property data - Holds currently retrieved data.
- * @property escapeRegularExpressions - Holds the escape regular expressions's
- * pipe transformation method.
- * @property extendObject - Holds the extend object's pipe transformation
- * method.
- * @property models - Saves a mapping from all available model names to their
- * specification.
- * @property relevantKeys - Saves a list of relevant key names to take into
- * account during resolving.
- */Reflect.defineMetadata('design:paramtypes',[GenericDataService,GenericExtendObjectPipe,GenericInitialDataService,GenericToolsService],GenericDataScopeService);let AbstractResolver/* implements Resolve<PlainObject>*/=exports.AbstractResolver=class AbstractResolver{/**
-     * Sets all needed injected services as instance properties.
-     * @param data - Injected data service instance.
-     * @param escapeRegularExpressions - Injected escape regular expression
-     * pipe instance.
-     * @param extendObject - Injected extend object pipe instance.
-     * @param initialData - Injected initial data service instance.
-     * @returns Nothing.
-     */constructor(data,escapeRegularExpressions,extendObject,initialData){this._type='Item';this.data=this.data;this.escapeRegularExpressions=this.escapeRegularExpressions;this.extendObject=this.extendObject;this.models=this.models;this.relevantKeys=null;this.data=data;this.escapeRegularExpressions=escapeRegularExpressions.transform.bind(escapeRegularExpressions);this.extendObject=extendObject.transform.bind(extendObject);this.models=initialData.configuration.modelConfiguration.models}/**
-     * List items which matches given filter criteria.
-     * @param sort - List of items.
-     * @param page - Page to show.
-     * @param limit - Maximal number of entities to retrieve.
-     * @param searchTerm - String query to search for.
-     * @param additionalSelectors - Custom filter criteria.
-     * @returns A promise wrapping retrieved data.
-     */list(sort=[{_id:'asc'}],page=1,limit=10,searchTerm='',additionalSelectors={}){var _this5=this;if(!this.relevantKeys)this.relevantKeys=Object.keys(this.models[this._type]).filter(function(name){return!name.startsWith('_')&&[undefined,'string'].includes(_this5.models[_this5._type][name].type)});const selector={'-type':this._type};if(searchTerm||Object.keys(additionalSelectors).length){if(sort.length)selector[Object.keys(sort[0])[0]]={$gt:null};selector.$or=[];for(const name of this.relevantKeys)selector.$or.push({[name]:{$regex:searchTerm}})}/*
-            NOTE: We can't use "limit" here since we want to provide total data
-            set size for pagination.
-        */const options={skip:(page-1)*limit};if(options.skip===0)delete options.skip;if(sort.length)options.sort=[{'-type':'asc'}].concat(sort);return this.data.find(this.extendObject(true,selector,additionalSelectors),options)}/* eslint-disable no-unused-vars *//**
-     * Implements the resolver method which converts route informations into
-     * "list()" method parameter and forward their result as result in an
-     * observable.
-     * @param route - Current route informations.
-     * @param state - Current state informations.
-     * @returns Observable with data filtered by current route informations.
-     */resolve(route,state){/* eslint-enable no-unused-vars */let searchTerm='';if('searchTerm'in route.params){const term=decodeURIComponent(route.params.searchTerm);if(term.startsWith('exact-'))searchTerm=this.escapeRegularExpressions(term.substring('exact-'.length));else if(term.startsWith('regex-')){searchTerm=term.substring('regex-'.length);try{new RegExp(searchTerm)}catch(error){searchTerm=''}}}let sort=[];if('sort'in route.params)sort=route.params.sort.split(',').map(function(name){const lastIndex=name.lastIndexOf('-');let type='asc';if(lastIndex!==-1){name=name.substring(0,lastIndex);type=name.substring(lastIndex+1)||type}return{[name]:type}});return _Observable.Observable.fromPromise(this.list(sort,parseInt(route.params.page||1),parseInt(route.params.limit||10),searchTerm))}};// / endregion
-// endregion
-// region components
-// / region abstract
-/**
- * Generic input component.
- * @property extendObject - Holds the extend object's pipe transformation
- * @property model - Holds model informations including actual value and
- * metadata.
- * @property modelChange - Model event emitter emitting events on each model
- * change.
- * @property showValidationErrorMessages - Indicates weather validation errors
- * should be suppressed or be shown automatically. Useful to prevent error
- * component from showing error messages before the user has submit the form.
- */Reflect.defineMetadata('design:paramtypes',[GenericDataService,GenericStringEscapeRegularExpressionsPipe,GenericExtendObjectPipe,GenericInitialDataService],AbstractResolver);let AbstractInputComponent=exports.AbstractInputComponent=(_dec19=(0,_core.Input)(),_dec20=(0,_core.Output)(),_dec21=(0,_core.Input)(),(_class25=class AbstractInputComponent{/**
-     * Sets needed services as property values.
-     * @param extendObject - Injected extend object pipe instance.
-     * @returns Nothing.
-     */constructor(extendObject){this._extendObject=this._extendObject;_initDefineProp(this,'model',_descriptor,this);_initDefineProp(this,'modelChange',_descriptor2,this);_initDefineProp(this,'showValidationErrorMessages',_descriptor3,this);this._extendObject=extendObject.transform.bind(extendObject)}/**
-     * Triggers after input values have been resolved.
-     * @returns Nothing.
-     */ngOnInit(){this._extendObject(this.model,this._extendObject({disabled:false,maximum:Infinity,minimum:this.model.type==='string'?0:-Infinity,nullable:true,regularExpressionPattern:'.*',state:{},type:'string'},this.model))}/**
-     * Triggers when ever a change to current model happens inside this
-     * component.
-     * @param state - Saves the current model state.
-     * @returns Nothing.
-     */onChange(state){this.model.state=state;this.modelChange.emit(this.model)}},(_descriptor=_applyDecoratedDescriptor(_class25.prototype,'model',[_dec19],{enumerable:true,initializer:function initializer(){return{}}}),_descriptor2=_applyDecoratedDescriptor(_class25.prototype,'modelChange',[_dec20],{enumerable:true,initializer:function initializer(){return new _core.EventEmitter}}),_descriptor3=_applyDecoratedDescriptor(_class25.prototype,'showValidationErrorMessages',[_dec21],{enumerable:true,initializer:function initializer(){return false}})),_class25));/**
- * A generic abstract component to edit, search, navigate and filter a list of
- * entities.
- * @property _itemPath - Routing path to a specific item.
- * @property _itemsPath - Routing path to the items overview.
- * @property _route - Current route configuration.
- * @property _router - Router service instance.
- * @property _tools - Tools service instance property.
- * @property items - Current list of visible items.
- * @property limit - Maximal number of visible items.
- * @property page - Current page number of each item list part.
- * @property regularExpression - Indicator weather searching via regular
- * expressions should be used.
- * @property searchTerm - Search string to filter visible item list.
- * @property searchTermStream - Search term stream which debounces and caches
- * search results.
- * @property selectedItems - List of currently selected items for group editing
- * purposes.
- * @property sort - Sorting informations.
- */Reflect.defineMetadata('design:paramtypes',[GenericExtendObjectPipe],AbstractInputComponent);let AbstractItemsComponent=exports.AbstractItemsComponent=class AbstractItemsComponent{/**
-     * Saves injected service instances as instance properties.
-     * @param route - Current route configuration.
-     * @param router - Injected router service instance.
-     * @param tools - Injected tools service instance.
-     * @returns Nothing.
-     */constructor(route,router,tools){var _this6=this;this._itemPath='admin/item';this._itemsPath='admin/items';this._route=this._route;this._router=this._router;this._tools=this._tools;this.items=this.items;this.limit=this.limit;this.page=this.page;this.regularExpression=false;this.searchTerm='';this.searchTermStream=new _rxjs.Subject;this.selectedItems=new Set;this.sort={_id:'asc'};this._route=route;this._router=router;this._tools=tools.tools;this._route.params.subscribe(function(data){_this6.page=parseInt(data.page);_this6.limit=parseInt(data.limit);const match=/(regex|exact)-(.*)/.exec(data.searchTerm);if(match){_this6.regularExpression=match[1]==='regex';_this6.searchTerm=match[2]}});this._route.data.subscribe(function(data){_this6.limit=Math.max(1,_this6.limit||1);const total=data.items.length+(Math.max(1,_this6.page||1)-1)*_this6.limit;if(data.items.length>_this6.limit)data.items.splice(_this6.limit,data.items.length-_this6.limit);_this6.items=data.items;_this6.items.total=total;if(_this6.applyPageConstraints())_this6._tools.timeout(function(){return _this6.update()})});this.searchTermStream.debounceTime(200).distinctUntilChanged().map(function(){_this6.page=1;return _this6.update()}).subscribe()}/**
-     * Updates constraints between limit, page number and number of total
-     * available items.
-     * @returns Nothing.
-     */applyPageConstraints(){const oldPage=this.page;const oldLimit=this.limit;this.limit=Math.max(1,this.limit||1);this.page=Math.max(1,Math.min(this.page,Math.ceil(this.items.total/this.limit)));return this.page!==oldPage||this.limit!==oldLimit}/* eslint-disable no-unused-vars *//**
-     * Deletes item which has same id provided by the id property through given
-     * event object.
-     * @param event - Event object which triggers action.
-     * @returns Nothing.
-     */delete(event){this.update(true)}/* eslint-enable no-unused-vars *//**
-     * Removes all items currently selected and clear current selection.
-     * @returns Nothing.
-     */deleteSelectedItems(){this.update(true)}/**
-     * Switches section to item which has given id.
-     * @param itemID - ID of item to switch to.
-     * @returns Nothing.
-     */goToItem(itemID){this._router.navigate([this._itemPath,itemID])}/**
-     * Applies current filter criteria to current visible item set.
-     * @param reload - Indicates weather a simple reload should be made because
-     * a changed list of available items is expected for example.
-     * @returns A boolean indicating weather route change was successful.
-     */update(reload=false){this.applyPageConstraints();if(reload)/*
-                NOTE: Will be normalised to "1" after route reload (hack to
-                enforce route reloading).
-            */this.page=0;let sort='';for(const name in this.sort)if(this.sort.hasOwnProperty(name))sort+=`${sort?',':''}${name}-${this.sort[name]}`;return this._router.navigate([this._itemsPath,sort,this.page,this.limit,`${this.regularExpression?'regex':'exact'}-`+encodeURIComponent(this.searchTerm)])}/**
-     * Applies current search term to the search term stream.
-     * @returns Nothing.
-     */updateSearch(){this.searchTermStream.next(this.searchTerm)}};// / endregion
-// // region text
-/* eslint-disable max-len */Reflect.defineMetadata('design:paramtypes',[_router.ActivatedRoute,_router.Router,GenericToolsService],AbstractItemsComponent);const propertyInputContent=`
-    [disabled]="model.disabled || model.mutable === false || model.writable === false"
-    [maxlength]="model.type === 'string' ? model.maximum : null"
-    [minlength]="model.type === 'string' ? model.minimum : null"
-    [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
-    [placeholder]="model.description || model.name"
-    [required]="!model.nullable"
-    [(ngModel)]="model.value"
-    #state="ngModel"
-    #data
-    (change)="onChange(state)"
-`;const mdInputContent=`
-    <span
-        md-suffix (click)="showDeclaration = !showDeclaration" title="info"
-        *ngIf="model.declaration"
-    >[i]</span>
-    <md-hint align="start">
-        <span *ngIf="showValidationErrorMessages">
-            <span *ngIf="model.state.errors?.required">
-                Bitte füllen Sie das Feld "{{model.description || model.name}}"
-                aus.
-            </span>
-            <span *ngIf="model.state.errors?.maxlength">
-                Bitte geben Sie maximal {{model.maximum}} Zeichen ein.
-            </span>
-            <span *ngIf="model.state.errors?.minlength">
-                Bitte geben Sie mindestens {{model.minimum}} Zeichen ein.
-            </span>
-            <span *ngIf="model.state.errors?.max">
-                Bitte geben Sie eine Zahl kleiner oder gleich {{model.maximum}}
-                ein.
-            </span>
-            <span *ngIf="model.state.errors?.min">
-                Bitte geben Sie eine Zahl großer oder gleich {{model.minimum}}
-                ein.
-            </span>
-            <span *ngIf="model.state.errors?.pattern">
-                Bitte geben Sie eine Zeinefolge ein die dem regulären Ausdruck
-                "{{model.regularExpressionPattern}}" entspricht.
+                [endShowValidationErrorMessages]="endShowValidationErrorMessages"
+                [startShowValidationErrorMessages]="startShowValidationErrorMessages"
+            >
+                <ng-container *ngIf="contentTemplate; else fallback">
+                    <ng-container
+                        *ngTemplateOutlet="contentTemplate; context: {\$implicit:interval}"
+                    ></ng-container>
+                </ng-container>
+            </generic-interval-input>
+            <a
+                class="remove"
+                (click)="$event.preventDefault(); $event.stopPropagation(); remove(interval)"
+                href=""
+                *ngIf="model.minimumNumber === null || model.value.length > model.minimumNumber"
+            >-</a>
+        </div>
+        <a
+            class="add"
+            (click)="$event.preventDefault(); $event.stopPropagation(); add()"
+            href=""
+            *ngIf="model.maximumNumber === null || (model.value?.length || 0) < model.maximumNumber"
+        >+</a>
+        <ng-template #fallback>--</ng-template>
+    `}),Aa=(0,bo.Input)(),ka=(0,bo.ContentChild)(bo.TemplateRef),La=(0,bo.Input)(),qa=(0,bo.Input)(),Fa=(0,bo.Input)(),Ua=(0,bo.Input)(),Wa=(0,bo.Input)(),Ga=(0,bo.Input)(),Ba=(0,bo.Input)(),Va=(0,bo.Input)(),$a=(0,bo.Input)(),Ha=(0,bo.Input)(),Ka=(0,bo.Input)(),Ya=(0,bo.Input)(),Za=(0,bo.Input)(),Ja=(0,bo.Input)(),Qa=(0,bo.Input)(),Xa=(0,bo.Input)(),en=(0,bo.Input)(),tn=(0,bo.Input)(),an=(0,bo.Input)(),nn=(0,bo.Input)(),rn=(0,bo.Input)(),on=(0,bo.Input)(),sn=(0,bo.Input)(),mn=(0,bo.Input)(),ln=(0,bo.Output)(),Ma(dn=(pn=class{constructor(e,t){i(this,'additionalObjectData',cn,this),i(this,'contentTemplate',un,this),i(this,'description',fn,this),i(this,'endDeclaration',gn,this),i(this,'startDeclaration',yn,this),i(this,'endDescription',bn,this),i(this,'startDescription',hn,this),i(this,'endDisabled',xn,this),i(this,'startDisabled',vn,this),i(this,'endMaximum',Nn,this),i(this,'startMaximum',Tn,this),i(this,'endMaximumText',Pn,this),i(this,'startMaximumText',In,this),i(this,'endMinimum',_n,this),i(this,'startMinimum',On,this),i(this,'endMinimumText',Sn,this),i(this,'startMinimumText',Cn,this),i(this,'endRequired',wn,this),i(this,'startRequired',Dn,this),i(this,'endRequiredText',En,this),i(this,'startRequiredText',zn,this),i(this,'endShowDeclarationText',jn,this),i(this,'startShowDeclarationText',Rn,this),i(this,'endShowValidationErrorMessages',Mn,this),i(this,'startShowValidationErrorMessages',An,this),i(this,'model',kn,this),i(this,'modelChange',Ln,this),this._dataScope=this._dataScope,this._extendObject=this._extendObject,this._dataScope=e,this._extendObject=t.transform.bind(t)}change(e,t){this.modelChange.emit({value:e,index:t})}ngOnInit(){this.additionalObjectData||(this.additionalObjectData=this._dataScope.generate('_interval')),this.model.value?this.model.value.sort(function(e,t){return e.start.value-t.start.value}):this.model.value=[]}add(e={}){this.model.value||(this.model.value=[]);const t=this.model.value.length?new Date(this.model.value[this.model.value.length-1].end.value).getTime():0;this.model.value.push(this._extendObject(!0,{},this.additionalObjectData,{end:{value:new Date(t+3600000)},start:{value:new Date(t)}},e)),this.modelChange.emit(this.model)}remove(e){const t=this.model.value.indexOf(e);-1!==t&&(this.model.value.splice(t,1),this.modelChange.emit(this.model))}},cn=r(pn.prototype,'additionalObjectData',[Aa],{enumerable:!0,initializer:function(){return this.additionalObjectData}}),un=r(pn.prototype,'contentTemplate',[ka],{enumerable:!0,initializer:function(){return this.contentTemplate}}),fn=r(pn.prototype,'description',[La],{enumerable:!0,initializer:function(){return null}}),gn=r(pn.prototype,'endDeclaration',[qa],{enumerable:!0,initializer:function(){return null}}),yn=r(pn.prototype,'startDeclaration',[Fa],{enumerable:!0,initializer:function(){return null}}),bn=r(pn.prototype,'endDescription',[Ua],{enumerable:!0,initializer:function(){return null}}),hn=r(pn.prototype,'startDescription',[Wa],{enumerable:!0,initializer:function(){return null}}),xn=r(pn.prototype,'endDisabled',[Ga],{enumerable:!0,initializer:function(){return null}}),vn=r(pn.prototype,'startDisabled',[Ba],{enumerable:!0,initializer:function(){return null}}),Nn=r(pn.prototype,'endMaximum',[Va],{enumerable:!0,initializer:function(){return null}}),Tn=r(pn.prototype,'startMaximum',[$a],{enumerable:!0,initializer:function(){return null}}),Pn=r(pn.prototype,'endMaximumText',[Ha],{enumerable:!0,initializer:function(){return'Please give a number less or equal than ${model.maximum}.'}}),In=r(pn.prototype,'startMaximumText',[Ka],{enumerable:!0,initializer:function(){return'Please give a number less or equal than ${model.maximum}.'}}),_n=r(pn.prototype,'endMinimum',[Ya],{enumerable:!0,initializer:function(){return null}}),On=r(pn.prototype,'startMinimum',[Za],{enumerable:!0,initializer:function(){return null}}),Sn=r(pn.prototype,'endMinimumText',[Ja],{enumerable:!0,initializer:function(){return'Please given a number at least or equal to {{model.minimum}}.'}}),Cn=r(pn.prototype,'startMinimumText',[Qa],{enumerable:!0,initializer:function(){return'Please given a number at least or equal to {{model.minimum}}.'}}),wn=r(pn.prototype,'endRequired',[Xa],{enumerable:!0,initializer:function(){return null}}),Dn=r(pn.prototype,'startRequired',[en],{enumerable:!0,initializer:function(){return null}}),En=r(pn.prototype,'endRequiredText',[tn],{enumerable:!0,initializer:function(){return'Please fill this field.'}}),zn=r(pn.prototype,'startRequiredText',[an],{enumerable:!0,initializer:function(){return'Please fill this field.'}}),jn=r(pn.prototype,'endShowDeclarationText',[nn],{enumerable:!0,initializer:function(){return'\u2139'}}),Rn=r(pn.prototype,'startShowDeclarationText',[rn],{enumerable:!0,initializer:function(){return'\u2139'}}),Mn=r(pn.prototype,'endShowValidationErrorMessages',[on],{enumerable:!0,initializer:function(){return!1}}),An=r(pn.prototype,'startShowValidationErrorMessages',[sn],{enumerable:!0,initializer:function(){return!1}}),kn=r(pn.prototype,'model',[mn],{enumerable:!0,initializer:function(){return{value:[]}}}),Ln=r(pn.prototype,'modelChange',[ln],{enumerable:!0,initializer:function(){return new bo.EventEmitter}}),pn))||dn);Reflect.defineMetadata('design:paramtypes',[Es,$o],Ws);let Gs=t.CodeEditorComponent=(qn=(0,bo.Component)({animations:[Os()],changeDetection:bo.ChangeDetectionStrategy[zo],providers:[{provide:xo.NG_VALUE_ACCESSOR,useExisting:(0,bo.forwardRef)(function(){return Gs}),multi:!0}],selector:'code-editor',template:'<textarea #hostDomNode></textarea>'}),Fn=(0,bo.Output)(),Un=(0,bo.Input)(),Wn=(0,bo.Input)(),Gn=(0,bo.Output)(),Bn=(0,bo.ViewChild)('hostDomNode'),Vn=(0,bo.Output)(),$n=(0,bo.Input)(),Hn=(0,bo.Output)(),qn(Kn=(Yn=(ri=ii=class extends ks{constructor(e,t,a){var n;n=super(t),i(this,'blur',Zn,this),this.codeMirror=this.codeMirror,i(this,'configuration',Jn,this),i(this,'disabled',Qn,this),this.extendObject=this.extendObject,i(this,'focus',Xn,this),i(this,'hostDomNode',ei,this),i(this,'initialized',ti,this),this.instance=null,i(this,'model',ai,this),i(this,'modelChange',ni,this),this.tools=this.tools,this.extendObject=e.transform.bind(e),this.tools=a,this.tools.globalContext.CodeMirror?this.codeMirror=this.tools.globalContext.CodeMirror:'object'!=typeof this.constructor.applicationInterfaceLoad&&(this.constructor.applicationInterfaceLoad=Promise.all([new Promise(function(e){return n.tools.$(`<link
+                    href="${Ao.path.base}`+`${Ao.path.cascadingStyleSheet}"
+                    rel="stylesheet"
+                    type="text/css"
+                />`).appendTo('head').on('load',e)}),new Promise(function(e,t){return n.tools.$.ajax({cache:!0,dataType:'script',error:t,success:function(){n.codeMirror=n.tools.globalContext.CodeMirror,e(n.codeMirror)},url:Ao.path.base+Ao.path.script})})]))}ngAfterViewInit(){var e=this;return o(function*(){if(e.codeMirror)yield e.tools.tools.timeout();else try{yield e.constructor.applicationInterfaceLoad}catch(e){throw e}if(e.configuration.mode)if(!e.constructor.modesLoad.hasOwnProperty(e.configuration.mode)){e.constructor.modesLoad[e.configuration.mode]=new Promise(function(t,a){return e.tools.$.ajax({cache:!0,dataType:'script',error:a,success:t,url:e.configuration.path.base+e.configuration.path.mode.replace(/{mode}/g,e.configuration.mode)})});try{yield e.constructor.modesLoad[e.configuration.mode]}catch(e){throw e}}else if(!0!==e.constructor.modesLoad[e.configuration.mode])try{yield e.constructor.modesLoad[e.configuration.mode]}catch(e){throw e}const t=e.extendObject({},e.configuration,{readOnly:null===e.disabled?e.model.disabled||!1===model.mutable||!1===model.writable:e.disabled});delete t.path,e.instance=e.codeMirror.fromTextArea(e.hostDomNode.nativeElement,t),e.instance.setValue(e.model),e.instance.on('blur',function(t,a){return e.blur.emit({event:a,instance:t})}),e.instance.on('change',function(){e.model=e.onChangeCallback(e.import(e.instance.getValue())),e.modelChange.emit(e.model)}),e.instance.on('focus',function(t,a){return e.focus.emit({event:a,instance:t})}),e.initialized.emit(e.codeMirror)})()}export(e,...t){return this.model=e||'',this.instance&&this.instance.setValue(this.model),super.export(e,...t)}setDisabledState(e){this.instance&&this.instance.setOption('readOnly',e)}},ii.modesLoad={},ri),Zn=r(Yn.prototype,'blur',[Fn],{enumerable:!0,initializer:function(){return new bo.EventEmitter}}),Jn=r(Yn.prototype,'configuration',[Un],{enumerable:!0,initializer:function(){return{}}}),Qn=r(Yn.prototype,'disabled',[Wn],{enumerable:!0,initializer:function(){return null}}),Xn=r(Yn.prototype,'focus',[Gn],{enumerable:!0,initializer:function(){return new bo.EventEmitter}}),ei=r(Yn.prototype,'hostDomNode',[Bn],{enumerable:!0,initializer:function(){return this.hostDomNode}}),ti=r(Yn.prototype,'initialized',[Vn],{enumerable:!0,initializer:function(){return new bo.EventEmitter}}),ai=r(Yn.prototype,'model',[$n],{enumerable:!0,initializer:function(){return''}}),ni=r(Yn.prototype,'modelChange',[Hn],{enumerable:!0,initializer:function(){return new bo.EventEmitter}}),Yn))||Kn);(0,bo.Optional)()(Gs,null,1),Reflect.defineMetadata('design:paramtypes',[$o,bo.Injector,qo],Gs);const Bs={editor:`
+        (blur)="focused = false"
+        @defaultAnimation
+        (focus)="focused = true"
+        [ngModel]="model.value"
+        (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
+        [style.visibilty]="initialized ? 'visible' : 'hidden'"
+        #state="ngModel"
+    `,nativ:`
+        [name]="model.name"
+        [ngModel]="model.value"
+        (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
+        [placeholder]="description === '' ? null : description ? description : (model.description || model.name)"
+        [required]="required === null ? !model.nullable : required"
+        #state="ngModel"
+    `,nativText:`
+        [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
+        [maxlength]="maximumLength === null ? (model.type === 'string' ? model.maximumLength : null) : maximumLength"
+        [minlength]="minimumLength === null ? (model.type === 'string' ? model.minimumLength : null) : minimumLength"
+        [pattern]="pattern === null ? (model.type === 'string' ? model.regularExpressionPattern : null) : pattern"
+    `,wrapper:`
+        [declaration]="declaration"
+        [description]="description"
+        [disabled]="disabled"
+        [showDeclarationText]="showDeclarationText"
+        [maximum]="maximum"
+        [maximumLength]="maximumLength"
+        [maximumLengthText]="maximumLengthText"
+        [maximumText]="maximumText"
+        [minimum]="minimum"
+        [minimumLength]="minimumLength"
+        [minimumLengthText]="minimumLengthText"
+        [minimumText]="minimumText"
+        [model]="model"
+        [pattern]="pattern"
+        [required]="required"
+        [requiredText]="requiredText"
+        [patternText]="patternText"
+        [showValidationErrorMessages]="showValidationErrorMessages"
+        [type]="type"
+    `},Vs=`
+    <mat-hint align="start" @defaultAnimation matTooltip="info">
+        <span
+            [class.active]="showDeclaration"
+            (click)="showDeclaration = !showDeclaration"
+            *ngIf="declaration || model.declaration"
+        >
+            <a
+                (click)="$event.preventDefault()"
+                @defaultAnimation
+                href=""
+                *ngIf="showDeclarationText"
+            >{{showDeclarationText}}</a>
+            <span @defaultAnimation *ngIf="showDeclaration">
+                {{declaration || model.declaration}}
             </span>
         </span>
-        <span *ngIf="showDeclaration">{{model.declaration}}</span>
-    </md-hint>
-    <md-hint
+        <span *ngIf="editor && selectableEditor && !model.disabled">
+            <span *ngIf="declaration || model.declaration">|</span>
+            <a
+                [class.active]="activeEditor"
+                (click)="$event.preventDefault(); $event.stopPropagation(); activeEditor = true"
+                href=""
+            >editor</a>
+            <span>|</span>
+            <a
+                [class.active]="!activeEditor"
+                (click)="$event.preventDefault(); $event.stopPropagation(); activeEditor = false"
+                href=""
+            >plain</a>
+        </span>
+    </mat-hint>
+    <span generic-error *ngIf="showValidationErrorMessages">
+        <p @defaultAnimation *ngIf="model.state?.errors?.maxlength">
+            {{maximumLengthText | genericStringTemplate:model}}
+        </p>
+        <p @defaultAnimation *ngIf="model.state?.errors?.max">
+            {{maximumText | genericStringTemplate:model}}
+        </p>
+        <p @defaultAnimation *ngIf="model.state?.errors?.minlength">
+            {{minimumLengthText | genericStringTemplate:model}}
+        </p>
+        <p @defaultAnimation *ngIf="model.state?.errors?.min">
+            {{minimumText | genericStringTemplate:model}}
+        </p>
+        <p @defaultAnimation *ngIf="model.state?.errors?.pattern">
+            {{patternText | genericStringTemplate:model}}
+        </p>
+        <p @defaultAnimation *ngIf="model.state?.errors?.required">
+            {{requiredText | genericStringTemplate:model}}
+        </p>
+    </span>
+    <mat-hint
         align="end"
-        *ngIf="model.type === 'string' && model.maximum !== null && model.maximum < 100"
-    >{{data.characterCount}} / {{model.maximum}}</md-hint>
-`;// IgnoreTypeCheck
-/* eslint-enable max-len *//**
- * A generic form input component with validation, labeling and info
- * description support.
- * @property type - Optionally defines an input type explicitly.
- */let GenericInputComponent=exports.GenericInputComponent=(_dec22=(0,_core.Component)({selector:'generic-input',template:`
-        <md-input
-            [max]="model.type === 'number' ? model.maximum : null"
-            [min]="model.type === 'number' ? model.minimum : null"
-            [type]="type || model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
-            ${propertyInputContent}
-        >${mdInputContent}</md-input>`}),_dec23=(0,_core.Input)(),_dec22(_class28=(_class29=class GenericInputComponent extends AbstractInputComponent{/**
-     * Forwards injected service instances to the abstract input component's
-     * constructor.
-     * @param extendObject - Injected extend object pipe instance.
-     * @returns Nothing.
-     */constructor(extendObject){super(extendObject);_initDefineProp(this,'type',_descriptor4,this)}},(_descriptor4=_applyDecoratedDescriptor(_class29.prototype,'type',[_dec23],{enumerable:true,initializer:function initializer(){return this.type}})),_class29))||_class28);// IgnoreTypeCheck
-Reflect.defineMetadata('design:paramtypes',[GenericExtendObjectPipe],GenericInputComponent);/**
- * A generic form textarea component with validation, labeling and info
- * description support.
- */let GenericTextareaComponent=exports.GenericTextareaComponent=(_dec24=(0,_core.Component)({selector:'generic-textarea',template:`
-        <md-textarea ${propertyInputContent}>${mdInputContent}</md-textarea>`}),_dec24(_class31=class GenericTextareaComponent extends AbstractInputComponent{/**
-     * Forwards injected service instances to the abstract input component's
-     * constructor.
-     * @param extendObject - Injected extend object pipe instance.
-     * @returns Nothing.
-     */constructor(extendObject){super(extendObject)}})||_class31);// // endregion
-// / region file input
-/* eslint-disable max-len */// IgnoreTypeCheck
-Reflect.defineMetadata('design:paramtypes',[GenericExtendObjectPipe],GenericTextareaComponent);/* eslint-enable max-len *//**
- * A file type independent file uploader with file content preview (if
- * supported).
- * @property static:imageMimeTypeRegularExpression - Regular expression which
- * should match to each known image mime type.
- * @property static:textMimeTypeRegularExpression - Regular expression which
- * should match to each known text mime type.
- * @property static:videoMimeTypeRegularExpression - Regular expression which
- * should match to each known video mime type.
- * @property _data - Holds the data service instance.
- * @property _domSanitizer - Holds the dom sanitizer service instance.
- * @property _extendObject - Holds the extend object pipe instance's transform
- * method.
- * @property _getFilenameByPrefix - Holds the file name by prefix getter pipe
- * instance's transform method.
- * @property _representObject - Holds the represent object pipe instance's
- * transform method.
- * @property _prefixMatch - Holds the prefix match pipe instance's transform
- * method.
- * @property delete - Event emitter which triggers its handler when current
- * file should be removed.
- * @property file - Holds the current selected file object if present.
- * @property fileChange - Event emitter emitting when file changes happen.
- * @property input - Virtual file input dom node.
- * @property internalName - Technical regular expression style file type.
- * @property mapNameToField - Indicates weather current file name should be
- * mapped to a specific model property.
- * @property model - File property specification.
- * @property modelChange -
- * @property name - Name of currently active file.
- * @property showValidationErrorMessages - Indicates weather validation errors
- * should be displayed. Useful to hide error messages until user tries to
- * submit a form.
- * @property synchronizeImmediately - Indicates weather file upload should be
- * done immediately after a file was selected (or synchronously with other
- * model data).
- */let GenericFileInputComponent/* implements OnInit, AfterViewInit*/=exports.GenericFileInputComponent=(_dec25=(0,_core.Component)({selector:'generic-file-input',template:`
-        <md-card>
-            <md-card-header>
-                <h3>
-                    {{model._attachments[internalName]?.description || name}}
+        @defaultAnimation
+        *ngIf="!model.selection && model.type === 'string' && model.maximumLength !== null && model.maximumLength < 100"
+    >{{model.value?.length}} / {{model.maximumLength}}</mat-hint>
+`;let $s=t.InputComponent=(oi=(0,bo.Component)({animations:[Os()],changeDetection:bo.ChangeDetectionStrategy[zo],selector:'generic-input',template:`
+        <generic-textarea
+            ${Bs.wrapper}
+            [activeEditor]="activeEditor"
+            [editor]="editor"
+            [maximumNumberOfRows]="maximumNumberOfRows"
+            [minimumNumberOfRows]="minimumNumberOfRows"
+            *ngIf="editor || model.editor; else simpleInput"
+            [rows]="rows"
+            [selectableEditor]="selectableEditor"
+        ><ng-content></ng-content></generic-textarea>
+        <ng-template #simpleInput><generic-simple-input
+            ${Bs.wrapper}
+            [labels]="labels"
+        ><ng-content></ng-content></generic-simple-input></ng-template>
+    `}),si=(0,bo.Input)(),mi=(0,bo.Input)(),li=(0,bo.Input)(),di=(0,bo.Input)(),pi=(0,bo.Input)(),ci=(0,bo.Input)(),ui=(0,bo.Input)(),fi=(0,bo.Input)(),oi(gi=(yi=class extends js{constructor(e){super(e),i(this,'activeEditor',bi,this),i(this,'editor',hi,this),i(this,'labels',xi,this),i(this,'maximumNumberOfRows',vi,this),i(this,'minimumNumberOfRows',Ni,this),i(this,'rows',Ti,this),i(this,'selectableEditor',Pi,this),i(this,'type',Ii,this)}},bi=r(yi.prototype,'activeEditor',[si],{enumerable:!0,initializer:function(){return null}}),hi=r(yi.prototype,'editor',[mi],{enumerable:!0,initializer:function(){return null}}),xi=r(yi.prototype,'labels',[li],{enumerable:!0,initializer:function(){return{}}}),vi=r(yi.prototype,'maximumNumberOfRows',[di],{enumerable:!0,initializer:function(){return this.maximumNumberOfRows}}),Ni=r(yi.prototype,'minimumNumberOfRows',[pi],{enumerable:!0,initializer:function(){return this.minimumNumberOfRows}}),Ti=r(yi.prototype,'rows',[ci],{enumerable:!0,initializer:function(){return this.rows}}),Pi=r(yi.prototype,'selectableEditor',[ui],{enumerable:!0,initializer:function(){return null}}),Ii=r(yi.prototype,'type',[fi],{enumerable:!0,initializer:function(){return this.type}}),yi))||gi);Reflect.defineMetadata('design:paramtypes',[bo.Injector],$s);let Hs=t.SimpleInputComponent=(_i=(0,bo.Component)({animations:[Os()],changeDetection:bo.ChangeDetectionStrategy[zo],selector:'generic-simple-input',template:`
+        <ng-container
+            @defaultAnimation *ngIf="model.selection; else textInput"
+        >
+            <mat-form-field>
+                <mat-select [(ngModel)]="model.value" ${Bs.nativ}>
+                    <mat-option
+                        *ngFor="let value of model.selection" [value]="value"
+                    >
+                        {{labels.hasOwnProperty(value) ? labels[value] : value}}
+                    </mat-option>
+                </mat-select>
+                ${Vs}
+                <ng-content></ng-content>
+            </mat-form-field>
+        </ng-container>
+        <ng-template #textInput><mat-form-field>
+            <input
+                ${Bs.nativ}
+                ${Bs.nativText}
+                [max]="maximum === null ? (model.type === 'number' ? model.maximum : null) : maximum"
+                matInput
+                [min]="minimum === null ? (model.type === 'number' ? model.minimum : null) : minimum"
+                [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+            />
+            ${Vs}
+            <ng-content></ng-content>
+        </mat-form-field></ng-template>
+    `}),Oi=(0,bo.Input)(),Si=(0,bo.Input)(),_i(Ci=(wi=class extends Rs{constructor(e){super(e),i(this,'labels',Di,this),i(this,'type',Ei,this)}},Di=r(wi.prototype,'labels',[Oi],{enumerable:!0,initializer:function(){return{}}}),Ei=r(wi.prototype,'type',[Si],{enumerable:!0,initializer:function(){return this.type}}),wi))||Ci);Reflect.defineMetadata('design:paramtypes',[bo.Injector],Hs);let Ks=t.TextareaComponent=(zi=(0,bo.Component)({animations:[Os()],changeDetection:bo.ChangeDetectionStrategy[zo],selector:'generic-textarea',template:`
+        <ng-container *ngIf="activeEditor; else plain">
+            <span [class.focused]="focused" class="editor-label">
+                {{
+                    description === '' ? null : description ? description : (
+                        model.description || model.name
+                    )
+                }}
+            </span>
+            <code-editor
+                ${Bs.editor}
+                [configuration]="editor"
+                [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
+                (initialized)="initialized = true"
+                *ngIf="editorType === 'code' || editor.indentUnit; else tinyMCE"
+            ></code-editor>
+            <ng-template #tinyMCE><angular-tinymce
+                ${Bs.editor}
+                (init)="initialized = true"
+                [settings]="editor"
+            ></angular-tinymce></ng-template>
+            ${Vs}
+            <ng-content></ng-content>
+        </ng-container>
+        <ng-template #plain><mat-form-field @defaultAnimation>
+            <textarea
+                ${Bs.nativ}
+                ${Bs.nativText}
+                [matAutosizeMaxRows]="maximumNumberOfRows"
+                [matAutosizeMinRows]="minimumNumberOfRows"
+                matInput
+                matTextareaAutosize
+                [rows]="rows"
+            ></textarea>
+            ${Vs}
+            <ng-content></ng-content>
+        </mat-form-field></ng-template>
+    `}),ji=(0,bo.Input)(),Ri=(0,bo.Input)(),Mi=(0,bo.Input)(),Ai=(0,bo.Input)(),ki=(0,bo.Input)(),Li=(0,bo.Input)(),zi(qi=(Fi=(Ki=Hi=class extends Rs{constructor(e,t){super(t),i(this,'activeEditor',Ui,this),i(this,'editor',Wi,this),this.editorType='custom',i(this,'maximumNumberOfRows',Gi,this),i(this,'minimumNumberOfRows',Bi,this),i(this,'rows',Vi,this),i(this,'selectableEditor',$i,this),e.configuration.hasOwnProperty('defaultEditorOptions')&&'object'==typeof e.configuration.defaultEditorOptions&&null!==e.configuration.defaultEditorOptions&&(this.constructor.defaultEditorOptions=e.configuration.defaultEditorOptions)}ngOnInit(...e){super.ngOnInit(...e),null===this.editor&&this.model.editor&&(this.editor=this.model.editor),'string'==typeof this.editor?(this.editor.startsWith('!')&&(this.editor=this.editor.substring(1),null===this.selectableEditor&&(this.selectableEditor=!1)),this.editor.startsWith('(')&&this.editor.endsWith(')')?this.editor=this.editor.substring(1,this.editor.length-1):null===this.activeEditor&&(this.activeEditor=!0),this.editorType=this.editor,this.editor=this.editor.startsWith('code')?this.editor.startsWith('code:')?{mode:this.editor.substring(5)}:{}:'raw'===this.editor?{toolbar1:'cut copy paste | undo redo removeformat | code | fullscreen',toolbar2:!1}:'simple'===this.editor?{toolbar1:'cut copy paste | undo redo removeformat | bold italic underline strikethrough subscript superscript | fullscreen',toolbar2:!1}:'normal'===this.editor?{toolbar1:'cut copy paste | undo redo removeformat | styleselect formatselect | searchreplace visualblocks fullscreen code'}:{}):null===this.editor&&this.activeEditor&&(this.editor={}),null===this.activeEditor&&(this.activeEditor=!1),null===this.selectableEditor&&('boolean'==typeof this.model.selectableEditor?this.selectableEditor=this.model.selectableEditor:this.selectableEditor=!0),'object'==typeof this.editor&&null!==this.editor?this.editorType.startsWith('code')||this.editor.indentUnit?this.editor=this._extendObject(!0,{},Ao,this.constructor.defaultEditorOptions.code,this.editor):this.editor=this._extendObject(!0,{},Lo,this.constructor.defaultEditorOptions.markup,this.editor):this.selectableEditor=!1}},Hi.defaultEditorOptions={code:{},markup:{}},Ki),Ui=r(Fi.prototype,'activeEditor',[ji],{enumerable:!0,initializer:function(){return null}}),Wi=r(Fi.prototype,'editor',[Ri],{enumerable:!0,initializer:function(){return null}}),Gi=r(Fi.prototype,'maximumNumberOfRows',[Mi],{enumerable:!0,initializer:function(){return this.maximumNumberOfRows}}),Bi=r(Fi.prototype,'minimumNumberOfRows',[Ai],{enumerable:!0,initializer:function(){return this.minimumNumberOfRows}}),Vi=r(Fi.prototype,'rows',[ki],{enumerable:!0,initializer:function(){return this.rows}}),$i=r(Fi.prototype,'selectableEditor',[Li],{enumerable:!0,initializer:function(){return null}}),Fi))||qi);Reflect.defineMetadata('design:paramtypes',[Fo,bo.Injector],Ks);let Ys=t.FileInputComponent=(Yi=(0,bo.Component)({animations:[Os()],changeDetection:bo.ChangeDetectionStrategy[zo],selector:'generic-file-input',template:`
+        <mat-card>
+            <mat-card-header
+                @defaultAnimation
+                *ngIf="headerText !== '' && (headerText || file?.name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description || name)"
+            >
+                <mat-card-title>
                     <span
-                        md-suffix (click)="showDeclaration = !showDeclaration"
-                        title="info"
-                        *ngIf="model._attachments[internalName]?.declaration"
-                    >[i]</span>
-                </h3>
-                <p *ngIf="showDeclaration">
-                    {{model._attachments[internalName].declaration}}
-                </p>
-            </md-card-header>
-            <img md-card-image
+                        @defaultAnimation
+                        *ngIf="!editableName || revision || headerText || !file?.name; else editable"
+                    >
+                        {{
+                            headerText ||
+                            file?.name ||
+                            model[attachmentTypeName][
+                                internalName
+                            ]?.description ||
+                            name
+                        }}
+                    </span>
+                    <ng-template #editable>
+                        <ng-container *ngIf="synchronizeImmediately; else parent">
+                            <mat-form-field
+                                [class.dirty]="editedName && editedName !== file.name"
+                                matTooltip="Focus to edit."
+                            >
+                                <input
+                                    matInput
+                                    [ngModel]="editedName || file.name"
+                                    (ngModelChange)="editedName = $event"
+                                />
+                                <mat-hint
+                                    [class.active]="showDeclaration"
+                                    (click)="showDeclaration = !showDeclaration"
+                                    @defaultAnimation
+                                    matTooltip="info"
+                                    *ngIf="model[attachmentTypeName][internalName]?.declaration"
+                                >
+                                    <a
+                                        (click)="$event.preventDefault()"
+                                        @defaultAnimation
+                                        href=""
+                                        *ngIf="showDeclarationText"
+                                    >{{showDeclarationText}}</a>
+                                    <span
+                                        @defaultAnimation
+                                        *ngIf="showDeclaration"
+                                    >
+                                        {{
+                                            model[attachmentTypeName][
+                                                internalName
+                                            ].declaration
+                                        }}
+                                    </span>
+                                </mat-hint>
+                            </mat-form-field>
+                            <ng-container
+                                *ngIf="editedName && editedName !== file.name"
+                            >
+                                <a
+                                    (click)="$event.preventDefault();rename(editedName)"
+                                    @defaultAnimation
+                                    href=""
+                                >{{saveNameText}}</a>
+                                <a
+                                    (click)="$event.preventDefault();editedName = file.name"
+                                    @defaultAnimation
+                                    href=""
+                                >{{resetNameText}}</a>
+                            </ng-container>
+                        </ng-container>
+                        <ng-template #parent><mat-form-field
+                            [class.dirty]="file.initialName !== file.name"
+                            @defaultAnimation
+                            matTooltip="Focus to edit."
+                            *ngIf="!synchronizeImmediately"
+                        >
+                            <input
+                                matInput [ngModel]="file.name"
+                                (ngModelChange)="file.name = $event;modelChange.emit(this.model); fileChange.emit(file)"
+                            />
+                            <mat-hint
+                                [class.active]="showDeclaration"
+                                (click)="showDeclaration = !showDeclaration"
+                                @defaultAnimation
+                                matTooltip="info"
+                                *ngIf="model[attachmentTypeName][internalName]?.declaration"
+                            >
+                                <a
+                                    (click)="$event.preventDefault()"
+                                    @defaultAnimation
+                                    href=""
+                                    *ngIf="showDeclarationText"
+                                >{{showDeclarationText}}</a>
+                                <span
+                                    @defaultAnimation
+                                    *ngIf="showDeclaration"
+                                >
+                                    {{
+                                        model[attachmentTypeName][
+                                            internalName
+                                        ].declaration
+                                    }}
+                                </span>
+                            </mat-hint>
+                        </mat-form-field></ng-template>
+                    </ng-template>
+                </mat-card-title>
+            </mat-card-header>
+            <img mat-card-image
+                [attr.alt]="name"
+                [attr.src]="file.source"
+                @defaultAnimation
                 *ngIf="file?.type === 'image' && file?.source"
-                [attr.alt]="name" [attr.src]="file.source"
             >
             <video
-                md-card-image autoplay muted loop
+                autoplay
+                @defaultAnimation
+                mat-card-image
+                muted
                 *ngIf="file?.type === 'video' && file?.source"
+                loop
             >
                 <source [attr.src]="file.source" [type]="file.content_type">
-                Keine Vorschau möglich.
+                No preview possible.
             </video>
             <iframe
-                [src]="file.source"
+                @defaultAnimation
                 *ngIf="file?.type === 'text' && file?.source"
-                style="border:none;width:100%;max-height:150px"
+                [src]="file.source"
+                style="border: none; width: 100%; max-height: 150px"
             ></iframe>
             <div
-                md-card-image
-                *ngIf="!file?.type && (file?.source || (file?.source | genericType) === 'string')"
-            >Keine Vorschau möglich.</div>
-            <div md-card-image *ngIf="!file">Keine Datei ausgewählt.</div>
-            <md-card-content>
+                @defaultAnimation
+                mat-card-image
+                *ngIf="(!file?.type && (file?.source || (file?.source | genericType) === 'string') ? noPreviewText : noFileText) as text"
+            ><p>{{text}}</p></div>
+            <mat-card-content>
                 <ng-content></ng-content>
-                <span *ngIf="showValidationErrorMessages">
+                <div
+                    @defaultAnimation
+                    generic-error
+                    *ngIf="showValidationErrorMessages && model[attachmentTypeName][internalName]?.state?.errors"
+                >
                     <p
-                        *ngIf="model._attachments[internalName]?.state.errors?.required"
-                    >Bitte wählen Sie eine Datei aus.</p>
-                    <p
-                        *ngIf="model._attachments[internalName]?.state.errors?.name"
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.required"
                     >
-                        Der Dateiname "{{file.name}}" entspricht nicht dem
-                        vorgegebenen Muster "{{this.internalName}}".
+                        {{
+                            requiredText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
                     </p>
                     <p
-                        *ngIf="model._attachments[internalName]?.state.errors?.contentType"
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.name"
                     >
-                        Der Daten-Typ "{{file.content_type}}" entspricht
-                        nicht dem vorgegebenen Muster
-                        "{{model._attachments[internalName].contentTypeRegularExpressionPattern}}".
+                        {{
+                            namePatternText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
                     </p>
                     <p
-                        *ngIf="model._attachments[internalName]?.state.errors?.database"
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.contentType"
                     >
-                        {{model._attachments[internalName]?.state.errors?.database}}
+                        {{
+                            typePatternText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
                     </p>
-                </span>
-            </md-card-content>
-            <md-card-actions>
-                <input #input type="file" style="display:none"/>
-                <button md-button (click)="input.click()">Neu</button>
-                <button md-button *ngIf="file" (click)="remove()">
-                    Löschen
-                </button>
-                <a *ngIf="file" [download]="file.name" [href]="file.source">
-                    <button md-button>Download</button>
-                </a>
-            </md-card-actions>
-        </md-card>
-    `}),_dec26=(0,_core.Output)(),_dec27=(0,_core.Output)(),_dec28=(0,_core.ViewChild)('input'),_dec29=(0,_core.Input)(),_dec30=(0,_core.Input)(),_dec31=(0,_core.Output)(),_dec32=(0,_core.Input)(),_dec33=(0,_core.Input)(),_dec34=(0,_core.Input)(),_dec25(_class32=(_class33=(_temp2=_class34=class GenericFileInputComponent{/**
-     * Sets needed services as property values.
-     * @param data - Injected data service instance.
-     * @param domSanitizer - Injected dom sanitizer service instance.
-     * @param extendObject - Injected extend object pipe instance.
-     * @param getFilenameByPrefix - Saves the file name by prefix retriever
-     * pipe instance.
-     * @param initialData - Injected initial data service instance.
-     * @param representObject - Saves the object to string representation pipe
-     * instance.
-     * @returns Nothing.
-     */constructor(data,domSanitizer,extendObject,getFilenameByPrefix,initialData,representObject){this._configuration=this._configuration;this._data=this._data;this._domSanitizer=this._domSanitizer;this._extendObject=this._extendObject;this._getFilenameByPrefix=this._getFilenameByPrefix;this._representObject=this._representObject;this._prefixMatch=false;_initDefineProp(this,'delete',_descriptor5,this);this.file=null;_initDefineProp(this,'fileChange',_descriptor6,this);_initDefineProp(this,'input',_descriptor7,this);this.internalName=this.internalName;_initDefineProp(this,'mapNameToField',_descriptor8,this);_initDefineProp(this,'model',_descriptor9,this);_initDefineProp(this,'modelChange',_descriptor10,this);_initDefineProp(this,'name',_descriptor11,this);_initDefineProp(this,'showValidationErrorMessages',_descriptor12,this);_initDefineProp(this,'synchronizeImmediately',_descriptor13,this);this._configuration=initialData.configuration;this._data=data;this._domSanitizer=domSanitizer;this._extendObject=extendObject.transform.bind(extendObject);this._getFilenameByPrefix=getFilenameByPrefix.transform.bind(getFilenameByPrefix);this._representObject=representObject.transform.bind(representObject)}/**
-     * Initializes file upload handler.
-     * @returns Nothing.
-     */ngOnInit(){if(this.mapNameToField&&!Array.isArray(this.mapNameToField))this.mapNameToField=[this.mapNameToField];const name=this._getFilenameByPrefix(this.model._attachments,this.name);if(this.name&&name!==this.name)this._prefixMatch=true;this.internalName=name;this.file=this.model._attachments[this.internalName].value;this.model._attachments[this.internalName].state={};if(this.file)this.file.descriptionName=this.name;else if(!this.model._attachments[this.internalName].nullable)this.model._attachments[this.internalName].state.errors={required:true};if(this.file){this.file.hash=`#${this.file.digest}`;this.file.source=this._domSanitizer.bypassSecurityTrustResourceUrl(this._configuration.database.url+`/${this._configuration.name||'generic'}/`+`${this.model._id}/${this.file.name}${this.file.hash}`)}this.determinePresentationType();this.fileChange.emit(this.file)}/**
-     * Initializes current file input field. Adds needed event observer.
-     * @returns Nothing.
-     */ngAfterViewInit(){var _this7=this;this.input.nativeElement.addEventListener('change',_asyncToGenerator(function*(){if(_this7.input.nativeElement.files.length<1)return;_this7.model._attachments[_this7.internalName].state={};const oldFileName=_this7.file?_this7.file.name:null;_this7.file={descriptionName:_this7.name,name:_this7.input.nativeElement.files[0].name};if(!_this7.name)_this7.name=_this7.file.name;else if(_this7._prefixMatch){const lastIndex=_this7.file.name.lastIndexOf('.');if([0,-1].includes(lastIndex))_this7.file.name=_this7.name;else _this7.file.name=_this7.name+_this7.file.name.substring(lastIndex)}// IgnoreTypeCheck
-_this7.file.data=_this7.input.nativeElement.files[0];// IgnoreTypeCheck
-_this7.file.content_type=_this7.file.data.type||'text/plain';// IgnoreTypeCheck
-_this7.file.length=_this7.file.data.size;_this7.model._attachments[_this7.internalName].value=_this7.file;if(!new RegExp(_this7.internalName).test(_this7.file.name))_this7.model._attachments[_this7.internalName].state.errors={name:true};if(!([undefined,null].includes(_this7.model._attachments[_this7.internalName].contentTypeRegularExpressionPattern)||new RegExp(_this7.model._attachments[_this7.internalName].contentTypeRegularExpressionPattern).test(_this7.file.content_type))){if(_this7.model._attachments[_this7.internalName].state.errors)_this7.model._attachments[_this7.internalName].state.errors.contentType=true;else _this7.model._attachments[_this7.internalName].state.errors={contentType:true};_this7.determinePresentationType()}if(_this7.synchronizeImmediately&&!_this7.model._attachments[_this7.internalName].state.errors){let result;const newData={'-type':_this7.model['-type'],_id:_this7.model._id,_attachments:{[_this7.file.name]:{content_type:_this7.file.content_type,data:_this7.file.data}}};if(_this7.synchronizeImmediately!==true)_this7._extendObject(true,newData,_this7.synchronizeImmediately);// NOTE: We want to replace old medium.
-if(oldFileName&&oldFileName!==_this7.file.name)newData._attachments[oldFileName]={data:null};if(![undefined,null].includes(_this7.model._rev))newData._rev=_this7.model._rev;if(_this7.mapNameToField){if(_this7.model._id&&_this7.mapNameToField.includes('_id')){newData._deleted=true;try{result=yield _this7._data.put(newData)}catch(error){_this7.model._attachments[_this7.internalName].state.errors={database:'message'in error?error.message:_this7._representObject(error)};return}delete newData._deleted;delete newData._rev}for(const name of _this7.mapNameToField){newData[name]=_this7.file.name;_this7.model[name]=_this7.file.name}}try{result=yield _this7._data.put(newData)}catch(error){_this7.model._attachments[_this7.internalName].state.errors={database:'message'in error?error.message:_this7._representObject(error)};return}_this7.file.revision=_this7.model._rev=result.rev;_this7.file.hash=`#${result.rev}`;_this7.file.source=_this7._domSanitizer.bypassSecurityTrustResourceUrl(_this7._configuration.database.url+`/${_this7._configuration.name}/${_this7.model._id}/`+`${_this7.file.name}${_this7.file.hash}`);_this7.determinePresentationType();_this7.fileChange.emit(_this7.file);_this7.modelChange.emit(_this7.model)}else{_this7.determinePresentationType();const fileReader=new FileReader;fileReader.onload=function(event){_this7.file.source=_this7._domSanitizer.bypassSecurityTrustResourceUrl(event.target.result);if(_this7.mapNameToField)for(const name of _this7.mapNameToField)_this7.model[name]=_this7.file.name;_this7.fileChange.emit(_this7.file);_this7.modelChange.emit(_this7.model)};fileReader.readAsDataURL(_this7.file.data)}}))}/**
-     * Determines which type of file we have to present.
-     * @returns Nothing.
-     */determinePresentationType(){if(this.file&&this.file.content_type&&this.constructor.textMimeTypeRegularExpression.test(this.file.content_type))this.file.type='text';else if(this.file&&this.file.content_type&&this.constructor.imageMimeTypeRegularExpression.test(this.file.content_type))this.file.type='image';else if(this.file&&this.file.content_type&&this.constructor.videoMimeTypeRegularExpression.test(this.file.content_type))this.file.type='video';else this.file.type='binary'}/**
-     * Removes current file.
-     * @returns A Promise which will be resolved after current file will be
-     * removed.
-     */remove(){var _this8=this;return _asyncToGenerator(function*(){if(_this8.synchronizeImmediately&&_this8.file){let result;const update={'-type':_this8.model['-type'],_id:_this8.model._id,_rev:_this8.model._rev,_attachments:{[_this8.file.name]:{content_type:'text/plain',data:null}}};if(_this8.mapNameToField&&_this8.mapNameToField.includes('_id'))update._deleted=true;try{result=yield _this8._data.put(update)}catch(error){_this8.model._attachments[_this8.internalName].state.errors={database:_this8._representObject(error)};return}if(_this8.mapNameToField&&_this8.mapNameToField.includes('_id'))_this8.delete.emit(result);else _this8.model._rev=result.rev}_this8.model._attachments[_this8.internalName].state.errors=_this8.model._attachments[_this8.internalName].value=_this8.file=null;if(!_this8.model._attachments[_this8.internalName].nullable)_this8.model._attachments[_this8.internalName].state.errors={required:true};_this8.fileChange.emit(_this8.file);_this8.modelChange.emit(_this8.model)})()}},_class34.imageMimeTypeRegularExpression=new RegExp('^image/(?:p?jpe?g|png|svg(?:\\+xml)?|vnd\\.microsoft\\.icon|gif|'+'tiff|webp|vnd\\.wap\\.wbmp|x-(?:icon|jng|ms-bmp))$'),_class34.textMimeTypeRegularExpression=new RegExp('^(?:application/xml)|(?:text/(?:plain|x-ndpb[wy]html|(?:x-)?csv))$'),_class34.videoMimeTypeRegularExpression=new RegExp('^video/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|'+'(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|'+'(?:application/(?:x-)?shockwave-flash)$'),_temp2),(_descriptor5=_applyDecoratedDescriptor(_class33.prototype,'delete',[_dec26],{enumerable:true,initializer:function initializer(){return new _core.EventEmitter}}),_descriptor6=_applyDecoratedDescriptor(_class33.prototype,'fileChange',[_dec27],{enumerable:true,initializer:function initializer(){return new _core.EventEmitter}}),_descriptor7=_applyDecoratedDescriptor(_class33.prototype,'input',[_dec28],{enumerable:true,initializer:function initializer(){return this.input}}),_descriptor8=_applyDecoratedDescriptor(_class33.prototype,'mapNameToField',[_dec29],{enumerable:true,initializer:function initializer(){return null}}),_descriptor9=_applyDecoratedDescriptor(_class33.prototype,'model',[_dec30],{enumerable:true,initializer:function initializer(){return{_attachments:[],id:null}}}),_descriptor10=_applyDecoratedDescriptor(_class33.prototype,'modelChange',[_dec31],{enumerable:true,initializer:function initializer(){return new _core.EventEmitter}}),_descriptor11=_applyDecoratedDescriptor(_class33.prototype,'name',[_dec32],{enumerable:true,initializer:function initializer(){return null}}),_descriptor12=_applyDecoratedDescriptor(_class33.prototype,'showValidationErrorMessages',[_dec33],{enumerable:true,initializer:function initializer(){return false}}),_descriptor13=_applyDecoratedDescriptor(_class33.prototype,'synchronizeImmediately',[_dec34],{enumerable:true,initializer:function initializer(){return false}})),_class33))||_class32);// / endregion
-// / region pagination
-/* eslint-disable max-len */// IgnoreTypeCheck
-Reflect.defineMetadata('design:paramtypes',[GenericDataService,_platformBrowser.DomSanitizer,GenericExtendObjectPipe,GenericGetFilenameByPrefixPipe,GenericInitialDataService,GenericRepresentObjectPipe],GenericFileInputComponent);/* eslint-enable max-len *//**
- * Provides a generic pagination component.
- * @property _makeRange - Saves the make range pipe transformation function.
- * @property itemsPerPage - Number of items to show per page as maximum.
- * @property page - Contains currently selected page number.
- * @property pageChange - Event emitter to fire on each page change event.
- * @property pageRangeLimit - Number of concrete page links to show.
- * @property total - Contains total number of pages.
- */let GenericPaginationComponent=exports.GenericPaginationComponent=(_dec35=(0,_core.Component)({selector:'generic-pagination',template:`
-        <ul *ngIf="lastPage > 1">
-            <li *ngIf="page > 2">
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.minimumSize"
+                    >
+                        {{
+                            minimumSizeText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.maximumSize"
+                    >
+                        {{
+                            maximumSizeText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.database"
+                    >
+                        {{
+                            model[attachmentTypeName][
+                                internalName
+                            ].state.errors.database
+                        }}
+                    </p>
+                </div>
+            </mat-card-content>
+            <mat-card-actions>
+                <input #input style="display: none" type="file" />
+                <button
+                    @defaultAnimation
+                    (click)="input.click()"
+                    mat-raised-button
+                    *ngIf="newButtonText"
+                >{{newButtonText}}</button>
+                <button
+                    (click)="remove()"
+                    @defaultAnimation
+                    mat-raised-button
+                    *ngIf="deleteButtonText && file"
+                >{{deleteButtonText}}</button>
+                <button mat-raised-button
+                    @defaultAnimation
+                    *ngIf="downloadButtonText && file"
+                ><a [download]="file.name" [href]="file.source">
+                    {{downloadButtonText}}
+                </a></button>
+            </mat-card-actions>
+        </mat-card>
+    `}),Zi=(0,bo.Output)(),Ji=(0,bo.Input)(),Qi=(0,bo.Input)(),Xi=(0,bo.Input)(),er=(0,bo.Output)(),tr=(0,bo.Input)(),ar=(0,bo.ViewChild)('input'),nr=(0,bo.Input)(),ir=(0,bo.Input)(),rr=(0,bo.Input)(),or=(0,bo.Input)(),sr=(0,bo.Input)(),mr=(0,bo.Input)(),lr=(0,bo.Input)(),dr=(0,bo.Output)(),pr=(0,bo.Input)(),cr=(0,bo.Input)(),ur=(0,bo.Input)(),fr=(0,bo.Input)(),gr=(0,bo.Input)(),yr=(0,bo.Input)(),br=(0,bo.Input)(),hr=(0,bo.Input)(),xr=(0,bo.Input)(),vr=(0,bo.Input)(),Yi(Nr=(Tr=(Yr=Kr=class{constructor(e,t,a,n,r,o,s,m){this.attachmentTypeName=this.attachmentTypeName,this.configuration=this.configuration,i(this,'delete',Pr,this),i(this,'deleteButtonText',Ir,this),this.deletedName=this.deletedName,i(this,'downloadButtonText',_r,this),i(this,'editableName',Or,this),this.file=null,i(this,'fileChange',Sr,this),i(this,'headerText',Cr,this),this.idName=this.idName,i(this,'input',wr,this),i(this,'resetNameText',Dr,this),i(this,'saveNameText',Er,this),i(this,'showDeclarationText',zr,this),this.typeName=this.typeName,this.internalName=this.internalName,this.keyCode=this.keyCode,i(this,'mapNameToField',jr,this),i(this,'maximumSizeText',Rr,this),i(this,'minimumSizeText',Mr,this),i(this,'model',Ar,this),i(this,'modelChange',kr,this),i(this,'name',Lr,this),i(this,'namePatternText',qr,this),i(this,'newButtonText',Fr,this),i(this,'noFileText',Ur,this),i(this,'noPreviewText',Wr,this),i(this,'requiredText',Gr,this),i(this,'revision',Br,this),this.revisionName=this.revisionName,i(this,'showValidationErrorMessages',Vr,this),i(this,'synchronizeImmediately',$r,this),i(this,'typePatternText',Hr,this),this._data=this._data,this._domSanitizer=this._domSanitizer,this._extendObject=this._extendObject,this._getFilenameByPrefix=this._getFilenameByPrefix,this._idIsObject=!1,this._representObject=this._representObject,this._stringFormat=this._stringFormat,this._prefixMatch=!1,this.configuration=r.configuration,this.attachmentTypeName=this.configuration.database.model.property.name.special.attachment,this.keyCode=m.tools.keyCode,this.deletedName=this.configuration.database.model.property.name.special.deleted,this.idName=this.configuration.database.model.property.name.special.id,this.model={[this.attachmentTypeName]:{},id:null},this.revisionName=this.configuration.database.model.property.name.special.revision,this.typeName=this.configuration.database.model.property.name.special.type,this._data=e,this._domSanitizer=t,this._extendObject=a.transform.bind(a),this._getFilenameByPrefix=n.transform.bind(n),this._representObject=o.transform.bind(o),this._stringFormat=s.transform.bind(s)}determinePresentationType(){this.file&&this.file.content_type&&(this.constructor.textMimeTypeRegularExpression.test(this.file.content_type)?this.file.type='text':this.constructor.imageMimeTypeRegularExpression.test(this.file.content_type)?this.file.type='image':this.constructor.videoMimeTypeRegularExpression.test(this.file.content_type)?this.file.type='video':this.file.type='binary')}ngOnChanges(e){var t=this;return o(function*(){if('object'==typeof t.model[t.idName]&&(t._idIsObject=!0),e.hasOwnProperty('mapNameToField')&&t.mapNameToField&&!Array.isArray(t.mapNameToField)&&(t.mapNameToField=[t.mapNameToField]),(e.hasOwnProperty('model')||e.hasOwnProperty('name'))&&(t.internalName=t._getFilenameByPrefix(t.model[t.attachmentTypeName],t.name),t.name&&t.internalName&&t.internalName!==t.name&&(t._prefixMatch=!0),t.model[t.attachmentTypeName][t.internalName].state={},t.file=t.model[t.attachmentTypeName][t.internalName].value,t.file?t.file.initialName=t.file.name:!t.model[t.attachmentTypeName][t.internalName].nullable&&(t.model[t.attachmentTypeName][t.internalName].state.errors={required:!0})),e.hasOwnProperty('model')||e.hasOwnProperty('name')||e.hasOwnProperty('revision')){if(t.file&&(t.file.query=`?version=${t.file.digest}`,!t.file.source)){const a=t._idIsObject?t.model[t.idName].value:t.model[t.idName];if(t.revision&&e.revision.currentValue!==e.revision.previousValue)try{yield t.retrieveAttachment(a,{rev:t.revision})}catch(e){return void(model[attachmentTypeName][internalName].state.errors.database='message'in e?e.message:t._representObject(e))}else t.file.source=t._domSanitizer.bypassSecurityTrustResourceUrl(t._stringFormat(t.configuration.database.url,'')+'/'+(t.configuration.name||'generic')+`/${a}/${t.file.name}`+t.file.query)}t.determinePresentationType(),t.modelChange.emit(t.model),t.fileChange.emit(t.file)}})()}ngAfterViewInit(){var e=this;this.input.nativeElement.addEventListener('change',function(){0<e.input.nativeElement.files.length&&(e.file={content_type:e.input.nativeElement.files[0].type||'text/plain',data:e.input.nativeElement.files[0],initialName:e.input.nativeElement.files[0].name,length:e.input.nativeElement.files[0].size,name:e.input.nativeElement.files[0].name},e.update(e.file?e.file.name:null))})}remove(){var e=this;return o(function*(){if(e.synchronizeImmediately&&e.file){let t;const a={[e.typeName]:e.model[e.typeName],[e.idName]:e._idIsObject?e.model[e.idName].value:e.model[e.idName],[e.revisionName]:e.model[e.revisionName]};e.mapNameToField&&e.mapNameToField.includes(e.idName)?a[e.deletedName]=!0:a[e.attachmentTypeName]={[e.file.name]:{content_type:'text/plain',data:null}};try{t=yield e._data.put(a)}catch(t){return void(e.model[e.attachmentTypeName][e.internalName].state.errors={database:'message'in t?t.message:e._representObject(t)})}e.mapNameToField&&e.mapNameToField.includes(e.idName)?e.delete.emit(t):e.model[e.revisionName]=t.rev}e.model[e.attachmentTypeName][e.internalName].state.errors=e.model[e.attachmentTypeName][e.internalName].value=e.file=null,e.model[e.attachmentTypeName][e.internalName].nullable||(e.model[e.attachmentTypeName][e.internalName].state.errors={required:!0}),e.modelChange.emit(e.model),e.fileChange.emit(e.file)})()}rename(e){var t=this;return o(function*(){const a=t._idIsObject?t.model[t.idName].value:t.model[t.idName],n=t.file.name;if(t.file.stub&&t.mapNameToField&&a&&t.mapNameToField.includes(t.idName))try{yield t.retrieveAttachment(a)}catch(e){return void(t.model[t.attachmentTypeName][t.internalName].state.errors={database:'message'in e?e.message:t._representObject(e)})}return t.file.name=e,t.update(n)})()}retrieveAttachment(e,t={}){var a=this;return o(function*(){const n=yield a._data.getAttachment(e,a.file.name,t);a.file={content_type:n.type||'text/plain',data:yield(0,uo.blobToBase64String)(n),length:n.size,name:a.file.name},a.file.source=a._domSanitizer.bypassSecurityTrustResourceUrl(`data:${a.file.content_type};base64,${a.file.data}`)})()}update(e){var t=this;return o(function*(){if(t.model[t.attachmentTypeName][t.internalName].state={},t._prefixMatch){const e=t.file.name.lastIndexOf('.');t.file.name=[0,-1].includes(e)?t.name:t.name+t.file.name.substring(e)}if(t.model[t.attachmentTypeName][t.internalName].value=t.file,t.model[t.attachmentTypeName][t.internalName].state.errors||(t.model[t.attachmentTypeName][t.internalName].state.errors={}),new RegExp(t.internalName).test(t.file.name)||(t.model[t.attachmentTypeName][t.internalName].state.errors={name:!0}),[void 0,null].includes(t.model[t.attachmentTypeName][t.internalName].contentTypeRegularExpressionPattern)||new RegExp(t.model[t.attachmentTypeName][t.internalName].contentTypeRegularExpressionPattern).test(t.file.content_type)||(t.model[t.attachmentTypeName][t.internalName].state.errors.contentType=!0),[void 0,null].includes(t.model[t.attachmentTypeName][t.internalName].minimumSize)||t.model[t.attachmentTypeName][t.internalName].minimumSize<=t.file.length||(t.model[t.attachmentTypeName][t.internalName].state.errors.minimuSize=!0),[void 0,null].includes(t.model[t.attachmentTypeName][t.internalName].maximumSize)||t.model[t.attachmentTypeName][t.internalName].maximumSize>=t.file.length||(t.model[t.attachmentTypeName][t.internalName].state.errors.maximumSize=!0),0===Object.keys(t.model[t.attachmentTypeName][t.internalName].state.errors).length&&delete t.model[t.attachmentTypeName][t.internalName].state.errors,t.synchronizeImmediately&&!t.model[t.attachmentTypeName][t.internalName].state.errors){let a={[t.typeName]:t.model[t.typeName],[t.idName]:t._idIsObject?t.model[t.idName].value:t.model[t.idName]};!0!==t.synchronizeImmediately&&t._extendObject(!0,a,t.synchronizeImmediately);let n=t._idIsObject?t.model[t.idName].value:t.model[t.idName];e&&e!==t.file.name&&!(t.mapNameToField&&n&&t.mapNameToField.includes(t.idName))&&(a[t.attachmentTypeName]={[e]:{data:null}}),[void 0,null].includes(t.model[t.revisionName])||(a[t.revisionName]=t.model[t.revisionName]);const i=[];if(t.mapNameToField){n&&n!==t.file.name&&t.mapNameToField.includes(t.idName)&&(a[t.deletedName]=!0,i.unshift(a),a=t._extendObject(!0,{},a,{[t.deletedName]:!1}));for(const e of t.mapNameToField)a[e]=t.file.name,e===t.idName&&t._idIsObject?t.model[e].value=t.file.name:t.model[e]=t.file.name}a[t.revisionName]='upsert',a[t.attachmentTypeName]={[t.file.name]:{content_type:t.file.content_type,data:t.file.data}},i.unshift(a);let r;try{r=yield t._data.bulkDocs(i)}catch(e){return void(t.model[t.attachmentTypeName][t.internalName].state.errors={database:'message'in e?e.message:t._representObject(e)})}n=a[t.idName];let o;for(const e of r){if(e.error)return void(t.model[t.attachmentTypeName][t.internalName].state.errors={database:e.message});e.id===n&&(o=e.rev)}t.file&&(t.file.revision=t.model[t.revisionName]=o,t.file.query=`?rev=${o}`,t.file.source=t._domSanitizer.bypassSecurityTrustResourceUrl(t._stringFormat(t.configuration.database.url,'')+`/${t.configuration.name}/${n}/`+`${t.file.name}${t.file.query}`),t.determinePresentationType()),t.modelChange.emit(t.model),t.fileChange.emit(t.file)}else if(t.file.data){t.determinePresentationType();const e=new FileReader;e.onload=function(e){if(t.file.digest=new Date().getTime(),t.file.source=t._domSanitizer.bypassSecurityTrustResourceUrl(e.target.result),t.mapNameToField)for(const e of t.mapNameToField)t.model[e]=t.file.name;t.modelChange.emit(t.model),t.fileChange.emit(t.file)},e.readAsDataURL(t.file.data)}})()}},Kr.imageMimeTypeRegularExpression=/^image\/(?:p?jpe?g|png|svg(?:\+xml)?|vnd\.microsoft\.icon|gif|tiff|webp|vnd\.wap\.wbmp|x-(?:icon|jng|ms-bmp))$/,Kr.textMimeTypeRegularExpression=/^(?:application\/xml)|(?:text\/(?:plain|x-ndpb[wy]html|(?:x-)?csv))$/,Kr.videoMimeTypeRegularExpression=/^video\/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|(?:application\/(?:x-)?shockwave-flash)$/,Yr),Pr=r(Tr.prototype,'delete',[Zi],{enumerable:!0,initializer:function(){return new bo.EventEmitter}}),Ir=r(Tr.prototype,'deleteButtonText',[Ji],{enumerable:!0,initializer:function(){return'delete'}}),_r=r(Tr.prototype,'downloadButtonText',[Qi],{enumerable:!0,initializer:function(){return'download'}}),Or=r(Tr.prototype,'editableName',[Xi],{enumerable:!0,initializer:function(){return!0}}),Sr=r(Tr.prototype,'fileChange',[er],{enumerable:!0,initializer:function(){return new bo.EventEmitter}}),Cr=r(Tr.prototype,'headerText',[tr],{enumerable:!0,initializer:function(){return null}}),wr=r(Tr.prototype,'input',[ar],{enumerable:!0,initializer:function(){return this.input}}),Dr=r(Tr.prototype,'resetNameText',[nr],{enumerable:!0,initializer:function(){return'\xD7'}}),Er=r(Tr.prototype,'saveNameText',[ir],{enumerable:!0,initializer:function(){return'\u2713'}}),zr=r(Tr.prototype,'showDeclarationText',[rr],{enumerable:!0,initializer:function(){return'\u2139'}}),jr=r(Tr.prototype,'mapNameToField',[or],{enumerable:!0,initializer:function(){return null}}),Rr=r(Tr.prototype,'maximumSizeText',[sr],{enumerable:!0,initializer:function(){return'Filesize (${file.length} byte) is more than specified maximum of ${model.maximumSize} byte.'}}),Mr=r(Tr.prototype,'minimumSizeText',[mr],{enumerable:!0,initializer:function(){return'Filesize (${file.length} byte) is less than specified minimum of ${model.minimumSize} byte.'}}),Ar=r(Tr.prototype,'model',[lr],{enumerable:!0,initializer:function(){return this.model}}),kr=r(Tr.prototype,'modelChange',[dr],{enumerable:!0,initializer:function(){return new bo.EventEmitter}}),Lr=r(Tr.prototype,'name',[pr],{enumerable:!0,initializer:function(){return null}}),qr=r(Tr.prototype,'namePatternText',[cr],{enumerable:!0,initializer:function(){return'Given filename "${file.name}" doesn\'t match specified pattern "${internalName}".'}}),Fr=r(Tr.prototype,'newButtonText',[ur],{enumerable:!0,initializer:function(){return'new'}}),Ur=r(Tr.prototype,'noFileText',[fr],{enumerable:!0,initializer:function(){return''}}),Wr=r(Tr.prototype,'noPreviewText',[gr],{enumerable:!0,initializer:function(){return''}}),Gr=r(Tr.prototype,'requiredText',[yr],{enumerable:!0,initializer:function(){return'Please select a file.'}}),Br=r(Tr.prototype,'revision',[br],{enumerable:!0,initializer:function(){return null}}),Vr=r(Tr.prototype,'showValidationErrorMessages',[hr],{enumerable:!0,initializer:function(){return!1}}),$r=r(Tr.prototype,'synchronizeImmediately',[xr],{enumerable:!0,initializer:function(){return!1}}),Hr=r(Tr.prototype,'typePatternText',[vr],{enumerable:!0,initializer:function(){return'Filetype "${file.content_type}" doesn\'t match specified pattern "${model.contentTypeRegularExpressionPattern}".'}}),Tr))||Nr);Reflect.defineMetadata('design:paramtypes',[Ds,No.DomSanitizer,$o,es,Fo,Ko,Jo,qo],Ys);let Zs=t.PaginationComponent=(Zr=(0,bo.Component)({animations:[Os()],changeDetection:bo.ChangeDetectionStrategy.OnPush,selector:'generic-pagination',template:`
+        <ul @defaultAnimation *ngIf="lastPage > 1">
+            <li @defaultAnimation *ngIf="page > 2">
                 <a href="" (click)="change($event, 1)">--</a>
             </li>
-            <li *ngIf="page > 1">
+            <li @defaultAnimation *ngIf="page > 1">
                 <a href="" (click)="change($event, previousPage)">-</a>
             </li>
-            <li *ngFor="let currentPage of pagesRange;let even = even">
-                <a
-                    href="" class="page-{{currentPage}}"
-                    [ngClass]="{current: currentPage === page, previous: currentPage === previousPage, next: currentPage === nextPage, even: even, 'even-page': currentPage % 2 === 0, first: currentPage === firstPage, last: currentPage === lastPage}"
-                    (click)="change($event, currentPage)"
-                >{{currentPage}}</a>
+            <li
+                class="page-{{currentPage}}"
+                @defaultAnimation
+                [ngClass]="{current: currentPage === page, previous: currentPage === previousPage, next: currentPage === nextPage, even: even, 'even-page': currentPage % 2 === 0, first: currentPage === firstPage, last: currentPage === lastPage}"
+                *ngFor="let currentPage of pagesRange;let even = even"
+            >
+                <a (click)="change($event, currentPage)" href="">
+                    {{currentPage}}
+                </a>
             </li>
-            <li *ngIf="lastPage > page">
+            <li @defaultAnimation *ngIf="lastPage > page">
                 <a href="" (click)="change($event, nextPage)">+</a>
             </li>
-            <li *ngIf="lastPage > page + 1">
+            <li @defaultAnimation *ngIf="lastPage > page + 1">
                 <a href="" (click)="change($event, lastPage)">++</a>
             </li>
         </ul>
-    `}),_dec36=(0,_core.Input)(),_dec37=(0,_core.Input)(),_dec38=(0,_core.Output)(),_dec39=(0,_core.Input)(),_dec40=(0,_core.Input)(),_dec35(_class35=(_class36=class GenericPaginationComponent{/**
-     * Sets needed services as property values.
-     * @param makeRange - Saves the make range pipe instance.
-     * @returns Nothing.
-     */constructor(makeRange){this._makeRange=this._makeRange;_initDefineProp(this,'itemsPerPage',_descriptor14,this);_initDefineProp(this,'page',_descriptor15,this);_initDefineProp(this,'pageChange',_descriptor16,this);_initDefineProp(this,'pageRangeLimit',_descriptor17,this);_initDefineProp(this,'total',_descriptor18,this);this._makeRange=makeRange.transform.bind(makeRange)}/**
-     * Is called whenever a page change should be performed.
-     * @param event - The responsible event.
-     * @param newPage - New page number to change to.
-     * @returns Nothing.
-     */change(event,newPage){event.preventDefault();this.page=newPage;this.pageChange.emit(this.page)}/**
-     * Determines the highest page number.
-     * @returns The determines page number.
-     */get lastPage(){return Math.ceil(this.total/this.itemsPerPage)}/**
-     * Retrieves the next or last (if last is current) page.
-     * @returns The new determined page number.
-     */get nextPage(){return Math.min(this.page+1,this.lastPage)}/**
-     * Determines the number of pages to show.
-     * @returns A list of page numbers.
-     */get pagesRange(){if(this.page-this.pageRangeLimit<1){const start=1;const startRest=this.pageRangeLimit-(this.page-start);const end=Math.min(this.lastPage,this.page+this.pageRangeLimit+startRest);return this._makeRange([start,end])}const end=Math.min(this.lastPage,this.page+this.pageRangeLimit);const endRest=this.pageRangeLimit-(end-this.page);const start=Math.max(1,this.page-this.pageRangeLimit-endRest);return this._makeRange([start,end])}/**
-     * Determines the previous or first (if first is current) page.
-     * @returns The previous determined page number.
-     */get previousPage(){return Math.max(1,this.page-1)}},(_descriptor14=_applyDecoratedDescriptor(_class36.prototype,'itemsPerPage',[_dec36],{enumerable:true,initializer:function initializer(){return 20}}),_descriptor15=_applyDecoratedDescriptor(_class36.prototype,'page',[_dec37],{enumerable:true,initializer:function initializer(){return 1}}),_descriptor16=_applyDecoratedDescriptor(_class36.prototype,'pageChange',[_dec38],{enumerable:true,initializer:function initializer(){return new _core.EventEmitter}}),_descriptor17=_applyDecoratedDescriptor(_class36.prototype,'pageRangeLimit',[_dec39],{enumerable:true,initializer:function initializer(){return 4}}),_descriptor18=_applyDecoratedDescriptor(_class36.prototype,'total',[_dec40],{enumerable:true,initializer:function initializer(){return 0}})),_class36))||_class35);// / endregion
-// endregion
-// region modules
-Reflect.defineMetadata('design:paramtypes',[GenericArrayMakeRangePipe],GenericPaginationComponent);const declarations=Object.keys(module.exports).filter(function(name){return!name.startsWith('Abstract')&&(name.endsWith('Component')||name.endsWith('Pipe'))}).map(function(name){return module.exports[name]});const providers=Object.keys(module.exports).filter(function(name){return!name.startsWith('Abstract')&&(name.endsWith('Resolver')||name.endsWith('Pipe')||name.endsWith('Guard')||name.endsWith('Service'))}).map(function(name){return module.exports[name]});const modules=[_platformBrowser.BrowserModule,_forms.FormsModule,_material.MaterialModule.forRoot()];// IgnoreTypeCheck
-/**
- * Represents the importable angular module.
- */let GenericModule=(_dec41=(0,_core.NgModule)({declarations,exports:declarations,imports:modules,providers}),_dec41(_class38=class GenericModule{})||_class38);// endregion
-// region vim modline
-// vim: set tabstop=4 shiftwidth=4 expandtab:
-// vim: foldmethod=marker foldmarker=region,endregion:
-// endregion
-exports.default=GenericModule;
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)(module)))
-
-/***/ }),
-/* 3 */,
-/* 4 */
-/***/ (function(module, exports) {
-
-module.exports = function(module) {
-	if(!module.webpackPolyfill) {
-		module.deprecate = function() {};
-		module.paths = [];
-		// module.parent = undefined by default
-		if(!module.children) module.children = [];
-		Object.defineProperty(module, "loaded", {
-			enumerable: true,
-			get: function() {
-				return module.l;
-			}
-		});
-		Object.defineProperty(module, "id", {
-			enumerable: true,
-			get: function() {
-				return module.i;
-			}
-		});
-		module.webpackPolyfill = 1;
-	}
-	return module;
-};
-
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_5__;
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_6__;
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_7__;
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_8__;
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_9__;
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_10__;
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_11__;
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_12__;
-
-/***/ }),
-/* 13 */,
-/* 14 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_14__;
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(2);
-
-
-/***/ })
-/******/ ]);
-});
+    `}),Jr=(0,bo.Input)(),Qr=(0,bo.Input)(),Xr=(0,bo.Output)(),eo=(0,bo.Input)(),to=(0,bo.Input)(),Zr(ao=(no=class{constructor(e,t){i(this,'itemsPerPage',io,this),i(this,'page',ro,this),i(this,'pageChange',oo,this),i(this,'pageRangeLimit',so,this),i(this,'total',mo,this),this._changeDetectorReference=this._changeDetectorReference,this._makeRange=this._makeRange,this._changeDetectorReference=e,this._makeRange=t.transform.bind(t)}change(e,t){e.preventDefault(),this._changeDetectorReference.markForCheck(),this.page=t,this.pageChange.emit(this.page)}get lastPage(){return l(this.total/this.itemsPerPage)}get nextPage(){return m(this.page+1,this.lastPage)}get pagesRange(){if(1>this.page-this.pageRangeLimit){const e=1,t=this.pageRangeLimit-(this.page-e),a=m(this.lastPage,this.page+this.pageRangeLimit+t);return this._makeRange([e,a])}const e=m(this.lastPage,this.page+this.pageRangeLimit),t=this.pageRangeLimit-(e-this.page),a=d(1,this.page-this.pageRangeLimit-t);return this._makeRange([a,e])}get previousPage(){return d(1,this.page-1)}},io=r(no.prototype,'itemsPerPage',[Jr],{enumerable:!0,initializer:function(){return 10}}),ro=r(no.prototype,'page',[Qr],{enumerable:!0,initializer:function(){return 1}}),oo=r(no.prototype,'pageChange',[Xr],{enumerable:!0,initializer:function(){return new bo.EventEmitter}}),so=r(no.prototype,'pageRangeLimit',[eo],{enumerable:!0,initializer:function(){return 4}}),mo=r(no.prototype,'total',[to],{enumerable:!0,initializer:function(){return 0}}),no))||ao);Reflect.defineMetadata('design:paramtypes',[bo.ChangeDetectorRef,Bo],Zs);const Js=t.determineExports=function(e){return Object.keys(e.exports).filter(function(e){return!e.startsWith('Abstract')&&['Component','Directive','Pipe'].some(function(t){return e.endsWith(t)})}).map(function(t){return e.exports[t]})},Qs=t.determineDeclarations=function(e){return Js(e).concat(Object.keys(e.exports).filter(function(e){return!e.startsWith('Abstract')&&['Accessor'].some(function(t){return e.endsWith(t)})}).map(function(t){return e.exports[t]}))},Xs=t.determineProviders=function(e){return Object.keys(e.exports).filter(function(e){return e.endsWith('Resolver')||e.endsWith('Pipe')||e.endsWith('Guard')||e.endsWith('Service')}).map(function(t){return e.exports[t]})};let em=(lo=(0,bo.NgModule)({declarations:Qs(e),entryComponents:[Cs],exports:Js(e),imports:[No.BrowserModule.withServerTransition({appId:'generic-universal'}),xo.FormsModule,vo.MatButtonModule,vo.MatCardModule,vo.MatDialogModule,vo.MatInputModule,vo.MatSelectModule,vo.MatTooltipModule,co.TinyMceModule.forRoot(Lo)],providers:Xs(e).concat(ho.DatePipe,{deps:[Ds,Fo,bo.Injector],multi:!0,provide:bo.APP_INITIALIZER,useFactory:function(e,t,a){return function(){return t.constructor.injectors.add(a),e.initialize()}}})}),lo(po=class{})||po);t.default=em}).call(t,a(5)(e))},function(e){e.exports=function(e){return e.webpackPolyfill||(e.deprecate=function(){},e.paths=[],!e.children&&(e.children=[]),Object.defineProperty(e,'loaded',{enumerable:!0,get:function(){return e.l}}),Object.defineProperty(e,'id',{enumerable:!0,get:function(){return e.i}}),e.webpackPolyfill=1),e}},function(e){e.exports=n},function(e){e.exports=i},function(e){e.exports=r},function(e){e.exports=o},function(e){e.exports=s},function(e){e.exports=m},function(e){e.exports=l},function(e){e.exports=d},function(e){e.exports=p},function(e){e.exports=c},function(e){e.exports=u},function(e){e.exports=f},function(e){e.exports=g}])});
