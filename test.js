@@ -892,16 +892,25 @@ registerAngularTest(function(
                                         maximumNumber: 2
                                     }}},
                                     {payloadExists: true, result: {b: {
-                                        data: getBinary('a')
+                                        data: getBinary('b')
                                     }}}
                                 ]
                                 /* eslint-enable camelcase */
-                            ])
-                                assert.deepEqual(
-                                    await extractRawDataPipe
-                                        .getNotAlreadyExistingAttachmentData(
-                                            test[0], test[1], test[2]),
-                                    test[3])
+                            ]) {
+                                /*
+                                    NOTE: "deepEquals" doesn't handle binary
+                                    data well.
+                                */
+                                const result:any = await extractRawDataPipe
+                                    .getNotAlreadyExistingAttachmentData(
+                                        test[0], test[1], test[2])
+                                if (Tools.equals(result, test[3]))
+                                    assert.ok(true)
+                                else {
+                                    assert.ok(false)
+                                    console.warn(Tools.representObject(result), '!=', test[3])
+                                }
+                            }
                             // endregion
                             // region removeAlreadyExistingData
                             for (const test:Array<any> of [
@@ -1470,19 +1479,23 @@ registerAngularTest(function(
                                         ), test[1])
                             })
                         // / region confirm
-                        self.test(`AlertService (${roundType})`, (
-                            assert:Object
-                        ):void => {
-                            const done:Function = assert.async()
-                            alert.confirm('test').then((result:true):void =>
-                                assert.ok(result))
-                            alert.dialogReference.close(true)
-                            alert.confirm('test').then((result:true):void => {
-                                assert.notOk(result)
-                                done()
+                        self[targetTechnology === 'web' ? 'test' : 'skip'](
+                            `AlertService (${roundType})`, (
+                                assert:Object
+                            ):void => {
+                                const done:Function = assert.async()
+                                alert.confirm('test').then((
+                                    result:true
+                                ):void => assert.ok(result))
+                                alert.dialogReference.close(true)
+                                alert.confirm('test').then((
+                                    result:true
+                                ):void => {
+                                    assert.notOk(result)
+                                    done()
+                                })
+                                alert.dialogReference.close(false)
                             })
-                            alert.dialogReference.close(false)
-                        })
                         // / endregion
                         self.test(`DataService (${roundType})`, async (
                             assert:Object
@@ -2019,25 +2032,26 @@ registerAngularTest(function(
             // region test components
             this.module(`Module.components (${roundType})`)
             // / region confirm
-            this.test(`ConfirmComponent (${roundType})`, async (
-                assert:Object
-            ):Promise<void> => {
-                const done:Function = assert.async()
-                const fixture:ComponentFixture<ConfirmComponent> =
-                    TestBed.createComponent(ConfirmComponent)
-                const instance:Object = fixture.componentInstance
-                try {
-                    fixture.detectChanges()
-                    await fixture.whenStable()
-                    assert.strictEqual(instance.cancelText, 'Cancel')
-                    assert.strictEqual(instance.dialogReference, null)
-                    assert.strictEqual(instance.okText, 'OK')
-                } catch (error) {
-                    console.warn(error)
-                    assert.ok(false)
-                }
-                done()
-            })
+            this[targetTechnology === 'web' ? 'test' : 'skip'].test(
+                `ConfirmComponent (${roundType})`, async (
+                    assert:Object
+                ):Promise<void> => {
+                    const done:Function = assert.async()
+                    const fixture:ComponentFixture<ConfirmComponent> =
+                        TestBed.createComponent(ConfirmComponent)
+                    const instance:Object = fixture.componentInstance
+                    try {
+                        fixture.detectChanges()
+                        await fixture.whenStable()
+                        assert.strictEqual(instance.cancelText, 'Cancel')
+                        assert.strictEqual(instance.dialogReference, null)
+                        assert.strictEqual(instance.okText, 'OK')
+                    } catch (error) {
+                        console.warn(error)
+                        assert.ok(false)
+                    }
+                    done()
+                })
             // / endregion
             // / region input/select/textarea
             this.test(`${InputComponent.name} (${roundType})`, async (
