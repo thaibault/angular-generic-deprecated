@@ -28,6 +28,7 @@ import registerAngularTest from './testRunner'
 // endregion
 // TODO check if all needed tests exists.
 // region tests
+console.log('A')
 registerAngularTest(function(
     ApplicationComponent:Object, roundType:string, targetTechnology:?string,
     $:any
