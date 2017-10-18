@@ -52,32 +52,36 @@ export default function(
     ):Promise<void> {
         // region mocking angular environment
         $('head').append('<base href="/">')
-        for (const domNodeSpecification:PlainObject of [
-            {link: {
-                attributes: {
-                    href: 'node_modules/@angular/material/prebuilt-themes/' +
-                        'deeppurple-amber.css',
-                    rel: 'stylesheet',
-                    type: 'text/css'
-                },
-                inject: window.document.getElementsByTagName('head')[0]
-            }}
-        ]) {
-            const domNodeName:string = Object.keys(domNodeSpecification)[0]
-            const domNode:DomNode = window.document.createElement(domNodeName)
-            for (const name:string in domNodeSpecification[
-                domNodeName
-            ].attributes)
-                if (domNodeSpecification[
+        if (
+            typeof TARGET_TECHNOLOGY === 'string' &&
+            TARGET_TECHNOLOGY === 'web'
+        )
+            for (const domNodeSpecification:PlainObject of [
+                {link: {
+                    attributes: {
+                        href: 'node_modules/@angular/material/' +
+                            'prebuilt-themes/deeppurple-amber.css',
+                        rel: 'stylesheet',
+                        type: 'text/css'
+                    },
+                    inject: window.document.getElementsByTagName('head')[0]
+                }}
+            ]) {
+                const domNodeName:string = Object.keys(domNodeSpecification)[0]
+                const domNode:DomNode = window.document.createElement(domNodeName)
+                for (const name:string in domNodeSpecification[
                     domNodeName
-                ].attributes.hasOwnProperty(name))
-                    domNode.setAttribute(name, domNodeSpecification[
+                ].attributes)
+                    if (domNodeSpecification[
                         domNodeName
-                    ].attributes[name])
-            domNodeSpecification[domNodeName].inject.appendChild(domNode)
-            await new Promise((resolve:Function):void =>
-                domNode.addEventListener('load', resolve))
-        }
+                    ].attributes.hasOwnProperty(name))
+                        domNode.setAttribute(name, domNodeSpecification[
+                            domNodeName
+                        ].attributes[name])
+                domNodeSpecification[domNodeName].inject.appendChild(domNode)
+                await new Promise((resolve:Function):void =>
+                    domNode.addEventListener('load', resolve))
+            }
         /*
             NOTE: A working polymorphic angular environment needs some
             assumptions about the global scope, so mocking and initializing
@@ -88,6 +92,8 @@ export default function(
             TARGET_TECHNOLOGY === 'node'
         ) {
             global.window.Reflect = global.Reflect
+            if (!('CSS' in global))
+                global.CSS = true
             if (!('matchMedia' in global.window))
                 global.window.matchMedia = (mediaQuery:string):{
                     addListener:Function;
@@ -106,6 +112,8 @@ export default function(
                         removeListener: ():void => {}
                     }
                 }
+            if (!('navigator' in global))
+                global.navigator = {userAgent: 'node'}
             process.setMaxListeners(30)
         }
         require('hammerjs')
@@ -141,7 +149,7 @@ export default function(
                 platform = ((
                     typeof TARGET_TECHNOLOGY === 'string' &&
                     TARGET_TECHNOLOGY === 'node'
-                ) ? require('@angular/platform-server').platformServer :
+                ) ? require('@angular/platform-server').platformDynamicServer :
                     require(
                         '@angular/platform-browser-dynamic'
                     ).platformBrowserDynamic)()

@@ -17,7 +17,6 @@
 // region imports
 import Tools from 'clientnode'
 import type {DomNode, PlainObject} from 'clientnode'
-import {blobToBase64String} from 'blob-util'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 // NOTE: Only needed for debugging this file.
 try {
@@ -26,9 +25,11 @@ try {
 
 import registerAngularTest from './testRunner'
 // endregion
+const blobToBase64String:Function = typeof Blob === 'undefined' ?
+    async (file:Object):Promise<string> => file.toString('base64') :
+    eval('require')('blob-util').blobToBase64String
 // TODO check if all needed tests exists.
 // region tests
-console.log('A')
 registerAngularTest(function(
     ApplicationComponent:Object, roundType:string, targetTechnology:?string,
     $:any
@@ -272,7 +273,7 @@ registerAngularTest(function(
                         const tools:ToolsService = get(ToolsService)
                         const typePipe:TypePipe = get(TypePipe)
                         const getBinary:Function = (data:string):Object => (
-                            typeof Blob === undefined
+                            typeof Blob === 'undefined'
                         ) ? new Buffer(data) : new Blob([data], {
                                 type: 'application/octet-stream'})
                         specialNames = initialData.configuration.database.model
