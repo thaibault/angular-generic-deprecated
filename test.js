@@ -273,7 +273,7 @@ registerAngularTest(function(
                         const tools:ToolsService = get(ToolsService)
                         const typePipe:TypePipe = get(TypePipe)
                         const getBinary:Function = (data:string):Object => (
-                            typeof Blob === 'undefined'
+                            typeof Buffer !== 'undefined' && Buffer.isBuffer
                         ) ? new Buffer(data) : new Blob([data], {
                                 type: 'application/octet-stream'})
                         specialNames = initialData.configuration.database.model
