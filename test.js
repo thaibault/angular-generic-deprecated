@@ -2039,7 +2039,7 @@ registerAngularTest(function(
             // region test components
             this.module(`Module.components (${roundType})`)
             // / region confirm
-            this[targetTechnology === 'web' ? 'test' : 'skip'].test(
+            this[targetTechnology === 'web' ? 'test' : 'skip'](
                 `ConfirmComponent (${roundType})`, async (
                     assert:Object
                 ):Promise<void> => {

@@ -272,7 +272,9 @@ export class InitialDataService {
             // TODO how to get right dom node?
             const domNode:DomNode = tools.globalContext.document.querySelector(
                 'application')
-            if (domNode && domNode.getAttribute('initialData')) {
+            if (domNode && 'getAttribute' in domNode && domNode.getAttribute(
+                'initialData'
+            )) {
                 this.set(JSON.parse(domNode.getAttribute('initialData')))
                 if (this.constructor.removeFoundData)
                     domNode.removeAttribute('initialData')
