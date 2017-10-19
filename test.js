@@ -909,7 +909,9 @@ registerAngularTest(function(
                                     assert.ok(true)
                                 else {
                                     assert.ok(false)
-                                    console.warn(Tools.representObject(result), '!=', test[3])
+                                    console.warn(
+                                        Tools.representObject(result), '!=',
+                                        test[3])
                                 }
                             }
                             // endregion

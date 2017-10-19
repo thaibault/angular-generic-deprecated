@@ -68,7 +68,8 @@ export default function(
                 }}
             ]) {
                 const domNodeName:string = Object.keys(domNodeSpecification)[0]
-                const domNode:DomNode = window.document.createElement(domNodeName)
+                const domNode:DomNode = window.document.createElement(
+                    domNodeName)
                 for (const name:string in domNodeSpecification[
                     domNodeName
                 ].attributes)
