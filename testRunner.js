@@ -51,13 +51,15 @@ export default function(
         ...extraParameter:Array<any>
     ):Promise<void> {
         // region mocking angular environment
+        /*
+            NOTE: A working polymorphic angular environment needs some
+            assumptions about the global scope, so mocking and initializing
+            that environment after a working browser environment is present.
+        */
         $('head').append('<base href="/">')
-        if (
-            typeof TARGET_TECHNOLOGY === 'string' &&
-            TARGET_TECHNOLOGY === 'web'
-        )
-            for (const domNodeSpecification:PlainObject of [
-                {link: {
+        if (typeof TARGET_TECHNOLOGY === 'string') {
+            if (TARGET_TECHNOLOGY === 'web') {
+                const domNodeSpecification:PlainObject = {link: {
                     attributes: {
                         href: 'node_modules/@angular/material/' +
                             'prebuilt-themes/deeppurple-amber.css',
@@ -66,7 +68,6 @@ export default function(
                     },
                     inject: window.document.getElementsByTagName('head')[0]
                 }}
-            ]) {
                 const domNodeName:string = Object.keys(domNodeSpecification)[0]
                 const domNode:DomNode = window.document.createElement(
                     domNodeName)
@@ -80,44 +81,35 @@ export default function(
                             domNodeName
                         ].attributes[name])
                 domNodeSpecification[domNodeName].inject.appendChild(domNode)
-                /* TODO: Produces a compiler error yet.
                 await new Promise((resolve:Function):void =>
                     domNode.addEventListener('load', resolve))
-                */
             }
-        /*
-            NOTE: A working polymorphic angular environment needs some
-            assumptions about the global scope, so mocking and initializing
-            that environment after a working browser environment is present.
-        */
-        if (
-            typeof TARGET_TECHNOLOGY === 'string' &&
-            TARGET_TECHNOLOGY === 'node'
-        ) {
-            global.window.Reflect = global.Reflect
-            if (!('CSS' in global))
-                global.CSS = true
-            if (!('matchMedia' in global.window))
-                global.window.matchMedia = (mediaQuery:string):{
-                    addListener:Function;
-                    matches:boolean;
-                    media:string;
-                    removeListener:Function;
-                } => {
-                    /*
-                        NOTE: It is syntactically impossible to return an
-                        object literal in functional style.
-                    */
-                    return {
-                        addListener: ():void => {},
-                        matches: true,
-                        media: mediaQuery,
-                        removeListener: ():void => {}
+            if (TARGET_TECHNOLOGY === 'node') {
+                global.window.Reflect = global.Reflect
+                if (!('CSS' in global))
+                    global.CSS = true
+                if (!('matchMedia' in global.window))
+                    global.window.matchMedia = (mediaQuery:string):{
+                        addListener:Function;
+                        matches:boolean;
+                        media:string;
+                        removeListener:Function;
+                    } => {
+                        /*
+                            NOTE: It is syntactically impossible to return an
+                            object literal in functional style.
+                        */
+                        return {
+                            addListener: ():void => {},
+                            matches: true,
+                            media: mediaQuery,
+                            removeListener: ():void => {}
+                        }
                     }
-                }
-            if (!('navigator' in global))
-                global.navigator = {userAgent: 'node'}
-            process.setMaxListeners(30)
+                if (!('navigator' in global))
+                    global.navigator = {userAgent: 'node'}
+                process.setMaxListeners(30)
+            }
         }
         require('hammerjs')
         const {Component, enableProdMode} = require('@angular/core')

@@ -27,7 +27,7 @@ import registerAngularTest from './testRunner'
 // endregion
 // TODO check if all needed tests exists.
 // region tests
-registerAngularTest(f, registerTestunction(
+registerAngularTest(function(
     ApplicationComponent:Object, roundType:string, targetTechnology:?string,
     $:any
 ):{bootstrap:Function;component:Function} {
@@ -36,7 +36,11 @@ registerAngularTest(f, registerTestunction(
     // region imports
     const blobToBase64String:Function = typeof Blob === 'undefined' ?
         async (file:Object):Promise<string> => file.toString('base64') :
-        eval('require')('blob-util').blobToBase64String
+        require('blob-util').blobToBase64String
+    const getBinary:Function = (data:string):Object => (
+        typeof Blob === 'undefined'
+    ) ? new Buffer(data) : new Blob([data], {
+            type: 'application/octet-stream'})
     const {
         Component,
         Injector,
@@ -272,10 +276,6 @@ registerAngularTest(f, registerTestunction(
                             StringTemplatePipe)
                         const tools:ToolsService = get(ToolsService)
                         const typePipe:TypePipe = get(TypePipe)
-                        const getBinary:Function = (data:string):Object => (
-                            typeof Buffer !== 'undefined' && Buffer.isBuffer
-                        ) ? new Buffer(data) : new Blob([data], {
-                                type: 'application/octet-stream'})
                         specialNames = initialData.configuration.database.model
                             .property.name.special
                         // region basic services
@@ -904,14 +904,19 @@ registerAngularTest(f, registerTestunction(
                                 const result:any = await extractRawDataPipe
                                     .getNotAlreadyExistingAttachmentData(
                                         test[0], test[1], test[2])
-                                if (Tools.equals(result, test[3]))
-                                    assert.ok(true)
-                                else {
-                                    assert.ok(false)
+                                const equal:any = Tools.equals(
+                                    result, test[3], null, -1, [], true, true)
+                                if (
+                                    typeof equal === 'object' &&
+                                    'then' in equal
+                                )
+                                    equal = await equal
+                                assert.ok(equal)
+                                if (!equal)
                                     console.warn(
-                                        Tools.representObject(result), '!=',
-                                        test[3])
-                                }
+                                        Tools.representObject(result),
+                                        '!=',
+                                        Tools.representObject(test[3]))
                             }
                             // endregion
                             // region removeAlreadyExistingData
