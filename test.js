@@ -28,6 +28,7 @@ import registerAngularTest from './testRunner'
 const blobToBase64String:Function = typeof Blob === 'undefined' ?
     async (file:Object):Promise<string> => file.toString('base64') :
     eval('require')('blob-util').blobToBase64String
+console.log('22')
 // TODO check if all needed tests exists.
 // region tests
 registerAngularTest(function(
