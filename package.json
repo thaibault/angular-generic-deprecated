@@ -154,7 +154,7 @@
               "__remove__": "transform-runtime"
             },
             "presets": {
-              "__evaluate__": "(self.targetTechnology === 'node' ? [['env', {targets: {node: 'current'}}]] : [['env', {loose: true, targets: {browsers: ['last 2 versions']}}]]).concat('stage-0')"
+              "__evaluate__": "(self.targetTechnology === 'node' ? [['env', {targets: {node: 'current'}}]] : [['env', {targets: {browsers: 'last 2 versions'}}]]).concat('stage-0')"
             }
           }
         }
