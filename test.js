@@ -25,19 +25,18 @@ try {
 
 import registerAngularTest from './testRunner'
 // endregion
-const blobToBase64String:Function = typeof Blob === 'undefined' ?
-    async (file:Object):Promise<string> => file.toString('base64') :
-    eval('require')('blob-util').blobToBase64String
-console.log('22')
 // TODO check if all needed tests exists.
 // region tests
-registerAngularTest(function(
+registerAngularTest(f, registerTestunction(
     ApplicationComponent:Object, roundType:string, targetTechnology:?string,
     $:any
 ):{bootstrap:Function;component:Function} {
     const now:Date = new Date()
     const nowUTCTimestamp:number = Tools.numberGetUTCTimestamp(now)
     // region imports
+    const blobToBase64String:Function = typeof Blob === 'undefined' ?
+        async (file:Object):Promise<string> => file.toString('base64') :
+        eval('require')('blob-util').blobToBase64String
     const {
         Component,
         Injector,

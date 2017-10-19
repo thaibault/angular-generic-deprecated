@@ -80,8 +80,10 @@ export default function(
                             domNodeName
                         ].attributes[name])
                 domNodeSpecification[domNodeName].inject.appendChild(domNode)
+                /* TODO: Produces a compiler error yet.
                 await new Promise((resolve:Function):void =>
                     domNode.addEventListener('load', resolve))
+                */
             }
         /*
             NOTE: A working polymorphic angular environment needs some
