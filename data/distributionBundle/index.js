@@ -19,7 +19,6 @@
 */
 // region imports
 import {tinymceDefaultSettings, TinyMceModule} from 'angular-tinymce'
-import {blobToBase64String} from 'blob-util'
 import type {PlainObject} from 'clientnode'
 import Tools, {$, globalContext} from 'clientnode'
 import {
@@ -273,7 +272,9 @@ export class InitialDataService {
             // TODO how to get right dom node?
             const domNode:DomNode = tools.globalContext.document.querySelector(
                 'application')
-            if (domNode && domNode.getAttribute('initialData')) {
+            if (domNode && 'getAttribute' in domNode && domNode.getAttribute(
+                'initialData'
+            )) {
                 this.set(JSON.parse(domNode.getAttribute('initialData')))
                 if (this.constructor.removeFoundData)
                     domNode.removeAttribute('initialData')
@@ -1762,7 +1763,7 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
  */
 export class ConfirmComponent {
     @Input() cancelText:string = 'Cancel'
-    dialogReference:?MatDialogRef<ConfirmComponent> = null
+    dialogReference:?MatDialogRef = null
     @Input() okText:string = 'OK'
     /**
      * Gets needed component data injected.
@@ -1777,7 +1778,7 @@ export class ConfirmComponent {
         /* eslint-disable indent */
         // IgnoreTypeCheck
         @Optional() @Inject(MAT_DIALOG_DATA) data:any,
-        @Optional() dialogReference:MatDialogRef<ConfirmComponent>
+        @Optional() dialogReference:MatDialogRef
         /* eslint-enable indent */
     ):void {
         this.dialogReference = dialogReference
@@ -5763,7 +5764,9 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
             /* eslint-disable camelcase */
             content_type: file.type || 'text/plain',
             /* eslint-enable camelcase */
-            data: await blobToBase64String(file),
+            data: typeof Blob === 'undefined' ?
+                file.toString('base64') :
+                await eval('require')('blob-util').blobToBase64String(file),
             length: file.size,
             name: this.file.name
         }
