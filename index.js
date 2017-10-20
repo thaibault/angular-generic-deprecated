@@ -3445,10 +3445,8 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
                         result = await result
                     if (result)
                         this._changeDetectorReference.detectChanges()
-                    if (type === 'error' && this.autoRestartOnError) {
-                        console.log('EE')
+                    if (type === 'error' && this.autoRestartOnError)
                         initialize()
-                    }
                 })
         }, 3000)
         /*
