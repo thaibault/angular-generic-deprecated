@@ -3070,7 +3070,10 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
         if (options.skip === 0)
             delete options.skip
         if (sort.length)
-            options.sort = [{[this.specialNames.type]: 'asc'}].concat(sort)
+            options.sort = [this.specialNames.type].concat(sort).map((
+                item:PlainObject
+            ):PlainObject|string =>
+                Object.values(item)[0] === 'asc' ? Object.keys(item)[0] : item)
         return this.data.find(this.extendObject(
             true, selector, additionalSelector
         ), options)
@@ -3120,8 +3123,8 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
                 const lastIndex:number = name.lastIndexOf('-')
                 let type:string = 'asc'
                 if (lastIndex !== -1) {
-                    name = name.substring(0, lastIndex)
                     type = name.substring(lastIndex + 1) || type
+                    name = name.substring(0, lastIndex)
                 }
                 return {[name]: type}
             })
