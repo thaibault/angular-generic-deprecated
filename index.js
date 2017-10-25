@@ -3756,8 +3756,11 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
                 this.page = 0
             let sort:string = ''
             for (const name:string in this.sort)
-                if (this.sort.hasOwnProperty(name))
-                    sort += `${sort ? ',' : ''}${name}-${this.sort[name]}`
+                if (this.sort.hasOwnProperty(name)) {
+                    sort += `${sort ? ',' : ''}${name}`
+                    if (this.sort[name] !== 'asc')
+                        sort += `-${this.sort[name]}`
+                }
             result = await this._router.navigate([
                 this._itemsPath, sort, this.page, this.limit,
                 `${this.regularExpression ? 'regex' : 'exact'}-` +
