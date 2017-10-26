@@ -1652,15 +1652,27 @@ export class StringStartsWithPipe/* implements PipeTransform*/ {
 @Pipe({name: 'genericStringTemplate'})
 /**
  * Provides angular's template engine as pipe.
+ * @property extendObjectPipe - Extend object pipe instance.
  */
 export class StringTemplatePipe/* implements PipeTransform*/ {
+    extendObjectPipe:ExtendObjectPipe
+    /**
+     * Sets injected extend object pipe instance as instance property.
+     * @param extendObjectPipe - Injected extend object pipe instance.
+     * @returns Nothing.
+     */
+    constructor(extendObjectPipe:ExtendObjectPipe):void {
+        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+    }
     /**
      * Performs the actual indicator method.
      * @param string - To check.
-     * @param scope - Scope to render given string again.
+     * @param scopes - Scopes to merge and render again given template string
+     * again.
      * @returns The rendered result.
      */
-    transform(string:string = '', scope:PlainObject = {}):string {
+    transform(string:string = '', ...scopes:Array<PlainObject>):string {
+        const scope:PlainObject = this.extendObject(true, {}, ...scopes)
         return new Function(Object.keys(scope), `return \`${string}\``)(
             ...Object.values(scope))
     }

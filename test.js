@@ -904,7 +904,7 @@ registerAngularTest(function(
                                 const result:any = await extractRawDataPipe
                                     .getNotAlreadyExistingAttachmentData(
                                         test[0], test[1], test[2])
-                                const equal:any = Tools.equals(
+                                let equal:any = Tools.equals(
                                     result, test[3], null, -1, [], true, true)
                                 if (
                                     typeof equal === 'object' &&
