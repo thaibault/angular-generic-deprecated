@@ -4,7 +4,7 @@
     "target": "esnext",
     "module": "ESNEXT",
     "moduleResolution": "node",
-    "outDir": "aot",
+    "outDir": "aheadOfTime.compiled",
     "sourceMap": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -19,7 +19,7 @@
   ],
 
   "angularCompilerOptions": {
-   "genDir": "aot",
+   "genDir": "aheadOfTime.compiled",
    "skipMetadataEmit" : true
  }
 }
