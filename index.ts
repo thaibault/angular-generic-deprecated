@@ -19,7 +19,7 @@
 */
 // region imports
 import {tinymceDefaultSettings, TinyMceModule} from 'angular-tinymce'
-import type {PlainObject} from 'clientnode'
+// TODO import type {PlainObject} from 'clientnode'
 import Tools, {$, globalContext} from 'clientnode'
 import {
     animate, AnimationTriggerMetadata, style, transition, trigger
@@ -100,6 +100,9 @@ import {ISubscription} from 'rxjs/Subscription'
 try {
     module.require('source-map-support/register')
 } catch (error) {}
+
+import defaultAnimation from './animation'
+import determineProviders, {determineExports} from './moduleHelper'
 // endregion
 declare var UTC_BUILD_TIMESTAMP:number
 if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
@@ -1132,7 +1135,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      */
     async transform(
         newDocument:PlainObject, oldDocument:?PlainObject
-    ):Promise<?PlainObject> {
+    ):Promise<PlainObject|null> {
         let specification:?PlainObject = null
         if (
             this.specialNames.type in newDocument &&
@@ -1706,51 +1709,6 @@ export class NumberPercentPipe/* implements PipeTransform*/ {
     }
 }
 // / endregion
-// endregion
-// region animations
-/**
- * Fade in/out animation factory.
- * @param options - Animations meta data options.
- * @returns Animations meta data object.
- */
-export function fadeAnimation(
-    options:string|PlainObject = {}
-):AnimationTriggerMetadata {
-    if (typeof options === 'string')
-        options = {name: options}
-    options = Tools.extendObject({
-        duration: '.3s',
-        enterState: ':enter',
-        leaveState: ':leave',
-        name: 'fadeAnimation',
-        style: {
-            enter: {
-                final: {opacity: 1},
-                initial: {opacity: 0}
-            }
-        }
-    }, options)
-    return trigger(options.name, [
-        transition(options.enterState, [
-            style(options.style.enter.initial),
-            animate(
-                options.enterDuration || options.duration,
-                style(options.style.enter.final))
-        ]),
-        transition(options.leaveState, [
-            style(
-                options.style.leave &&
-                options.style.leave.initial || options.style.enter.final),
-            animate(
-                options.leaveDuration || options.duration,
-                style(
-                    options.style.leave && options.style.leave.final ||
-                    options.style.enter.initial))
-        ])
-    ])
-}
-export const defaultAnimation:Function = fadeAnimation.bind(
-    {}, 'defaultAnimation')
 // endregion
 // region services
 // IgnoreTypeCheck
@@ -6116,26 +6074,17 @@ export class PaginationComponent {
 // / endregion
 // endregion
 // region module
-export const determineExports:Function = (module:Object):Array<Object> =>
-    Object.keys(module.exports).filter((name:string):boolean =>
+// IgnoreTypeCheck
+@NgModule({
+    /*
+        NOTE: Running "determineDeclarations()" is not yet supported by the
+        AOT-Compiler.
+    */
+    declarations: Object.keys(module.exports).filter((name:string):boolean =>
         !name.startsWith('Abstract') &&
         ['Component', 'Directive', 'Pipe'].some((suffix:string):boolean =>
             name.endsWith(suffix))
-    ).map((name:string):Object => module.exports[name])
-export const determineDeclarations:Function = (module:Object):Array<Object> =>
-    determineExports(module).concat(Object.keys(module.exports).filter((
-        name:string
-    ):boolean => !name.startsWith('Abstract') && ['Accessor'].some(
-        (suffix:string):boolean => name.endsWith(suffix)
-    )).map((name:string):Object => module.exports[name]))
-export const determineProviders:Function = (module:Object):Array<Object> =>
-    Object.keys(module.exports).filter((name:string):boolean =>
-        name.endsWith('Resolver') || name.endsWith('Pipe') ||
-        name.endsWith('Guard') || name.endsWith('Service')
-    ).map((name:string):Object => module.exports[name])
-// IgnoreTypeCheck
-@NgModule({
-    declarations: determineDeclarations(module),
+    ).map((name:string):Object => module.exports[name]),
     entryComponents: [ConfirmComponent],
     exports: determineExports(module),
     imports: [
@@ -6150,7 +6099,7 @@ export const determineProviders:Function = (module:Object):Array<Object> =>
         TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
     ],
     providers: determineProviders(module).concat(
-        DatePipe,
+        DatePipe/* TODO,
         {
             deps: [DataService, InitialDataService, Injector],
             multi: true,
@@ -6163,7 +6112,7 @@ export const determineProviders:Function = (module:Object):Array<Object> =>
                 initialData.constructor.injectors.add(injector)
                 return data.initialize()
             }
-        }
+        }*/
     )
 })
 /**

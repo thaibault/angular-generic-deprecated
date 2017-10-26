@@ -59,7 +59,8 @@
     "pouchdb-adapter-memory": "^6.3.4",
     "pouchdb-find": "^6.3.4",
     "pouchdb-validation": "^1.2.1",
-    "rimraf": "^2.6.1"
+    "rimraf": "^2.6.1",
+    "typescript": "^2.5.3"
   },
   "peerDependencies": {
     "@angular/animations": "*",

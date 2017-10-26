@@ -1,23 +1,21 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "target": "es5",
-    "module": "es2015",
+    "target": "esnext",
+    "module": "ESNEXT",
     "moduleResolution": "node",
     "outDir": "aot",
     "sourceMap": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "lib": ["es2015", "dom"],
+    "lib": ["esnext", "dom"],
     "noImplicitAny": true,
     "suppressImplicitAnyIndexErrors": true,
-    "typeRoots": [
-      "./node_modules/@types/"
-    ]
+    "typeRoots": ["./node_modules/@types/"]
   },
 
   "files": [
-    "./index.js"
+    "./index.ts"
   ],
 
   "angularCompilerOptions": {
