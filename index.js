@@ -1673,8 +1673,18 @@ export class StringTemplatePipe/* implements PipeTransform*/ {
      */
     transform(string:string = '', ...scopes:Array<PlainObject>):string {
         const scope:PlainObject = this.extendObject(true, {}, ...scopes)
-        return new Function(Object.keys(scope), `return \`${string}\``)(
-            ...Object.values(scope))
+        const validNames:Array<string> = Object.keys(scope).filter((
+            name:string
+        ):boolean => {
+            try {
+                new Function(`var ${name}`)()
+            } catch (error) {
+                return false
+            }
+            return true
+        })
+        return new Function('scope', ...validNames, `return \`${string}\``)(
+            scope, ...validNames.map((name:string):any => scope[name]))
     }
 }
 // / endregion
