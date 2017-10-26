@@ -38,10 +38,11 @@ export const determineDeclarations:Function = (module:Object):Array<Object> =>
 export default const determineProviders:Function = (
     module:Object
 ):Array<Object> =>
-    Object.keys(module.exports).filter((name:string):boolean =>
-        name.endsWith('Resolver') || name.endsWith('Pipe') ||
-        name.endsWith('Guard') || name.endsWith('Service')
-    ).map((name:string):Object => module.exports[name])
+    Object.keys(module.exports).filter((name:string):boolean => [
+        'Resolver', 'Pipe', 'Guard', 'Service'
+    ].some((suffix:string):boolean => name.endsWith(suffix))).map((
+        name:string
+    ):Object => module.exports[name])
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:

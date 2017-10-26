@@ -1,4 +1,4 @@
-// @flow
+
 // #!/usr/bin/env node
 // -*- coding: utf-8 -*-
 /** @module angularGeneric */
@@ -19,7 +19,7 @@
 */
 // region imports
 import {tinymceDefaultSettings, TinyMceModule} from 'angular-tinymce'
-import type {PlainObject} from 'clientnode'
+// TODO import type {PlainObject} from 'clientnode'
 import Tools, {$, globalContext} from 'clientnode'
 import {
     animate, AnimationTriggerMetadata, style, transition, trigger
@@ -100,13 +100,15 @@ import {ISubscription} from 'rxjs/Subscription'
 try {
     module.require('source-map-support/register')
 } catch (error) {}
+
+import defaultAnimation from './animation'
+import determineProviders, {determineExports} from './moduleHelper'
 // endregion
-declare var UTC_BUILD_TIMESTAMP:number
 if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
     /* eslint-disable no-var */
     var CHANGE_DETECTION_STRATEGY_NAME:string = 'default'
     /* eslint-enable no-var */
-declare var UTC_BUILD_TIMESTAMP:number
+// TODO declare var UTC_BUILD_TIMESTAMP:number
 export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
@@ -141,7 +143,7 @@ export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
         // endregion
         allow_conditional_comments: false,
         allow_script_urls: false,
-        cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
+        // TODO cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
         convert_fonts_to_spans: true,
         document_base_url: '/',
         element_format: 'xhtml',
@@ -1132,7 +1134,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      */
     async transform(
         newDocument:PlainObject, oldDocument:?PlainObject
-    ):Promise<?PlainObject> {
+    ):Promise<PlainObject|null> {
         let specification:?PlainObject = null
         if (
             this.specialNames.type in newDocument &&
@@ -1706,51 +1708,6 @@ export class NumberPercentPipe/* implements PipeTransform*/ {
     }
 }
 // / endregion
-// endregion
-// region animations
-/**
- * Fade in/out animation factory.
- * @param options - Animations meta data options.
- * @returns Animations meta data object.
- */
-export function fadeAnimation(
-    options:string|PlainObject = {}
-):AnimationTriggerMetadata {
-    if (typeof options === 'string')
-        options = {name: options}
-    options = Tools.extendObject({
-        duration: '.3s',
-        enterState: ':enter',
-        leaveState: ':leave',
-        name: 'fadeAnimation',
-        style: {
-            enter: {
-                final: {opacity: 1},
-                initial: {opacity: 0}
-            }
-        }
-    }, options)
-    return trigger(options.name, [
-        transition(options.enterState, [
-            style(options.style.enter.initial),
-            animate(
-                options.enterDuration || options.duration,
-                style(options.style.enter.final))
-        ]),
-        transition(options.leaveState, [
-            style(
-                options.style.leave &&
-                options.style.leave.initial || options.style.enter.final),
-            animate(
-                options.leaveDuration || options.duration,
-                style(
-                    options.style.leave && options.style.leave.final ||
-                    options.style.enter.initial))
-        ])
-    ])
-}
-export const defaultAnimation:Function = fadeAnimation.bind(
-    {}, 'defaultAnimation')
 // endregion
 // region services
 // IgnoreTypeCheck
@@ -6115,29 +6072,118 @@ export class PaginationComponent {
 }
 // / endregion
 // endregion
+/*
+    TODO not all injectables are listed yet! Dynamically created aren't
+    resolvable!
+*/
 // region module
-export const determineExports:Function = (module:Object):Array<Object> =>
-    Object.keys(module.exports).filter((name:string):boolean =>
-        !name.startsWith('Abstract') &&
-        ['Component', 'Directive', 'Pipe'].some((suffix:string):boolean =>
-            name.endsWith(suffix))
-    ).map((name:string):Object => module.exports[name])
-export const determineDeclarations:Function = (module:Object):Array<Object> =>
-    determineExports(module).concat(Object.keys(module.exports).filter((
-        name:string
-    ):boolean => !name.startsWith('Abstract') && ['Accessor'].some(
-        (suffix:string):boolean => name.endsWith(suffix)
-    )).map((name:string):Object => module.exports[name]))
-export const determineProviders:Function = (module:Object):Array<Object> =>
-    Object.keys(module.exports).filter((name:string):boolean =>
-        name.endsWith('Resolver') || name.endsWith('Pipe') ||
-        name.endsWith('Guard') || name.endsWith('Service')
-    ).map((name:string):Object => module.exports[name])
 // IgnoreTypeCheck
 @NgModule({
-    declarations: determineDeclarations(module),
+    /*
+        NOTE: Running "determineDeclarations()" is not yet supported by the
+        AOT-Compiler.
+    */
+    declarations: [
+        DateTimeValueAccessor,
+
+        AttachmentsAreEqualPipe,
+        GetFilenameByPrefixPipe,
+        AttachmentWithPrefixExistsPipe,
+        ExtractDataPipe,
+        ExtractRawDataPipe,
+        IsDefinedPipe,
+        LimitToPipe,
+        MapPipe,
+        ObjectKeysPipe,
+        ReversePipe,
+        TypePipe,
+
+        ArrayDependentConcatPipe,
+
+        StringEndsWithPipe,
+        StringHasTimeSuffixPipe,
+        StringMatchPipe,
+        StringMaximumLengthPipe,
+        StringReplacePipe,
+        StringSafeHTMLPipe,
+        StringSafeResourceURLPipe,
+        StringSafeScriptPipe,
+        StringSafeStylePipe,
+        StringSafeURLPipe,
+        StringShowIfPatternMatchesPipe,
+        StringSliceMatchPipe,
+        StringStartsWithPipe,
+        StringTemplatePipe,
+
+        NumberPercentPipe,
+
+        GenericDateDirective,
+        GenericSliderDirective,
+
+        ConfirmComponent,
+
+        IntervalInputComponent,
+        IntervalsInputComponent,
+
+        CodeEditorComponent,
+        InputComponent,
+        SimpleInputComponent,
+        TextareaComponent,
+        FileInputComponent,
+        PaginationComponent
+    ],
     entryComponents: [ConfirmComponent],
-    exports: determineExports(module),
+    /*
+        NOTE: Running "determineExports()" is not yet supported by the
+        AOT-Compiler.
+    */
+    exports: [
+        AttachmentsAreEqualPipe,
+        GetFilenameByPrefixPipe,
+        AttachmentWithPrefixExistsPipe,
+        ExtractDataPipe,
+        ExtractRawDataPipe,
+        IsDefinedPipe,
+        LimitToPipe,
+        MapPipe,
+        ObjectKeysPipe,
+        ReversePipe,
+        TypePipe,
+
+        ArrayDependentConcatPipe,
+
+        StringEndsWithPipe,
+        StringHasTimeSuffixPipe,
+        StringMatchPipe,
+        StringMaximumLengthPipe,
+        StringReplacePipe,
+        StringSafeHTMLPipe,
+        StringSafeResourceURLPipe,
+        StringSafeScriptPipe,
+        StringSafeStylePipe,
+        StringSafeURLPipe,
+        StringShowIfPatternMatchesPipe,
+        StringSliceMatchPipe,
+        StringStartsWithPipe,
+        StringTemplatePipe,
+
+        NumberPercentPipe,
+
+        GenericDateDirective,
+        GenericSliderDirective,
+
+        ConfirmComponent,
+
+        IntervalInputComponent,
+        IntervalsInputComponent,
+
+        CodeEditorComponent,
+        InputComponent,
+        SimpleInputComponent,
+        TextareaComponent,
+        FileInputComponent,
+        PaginationComponent
+    ],
     imports: [
         BrowserModule.withServerTransition({appId: 'generic-universal'}),
         FormsModule,
@@ -6149,8 +6195,55 @@ export const determineProviders:Function = (module:Object):Array<Object> =>
         MatTooltipModule,
         TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
     ],
-    providers: determineProviders(module).concat(
-        DatePipe,
+    /*
+        NOTE: Running "determineProviders()" is not yet supported by the
+        AOT-Compiler.
+    */
+    providers: [
+        ToolsService,
+        InitialDataService,
+
+        CanDeactivateRouteLeaveGuard,
+        AlertService,
+        DataService,
+        DataScopeService,
+        AbstractResolver,
+
+        DateTimeValueAccessor,
+
+        AttachmentsAreEqualPipe,
+        GetFilenameByPrefixPipe,
+        AttachmentWithPrefixExistsPipe,
+        ExtractDataPipe,
+        ExtractRawDataPipe,
+        IsDefinedPipe,
+        LimitToPipe,
+        MapPipe,
+        ObjectKeysPipe,
+        ReversePipe,
+        TypePipe,
+
+        ArrayDependentConcatPipe,
+
+        StringEndsWithPipe,
+        StringHasTimeSuffixPipe,
+        StringMatchPipe,
+        StringMaximumLengthPipe,
+        StringReplacePipe,
+        StringSafeHTMLPipe,
+        StringSafeResourceURLPipe,
+        StringSafeScriptPipe,
+        StringSafeStylePipe,
+        StringSafeURLPipe,
+        StringShowIfPatternMatchesPipe,
+        StringSliceMatchPipe,
+        StringStartsWithPipe,
+        StringTemplatePipe,
+
+        NumberPercentPipe,
+
+        AbstractValueAccessor,
+        DatePipe/* TODO,
         {
             deps: [DataService, InitialDataService, Injector],
             multi: true,
@@ -6163,8 +6256,8 @@ export const determineProviders:Function = (module:Object):Array<Object> =>
                 initialData.constructor.injectors.add(injector)
                 return data.initialize()
             }
-        }
-    )
+        }*/
+    ]
 })
 /**
  * Represents the importable angular module.

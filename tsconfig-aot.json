@@ -13,11 +13,7 @@
     "suppressImplicitAnyIndexErrors": true,
     "typeRoots": ["./node_modules/@types/"]
   },
-
-  "files": [
-    "./index.ts"
-  ],
-
+  "files": ["./index"],
   "angularCompilerOptions": {
    "genDir": "aheadOfTime.compiled",
    "skipMetadataEmit" : true
