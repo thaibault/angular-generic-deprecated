@@ -28,13 +28,13 @@
     "url": "https://github.com/thaibault/angularGeneric"
   },
   "scripts": {
-    "build": "webOptimizer build && npm run build:pre-render && npm run build:test",
+    "build": "webOptimizer build && npm run build:pre-renderer && npm run build:test",
     "build:dll": "webOptimizer build:dll",
-    "build:pre-render": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types,transform-runtime --presets env,stage-0 --source-maps inline --out-file preRender.compiled.js preRender.js",
+    "build:pre-renderer": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types,transform-runtime --presets env,stage-0 --source-maps inline --out-file preRender.compiled.js preRender.js",
     "build:test": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types --presets env,stage-0 --source-maps inline --out-file testRunner.compiled.js testRunner.js",
     "clear": "webOptimizer clear",
     "document": "webOptimizer document",
-    "export": "webOptimizer build '{development:{tool:false},module:{preprocessor:{javaScript:{options:{plugins:{__remove__:\"transform-runtime\"}}}}}}' && npm run build:pre-render && npm run build:test",
+    "export": "webOptimizer build '{development:{tool:false},module:{preprocessor:{javaScript:{options:{plugins:{__remove__:\"transform-runtime\"}}}}}}' && npm run build:pre-renderer && npm run build:test",
     "lint": "webOptimizer check:type; webOptimizer lint",
     "prepare": "npm run build",
     "serve": "webOptimizer serve",
