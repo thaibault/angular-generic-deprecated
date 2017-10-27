@@ -1429,7 +1429,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                 nested values should have been already removed if not
                 necessary.
             */
-            for (const name:string in result)
+            for (const name in result)
                 if (
                     result.hasOwnProperty(name) &&
                     !this.modelConfiguration.property.name.reserved.concat(
@@ -1529,7 +1529,7 @@ export class MapPipe/* implements PipeTransform*/ {
     transform(
         object:any, pipeName:string, ...additionalArguments:Array<any>
     ):any {
-        const pipe:Object = this.injector.get(pipeName)
+        const pipe:PipeTransform = this.injector.get(pipeName)
         if (Array.isArray(object)) {
             const result:Array<any> = []
             for (const item:any of object)
@@ -2015,11 +2015,15 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
  * @property cancelText - Text to use as cancel button label.
  * @property dialogReference - Reference to the dialog component instance.
  * @property okText - Text to use as confirm button label.
+ * @property title - Title to show in dialog.
+ * @property message - Message to show in dialog.
  */
 export class ConfirmComponent {
     @Input() cancelText:string = 'Cancel'
     dialogReference:?MatDialogRef = null
     @Input() okText:string = 'OK'
+    title:string = ''
+    message:string = ''
     /**
      * Gets needed component data injected.
      * NOTE: The "@Optional" decorator makes test instances possible.
@@ -2998,7 +3002,7 @@ export class DataScopeService {
             ):boolean => !propertyNames.concat(reservedNames).includes(name)))
         }
         const result:PlainObject = {}
-        for (const name:string of propertyNames) {
+        for (const name of propertyNames) {
             if (propertyNamesToIgnore.includes(name))
                 continue
             if (specification.hasOwnProperty(name))
@@ -3012,12 +3016,12 @@ export class DataScopeService {
             const now:Date = new Date()
             const nowUTCTimestamp:number = this.numberGetUTCTimestamp(now)
             if (name === specialNames.attachment) {
-                for (const type:string in specification[name])
+                for (const type in specification[name])
                     if (specification[name].hasOwnProperty(type)) {
                         result[name][type].name = type
                         result[name][type].value = null
                         if (Object.keys(data).length === 0)
-                            for (const hookType:string of [
+                            for (const hookType of [
                                 'onCreateExecution', 'onCreateExpression'
                             ])
                                 if (result[name][type].hasOwnProperty(
@@ -3061,7 +3065,7 @@ export class DataScopeService {
                             data.hasOwnProperty(name) &&
                             ![undefined, null].includes(data[name])
                         )
-                            for (const fileName:string in data[name])
+                            for (const fileName in data[name])
                                 if (result[name].hasOwnProperty(type) && (
                                     new RegExp(type)
                                 ).test(fileName)) {
@@ -3086,7 +3090,7 @@ export class DataScopeService {
                 result[name].name = name
                 result[name].value = null
                 if (Object.keys(data).length === 0)
-                    for (const type:string of [
+                    for (const type of [
                         'onCreateExpression', 'onCreateExecution'
                     ])
                         if (
@@ -6739,7 +6743,8 @@ export class PaginationComponent {
 /**
  * Represents the importable angular module.
  */
-export default class Module {}
+export class Module {}
+export default Module
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
