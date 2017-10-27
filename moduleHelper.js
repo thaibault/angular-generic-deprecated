@@ -35,7 +35,7 @@ export const determineDeclarations:Function = (module:Object):Array<Object> =>
     ):boolean => !name.startsWith('Abstract') && ['Accessor'].some(
         (suffix:string):boolean => name.endsWith(suffix)
     )).map((name:string):Object => module.exports[name]))
-export default const determineProviders:Function = (
+export const determineProviders:Function = (
     module:Object
 ):Array<Object> =>
     Object.keys(module.exports).filter((name:string):boolean => [

@@ -18,52 +18,15 @@
     endregion
 */
 // region imports
+import Tools from 'clientnode'
 // TODO import type {PlainObject} from 'clientnode'
 import {
     animate, AnimationTriggerMetadata, style, transition, trigger
 } from '@angular/animations'
-import {
-    // AfterViewInit,
-    APP_INITIALIZER,
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    ContentChild,
-    Directive,
-    ElementRef,
-    EventEmitter,
-    forwardRef,
-    Injectable,
-    /* eslint-disable no-unused-vars */
-    Inject,
-    /* eslint-enable no-unused-vars */
-    Injector,
-    Input,
-    NgModule,
-    NgZone,
-    // OnChanges,
-    // OnInit,
-    /* eslint-disable no-unused-vars */
-    Optional,
-    /* eslint-enable no-unused-vars */
-    Output,
-    Pipe,
-    PipeTransform,
-    /* eslint-disable no-unused-vars */
-    PLATFORM_ID,
-    /* eslint-enable no-unused-vars */
-    ReflectiveInjector,
-    Renderer2,
-    TemplateRef,
-    ViewChild,
-    ViewContainerRef
-} from '@angular/core'
 // NOTE: Only needed for debugging this file.
 try {
     module.require('source-map-support/register')
 } catch (error) {}
-
-import defaultAnimation from './animation'
 // endregion
 /**
  * Fade in/out animation factory.
@@ -106,7 +69,7 @@ export function fadeAnimation(
         ])
     ])
 }
-export default const defaultAnimation:Function = fadeAnimation.bind(
+export const defaultAnimation:Function = fadeAnimation.bind(
     {}, 'defaultAnimation')
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

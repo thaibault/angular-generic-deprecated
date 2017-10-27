@@ -22,9 +22,6 @@ import {tinymceDefaultSettings, TinyMceModule} from 'angular-tinymce'
 // TODO import type {PlainObject} from 'clientnode'
 import Tools, {$, globalContext} from 'clientnode'
 import {
-    animate, AnimationTriggerMetadata, style, transition, trigger
-} from '@angular/animations'
-import {
     // AfterViewInit,
     APP_INITIALIZER,
     ChangeDetectionStrategy,
@@ -101,14 +98,13 @@ try {
     module.require('source-map-support/register')
 } catch (error) {}
 
-import defaultAnimation from './animation'
-import determineProviders, {determineExports} from './moduleHelper'
+import {defaultAnimation} from './animation'
 // endregion
 if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
     /* eslint-disable no-var */
     var CHANGE_DETECTION_STRATEGY_NAME:string = 'default'
     /* eslint-enable no-var */
-// TODO declare var UTC_BUILD_TIMESTAMP:number
+declare var UTC_BUILD_TIMESTAMP:number
 export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
@@ -143,7 +139,7 @@ export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
         // endregion
         allow_conditional_comments: false,
         allow_script_urls: false,
-        // TODO cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
+        cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
         convert_fonts_to_spans: true,
         document_base_url: '/',
         element_format: 'xhtml',
@@ -347,6 +343,42 @@ const methodGroups:PlainObject = {
     string: '*'
 }
 // // endregion
+/**
+ * TODO
+ */
+class AbstractToolsPipe /* implements PipeTransform*/{
+    toolsName:string
+    /**
+     * Performs the concrete conversion logic.
+     * @param parameter - Saves all generic parameter to forward it
+     * for triggering the underlying tools utility.
+     * @returns Whatever the underlying tools function returns.
+     */
+    transform(...parameter:Array<any>):any {
+        return ReflectiveInjector.resolveAndCreate([ToolsService]).get(
+            ToolsService
+        ).tools[this.methodName](...parameter)
+    }
+}
+/**
+ * TODO
+ */
+class AbstractInvertedToolsPipe /* implements PipeTransform*/{
+    toolsName:string
+    /**
+     * Performs the concrete conversion logic.
+     * @param parameter - Saves all generic parameter to
+     * forward it for triggering the underlying tools utility.
+     * @returns Whatever the underlying tools function returns.
+     */
+    transform(...parameter:Array<any>):any {
+        const tools:typeof Tools = ReflectiveInjector.resolveAndCreate([
+            ToolsService
+        ]).get(ToolsService).tools
+        // IgnoreTypeCheck
+        return tools.invertArrayFilter(tools[this.methodName])(...parameter)
+    }
+}
 for (const methodTypePrefix:string in methodGroups)
     if (methodGroups.hasOwnProperty(methodTypePrefix)) {
         let methodNames:Array<string> = []
@@ -363,38 +395,14 @@ for (const methodTypePrefix:string in methodGroups)
             methodNames = methodGroups[methodTypePrefix]
         for (const methodName:string of methodNames) {
             const pipeName:string = Tools.stringCapitalize(methodName)
-            module.exports[`${pipeName}Pipe`] = class {
-                /**
-                 * Performs the concrete conversion logic.
-                 * @param parameter - Saves all generic parameter to forward it
-                 * for triggering the underlying tools utility.
-                 * @returns Whatever the underlying tools function returns.
-                 */
-                transform(...parameter:Array<any>):any {
-                    return ReflectiveInjector.resolveAndCreate([
-                        ToolsService
-                    ]).get(ToolsService).tools[methodName](...parameter)
-                }
+            module.exports[`${pipeName}Pipe`] = class extends AbstractToolsPipe /* implements PipeTransform*/{
+                methodName:string = methodMame
             }
             Pipe({name: `generic${pipeName}`})(
                 module.exports[`${pipeName}Pipe`])
             if (invert.includes(methodTypePrefix)) {
-                module.exports[`${pipeName}InvertedPipe`] = class {
-                    /**
-                     * Performs the concrete conversion logic.
-                     * @param parameter - Saves all generic parameter to
-                     * forward it for triggering the underlying tools utility.
-                     * @returns Whatever the underlying tools function returns.
-                     */
-                    transform(...parameter:Array<any>):any {
-                        const tools:typeof Tools =
-                            ReflectiveInjector.resolveAndCreate([
-                                ToolsService
-                            ]).get(ToolsService).tools
-                        // IgnoreTypeCheck
-                        return tools.invertArrayFilter(tools[methodName])(
-                            ...parameter)
-                    }
+                module.exports[`${pipeName}InvertedPipe`] = class extends AbstractInvertedToolsPipe {
+                    methodName:string = methodMame
                 }
                 Pipe({name: `generic${pipeName}Inverted`})(
                     module.exports[`${pipeName}InvertedPipe`])
