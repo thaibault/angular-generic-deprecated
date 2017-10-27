@@ -28,28 +28,29 @@ try {
     module.require('source-map-support/register')
 } catch (error) {}
 // endregion
+export const defaultOptions:PlainObject = {
+    duration: '.3s',
+    enterState: ':enter',
+    leaveState: ':leave',
+    name: 'fadeAnimation',
+    style: {
+        enter: {
+            final: {opacity: 1},
+            initial: {opacity: 0}
+        }
+    }
+}
 /**
  * Fade in/out animation factory.
  * @param options - Animations meta data options.
  * @returns Animations meta data object.
  */
-export function fadeAnimation(
+export function createFadeAnimation(
     options:string|PlainObject = {}
 ):AnimationTriggerMetadata {
     if (typeof options === 'string')
         options = {name: options}
-    options = Tools.extendObject({
-        duration: '.3s',
-        enterState: ':enter',
-        leaveState: ':leave',
-        name: 'fadeAnimation',
-        style: {
-            enter: {
-                final: {opacity: 1},
-                initial: {opacity: 0}
-            }
-        }
-    }, options)
+    options = Tools.extendObject(true, {}, defaultOptions, options)
     return trigger(options.name, [
         transition(options.enterState, [
             style(options.style.enter.initial),
@@ -69,8 +70,33 @@ export function fadeAnimation(
         ])
     ])
 }
-export const defaultAnimation:Function = fadeAnimation.bind(
+export const createDefaultAnimation:Function = createFadeAnimation.bind(
     {}, 'defaultAnimation')
+/*
+    NOTE: Simply calling "createDefaultAnimation()" does not work in
+    combination with angular's ahead of time compiler.
+*/
+export const defaultAnimation:AnimationTriggerMetadata =
+    trigger('defaultAnimation', [
+        transition(defaultOptions.enterState, [
+            style(defaultOptions.style.enter.initial),
+            animate(
+                defaultOptions.enterDuration || defaultOptions.duration,
+                style(defaultOptions.style.enter.final))
+        ]),
+        transition(defaultOptions.leaveState, [
+            style(
+                defaultOptions.style.leave &&
+                defaultOptions.style.leave.initial ||
+                defaultOptions.style.enter.final),
+            animate(
+                defaultOptions.leaveDuration || defaultOptions.duration,
+                style(
+                    defaultOptions.style.leave &&
+                    defaultOptions.style.leave.final ||
+                    defaultOptions.style.enter.initial))
+        ])
+    ])
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:

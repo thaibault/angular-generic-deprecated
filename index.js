@@ -47,7 +47,7 @@ import {
     /* eslint-enable no-unused-vars */
     Output,
     Pipe,
-    PipeTransform,
+    // PipeTransform,
     /* eslint-disable no-unused-vars */
     PLATFORM_ID,
     /* eslint-enable no-unused-vars */
@@ -104,7 +104,7 @@ if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
     /* eslint-disable no-var */
     var CHANGE_DETECTION_STRATEGY_NAME:string = 'default'
     /* eslint-enable no-var */
-declare var UTC_BUILD_TIMESTAMP:number
+// TODO declare var UTC_BUILD_TIMESTAMP:number
 export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
@@ -139,7 +139,7 @@ export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
         // endregion
         allow_conditional_comments: false,
         allow_script_urls: false,
-        cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
+        // TODO cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
         convert_fonts_to_spans: true,
         document_base_url: '/',
         element_format: 'xhtml',
@@ -330,24 +330,14 @@ export const determineInjector:Function = (
 }
 // endregion
 // region pipes
-// / region forwarded methods
-// // region configuration
-const invert:Array<string> = ['array']
-const methodGroups:PlainObject = {
-    '': [
-        'convertCircularObjectToJSON', 'equals', 'extendObject',
-        'representObject', 'sort'
-    ],
-    array: '*',
-    number: '*',
-    string: '*'
-}
-// // endregion
+// / region wrapped
 /**
- * TODO
+ * Generic pipe transform class to wrapp simple pure functions as pipe
+ * transformation.
+ * @property methodName - Name of forwarded method.
  */
-class AbstractToolsPipe /* implements PipeTransform*/{
-    toolsName:string
+export class AbstractToolsPipe /* implements PipeTransform*/{
+    methodName:string
     /**
      * Performs the concrete conversion logic.
      * @param parameter - Saves all generic parameter to forward it
@@ -361,10 +351,12 @@ class AbstractToolsPipe /* implements PipeTransform*/{
     }
 }
 /**
- * TODO
+ * Generic pipe transform class to wrapp simple pure functions as inverted pipe
+ * transformation.
+ * @property methodName - Name of forwarded method.
  */
-class AbstractInvertedToolsPipe /* implements PipeTransform*/{
-    toolsName:string
+export class AbstractInvertedToolsPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
     /**
      * Performs the concrete conversion logic.
      * @param parameter - Saves all generic parameter to
@@ -379,47 +371,307 @@ class AbstractInvertedToolsPipe /* implements PipeTransform*/{
         return tools.invertArrayFilter(tools[this.methodName])(...parameter)
     }
 }
+/*
+    NOTE: This would dynamically load all possible pipes from the "Tools"
+    library but does not support angular's ahead of time compilation yet.
+
+// // region configuration
+const invert:Array<string> = ['array']
+const methodGroups:PlainObject = {
+    '': [
+        'convertCircularObjectToJSON',
+        'equals',
+        'extendObject',
+        'representObject',
+        'sort'
+    ],
+    array: '*',
+    number: '*',
+    string: '*'
+}
+// // endregion
 for (const methodTypePrefix:string in methodGroups)
     if (methodGroups.hasOwnProperty(methodTypePrefix)) {
         let methodNames:Array<string> = []
         if (methodGroups[methodTypePrefix] === '*')
-            /* eslint-disable curly */
+            /* eslint-disable curly * /
             for (const name:string of Object.getOwnPropertyNames(Tools)) {
                 if (Tools.hasOwnProperty(name) && Tools.hasOwnProperty(
                     name
                 ) && (new RegExp(`^${methodTypePrefix}[A-Z0-9]`)).test(name))
                     methodNames.push(name)
             }
-            /* eslint-enable curly */
+            /* eslint-enable curly * /
         else
             methodNames = methodGroups[methodTypePrefix]
         for (const methodName:string of methodNames) {
             const pipeName:string = Tools.stringCapitalize(methodName)
-            module.exports[`${pipeName}Pipe`] = class extends AbstractToolsPipe /* implements PipeTransform*/{
-                methodName:string = methodMame
-            }
+            module.exports[`${pipeName}Pipe`] =
+                class extends AbstractToolsPipe /* implements PipeTransform* /{
+                    methodName:string = methodMame
+                }
             Pipe({name: `generic${pipeName}`})(
                 module.exports[`${pipeName}Pipe`])
             if (invert.includes(methodTypePrefix)) {
-                module.exports[`${pipeName}InvertedPipe`] = class extends AbstractInvertedToolsPipe {
-                    methodName:string = methodMame
-                }
+                module.exports[`${pipeName}InvertedPipe`] =
+                    class extends AbstractInvertedToolsPipe {
+                        methodName:string = methodMame
+                    }
                 Pipe({name: `generic${pipeName}Inverted`})(
                     module.exports[`${pipeName}InvertedPipe`])
             }
         }
     }
-const ArrayMakeRangePipe:PipeTransform = module.exports.ArrayMakeRangePipe
-const EqualsPipe:PipeTransform = module.exports.EqualsPipe
-const ExtendObjectPipe:PipeTransform = module.exports.ExtendObjectPipe
-const NumberGetUTCTimestampPipe:PipeTransform =
-    module.exports.NumberGetUTCTimestampPipe
-const RepresentObjectPipe:PipeTransform = module.exports.RepresentObjectPipe
-const StringCapitalizePipe:PipeTransform = module.exports.StringCapitalizePipe
-const StringEscapeRegularExpressionsPipe:PipeTransform =
-    module.exports.StringEscapeRegularExpressionsPipe
-const StringFormatPipe:PipeTransform = module.exports.StringFormatPipe
-const StringMD5Pipe:PipeTransform = module.exports.StringMD5Pipe
+// NOTE: We have to declare referenced dependencies for injection mechanism.
+// const ...:PipeTransform = module.exports.ArrayMakeRangePipe
+*/
+@Pipe({name: `genericConvertCircularObjectToJSON`})
+export class ConvertCircularObjectToJSONPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'convertCircularObjectToJSON'
+}
+@Pipe({name: `genericEquals`})
+export class EqualsPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'equals'
+}
+@Pipe({name: `genericExtendObject`})
+export class ExtendObjectPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'extendObject'
+}
+@Pipe({name: `genericRepresentObject`})
+export class RepresentObjectPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'representObject'
+}
+@Pipe({name: `genericSort`})
+export class SortPipe extends AbstractToolsPipe /* implements PipeTransform*/{
+    methodName:string = 'sort'
+}
+@Pipe({name: `genericArrayMerge`})
+export class ArrayMergePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arrayMerge'
+}
+@Pipe({name: `genericArrayMake`})
+export class ArrayMakePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arrayMake'
+}
+@Pipe({name: `genericArrayUnique`})
+export class ArrayUniquePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arrayUnique'
+}
+@Pipe({name: `genericArrayAggregatePropertyIfEqual`})
+export class ArrayAggregatePropertyIfEqualPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arrayAggregatePropertyIfEqual'
+}
+@Pipe({name: `genericArrayDeleteEmptyItems`})
+export class ArrayDeleteEmptyItemsPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arrayDeleteEmptyItems'
+}
+@Pipe({name: `genericArrayExtract`})
+export class ArrayExtractPipe extends AbstractToolsPipe /* implements PipeTransform*/{
+    methodName:string = 'arrayExtract'
+}
+@Pipe({name: `genericArrayExtractIfMatches`})
+export class ArrayExtractIfMatchesPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arrayExtractIfMatches'
+}
+@Pipe({name: `genericArrayExtractIfPropertyExists`})
+export class ArrayExtractIfPropertyExistsPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arrayExtractIfPropertyExists'
+}
+@Pipe({name: `genericArrayExtractIfPropertyMatches`})
+export class ArrayExtractIfPropertyMatchesPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arrayExtractIfPropertyMatches'
+}
+@Pipe({name: `genericArrayIntersect`})
+export class ArrayIntersectPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arrayIntersect'
+}
+@Pipe({name: `genericArrayMakeRange`})
+export class ArrayMakeRangePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arrayMakeRange'
+}
+@Pipe({name: `genericArraySumUpProperty`})
+export class ArraySumUpPropertyPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arraySumUpProperty'
+}
+@Pipe({name: `genericArrayAppendAdd`})
+export class ArrayAppendAddPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arrayAppendAdd'
+}
+@Pipe({name: `genericArrayRemove`})
+export class ArrayRemovePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arrayRemove'
+}
+@Pipe({name: `genericArraySortTopological`})
+export class ArraySortTopologicalPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'arraySortTopological'
+}
+@Pipe({name: `genericStringEscapeRegularExpressions`})
+export class StringEscapeRegularExpressionsPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringEscapeRegularExpressions'
+}
+@Pipe({name: `genericStringConvertToValidVariableName`})
+export class StringConvertToValidVariableNamePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringConvertToValidVariableName'
+}
+@Pipe({name: `genericStringEncodeURIComponent`})
+export class StringEncodeURIComponentPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringEncodeURIComponent'
+}
+@Pipe({name: `genericStringAddSeparatorToPath`})
+export class StringAddSeparatorToPathPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringAddSeparatorToPath'
+}
+@Pipe({name: `genericStringHasPathPrefix`})
+export class StringHasPathPrefixPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringHasPathPrefix'
+}
+@Pipe({name: `genericStringGetDomainName`})
+export class StringGetDomainNamePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringGetDomainName'
+}
+@Pipe({name: `genericStringGetPortNumber`})
+export class StringGetPortNumberPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringGetPortNumber'
+}
+@Pipe({name: `genericStringGetProtocolName`})
+export class StringGetProtocolNamePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringGetProtocolName'
+}
+@Pipe({name: `genericStringGetURLVariable`})
+export class StringGetURLVariablePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringGetURLVariable'
+}
+@Pipe({name: `genericStringIsInternalURL`})
+export class StringIsInternalURLPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringIsInternalURL'
+}
+@Pipe({name: `genericStringNormalizeURL`})
+export class StringNormalizeURLPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringNormalizeURL'
+}
+@Pipe({name: `genericStringRepresentURL`})
+export class StringRepresentURLPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringRepresentURL'
+}
+@Pipe({name: `genericStringCompressStyleValue`})
+export class StringCompressStyleValuePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringCompressStyleValue'
+}
+@Pipe({name: `genericStringCamelCaseToDelimited`})
+export class StringCamelCaseToDelimitedPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringCamelCaseToDelimited'
+}
+@Pipe({name: `genericStringCapitalize`})
+export class StringCapitalizePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringCapitalize'
+}
+@Pipe({name: `genericStringDelimitedToCamelCase`})
+export class StringDelimitedToCamelCasePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringDelimitedToCamelCase'
+}
+@Pipe({name: `genericStringFormat`})
+export class StringFormatPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringFormat'
+}
+@Pipe({name: `genericStringGetRegularExpressionValidated`})
+export class StringGetRegularExpressionValidatedPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringGetRegularExpressionValidated'
+}
+@Pipe({name: `genericStringLowerCase`})
+export class StringLowerCasePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringLowerCase'
+}
+@Pipe({name: `genericStringFindNormalizedMatchRange`})
+export class StringFindNormalizedMatchRangePipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringFindNormalizedMatchRange'
+}
+@Pipe({name: `genericStringMark`})
+export class StringMarkPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringMark'
+}
+@Pipe({name: `genericStringMD5`})
+export class StringMD5Pipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringMD5'
+}
+@Pipe({name: `genericStringNormalizePhoneNumber`})
+export class StringNormalizePhoneNumberPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringNormalizePhoneNumber'
+}
+@Pipe({name: `genericStringParseEncodedObject`})
+export class StringParseEncodedObjectPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringParseEncodedObject'
+}
+@Pipe({name: `genericStringRepresentPhoneNumber`})
+export class StringRepresentPhoneNumberPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringRepresentPhoneNumber'
+}
+@Pipe({name: `genericStringDecodeHTMLEntities`})
+export class StringDecodeHTMLEntitiesPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringDecodeHTMLEntities'
+}
+@Pipe({name: `genericStringNormalizeDomNodeSelector`})
+export class StringNormalizeDomNodeSelectorPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'stringNormalizeDomNodeSelector'
+}
+@Pipe({name: `genericNumberGetUTCTimestamp`})
+export class NumberGetUTCTimestampPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'numberGetUTCTimestamp'
+}
+@Pipe({name: `genericNumberIsNotANumber`})
+export class NumberIsNotANumberPipe extends AbstractToolsPipe
+/* implements PipeTransform*/{
+    methodName:string = 'numberIsNotANumber'
+}
+@Pipe({name: `genericNumberRound`})
+export class NumberRoundPipe extends AbstractToolsPipe /* implements PipeTransform*/{
+    methodName:string = 'numberRound'
+}
 // / endregion
 // / region object
 // IgnoreTypeCheck
@@ -1740,7 +1992,7 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
 // / region confirm
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation()],
+    animations: [defaultAnimation],
     changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-confirm',
     template: `
@@ -4168,7 +4420,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
 // // / region interval
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation()],
+    animations: [defaultAnimation],
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-interval-input',
     template: `
@@ -4311,7 +4563,7 @@ export class IntervalInputComponent {
 }
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation()],
+    animations: [defaultAnimation],
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-intervals-input',
     /* eslint-disable max-len */
@@ -4557,7 +4809,7 @@ export class IntervalsInputComponent {
 // // endregion
 // // region text/selection
 @Component({
-    animations: [defaultAnimation()],
+    animations: [defaultAnimation],
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     providers: [{
         provide: NG_VALUE_ACCESSOR,
@@ -4849,7 +5101,7 @@ const inputContent:string = `
 /* eslint-enable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation()],
+    animations: [defaultAnimation],
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-input',
     template: `
@@ -4902,7 +5154,7 @@ export class InputComponent extends AbstractInputComponent {
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation()],
+    animations: [defaultAnimation],
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-simple-input',
     template: `
@@ -4957,7 +5209,7 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation()],
+    animations: [defaultAnimation],
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-textarea',
     template: `
@@ -5124,7 +5376,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation()],
+    animations: [defaultAnimation],
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-file-input',
     template: `
@@ -5958,7 +6210,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation()],
+    animations: [defaultAnimation],
     changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-pagination',
     template: `
@@ -6092,8 +6344,68 @@ export class PaginationComponent {
         AOT-Compiler.
     */
     declarations: [
-        DateTimeValueAccessor,
-
+        // region pipes
+        // / region wrapped
+        // // region object
+        ConvertCircularObjectToJSONPipe,
+        EqualsPipe,
+        ExtendObjectPipe,
+        RepresentObjectPipe,
+        SortPipe,
+        // // endregion
+        // // region array
+        ArrayMergePipe,
+        ArrayMakePipe,
+        ArrayUniquePipe,
+        ArrayAggregatePropertyIfEqualPipe,
+        ArrayDeleteEmptyItemsPipe,
+        ArrayExtractPipe,
+        ArrayExtractIfMatchesPipe,
+        ArrayExtractIfPropertyExistsPipe,
+        ArrayExtractIfPropertyMatchesPipe,
+        ArrayIntersectPipe,
+        ArrayMakeRangePipe,
+        ArraySumUpPropertyPipe,
+        ArrayAppendAddPipe,
+        ArrayRemovePipe,
+        ArraySortTopologicalPipe,
+        // // endregion
+        // // region string
+        StringEscapeRegularExpressionsPipe,
+        StringConvertToValidVariableNamePipe,
+        StringEncodeURIComponentPipe,
+        StringAddSeparatorToPathPipe,
+        StringHasPathPrefixPipe,
+        StringGetDomainNamePipe,
+        StringGetPortNumberPipe,
+        StringGetProtocolNamePipe,
+        StringGetURLVariablePipe,
+        StringIsInternalURLPipe,
+        StringNormalizeURLPipe,
+        StringRepresentURLPipe,
+        StringCompressStyleValuePipe,
+        StringCamelCaseToDelimitedPipe,
+        StringCapitalizePipe,
+        StringDelimitedToCamelCasePipe,
+        StringFormatPipe,
+        StringGetRegularExpressionValidatedPipe,
+        StringLowerCasePipe,
+        StringFindNormalizedMatchRangePipe,
+        StringMarkPipe,
+        StringMD5Pipe,
+        StringNormalizePhoneNumberPipe,
+        StringParseEncodedObjectPipe,
+        StringRepresentPhoneNumberPipe,
+        StringDecodeHTMLEntitiesPipe,
+        StringNormalizeDomNodeSelectorPipe,
+        // // endregion
+        // // region number
+        NumberGetUTCTimestampPipe,
+        NumberIsNotANumberPipe,
+        NumberRoundPipe
+        // // endregion
+        // / endregion
+        // / region object
         AttachmentsAreEqualPipe,
         GetFilenameByPrefixPipe,
         AttachmentWithPrefixExistsPipe,
@@ -6105,9 +6417,11 @@ export class PaginationComponent {
         ObjectKeysPipe,
         ReversePipe,
         TypePipe,
-
+        // / endregion
+        // / region array
         ArrayDependentConcatPipe,
-
+        // / endregion
+        // / region string
         StringEndsWithPipe,
         StringHasTimeSuffixPipe,
         StringMatchPipe,
@@ -6122,23 +6436,29 @@ export class PaginationComponent {
         StringSliceMatchPipe,
         StringStartsWithPipe,
         StringTemplatePipe,
-
+        // / endregion
+        // / region number
         NumberPercentPipe,
-
+        // / endregion
+        // endregion
+        // region accessors
+        DateTimeValueAccessor,
+        // endregion
+        // region directives
         GenericDateDirective,
         GenericSliderDirective,
-
+        // endregion
+        // region components
         ConfirmComponent,
-
         IntervalInputComponent,
         IntervalsInputComponent,
-
         CodeEditorComponent,
         InputComponent,
         SimpleInputComponent,
         TextareaComponent,
         FileInputComponent,
         PaginationComponent
+        // endregion
     ],
     entryComponents: [ConfirmComponent],
     /*
@@ -6146,6 +6466,68 @@ export class PaginationComponent {
         AOT-Compiler.
     */
     exports: [
+        // region pipes
+        // / region wrapped
+        // // region object
+        ConvertCircularObjectToJSONPipe,
+        EqualsPipe,
+        ExtendObjectPipe,
+        RepresentObjectPipe,
+        SortPipe,
+        // // endregion
+        // // region array
+        ArrayMergePipe,
+        ArrayMakePipe,
+        ArrayUniquePipe,
+        ArrayAggregatePropertyIfEqualPipe,
+        ArrayDeleteEmptyItemsPipe,
+        ArrayExtractPipe,
+        ArrayExtractIfMatchesPipe,
+        ArrayExtractIfPropertyExistsPipe,
+        ArrayExtractIfPropertyMatchesPipe,
+        ArrayIntersectPipe,
+        ArrayMakeRangePipe,
+        ArraySumUpPropertyPipe,
+        ArrayAppendAddPipe,
+        ArrayRemovePipe,
+        ArraySortTopologicalPipe,
+        // // endregion
+        // // region string
+        StringEscapeRegularExpressionsPipe,
+        StringConvertToValidVariableNamePipe,
+        StringEncodeURIComponentPipe,
+        StringAddSeparatorToPathPipe,
+        StringHasPathPrefixPipe,
+        StringGetDomainNamePipe,
+        StringGetPortNumberPipe,
+        StringGetProtocolNamePipe,
+        StringGetURLVariablePipe,
+        StringIsInternalURLPipe,
+        StringNormalizeURLPipe,
+        StringRepresentURLPipe,
+        StringCompressStyleValuePipe,
+        StringCamelCaseToDelimitedPipe,
+        StringCapitalizePipe,
+        StringDelimitedToCamelCasePipe,
+        StringFormatPipe,
+        StringGetRegularExpressionValidatedPipe,
+        StringLowerCasePipe,
+        StringFindNormalizedMatchRangePipe,
+        StringMarkPipe,
+        StringMD5Pipe,
+        StringNormalizePhoneNumberPipe,
+        StringParseEncodedObjectPipe,
+        StringRepresentPhoneNumberPipe,
+        StringDecodeHTMLEntitiesPipe,
+        StringNormalizeDomNodeSelectorPipe,
+        // // endregion
+        // // region number
+        NumberGetUTCTimestampPipe,
+        NumberIsNotANumberPipe,
+        NumberRoundPipe
+        // // endregion
+        // / endregion
+        // / region object
         AttachmentsAreEqualPipe,
         GetFilenameByPrefixPipe,
         AttachmentWithPrefixExistsPipe,
@@ -6157,9 +6539,11 @@ export class PaginationComponent {
         ObjectKeysPipe,
         ReversePipe,
         TypePipe,
-
+        // / endregion
+        // / region array
         ArrayDependentConcatPipe,
-
+        // / endregion
+        // / region string
         StringEndsWithPipe,
         StringHasTimeSuffixPipe,
         StringMatchPipe,
@@ -6174,23 +6558,26 @@ export class PaginationComponent {
         StringSliceMatchPipe,
         StringStartsWithPipe,
         StringTemplatePipe,
-
+        // / endregion
+        // / region number
         NumberPercentPipe,
-
+        // / endregion
+        // endregion
+        // region directives
         GenericDateDirective,
         GenericSliderDirective,
-
+        // endregion
+        // region components
         ConfirmComponent,
-
         IntervalInputComponent,
         IntervalsInputComponent,
-
         CodeEditorComponent,
         InputComponent,
         SimpleInputComponent,
         TextareaComponent,
         FileInputComponent,
         PaginationComponent
+        // endregion
     ],
     imports: [
         BrowserModule.withServerTransition({appId: 'generic-universal'}),
@@ -6208,17 +6595,81 @@ export class PaginationComponent {
         AOT-Compiler.
     */
     providers: [
+        // region services
         ToolsService,
         InitialDataService,
-
-        CanDeactivateRouteLeaveGuard,
         AlertService,
         DataService,
         DataScopeService,
+        // / region guards
+        CanDeactivateRouteLeaveGuard,
+        // / endregion
+        // / region resolver
         AbstractResolver,
-
-        DateTimeValueAccessor,
-
+        // / endregion
+        // endregion
+        // region pipes
+        // / region wrapped
+        // // region object
+        ConvertCircularObjectToJSONPipe,
+        EqualsPipe,
+        ExtendObjectPipe,
+        RepresentObjectPipe,
+        SortPipe,
+        // // endregion
+        // // region array
+        ArrayMergePipe,
+        ArrayMakePipe,
+        ArrayUniquePipe,
+        ArrayAggregatePropertyIfEqualPipe,
+        ArrayDeleteEmptyItemsPipe,
+        ArrayExtractPipe,
+        ArrayExtractIfMatchesPipe,
+        ArrayExtractIfPropertyExistsPipe,
+        ArrayExtractIfPropertyMatchesPipe,
+        ArrayIntersectPipe,
+        ArrayMakeRangePipe,
+        ArraySumUpPropertyPipe,
+        ArrayAppendAddPipe,
+        ArrayRemovePipe,
+        ArraySortTopologicalPipe,
+        // // endregion
+        // // region string
+        StringEscapeRegularExpressionsPipe,
+        StringConvertToValidVariableNamePipe,
+        StringEncodeURIComponentPipe,
+        StringAddSeparatorToPathPipe,
+        StringHasPathPrefixPipe,
+        StringGetDomainNamePipe,
+        StringGetPortNumberPipe,
+        StringGetProtocolNamePipe,
+        StringGetURLVariablePipe,
+        StringIsInternalURLPipe,
+        StringNormalizeURLPipe,
+        StringRepresentURLPipe,
+        StringCompressStyleValuePipe,
+        StringCamelCaseToDelimitedPipe,
+        StringCapitalizePipe,
+        StringDelimitedToCamelCasePipe,
+        StringFormatPipe,
+        StringGetRegularExpressionValidatedPipe,
+        StringLowerCasePipe,
+        StringFindNormalizedMatchRangePipe,
+        StringMarkPipe,
+        StringMD5Pipe,
+        StringNormalizePhoneNumberPipe,
+        StringParseEncodedObjectPipe,
+        StringRepresentPhoneNumberPipe,
+        StringDecodeHTMLEntitiesPipe,
+        StringNormalizeDomNodeSelectorPipe,
+        // // endregion
+        // // region number
+        NumberGetUTCTimestampPipe,
+        NumberIsNotANumberPipe,
+        NumberRoundPipe
+        // // endregion
+        // / endregion
+        // / region object
         AttachmentsAreEqualPipe,
         GetFilenameByPrefixPipe,
         AttachmentWithPrefixExistsPipe,
@@ -6230,9 +6681,11 @@ export class PaginationComponent {
         ObjectKeysPipe,
         ReversePipe,
         TypePipe,
-
+        // / endregion
+        // / region array
         ArrayDependentConcatPipe,
-
+        // / endregion
+        // / region string
         StringEndsWithPipe,
         StringHasTimeSuffixPipe,
         StringMatchPipe,
@@ -6247,10 +6700,11 @@ export class PaginationComponent {
         StringSliceMatchPipe,
         StringStartsWithPipe,
         StringTemplatePipe,
-
+        // / endregion
+        // / region number
         NumberPercentPipe,
-
-        AbstractValueAccessor,
+        // / endregion
+        // endregion
         DatePipe/* TODO,
         {
             deps: [DataService, InitialDataService, Injector],
