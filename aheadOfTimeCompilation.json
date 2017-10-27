@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "target": "esnext",
-    "module": "ESNEXT",
-    "moduleResolution": "node",
-    "outDir": "aheadOfTime.compiled",
-    "sourceMap": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "lib": ["esnext", "dom"],
-    "noImplicitAny": true,
+    "module": "ESNEXT",
+    "moduleResolution": "node",
+    "noImplicitAny": false,
+    "outDir": "aheadOfTime.compiled",
     "suppressImplicitAnyIndexErrors": true,
+    "sourceMap": true,
+    "target": "esnext",
     "typeRoots": ["./node_modules/@types/"]
   },
   "files": ["./index"],

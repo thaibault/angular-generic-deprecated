@@ -4343,13 +4343,31 @@ export class GenericSliderDirective {
         this.update()
     }
 }
-// IgnoreTypeCheck
-@Directive(Tools.extendObject(true, {
-}, DefaultValueAccessor.decorators[0].args[0], {providers: [{
+const providers:Array<PlainObject> = [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(():DateTimeValueAccessor => DateTimeValueAccessor),
     multi: true
-}]}))
+}]
+/*
+    NOTE: This core update resistent version is not compatible with angular's ahead
+    of time compilation.
+// IgnoreTypeCheck
+@Directive(Tools.extendObject(true, {
+}, DefaultValueAccessor.decorators[0].args[0], {providers}))
+*/
+@Directive({
+    selector: 'input:not([type=checkbox])[formControlName],textarea[formControlName],input:not([type=checkbox])[formControl],textarea[formControl],input:not([type=checkbox])[ngModel],textarea[ngModel],[ngDefaultControl]',
+    // TODO: vsavkin replace the above selector with the one below it once
+    // https://github.com/angular/angular/issues/3011 is implemented
+    // selector: '[ngModel],[formControl],[formControlName]',
+    host: {
+        '(input)': '_handleInput($event.target.value)',
+        '(blur)': 'onTouched()',
+        '(compositionstart)': '_compositionStart()',
+        '(compositionend)': '_compositionEnd($event.target.value)'
+    },
+    providers
+})
 /**
  * Time value accessor with "ngModel" support.
  */
@@ -6332,10 +6350,6 @@ export class PaginationComponent {
 }
 // / endregion
 // endregion
-/*
-    TODO not all injectables are listed yet! Dynamically created aren't
-    resolvable!
-*/
 // region module
 // IgnoreTypeCheck
 @NgModule({
@@ -6402,7 +6416,7 @@ export class PaginationComponent {
         // // region number
         NumberGetUTCTimestampPipe,
         NumberIsNotANumberPipe,
-        NumberRoundPipe
+        NumberRoundPipe,
         // // endregion
         // / endregion
         // / region object
@@ -6442,6 +6456,7 @@ export class PaginationComponent {
         // / endregion
         // endregion
         // region accessors
+        AbstractValueAccessor,
         DateTimeValueAccessor,
         // endregion
         // region directives
@@ -6524,7 +6539,7 @@ export class PaginationComponent {
         // // region number
         NumberGetUTCTimestampPipe,
         NumberIsNotANumberPipe,
-        NumberRoundPipe
+        NumberRoundPipe,
         // // endregion
         // / endregion
         // / region object
@@ -6666,7 +6681,7 @@ export class PaginationComponent {
         // // region number
         NumberGetUTCTimestampPipe,
         NumberIsNotANumberPipe,
-        NumberRoundPipe
+        NumberRoundPipe,
         // // endregion
         // / endregion
         // / region object
