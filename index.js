@@ -3160,7 +3160,7 @@ export class DataScopeService {
                             entities.hasOwnProperty(type)
                         ) {
                             let index:number = 0
-                            for (const item:any of result[name].value) {
+                            for (const item of result[name].value) {
                                 result[name].value[index] = this.generate(
                                     type, null, item || {},
                                     [specialNames.attachment, specialNames.id])
@@ -3170,7 +3170,7 @@ export class DataScopeService {
                     }
             }
         }
-        for (const name:string of reservedNames)
+        for (const name of reservedNames)
             if (data.hasOwnProperty(name))
                 result[name] = data[name]
             else if (name === specialNames.type)
