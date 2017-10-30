@@ -101,10 +101,103 @@ try {
 
 import {defaultAnimation} from './animation'
 // endregion
+// region types
+export type AllowedRoles = string|Array<string>|{
+    read:string|Array<string>;
+    write:string|Array<string>;
+}
+export type Constraint = {
+    description?:string;
+    evaluation:string;
+}
+export type PropertySpecification = {
+    allowedRoles?:AllowedRoles;
+    constraintExecution?:Constraint;
+    constraintExpression?:Constraint;
+    contentTypeRegularExpressionPattern?:string;
+    default?:any;
+    emptyEqualsToNull?:boolean;
+    index?:boolean;
+    invertedContentTypeRegularExpressionPattern?:string;
+    invertedRegularExpressionPattern?:string;
+    maximum?:number;
+    minimum?:number;
+    maximumLength?:number;
+    minimumLength?:number;
+    maximumNumber?:number;
+    minimumNumber?:number;
+    maximumSize?:number;
+    minimumSize?:number;
+    mutable?:boolean;
+    nullable?:boolean;
+    onCreateExecution?:string;
+    onCreateExpression?:string;
+    onUpdateExecution?:string;
+    onUpdateExpression?:string;
+    regularExpressionPattern?:string;
+    selection?:Array<any>;
+    trim?:boolean;
+    type?:any;
+    writable?:boolean;
+}
+export type Model = {
+    _allowedRoles?:AllowedRoles;
+    _extends?:Array<string>;
+    _constraintExpressions?:Array<Constraint>;
+    _constraintExecutions?:Array<Constraint>;
+    _maximumAggregatedSize?:number,
+    _minimumAggregatedSize?:number,
+    [key:string]:PropertySpecification;
+}
+export type ModelConfiguration = {
+    entities:PlainObject;
+    property:{
+        defaultSpecification:{
+            minimum:number;
+            minimumLength:number;
+            minimumNumber:number;
+        };
+        name:{
+            reserved:Array<string>;
+            special:{
+                allowedRole:string;
+                attachment:string;
+                conflict:string;
+                constraint:{
+                    execution:string;
+                    expression:string;
+                };
+                deleted:string;
+                deletedConflict:string;
+                extend:string;
+                id:string;
+                localSequence:string;
+                maximumAggregatedSize:string;
+                minimumAggregatedSize:string;
+                revision:string;
+                revisions:string;
+                revisionsInformation:string;
+                strategy:string;
+                type:string;
+            },
+            validatedDocumentsCache:string;
+        }
+    }
+}
+export type Configuration = {database:{
+    connector:{
+        auto_compaction:boolean;
+        revs_limit:number;
+    },
+    model:ModelConfiguration,
+    plugins:Array<Object>;
+    url:string;
+}}
 export type ChangesStream = {
     cancel:Function;
     on:Function;
 }
+// endregion
 if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
     /* eslint-disable no-var */
     var CHANGE_DETECTION_STRATEGY_NAME:string = 'default'
@@ -2031,7 +2124,7 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
  */
 export class ConfirmComponent {
     @Input() cancelText:string = 'Cancel'
-    dialogReference:MatDialogRef|null = null
+    dialogReference:MatDialogRef<ConfirmComponent>|null = null
     @Input() okText:string = 'OK'
     title:string = ''
     message:string = ''
@@ -2048,7 +2141,7 @@ export class ConfirmComponent {
         /* eslint-disable indent */
         // IgnoreTypeCheck
         @Optional() @Inject(MAT_DIALOG_DATA) data:any,
-        @Optional() dialogReference:MatDialogRef
+        @Optional() dialogReference:MatDialogRef<ConfirmComponent>
         /* eslint-enable indent */
     ) {
         this.dialogReference = dialogReference
