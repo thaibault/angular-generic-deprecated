@@ -14,7 +14,11 @@
     "tools"
   ],
   "files": [
+    "aheadOfTimeCompilation.json",
+    "animation.js",
+    "animation.ts",
     "index.js",
+    "index.ts",
     "mockup.js",
     "mockup.compiled.js",
     "preRender.js",
