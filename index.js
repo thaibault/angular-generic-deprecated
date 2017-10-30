@@ -19,8 +19,7 @@
 */
 // region imports
 import {tinymceDefaultSettings, TinyMceModule} from 'angular-tinymce'
-// TODO import type {PlainObject} from 'clientnode'
-import Tools, {$, globalContext} from 'clientnode'
+import Tools, {$, DomNode, globalContext, PlainObject} from 'clientnode'
 import {
     // AfterViewInit,
     APP_INITIALIZER,
@@ -47,7 +46,7 @@ import {
     /* eslint-enable no-unused-vars */
     Output,
     Pipe,
-    // PipeTransform,
+    PipeTransform,
     /* eslint-disable no-unused-vars */
     PLATFORM_ID,
     /* eslint-enable no-unused-vars */
@@ -77,12 +76,14 @@ import {
     MatSnackBarConfig,
     MatTooltipModule
 } from '@angular/material'
-import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
+import {
+    BrowserModule, DomSanitizer, SafeRessourceUrl
+} from '@angular/platform-browser'
 import {
     ActivatedRoute,
     ActivatedRouteSnapshot,
     // CanDeactivate,
-    // NavigationEnd,
+    NavigationEnd,
     // Resolve,
     Router,
     RouterStateSnapshot
@@ -100,15 +101,22 @@ try {
 
 import {defaultAnimation} from './animation'
 // endregion
+export type ChangesStream = {
+    cancel:Function;
+    on:Function;
+}
 if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
     /* eslint-disable no-var */
     var CHANGE_DETECTION_STRATEGY_NAME:string = 'default'
     /* eslint-enable no-var */
-// TODO declare var UTC_BUILD_TIMESTAMP:number
+if (typeof UTC_BUILD_TIMESTAMP === 'undefined')
+    /* eslint-disable no-var */
+    var UTC_BUILD_TIMESTAMP:number = 1
+    /* eslint-enable no-var */
 export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
-export let currentInstanceToSearchInjectorFor:?Object = null
+export let currentInstanceToSearchInjectorFor:Object|null = null
 export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
 // region configuration
 export const CODE_MIRROR_DEFAULT_OPTIONS:PlainObject = {
@@ -139,7 +147,7 @@ export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
         // endregion
         allow_conditional_comments: false,
         allow_script_urls: false,
-        // TODO cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
+        cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
         convert_fonts_to_spans: true,
         document_base_url: '/',
         element_format: 'xhtml',
@@ -179,7 +187,7 @@ export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
  */
 export class ToolsService {
     $:any = $
-    globalContext:Object = globalContext
+    globalContext:any = globalContext
     tools:Object = Tools
 }
 // IgnoreTypeCheck
@@ -254,14 +262,16 @@ export class InitialDataService {
      * @param tools - Saves the generic tools service instance.
      * @returns Nothing.
      */
-    constructor(tools:ToolsService):void {
+    constructor(tools:ToolsService) {
         if (!tools)
             tools = new ToolsService()
         this.tools = tools.tools
         this.set(
-            this.constructor.defaultScope,
-            tools.globalContext.genericInitialData || {})
-        if (this.constructor.removeFoundData)
+            InitialDataService.defaultScope,
+            'genericInitialData' in tools.globalContext ?
+                tools.globalContext.genericInitialData :
+                {})
+        if (InitialDataService.removeFoundData)
             delete tools.globalContext.genericInitialData
         if (
             'document' in tools.globalContext &&
@@ -274,7 +284,7 @@ export class InitialDataService {
                 'initialData'
             )) {
                 this.set(JSON.parse(domNode.getAttribute('initialData')))
-                if (this.constructor.removeFoundData)
+                if (InitialDataService.removeFoundData)
                     domNode.removeAttribute('initialData')
             }
         }
@@ -300,14 +310,14 @@ export class InitialDataService {
  * @returns Nothing.
  */
 export const determineInjector:Function = (
-    injector:?Injector, instance:?Object, constructor:?Object
-):?Function => {
+    injector?:Injector, instance?:Object, constructor?:Object
+):Function|void => {
     if (injector)
         return injector.get.bind(injector)
     if (currentInstanceToSearchInjectorFor === this)
         throw SYMBOL
     currentInstanceToSearchInjectorFor = this
-    for (const injector:Injector of InitialDataService.injectors)
+    for (const injector of InitialDataService.injectors)
         try {
             if (injector.get(constructor, NaN) === instance)
                 return injector.get.bind(injector)
@@ -706,7 +716,7 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
         ngZone:NgZone,
         representObjectPipe:RepresentObjectPipe,
         stringMD5Pipe:StringMD5Pipe
-    ):void {
+    ) {
         this.data = injector.get(DataService)
         this.ngZone = ngZone
         this.representObject = representObjectPipe.transform.bind(
@@ -730,7 +740,7 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
             return true
         // Normalize properties.
         const data:Object = {first: {given: first}, second: {given: second}}
-        for (const type:string of ['first', 'second']) {
+        for (const type of ['first', 'second']) {
             if (
                 typeof data[type].given !== 'object' ||
                 data[type].given === null
@@ -748,7 +758,7 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
             data[type].size = data[type].given.size || data[type].given.length
         }
         // Search for an exclusion criterion.
-        for (const type:string of ['content_type', 'size'])
+        for (const type of ['content_type', 'size'])
             if (
                 ![data.first[type], data.second[type]].includes(undefined) &&
                 data.first[type] !== data.second[type]
@@ -757,7 +767,7 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
         // Check for a sufficient criterion.
         if (data.first.data === data.second.data)
             return true
-        for (const type:string of ['first', 'second'])
+        for (const type of ['first', 'second'])
             if (!data[type].hash) {
                 if (data[type].data === null || !['object', 'string'].includes(
                     typeof data[type].data
@@ -810,9 +820,9 @@ export class GetFilenameByPrefixPipe/* implements PipeTransform*/ {
      * file name will be returned.
      * @returns Matching file name or null if no file matches.
      */
-    transform(attachments:PlainObject, prefix:?string):?string {
+    transform(attachments:PlainObject, prefix?:string):string|void {
         if (prefix) {
-            for (const name:string in attachments)
+            for (const name in attachments)
                 if (attachments.hasOwnProperty(name) && name.startsWith(
                     prefix
                 ))
@@ -845,9 +855,10 @@ export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
     constructor(
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService
-    ):void {
-        this.attachmentName = initialData.configuration.database.model.property
-            .name.special.attachment
+    ) {
+        this.attachmentName =
+            initialData.configuration.database.model.property.name.special
+            .attachment
         this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
     }
@@ -858,9 +869,9 @@ export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
      * "false" will be returned either.
      * @returns Boolean indication if given file name prefix exists.
      */
-    transform(document:PlainObject, namePrefix:?string):boolean {
+    transform(document:PlainObject, namePrefix?:string):boolean {
         if (document.hasOwnProperty(this.attachmentName)) {
-            const name:?string = this.getFilenameByPrefix(
+            const name:string|null = this.getFilenameByPrefix(
                 document[this.attachmentName], namePrefix)
             if (name)
                 return document[this.attachmentName][name].hasOwnProperty(
@@ -885,7 +896,7 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
      * @param initialData - Initial data service instance.
      * @returns Nothing.
      */
-    constructor(initialData:InitialDataService):void {
+    constructor(initialData:InitialDataService) {
         this.modelConfiguration = initialData.configuration.database.model
     }
     /**
@@ -896,7 +907,7 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
     transform(item:any):any {
         if (Array.isArray(item)) {
             const result:Array<any> = []
-            for (const subItem:any of item)
+            for (const subItem of item)
                 result.push(this.transform(subItem))
             return result
         } else if (typeof item === 'object' && item !== null) {
@@ -931,7 +942,7 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
         const specialNames:PlainObject =
             this.modelConfiguration.property.name.special
         const result:PlainObject = {}
-        for (const key:string in object)
+        for (const key in object)
             if (
                 object.hasOwnProperty(key) && (
                     !object.hasOwnProperty(specialNames.type) ||
@@ -964,7 +975,7 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
             object.hasOwnProperty(specialNames.attachment) &&
             object[specialNames.attachment]
         )
-            for (const key:string in object[specialNames.attachment])
+            for (const key in object[specialNames.attachment])
                 if (
                     object[specialNames.attachment].hasOwnProperty(key) &&
                     typeof object[specialNames.attachment][key] === 'object' &&
@@ -1027,7 +1038,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         injector:Injector,
         numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe,
         tools:ToolsService
-    ):void {
+    ) {
         this.attachmentsAreEqual = attachmentsAreEqualPipe.transform.bind(
             attachmentsAreEqualPipe)
         this.dataScope = injector.get(DataScopeService)
@@ -1050,14 +1061,14 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                 return this.numberGetUTCTimestamp(value)
             if (Array.isArray(value)) {
                 const result:Array<any> = []
-                for (const subValue:any of value)
+                for (const subValue of value)
                     result.push(this.convertDateToTimestampRecursively(
                         subValue))
                 return result
             }
             if (Object.getPrototypeOf(value) === Object.prototype) {
                 const result:PlainObject = {}
-                for (const name:string in value)
+                for (const name in value)
                     if (value.hasOwnProperty(name))
                         result[name] = this.convertDateToTimestampRecursively(
                             value[name])
@@ -1084,9 +1095,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         if (specification && specification.hasOwnProperty(
             this.specialNames.attachment
         ))
-            for (const type:string in specification[
-                this.specialNames.attachment
-            ])
+            for (const type in specification[this.specialNames.attachment])
                 if (specification[this.specialNames.attachment].hasOwnProperty(
                     type
                 )) {
@@ -1097,7 +1106,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                             this.specialNames.attachment) &&
                         oldDocument[this.specialNames.attachment]
                     )
-                        for (const fileName:string in oldDocument[
+                        for (const fileName in oldDocument[
                             this.specialNames.attachment
                         ])
                             if (
@@ -1113,7 +1122,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                     if (newDocument.hasOwnProperty(
                         this.specialNames.attachment
                     ))
-                        for (const fileName:string in newDocument[
+                        for (const fileName in newDocument[
                             this.specialNames.attachment
                         ])
                             if (
@@ -1203,7 +1212,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                 }
                                 // endregion
                     // region mark all not mentioned old attachments as removed
-                    for (const fileName:string in oldAttachments)
+                    for (const fileName in oldAttachments)
                         if (oldAttachments.hasOwnProperty(fileName))
                             result[fileName] = {data: null}
                     // endregion
@@ -1223,7 +1232,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      * exists any payload.
      */
     removeAlreadyExistingData(
-        newData:any, oldData:any, specification:?PlainObject
+        newData:any, oldData:any, specification?:PlainObject
     ):{newData:any;payloadExists:boolean} {
         let payloadExists:boolean = false
         if (Array.isArray(newData)) {
@@ -1239,7 +1248,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
             typeof oldData === 'object' && oldData !== null
         ) {
             const newPropertyNames:Array<string> = Object.keys(newData)
-            for (const name:string in oldData)
+            for (const name in oldData)
                 if (oldData.hasOwnProperty(name)) {
                     const index:number = newPropertyNames.indexOf(name)
                     if (index !== -1)
@@ -1280,12 +1289,12 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      * @param specification - Specification object for given document.
      * @returns Sliced given document.
      */
-    removeMetaData(data:PlainObject, specification:?PlainObject):any {
+    removeMetaData(data:PlainObject, specification?:PlainObject):any {
         if (data instanceof Date)
             return this.numberGetUTCTimestamp(data)
         if (Array.isArray(data)) {
             let index:number = 0
-            for (const item:any of data) {
+            for (const item of data) {
                 data[index] = this.removeMetaData(item, specification)
                 index += 1
             }
@@ -1293,7 +1302,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
         }
         if (typeof data === 'object' && data !== null) {
             const result:PlainObject = {}
-            for (const name:string in data)
+            for (const name in data)
                 if (data.hasOwnProperty(name)) {
                     const emptyEqualsToNull:boolean = Boolean((
                         specification && (
@@ -1328,7 +1337,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                 data[name] !== null
                             ) {
                                 result[name] = {}
-                                for (const fileName:string in data[name]) {
+                                for (const fileName in data[name]) {
                                     if (data[name].hasOwnProperty(fileName))
                                         result[name][fileName] = {
                                             /* eslint-disable camelcase */
@@ -1344,9 +1353,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                         result[name][fileName].data =
                                             data[name][fileName].data
                                     else
-                                        for (const type:string of [
-                                            'digest', 'stub'
-                                        ])
+                                        for (const type of ['digest', 'stub'])
                                             if (data[name][
                                                 fileName
                                             ].hasOwnProperty(type))
@@ -1393,9 +1400,9 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
      * wrapped into a promise to process binary data asynchronous.
      */
     async transform(
-        newDocument:PlainObject, oldDocument:?PlainObject
+        newDocument:PlainObject, oldDocument?:PlainObject
     ):Promise<PlainObject|null> {
-        let specification:?PlainObject = null
+        let specification:PlainObject|null = null
         if (
             this.specialNames.type in newDocument &&
             this.modelConfiguration.entities.hasOwnProperty(newDocument[
@@ -1514,7 +1521,7 @@ export class MapPipe/* implements PipeTransform*/ {
      * @param injector - Pipe injector service instance.
      * @returns Nothing.
      */
-    constructor(injector:Injector):void {
+    constructor(injector:Injector) {
         this.injector = injector
     }
     /**
@@ -1532,12 +1539,12 @@ export class MapPipe/* implements PipeTransform*/ {
         const pipe:PipeTransform = this.injector.get(pipeName)
         if (Array.isArray(object)) {
             const result:Array<any> = []
-            for (const item:any of object)
+            for (const item of object)
                 result.push(pipe.transform(item, ...additionalArguments))
             return result
         }
         const result:Object = {}
-        for (const key:string in object)
+        for (const key in object)
             if (object.hasOwnProperty(key))
                 result[key] = pipe.transform.transform(
                     object[key], key, ...additionalArguments)
@@ -1561,7 +1568,7 @@ export class ObjectKeysPipe/* implements PipeTransform*/ {
      * @returns Arrays of key names.
      */
     transform(
-        object:?Object, sort:any = false, reverse:boolean = false,
+        object?:Object, sort:any = false, reverse:boolean = false,
         asNumber:boolean = false
     ):Array<string> {
         if (typeof object === 'object' && object !== null) {
@@ -1600,7 +1607,7 @@ export class ReversePipe/* implements PipeTransform*/ {
      * reversion can be done in place.
      * @returns Reverted arrays.
      */
-    transform(list:?Array<any>, copy:boolean = false):Array<any> {
+    transform(list?:Array<any>, copy:boolean = false):Array<any> {
         if (list) {
             if (copy)
                 list = list.slice()
@@ -1661,7 +1668,7 @@ export class StringEndsWithPipe/* implements PipeTransform*/ {
      * @param needle - Suffix to search for.
      * @returns The boolean result.
      */
-    transform(string:?string, needle:?string):boolean {
+    transform(string?:string, needle?:string):boolean {
         return typeof string === 'string' && typeof needle === 'string' &&
             string.endsWith(needle)
     }
@@ -1677,7 +1684,7 @@ export class StringHasTimeSuffixPipe/* implements PipeTransform*/ {
      * @param string - To search in.
      * @returns The boolean result.
      */
-    transform(string:?string):boolean {
+    transform(string?:string):boolean {
         if (typeof string !== 'string')
             return false
         return string.endsWith('Date') || string.endsWith(
@@ -1718,7 +1725,7 @@ export class StringMaximumLengthPipe/* implements PipeTransform*/ {
      * @returns The potentially trimmed given string.
      */
     transform(
-        string:?string, maximumLength:number = 100, suffix:string = '...'
+        string?:string, maximumLength:number = 100, suffix:string = '...'
     ):string {
         if (string) {
             if (
@@ -1753,8 +1760,11 @@ export class StringReplacePipe/* implements PipeTransform*/ {
         string:string, search:string|RegExp, replacement:string = '',
         modifier:string = 'g'
     ):string {
-        // IgnoreTypeCheck
-        return string.replace(new RegExp(search, modifier), replacement)
+        return string.replace(
+            typeof search === 'string' ?
+                new RegExp(search, modifier) :
+                search,
+            replacement)
     }
 }
 // IgnoreTypeCheck
@@ -1768,7 +1778,7 @@ export class StringSafeHTMLPipe/* implements PipeTransform*/ {
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
      */
-    constructor(domSanitizer:DomSanitizer):void {
+    constructor(domSanitizer:DomSanitizer) {
         this.transform = domSanitizer.bypassSecurityTrustHtml.bind(
             this.domSanitizer)
     }
@@ -1784,7 +1794,7 @@ export class StringSafeResourceURLPipe/* implements PipeTransform*/ {
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
      */
-    constructor(domSanitizer:DomSanitizer):void {
+    constructor(domSanitizer:DomSanitizer) {
         this.transform = domSanitizer.bypassSecurityTrustResourceUrl.bind(
             this.domSanitizer)
     }
@@ -1800,7 +1810,7 @@ export class StringSafeScriptPipe/* implements PipeTransform*/ {
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
      */
-    constructor(domSanitizer:DomSanitizer):void {
+    constructor(domSanitizer:DomSanitizer) {
         this.transform = domSanitizer.bypassSecurityTrustScript.bind(
             this.domSanitizer)
     }
@@ -1816,7 +1826,7 @@ export class StringSafeStylePipe/* implements PipeTransform*/ {
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
      */
-    constructor(domSanitizer:DomSanitizer):void {
+    constructor(domSanitizer:DomSanitizer) {
         this.transform = domSanitizer.bypassSecurityTrustStyle.bind(
             this.domSanitizer)
     }
@@ -1832,7 +1842,7 @@ export class StringSafeURLPipe/* implements PipeTransform*/ {
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
      */
-    constructor(domSanitizer:DomSanitizer):void {
+    constructor(domSanitizer:DomSanitizer) {
         this.transform = domSanitizer.bypassSecurityTrustUrl.bind(
             this.domSanitizer)
     }
@@ -1881,10 +1891,11 @@ export class StringSliceMatchPipe/* implements PipeTransform*/ {
      * @returns Matching group.
      */
     transform(
-        subject:?string, pattern:string, index:number = 0, modifier:string = ''
+        subject?:string, pattern:string, index:number = 0,
+        modifier:string = ''
     ):string {
         if (typeof subject === 'string') {
-            const match:?Array<string> = subject.match(new RegExp(
+            const match:Array<string>|null = subject.match(new RegExp(
                 // IgnoreTypeCheck
                 pattern, modifier))
             if (match && typeof match[index] === 'string')
@@ -1905,7 +1916,7 @@ export class StringStartsWithPipe/* implements PipeTransform*/ {
      * @param needle - Prefix to search for.
      * @returns The boolean result.
      */
-    transform(string:?string, needle:?string):boolean {
+    transform(string?:string, needle?:string):boolean {
         return typeof string === 'string' && typeof needle === 'string' &&
             string.startsWith(needle)
     }
@@ -1923,7 +1934,7 @@ export class StringTemplatePipe/* implements PipeTransform*/ {
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @returns Nothing.
      */
-    constructor(extendObjectPipe:ExtendObjectPipe):void {
+    constructor(extendObjectPipe:ExtendObjectPipe) {
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
     }
     /**
@@ -2020,7 +2031,7 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
  */
 export class ConfirmComponent {
     @Input() cancelText:string = 'Cancel'
-    dialogReference:?MatDialogRef = null
+    dialogReference:MatDialogRef|null = null
     @Input() okText:string = 'OK'
     title:string = ''
     message:string = ''
@@ -2039,10 +2050,10 @@ export class ConfirmComponent {
         @Optional() @Inject(MAT_DIALOG_DATA) data:any,
         @Optional() dialogReference:MatDialogRef
         /* eslint-enable indent */
-    ):void {
+    ) {
         this.dialogReference = dialogReference
         if (typeof data === 'object' && data !== null)
-            for (const key:string in data)
+            for (const key in data)
                 if (data.hasOwnProperty(key))
                     this[key] = data[key]
     }
@@ -2062,7 +2073,7 @@ export class AlertService {
      * @param dialog - Reference to the dialog component instance.
      * @returns Nothing.
      */
-    constructor(dialog:MatDialog):void {
+    constructor(dialog:MatDialog) {
         this.dialog = dialog
     }
     /**
@@ -2134,7 +2145,7 @@ export class DataService {
     database:typeof PouchDB
     equals:Function
     extendObject:Function
-    interceptSynchronisationPromise:?Promise<any> = null
+    interceptSynchronisationPromise:Promise<any>|null = null
     ngZone:ngZone
     middlewares:{
         pre:{[key:string]:Array<Function>};
@@ -2144,11 +2155,11 @@ export class DataService {
         pre: {}
     }
     platformID:string
-    remoteConnection:?PouchDB = null
+    remoteConnection:PouchDB|null = null
     runningRequests:Array<PlainObject> = []
     runningRequestsStream:Subject<Array<PlainObject>> = new Subject()
     stringFormat:Function
-    synchronisation:?Object
+    synchronisation:Object|null = null
     tools:Tools
     /**
      * Creates the database constructor applies all plugins instantiates
@@ -2170,7 +2181,7 @@ export class DataService {
         @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe,
         tools:ToolsService
-    ):void {
+    ) {
         this.configuration = initialData.configuration
         if (this.configuration.database.hasOwnProperty('publicURL'))
             this.configuration.database.url =
@@ -2212,7 +2223,7 @@ export class DataService {
                     if backend doesn't support the "latest" or "upsert" syntax.
                 */
                 if (error.name === 'bad_request') {
-                    for (const item:PlainObject of firstParameter)
+                    for (const item of firstParameter)
                         if (['latest', 'upsert'].includes(item[revisionName]))
                             try {
                                 item[revisionName] = (
@@ -2236,7 +2247,7 @@ export class DataService {
             const conflictingIndexes:Array<number> = []
             const conflicts:Array<PlainObject> = []
             let index:number = 0
-            for (const item:PlainObject of result) {
+            for (const item of result) {
                 if (
                     typeof firstParameter[index] === 'object' &&
                     firstParameter !== null
@@ -2279,7 +2290,7 @@ export class DataService {
                 firstParameter = conflicts
                 const retriedResults:Array<PlainObject> = await this.bulkDocs(
                     firstParameter, ...parameter)
-                for (const retriedResult:PlainObject of retriedResults)
+                for (const retriedResult of retriedResults)
                     result[conflictingIndexes.shift()] = retriedResult
             }
             return result
@@ -2287,7 +2298,7 @@ export class DataService {
         this.database
             .plugin(PouchDBFindPlugin)
             .plugin(PouchDBValidationPlugin)
-        for (const plugin:Object of this.configuration.database.plugins)
+        for (const plugin of this.configuration.database.plugins)
             this.database.plugin(plugin)
     }
     /**
@@ -2361,7 +2372,7 @@ export class DataService {
             this.configuration.database.model.property.name.special.id
         const revisionName:string =
             this.configuration.database.model.property.name.special.revision
-        for (const pluginName:string of ['post', 'put']) {
+        for (const pluginName of ['post', 'put']) {
             const nativeMethod:Function = this.connection[pluginName].bind(
                 this.connection)
             this.connection[pluginName] = async function(
@@ -2406,9 +2417,9 @@ export class DataService {
             }
         }
         // endregion
-        for (const name:string in this.connection)
+        for (const name in this.connection)
             if (
-                this.constructor.wrappableMethodNames.includes(name) &&
+                DataService.wrappableMethodNames.includes(name) &&
                 typeof this.connection[name] === 'function'
             ) {
                 const method:Function = this.connection[name]
@@ -2417,7 +2428,7 @@ export class DataService {
                 ):Promise<any> => {
                     const request:{
                         parameter:Array<any>;
-                        wrappedParameter:?Array<any>;
+                        wrappedParameter?:Array<any>;
                     } = {name, parameter}
                     this.runningRequests.push(request)
                     this.runningRequestsStream.next(this.runningRequests)
@@ -2428,10 +2439,10 @@ export class DataService {
                             this.runningRequests.splice(index, 1)
                         this.runningRequestsStream.next(this.runningRequests)
                     }
-                    for (const methodName:string of [name, '_all'])
+                    for (const methodName of [name, '_all'])
                         if (this.middlewares.pre.hasOwnProperty(methodName))
                             for (
-                                const interceptor:Function of
+                                const interceptor of
                                 this.middlewares.pre[methodName]
                             ) {
                                 parameter = interceptor.apply(
@@ -2451,10 +2462,10 @@ export class DataService {
                         givenParameter:Array<any>=parameter
                     ):any => method.apply(context, givenParameter)
                     let result:any = action()
-                    for (const methodName:string of [name, '_all'])
+                    for (const methodName of [name, '_all'])
                         if (this.middlewares.post.hasOwnProperty(methodName))
                             for (
-                                const interceptor:Function of
+                                const intercepto of
                                 this.middlewares.post[methodName]
                             ) {
                                 result = interceptor.call(
@@ -2497,10 +2508,7 @@ export class DataService {
             this.configuration.database.createGenericFlatIndex
         ) {
             // region create/remove needed/unneeded generic indexes
-            for (
-                const modelName:string in
-                this.configuration.database.model.entities
-            )
+            for (const modelName in this.configuration.database.model.entities)
                 if (
                     this.configuration.database.model.entities.hasOwnProperty(
                         modelName
@@ -2511,7 +2519,7 @@ export class DataService {
                     ).test(modelName)
                 )
                     for (
-                        const name:string of
+                        const name of
                         DataService.determineGenericIndexablePropertyNames(
                             this.configuration.database.model,
                             this.configuration.database.model.entities[
@@ -2536,15 +2544,15 @@ export class DataService {
             } catch (error) {
                 throw error
             }
-            for (const index:PlainObject of indexes)
+            for (const index of indexes)
                 if (index.name.endsWith('-GenericIndex')) {
                     let exists:boolean = false
                     for (
-                        const modelName:string in
+                        const modelName in
                         this.configuration.database.model.entities
                     )
                         if (index.name.startsWith(`${modelName}-`)) {
-                            for (const name:string of DataService
+                            for (const name of DataService
                                 .determineGenericIndexablePropertyNames(
                                     this.configuration.database.model,
                                     this.configuration.database.model.entities[
@@ -2631,10 +2639,10 @@ export class DataService {
                 this.equals(parameter[1], {latest: true, rev: 'latest'})
             ) &&
             parseInt(result[revisionName].match(
-                this.constructor.revisionNumberRegularExpression
+                DataService.revisionNumberRegularExpression
             )[1]) < parseInt(
                     LAST_KNOWN_DATA.data[result[idName]][revisionName].match(
-                        this.constructor.revisionNumberRegularExpression
+                        DataService.revisionNumberRegularExpression
                     )[1])
         )
             return LAST_KNOWN_DATA.data[result[idName]]
@@ -2681,13 +2689,13 @@ export class DataService {
     ):Function {
         if (!Array.isArray(names))
             names = [names]
-        for (const name:string of names) {
+        for (const name of names) {
             if (!this.middlewares[type].hasOwnProperty(name))
                 this.middlewares[type][name] = []
             this.middlewares[type][name].push(callback)
         }
         return ():void => {
-            for (const name:string of names) {
+            for (const name of names) {
                 const index:number = this.middlewares[type][name].indexOf(
                     callback)
                 if (index !== -1)
@@ -2787,7 +2795,7 @@ export class DataScopeService {
         numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe,
         representObjectPipe:RepresentObjectPipe,
         tools:ToolsService
-    ):void {
+    ) {
         this.attachmentWithPrefixExists =
             attachmentWithPrefixExistsPipe.transform.bind(
                 attachmentWithPrefixExistsPipe)
@@ -2815,8 +2823,8 @@ export class DataScopeService {
      * @returns A promise wrapping requested data.
      */
     async determine(
-        modelName:string, id:?string = null,
-        propertyNames:?Array<string> = null, revision:string = 'latest',
+        modelName:string, id:string|null = null,
+        propertyNames:Array<string>|null = null, revision:string = 'latest',
         revisionHistory:boolean = false
     ):Promise<PlainObject> {
         let data:PlainObject = {}
@@ -2844,7 +2852,7 @@ export class DataScopeService {
                     this.configuration.database.model.property.name.special
                         .revisionsInformation
                 let revisions:Array<PlainObject>
-                let latestData:?PlainObject
+                let latestData:PlainObject|null = null
                 if (revision !== 'latest') {
                     delete options.rev
                     /* eslint-disable camelcase */
@@ -2865,7 +2873,7 @@ export class DataScopeService {
                     revisions = data[revisionsInformationName]
                 data[revisionsInformationName] = {}
                 let first:boolean = true
-                for (const item:PlainObject of revisions)
+                for (const item of revisions)
                     if (item.status === 'available') {
                         data[revisionsInformationName][
                             first ? 'latest' : item.rev
@@ -2888,8 +2896,8 @@ export class DataScopeService {
      * @returns New specification object or null if it could not be determined.
      */
     determineNestedSpecifcation(
-        name:string, specification:?PlainObject
-    ):?PlainObject {
+        name:string, specification?:PlainObject
+    ):PlainObject|null {
         const entities:PlainObject =
             this.configuration.database.model.entities
         const additionalName:string =
@@ -2905,7 +2913,6 @@ export class DataScopeService {
                 return entities[specification[additionalName].type]
         return null
     }
-
     /**
      * Determines a recursive resolved specification object for given (flat)
      * model object.
@@ -2915,13 +2922,13 @@ export class DataScopeService {
      * @returns Resolved specification object.
      */
     determineSpecificationObject(
-        modelSpecification:PlainObject, propertyNames:?Array<string>,
+        modelSpecification:PlainObject, propertyNames?:Array<string>,
         propertyNamesToIgnore:Array<string> = []
     ):PlainObject {
         if (!propertyNames)
             propertyNames = Object.keys(modelSpecification)
         const result:PlainObject = {}
-        for (const name:string of propertyNames)
+        for (const name of propertyNames)
             if (
                 modelSpecification.hasOwnProperty(name) &&
                 !propertyNamesToIgnore.includes(name)
@@ -2931,7 +2938,7 @@ export class DataScopeService {
                         .special.attachment
                 ) {
                     result[name] = {}
-                    for (const fileType:string in modelSpecification[name])
+                    for (const fileType in modelSpecification[name])
                         if (modelSpecification[name].hasOwnProperty(fileType))
                             result[name][fileType] = this.extendObject(
                                 true, this.tools.copyLimitedRecursively(
@@ -2966,8 +2973,8 @@ export class DataScopeService {
      * @returns The generated scope object.
      */
     generate(
-        modelName:string, propertyNames:?Array<string>,
-        data:PlainObject = {}, propertyNamesToIgnore:?Array<string>
+        modelName:string, propertyNames?:Array<string>,
+        data:PlainObject = {}, propertyNamesToIgnore?:Array<string>
     ):PlainObject {
         const entities:PlainObject = this.configuration.database.model.entities
         const modelSpecification:PlainObject = entities[modelName]
@@ -3210,15 +3217,15 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     data:PlainObject
     databaseBaseURL:string
     databaseURL:string
-    databaseURLCache:{[key:string]:string} = {}
+    databaseURLCache:{[key:string]:SafeRessourceUrl} = {}
     domSanitizer:DomSanitizer
     escapeRegularExpressions:Function
     extendObject:Function
     message:Function
     messageConfiguration:PlainObject = new MatSnackBarConfig()
     modelConfiguration:PlainObject
-    relevantKeys:?Array<string> = null
-    relevantSearchKeys:?Array<string> = null
+    relevantKeys:Array<string>|null = null
+    relevantSearchKeys:Array<string>|null = null
     representObject:Function
     specialNames:{[key:string]:string}
     type:string = 'Item'
@@ -3228,7 +3235,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
      * detected one.
      * @returns Nothing.
      */
-    constructor(@Optional() injector:Injector):void {
+    constructor(@Optional() injector:Injector) {
         const get:Function = determineInjector(
             injector, this, this.constructor)
         this.data = get(DataService)
@@ -3304,7 +3311,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
             if (sort.length)
                 selector[Object.keys(sort[0])[0]] = {$gt: null}
             selector.$or = []
-            for (const name:string of this.relevantSearchKeys)
+            for (const name of this.relevantSearchKeys)
                 selector.$or.push({[name]: {$regex: searchTerm}})
             if (
                 additionalSelector.hasOwnProperty('$or') &&
@@ -3314,7 +3321,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
                     NOTE: We have to integrate search expression into existing
                     selector.
                 */
-                for (const item:PlainObject of selector.$or)
+                for (const item of selector.$or)
                     item.$or = additionalSelector.$or
                 delete additionalSelector.$or
             }
@@ -3399,7 +3406,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
      * @returns A boolean indicating if requested update was successful.
      */
     async update(
-        item:PlainObject, data:?PlainObject, message:string = ''
+        item:PlainObject, data?:PlainObject, message:string = ''
     ):Promise<boolean> {
         let newData:PlainObject
         if (data)
@@ -3460,17 +3467,17 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * @property type - Type of given input.
  */
 export class AbstractInputComponent/* implements OnInit*/ {
-    @Input() declaration:?string = null
-    @Input() description:?string = null
-    @Input() disabled:?boolean = null
-    @Input() maximum:?number = null
-    @Input() maximumLength:?number = null
+    @Input() declaration:string|null = null
+    @Input() description:string|null = null
+    @Input() disabled:boolean|null = null
+    @Input() maximum:number|null = null
+    @Input() maximumLength:number|null = null
     @Input() maximumLengthText:string =
         'Please type less or equal than ${model.maximumLength} symbols.'
     @Input() maximumText:string =
         'Please give a number less or equal than ${model.maximum}.'
-    @Input() minimum:?number = null
-    @Input() minimumLength:?number = null
+    @Input() minimum:number|null = null
+    @Input() minimumLength:number|null = null
     @Input() minimumLengthText:string =
         'Please type at least or equal ${model.minimumLength} symbols.'
     @Input() minimumText:string =
@@ -3481,7 +3488,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
     @Input() patternText:string =
         'Your string have to match the regular expression: "' +
         '${model.regularExpressionPattern}".'
-    @Input() required:?boolean = null
+    @Input() required:boolean|null = null
     @Input() requiredText:string = 'Please fill this field.'
     @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
@@ -3513,8 +3520,8 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
      * detected one.
      * @returns Nothing.
      */
-    constructor(@Optional() injector:Injector):void {
-        super(injector)
+    constructor(@Optional() injector:Injector) {
+        super()
         const get:Function = determineInjector(
             injector, this, this.constructor)
         this._attachmentWithPrefixExists = get(
@@ -3551,9 +3558,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
         }, this.model))
         if (typeof this.model.value === 'string' && this.model.trim)
             this.model.value === this.model.value.trim()
-        for (const hookType:string of [
-            'onUpdateExpression', 'onUpdateExecution'
-        ])
+        for (const hookType of ['onUpdateExpression', 'onUpdateExecution'])
             if (
                 this.model.hasOwnProperty(hookType) && this.model[hookType] &&
                 typeof this.model[hookType] !== 'function'
@@ -3584,9 +3589,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
         const now:Date = new Date()
         const nowUTCTimestamp:number = this._numberGetUTCTimestamp(now)
         const newData:PlainObject = {[this.model.name]: newValue}
-        for (const hookType:string of [
-            'onUpdateExpression', 'onUpdateExecution'
-        ])
+        for (const hookType of ['onUpdateExpression', 'onUpdateExecution'])
             if (
                 this.model.hasOwnProperty(hookType) && this.model[hookType] &&
                 typeof this.model[hookType] === 'function'
@@ -3649,7 +3652,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
 
     _canceled:boolean = false
     _changeDetectorReference:ChangeDetectorRef
-    _changesStream:Object
+    _changesStream:ChangesStream
     _data:DataService
     _extendObject:Function
     _liveUpdateOptions:PlainObject = {}
@@ -3661,7 +3664,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
      * detected one.
      * @returns Nothing.
      */
-    constructor(@Optional() injector:Injector):void {
+    constructor(@Optional() injector:Injector) {
         const get:Function = determineInjector(
             injector, this, this.constructor)
         this._changeDetectorReference = get(ChangeDetectorRef)
@@ -3681,9 +3684,9 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
             this._changesStream = this._data.connection.changes(
                 this._extendObject(
                     true, {}, {since: LAST_KNOWN_DATA.sequence},
-                    this.constructor.defaultLiveUpdateOptions,
+                    AbstractLiveDataComponent.defaultLiveUpdateOptions,
                     this._liveUpdateOptions))
-            for (const type:string of ['change', 'complete', 'error'])
+            for (const type of ['change', 'complete', 'error'])
                 this._changesStream.on(type, async (
                     action:PlainObject
                 ):Promise<void> => {
@@ -3759,13 +3762,16 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
  * @property allItems - Current list of items.
  * @property allItemsChecked - Indicates whether all currently selected items
  * are checked via select all selector.
+ * @property idName - Document property id name.
  * @property items - Current list of visible items.
+ * @property keyCode - Mapping from key names to their key codes.
  * @property limit - Maximal number of visible items.
  * @property page - Current page number of each item list part.#
  * @property preventedDataUpdate - Saves null or arguments to a prevented data
  * updates.
  * @property regularExpression - Indicator whether searching via regular
  * expressions should be used.
+ * @property revisionName - Document property revision name.
  * @property searchTerm - Search string to filter visible item list.
  * @property searchTermStream - Search term stream which debounces and caches
  * search results.
@@ -3786,12 +3792,15 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     allItems:Array<PlainObject>
     allItemsChecked:boolean = false
     debouncedUpdate:Function
+    idName:string
     items:Array<PlainObject>
+    keyCode:{[key:string]:number}
     limit:number
     navigateAway:boolean = false
     page:number
-    preventedDataUpdate:?Array<any> = null
+    preventedDataUpdate:Array<any>|null = null
     regularExpression:boolean = false
+    revisionName:string
     searchTerm:string = ''
     searchTermStream:Subject<string> = new Subject()
     selectedItems:Set<PlainObject> = new Set()
@@ -3814,7 +3823,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * detected one.
      * @returns Nothing.
      */
-    constructor(@Optional() injector:Injector):void {
+    constructor(@Optional() injector:Injector) {
         super(injector)
         const get:Function = determineInjector(injector)
         this.idName = get(
@@ -3849,14 +3858,13 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             data:PlainObject
         ):void => {
             this.limit = Math.max(1, this.limit || 1)
-            const total:number = data.items.length + (
-                Math.max(1, this.page || 1) - 1
-            ) * this.limit
+            // TODO this are not all items only the rest!
+            // TODO wen in pagination "++" ausgewählt wird verschwinden alle
+            // pages
             this.allItems = data.items.slice()
             if (data.items.length > this.limit)
                 data.items.splice(this.limit, data.items.length - this.limit)
             this.items = data.items
-            this.items.total = total
             if (this.applyPageConstraints())
                 this.update()
         }))
@@ -3879,7 +3887,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
         this.limit = Math.max(1, this.limit || 1)
         this.page = Math.max(1, Math.min(this.page, Math.ceil(
             // IgnoreTypeCheck
-            this.items.total / this.limit)))
+            this.allItems.length / this.limit)))
         return this.page !== oldPage || this.limit !== oldLimit
     }
     /**
@@ -3917,7 +3925,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * @returns Nothing.
      */
     clearSelectedItems():void {
-        for (const item:PlainObject of this.items) {
+        for (const item of this.items) {
             this.selectedItems.delete(item)
             item.selected = false
         }
@@ -3973,7 +3981,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      */
     ngOnDestroy(...parameter:Array<any>):any {
         const result:any = super.ngOnDestroy(...parameter)
-        for (const subscription:ISubscription of this._subscriptions)
+        for (const subscription of this._subscriptions)
             subscription.unsubscribe()
         return result
     }
@@ -3982,7 +3990,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * @returns Nothing.
      */
     selectAllItems():void {
-        for (const item:PlainObject of this.items) {
+        for (const item of this.items) {
             this.selectedItems.add(item)
             item.selected = true
         }
@@ -4014,7 +4022,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
                 */
                 this.page = 0
             let sort:string = ''
-            for (const name:string in this.sort)
+            for (const name in this.sort)
                 if (this.sort.hasOwnProperty(name)) {
                     sort += `${sort ? ',' : ''}${name}`
                     if (this.sort[name] !== 'asc')
@@ -4050,9 +4058,9 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
  * @property type - Saves current input type.
  */
 export class AbstractValueAccessor extends DefaultValueAccessor {
-    onChangeCallback:Function = Tools.noop
-    onTouchedCallback:Function = Tools.noop
-    @Input() type:?string
+    onChangeCallback:(value:any) => void = Tools.noop
+    onTouchedCallback:() => void = Tools.noop
+    @Input() type:string|null = null
     /**
      * Initializes and forwards needed services to the default value accessor
      * constructor.
@@ -4060,7 +4068,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
      * detected one.
      * @returns Nothing.
      */
-    constructor(injector:Injector):void {
+    constructor(injector:Injector) {
         super(injector.get(Renderer2), injector.get(ElementRef), null)
     }
     /**
@@ -4087,10 +4095,13 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
      * @returns What inherited method returns.
      */
     registerOnChange(
-        callback:Function, ...additionalParameter:Array<any>
+        callback:(value:any) => void, ...additionalParameter:Array<any>
     ):any {
-        this.onChangeCallback = callback
-        return super.registerOnChange(callback, ...additionalParameter)
+        this.onChangeCallback = (
+            value:any, ...additionalParameter:Array<any>
+        ):void => callback(this.import(value), ...additionalParameter)
+        return super.registerOnChange(
+            this.onChangeCallback, ...additionalParameter)
     }
     /**
      * Needed implementation for an angular control value accessor.
@@ -4100,10 +4111,11 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
      * @returns What inherited method returns.
      */
     registerOnTouched(
-        callback:Function, ...additionalParameter:Array<any>
+        callback:() => void, ...additionalParameter:Array<any>
     ):any {
         this.onTouchedCallback = callback
-        return super.registerOnTouched(callback, ...additionalParameter)
+        return super.registerOnTouched(
+            this.onTouchedCallback, ...additionalParameter)
     }
     /**
      * Overridden inherited function for value export.
@@ -4114,18 +4126,6 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
      */
     writeValue(value:any, ...additionalParameter:Array<any>):any {
         return super.writeValue(this.export(
-            value, ...additionalParameter
-        ), ...additionalParameter)
-    }
-    /**
-     * Overridden inherited function for value import.
-     * @param value - Value to import.
-     * @param additionalParameter - Additional arguments will be forwarded to
-     * the overridden method invocation.
-     * @returns The transformed give value.
-     */
-    _handleInput(value:any, ...additionalParameter:Array<any>):any {
-        return super._handleInput(this.import(
             value, ...additionalParameter
         ), ...additionalParameter)
     }
@@ -4159,9 +4159,9 @@ export class GenericDateDirective {
         freeze: false,
         updateIntervalInMilliseconds: 1000
     }
-    templateReference:Object
+    templateReference:TemplateRef<any>
     timerID:any
-    viewContainerReference:Object
+    viewContainerReference:ViewContainerRef
     /**
      * Saves injected services as instance properties.
      * @param datePipe - Injected date pipe service instance.
@@ -4173,9 +4173,9 @@ export class GenericDateDirective {
     constructor(
         datePipe:DatePipe,
         extendObjectPipe:ExtendObjectPipe,
-        templateReference:TemplateRef,
+        templateReference:TemplateRef<any>,
         viewContainerReference:ViewContainerRef
-    ):void {
+    ) {
         this.dateFormatter = datePipe.transform.bind(datePipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.templateReference = templateReference
@@ -4187,7 +4187,7 @@ export class GenericDateDirective {
      * @returns Nothing.
      */
     @Input('genericDate')
-    set insertOptions(options:PlainObject = {}):void {
+    set insertOptions(options:PlainObject) {
         if (
             ['string', 'number'].includes(typeof options) ||
             [null, undefined].includes(options) ||
@@ -4202,8 +4202,12 @@ export class GenericDateDirective {
      * @returns Nothing.
      */
     insert():void {
-        let dateTime:Date = this.options.dateTime
-        if (['now', '', null, undefined].includes(dateTime) || isNaN(dateTime))
+        let dateTime:Date|number|string = this.options.dateTime
+        if (
+            typeof dateTime === 'string' && ['now', ''].includes(dateTime) ||
+            typeof dateTime === 'number' && isNaN(dateTime) ||
+            [null, undefined].includes(dateTime)
+        )
             dateTime = Date.now()
         else if (
             typeof dateTime === 'string' &&
@@ -4259,9 +4263,9 @@ export class GenericSliderDirective {
         slides: [],
         updateIntervalInMilliseconds: 6000
     }
-    templateReference:Object
+    templateReference:TemplateRef<any>
     timerID:any
-    viewContainerReference:Object
+    viewContainerReference:ViewContainerRef
     /**
      * Saves injected services as instance properties.
      * @param extendObjectPipe - Injected extend object pipe service instance.
@@ -4271,9 +4275,9 @@ export class GenericSliderDirective {
      */
     constructor(
         extendObjectPipe:ExtendObjectPipe,
-        templateReference:TemplateRef,
+        templateReference:TemplateRef<any>,
         viewContainerReference:ViewContainerRef
-    ):void {
+    ) {
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
@@ -4294,7 +4298,7 @@ export class GenericSliderDirective {
      * @returns Nothing.
      */
     @Input('genericSlider')
-    set insertOptions(options:Array<any>|PlainObject = {}):void {
+    set insertOptions(options:Array<any>|PlainObject) {
         if (Array.isArray(options))
             options = {slides: options}
         this.extendObject(true, this.options, options)
@@ -4349,12 +4353,14 @@ export class GenericSliderDirective {
 }
 const providers:Array<PlainObject> = [{
     provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(():DateTimeValueAccessor => DateTimeValueAccessor),
+    useExisting: forwardRef(
+        ():typeof DateTimeValueAccessor => DateTimeValueAccessor),
     multi: true
 }]
 /*
-    NOTE: This core update resistent version is not compatible with angular's ahead
-    of time compilation.
+    NOTE: This core update resistent version is not compatible with angular's
+    ahead of time compilation.
+
 // IgnoreTypeCheck
 @Directive(Tools.extendObject(true, {
 }, DefaultValueAccessor.decorators[0].args[0], {providers}))
@@ -4381,7 +4387,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
      * @param injector - Injected injector service instance.
      * @returns Nothing.
      */
-    constructor(injector:Injector):void {
+    constructor(injector:Injector) {
         super(injector)
     }
     /**
@@ -4531,33 +4537,33 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
  * change.
  */
 export class IntervalInputComponent {
-    @Input() endDeclaration:?string = null
-    @Input() startDeclaration:?string = null
+    @Input() endDeclaration:string|null = null
+    @Input() startDeclaration:string|null = null
 
-    @Input() endDescription:?string = null
-    @Input() startDescription:?string = null
+    @Input() endDescription:string|null = null
+    @Input() startDescription:string|null = null
 
-    @Input() endDisabled:?boolean = null
-    @Input() startDisabled:?boolean = null
+    @Input() endDisabled:boolean|null = null
+    @Input() startDisabled:boolean|null = null
 
-    @Input() endMaximum:?number = null
-    @Input() startMaximum:?number = null
+    @Input() endMaximum:number|null = null
+    @Input() startMaximum:number|null = null
 
     @Input() endMaximumText:string =
         'Please give a number less or equal than ${model.maximum}.'
     @Input() startMaximumText:string =
         'Please give a number less or equal than ${model.maximum}.'
 
-    @Input() endMinimum:?number = null
-    @Input() startMinimum:?number = null
+    @Input() endMinimum:number|null = null
+    @Input() startMinimum:number|null = null
 
     @Input() endMinimumText:string =
         'Please given a number at least or equal to {{model.minimum}}.'
     @Input() startMinimumText:string =
         'Please given a number at least or equal to {{model.minimum}}.'
 
-    @Input() endRequired:?boolean = null
-    @Input() startRequired:?boolean = null
+    @Input() endRequired:boolean|null = null
+    @Input() startRequired:boolean|null = null
 
     @Input() endRequiredText:string = 'Please fill this field.'
     @Input() startRequiredText:string = 'Please fill this field.'
@@ -4568,7 +4574,7 @@ export class IntervalInputComponent {
     @Input() endShowValidationErrorMessages:boolean = false
     @Input() startShowValidationErrorMessages:boolean = false
 
-    @Input() model:{end:number;start:number} = {
+    @Input() model:{end:any;start:any} = {
         end: {value: new Date(1970, 0, 1)},
         start: {value: new Date(1970, 0, 1)}
     }
@@ -4716,35 +4722,35 @@ export class IntervalInputComponent {
 export class IntervalsInputComponent {
     @Input() additionalObjectData:PlainObject
     @ContentChild(TemplateRef) contentTemplate:TemplateRef
-    @Input() description:?string = null
+    @Input() description:string|null = null
 
-    @Input() endDeclaration:?string = null
-    @Input() startDeclaration:?string = null
+    @Input() endDeclaration:string|null = null
+    @Input() startDeclaration:string|null = null
 
-    @Input() endDescription:?string = null
-    @Input() startDescription:?string = null
+    @Input() endDescription:string|null = null
+    @Input() startDescription:string|null = null
 
-    @Input() endDisabled:?boolean = null
-    @Input() startDisabled:?boolean = null
+    @Input() endDisabled:boolean|null = null
+    @Input() startDisabled:boolean|null = null
 
-    @Input() endMaximum:?number = null
-    @Input() startMaximum:?number = null
+    @Input() endMaximum:number|null = null
+    @Input() startMaximum:number|null = null
 
     @Input() endMaximumText:string =
         'Please give a number less or equal than ${model.maximum}.'
     @Input() startMaximumText:string =
         'Please give a number less or equal than ${model.maximum}.'
 
-    @Input() endMinimum:?number = null
-    @Input() startMinimum:?number = null
+    @Input() endMinimum:number|null = null
+    @Input() startMinimum:number|null = null
 
     @Input() endMinimumText:string =
         'Please given a number at least or equal to {{model.minimum}}.'
     @Input() startMinimumText:string =
         'Please given a number at least or equal to {{model.minimum}}.'
 
-    @Input() endRequired:?boolean = null
-    @Input() startRequired:?boolean = null
+    @Input() endRequired:boolean|null = null
+    @Input() startRequired:boolean|null = null
 
     @Input() endRequiredText:string = 'Please fill this field.'
     @Input() startRequiredText:string = 'Please fill this field.'
@@ -4768,7 +4774,7 @@ export class IntervalsInputComponent {
      */
     constructor(
         dataScope:DataScopeService, extendObjectPipe:ExtendObjectPipe
-    ):void {
+    ) {
         this._dataScope = dataScope
         this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
     }
@@ -4870,14 +4876,14 @@ export class CodeEditorComponent extends AbstractValueAccessor
     }> = new EventEmitter()
     codeMirror:Object
     @Input() configuration:PlainObject = {}
-    @Input() disabled:?boolean = null
+    @Input() disabled:boolean|null = null
     extendObject:Function
     @Output() focus:EventEmitter<{
         event:Object;instance:Object;
     }> = new EventEmitter()
     @ViewChild('hostDomNode') hostDomNode:ElementRef
     @Output() initialized:EventEmitter<Object> = new EventEmitter()
-    instance:?Object = null
+    instance:Object|null = null
     @Input() model:string = ''
     @Output() modelChange:EventEmitter<string> = new EventEmitter()
     tools:ToolsService
@@ -4893,16 +4899,16 @@ export class CodeEditorComponent extends AbstractValueAccessor
         extendObjectPipe:ExtendObjectPipe,
         @Optional() injector:Injector,
         tools:ToolsService
-    ):void {
+    ) {
         super(injector)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.tools = tools
         if (this.tools.globalContext.CodeMirror)
             this.codeMirror = this.tools.globalContext.CodeMirror
         else if (
-            typeof this.constructor.applicationInterfaceLoad !== 'object'
+            typeof CodeEditorComponent.applicationInterfaceLoad !== 'object'
         )
-            this.constructor.applicationInterfaceLoad = Promise.all([
+            CodeEditorComponent.applicationInterfaceLoad = Promise.all([
                 new Promise((resolve:Function):$DomNode => this.tools.$(`<link
                     href="${CODE_MIRROR_DEFAULT_OPTIONS.path.base}` +
                     `${CODE_MIRROR_DEFAULT_OPTIONS.path.cascadingStyleSheet}"
@@ -4937,25 +4943,25 @@ export class CodeEditorComponent extends AbstractValueAccessor
             await this.tools.tools.timeout()
         else
             try {
-                await this.constructor.applicationInterfaceLoad
+                await CodeEditorComponent.applicationInterfaceLoad
             } catch (error) {
                 throw error
             }
         if (this.configuration.mode)
-            if (this.constructor.modesLoad.hasOwnProperty(
+            if (CodeEditorComponent.modesLoad.hasOwnProperty(
                 this.configuration.mode
             )) {
-                if (this.constructor.modesLoad[
+                if (CodeEditorComponent.modesLoad[
                     this.configuration.mode
                 ] !== true)
                     try {
-                        await this.constructor.modesLoad[
+                        await CodeEditorComponent.modesLoad[
                             this.configuration.mode]
                     } catch (error) {
                         throw error
                     }
             } else {
-                this.constructor.modesLoad[this.configuration.mode] =
+                CodeEditorComponent.modesLoad[this.configuration.mode] =
                     new Promise((resolve:Function, reject:Function):Object =>
                         this.tools.$.ajax({
                             cache: true,
@@ -4967,7 +4973,8 @@ export class CodeEditorComponent extends AbstractValueAccessor
                                     /{mode}/g, this.configuration.mode)
                         }))
                 try {
-                    await this.constructor.modesLoad[this.configuration.mode]
+                    await CodeEditorComponent.modesLoad[
+                        this.configuration.mode]
                 } catch (error) {
                     throw error
                 }
@@ -4984,8 +4991,7 @@ export class CodeEditorComponent extends AbstractValueAccessor
         this.instance.on('blur', (instance:Object, event:Object):void =>
             this.blur.emit({event, instance}))
         this.instance.on('change', ():void => {
-            this.model = this.onChangeCallback(this.import(
-                this.instance.getValue()))
+            this.model = this.onChangeCallback(this.instance.getValue())
             this.modelChange.emit(this.model)
         })
         this.instance.on('focus', (instance:Object, event:Object):void =>
@@ -5156,20 +5162,20 @@ const inputContent:string = `
  * @property type - Optionally defines an input type explicitly.
  */
 export class InputComponent extends AbstractInputComponent {
-    @Input() activeEditor:?boolean = null
-    @Input() editor:?PlainObject|string = null
+    @Input() activeEditor:boolean|null = null
+    @Input() editor:PlainObject|string|null = null
     @Input() labels:{[key:string]:string} = {}
-    @Input() maximumNumberOfRows:?string
-    @Input() minimumNumberOfRows:?string
-    @Input() rows:?string
-    @Input() selectableEditor:?boolean = null
-    @Input() type:?string
+    @Input() maximumNumberOfRows:string
+    @Input() minimumNumberOfRows:string
+    @Input() rows:string
+    @Input() selectableEditor:boolean|null = null
+    @Input() type:string
     /**
      * Delegates injected injector service instance to the super constructor.
      * @param injector - Injected injector service instance.
      * @returns Nothing.
      */
-    constructor(injector:Injector):void {
+    constructor(injector:Injector) {
         super(injector)
     }
 }
@@ -5218,13 +5224,13 @@ export class InputComponent extends AbstractInputComponent {
  */
 export class SimpleInputComponent extends AbstractNativeInputComponent {
     @Input() labels:{[key:string]:string} = {}
-    @Input() type:?string
+    @Input() type:string
     /**
      * Delegates injected injector service instance to the super constructor.
      * @param injector - Injected injector service instance.
      * @returns Nothing.
      */
-    constructor(injector:Injector):void {
+    constructor(injector:Injector) {
         super(injector)
     }
 }
@@ -5296,13 +5302,13 @@ export class TextareaComponent extends AbstractNativeInputComponent
         markup: {}
     }
 
-    @Input() activeEditor:?boolean = null
-    @Input() editor:?PlainObject|?string = null
+    @Input() activeEditor:boolean|null = null
+    @Input() editor:PlainObject|string|null = null
     editorType:string = 'custom'
-    @Input() maximumNumberOfRows:?string
-    @Input() minimumNumberOfRows:?string
-    @Input() rows:?string
-    @Input() selectableEditor:?boolean = null
+    @Input() maximumNumberOfRows:string
+    @Input() minimumNumberOfRows:string
+    @Input() rows:string
+    @Input() selectableEditor:boolean|null = null
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
@@ -5311,13 +5317,13 @@ export class TextareaComponent extends AbstractNativeInputComponent
      * detected one.
      * @returns Nothing.
      */
-    constructor(initialData:InitialDataService, injector:Injector):void {
+    constructor(initialData:InitialDataService, injector:Injector) {
         super(injector)
         if (initialData.configuration.hasOwnProperty(
             'defaultEditorOptions'
         ) && typeof initialData.configuration.defaultEditorOptions ===
         'object' && initialData.configuration.defaultEditorOptions !== null)
-            this.constructor.defaultEditorOptions =
+            TextareaComponent.defaultEditorOptions =
                 initialData.configuration.defaultEditorOptions
     }
     /**
@@ -5384,11 +5390,11 @@ export class TextareaComponent extends AbstractNativeInputComponent
             if (this.editorType.startsWith('code') || this.editor.indentUnit)
                 this.editor = this._extendObject(
                     true, {}, CODE_MIRROR_DEFAULT_OPTIONS,
-                    this.constructor.defaultEditorOptions.code, this.editor)
+                    TextareaComponent.defaultEditorOptions.code, this.editor)
             else
                 this.editor = this._extendObject(
                     true, {}, TINY_MCE_DEFAULT_OPTIONS,
-                    this.constructor.defaultEditorOptions.markup, this.editor)
+                    TextareaComponent.defaultEditorOptions.markup, this.editor)
         else
             this.selectableEditor = false
     }
@@ -5732,7 +5738,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     @Input() editableName:boolean = true
     file:any = null
     @Output() fileChange:EventEmitter<any> = new EventEmitter()
-    @Input() headerText:?string = null
+    @Input() headerText:string|null = null
     idName:string
     @ViewChild('input') input:ElementRef
     @Input() resetNameText:string = '×'
@@ -5741,18 +5747,18 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     typeName:string
     internalName:string
     keyCode:{[key:string]:number}
-    @Input() mapNameToField:?string|?Array<string> = null
+    @Input() mapNameToField:string|Array<string>|null = null
     @Input() maximumSizeText:string =
         'Filesize (${file.length} byte) is more than specified maximum of ' +
         '${model.maximumSize} byte.'
     @Input() minimumSizeText:string =
         'Filesize (${file.length} byte) is less than specified minimum of ' +
         '${model.minimumSize} byte.'
-    @Input() model:{id:?string;[key:string]:any}
+    @Input() model:{id?:string;[key:string]:any}
     @Output() modelChange:EventEmitter<{
-        id:?string;[key:string]:any;
+        id?:string;[key:string]:any;
     }> = new EventEmitter()
-    @Input() name:?string = null
+    @Input() name:string|null = null
     @Input() namePatternText:string =
         'Given filename "${file.name}" doesn\'t match specified pattern "' +
         '${internalName}".'
@@ -5760,7 +5766,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     @Input() noFileText:string = ''
     @Input() noPreviewText:string = ''
     @Input() requiredText:string = 'Please select a file.'
-    @Input() revision:?string = null
+    @Input() revision:string|null = null
     revisionName:string
     @Input() showValidationErrorMessages:boolean = false
     @Input() synchronizeImmediately:boolean|PlainObject = false
@@ -5799,7 +5805,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         representObjectPipe:RepresentObjectPipe,
         stringFormatPipe:StringFormatPipe,
         tools:ToolsService
-    ):void {
+    ) {
         this.configuration = initialData.configuration
         this.attachmentTypeName =
             this.configuration.database.model.property.name.special.attachment
@@ -5829,15 +5835,15 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      */
     determinePresentationType():void {
         if (this.file && this.file.content_type)
-            if (this.constructor.textMimeTypeRegularExpression.test(
+            if (FileInputComponent.textMimeTypeRegularExpression.test(
                 this.file.content_type
             ))
                 this.file.type = 'text'
-            else if (this.constructor.imageMimeTypeRegularExpression.test(
+            else if (FileInputComponent.imageMimeTypeRegularExpression.test(
                 this.file.content_type
             ))
                 this.file.type = 'image'
-            else if (this.constructor.videoMimeTypeRegularExpression.test(
+            else if (FileInputComponent.videoMimeTypeRegularExpression.test(
                 this.file.content_type
             ))
                 this.file.type = 'video'
@@ -6061,7 +6067,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      * @returns A Promise which will be resolved after current file will be
      * synchronized.
      */
-    async update(oldName:?string):Promise<void> {
+    async update(oldName?:string):Promise<void> {
         this.model[this.attachmentTypeName][this.internalName].state = {}
         if (this._prefixMatch) {
             const lastIndex:number = this.file.name.lastIndexOf('.')
@@ -6157,7 +6163,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     newData = this._extendObject(
                         true, {}, newData, {[this.deletedName]: false})
                 }
-                for (const name:string of this.mapNameToField) {
+                for (const name of this.mapNameToField) {
                     newData[name] = this.file.name
                     if (name === this.idName && this._idIsObject)
                         this.model[name].value = this.file.name
@@ -6186,7 +6192,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
             }
             id = newData[this.idName]
             let revision:string
-            for (const item:PlainObject of result) {
+            for (const item of result) {
                 if (item.error) {
                     this.model[this.attachmentTypeName][
                         this.internalName
@@ -6218,7 +6224,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                     this._domSanitizer.bypassSecurityTrustResourceUrl(
                         event.target.result)
                 if (this.mapNameToField)
-                    for (const name:string of this.mapNameToField)
+                    for (const name of this.mapNameToField)
                         this.model[name] = this.file.name
                 this.modelChange.emit(this.model)
                 this.fileChange.emit(this.file)
@@ -6294,7 +6300,7 @@ export class PaginationComponent {
     constructor(
         changeDetectorReference:ChangeDetectorRef,
         makeRangePipe:ArrayMakeRangePipe
-    ):void {
+    ) {
         this._changeDetectorReference = changeDetectorReference
         this._makeRange = makeRangePipe.transform.bind(makeRangePipe)
     }
