@@ -18,8 +18,7 @@
     endregion
 */
 // region imports
-import Tools from 'clientnode'
-// TODO import type {PlainObject} from 'clientnode'
+import Tools, {PlainObject} from 'clientnode'
 import {
     animate, AnimationTriggerMetadata, style, transition, trigger
 } from '@angular/animations'

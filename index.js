@@ -19,7 +19,9 @@
 */
 // region imports
 import {tinymceDefaultSettings, TinyMceModule} from 'angular-tinymce'
-import Tools, {$, DomNode, globalContext, PlainObject} from 'clientnode'
+import Tools, {
+    $, $DomNode, DomNode, globalContext, PlainObject
+} from 'clientnode'
 import {
     // AfterViewInit,
     APP_INITIALIZER,
@@ -77,7 +79,13 @@ import {
     MatTooltipModule
 } from '@angular/material'
 import {
-    BrowserModule, DomSanitizer, SafeRessourceUrl
+    BrowserModule,
+    DomSanitizer,
+    SafeScript,
+    SafeHtml,
+    SafeResourceUrl,
+    SafeStyle,
+    SafeUrl
 } from '@angular/platform-browser'
 import {
     ActivatedRoute,
@@ -105,6 +113,13 @@ import {defaultAnimation} from './animation'
 export type AllowedRoles = string|Array<string>|{
     read:string|Array<string>;
     write:string|Array<string>;
+}
+export type CodeMirror = {
+    getValue:() => string;
+    on:(name:string, callback:(instance:CodeMirror, event:Object) => void) =>
+        void;
+    setOption:(name:string, value:any) => void;
+    setValue:(value:string) => void;
 }
 export type Constraint = {
     description?:string;
@@ -145,9 +160,31 @@ export type Model = {
     _extends?:Array<string>;
     _constraintExpressions?:Array<Constraint>;
     _constraintExecutions?:Array<Constraint>;
-    _maximumAggregatedSize?:number,
-    _minimumAggregatedSize?:number,
+    _maximumAggregatedSize?:number;
+    _minimumAggregatedSize?:number;
     [key:string]:PropertySpecification;
+}
+export type SpecialPropertyNames = {
+    additional:string;
+    allowedRole:string;
+    attachment:string;
+    conflict:string;
+    constraint:{
+        execution:string;
+        expression:string;
+    };
+    deleted:string;
+    deletedConflict:string;
+    extend:string;
+    id:string;
+    localSequence:string;
+    maximumAggregatedSize:string;
+    minimumAggregatedSize:string;
+    revision:string;
+    revisions:string;
+    revisionsInformation:string;
+    strategy:string;
+    type:string;
 }
 export type ModelConfiguration = {
     entities:PlainObject;
@@ -159,27 +196,7 @@ export type ModelConfiguration = {
         };
         name:{
             reserved:Array<string>;
-            special:{
-                allowedRole:string;
-                attachment:string;
-                conflict:string;
-                constraint:{
-                    execution:string;
-                    expression:string;
-                };
-                deleted:string;
-                deletedConflict:string;
-                extend:string;
-                id:string;
-                localSequence:string;
-                maximumAggregatedSize:string;
-                minimumAggregatedSize:string;
-                revision:string;
-                revisions:string;
-                revisionsInformation:string;
-                strategy:string;
-                type:string;
-            },
+            special:SpecialPropertyNames;
             validatedDocumentsCache:string;
         }
     }
@@ -193,7 +210,7 @@ export type Configuration = {database:{
     plugins:Array<Object>;
     url:string;
 }}
-export type ChangesStream = {
+export type Stream = {
     cancel:Function;
     on:Function;
 }
@@ -281,7 +298,7 @@ export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
 export class ToolsService {
     $:any = $
     globalContext:any = globalContext
-    tools:Object = Tools
+    tools:typeof Tools = Tools
 }
 // IgnoreTypeCheck
 @Injectable()
@@ -832,7 +849,10 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
         if (first === second)
             return true
         // Normalize properties.
-        const data:Object = {first: {given: first}, second: {given: second}}
+        const data:{first:{given:PlainObject};second:{given:PlainObject}} = {
+            first: {given: first},
+            second: {given: second}
+        }
         for (const type of ['first', 'second']) {
             if (
                 typeof data[type].given !== 'object' ||
@@ -1060,7 +1080,7 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
                     specialNames.maximumAggregatedSize,
                     specialNames.minimumAggregatedSize,
                     specialNames.revisions,
-                    specialNames.revisionsInformations
+                    specialNames.revisionsInformation
                 ].includes(key)
             )
                 result[key] = this.transform(object[key])
@@ -1107,10 +1127,11 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
  */
 export class ExtractRawDataPipe/* implements PipeTransform*/ {
     attachmentsAreEqual:Function
+    dataScope:DataScopeService
     equals:Function
-    modelConfiguration:PlainObject
+    modelConfiguration:ModelConfiguration
     numberGetUTCTimestamp:Function
-    specialNames:{[key:string]:string}
+    specialNames:SpecialPropertyNames
     tools:Tools
     /**
      * Gets injected services.
@@ -1467,7 +1488,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
                                 this.specialNames.maximumAggregatedSize,
                                 this.specialNames.minimumAggregatedSize,
                                 this.specialNames.revisions,
-                                this.specialNames.revisionsInformations
+                                this.specialNames.revisionsInformation
                             ].includes(name) && (
                                 !specification ||
                                 specification.hasOwnProperty(name) ||
@@ -1639,7 +1660,7 @@ export class MapPipe/* implements PipeTransform*/ {
         const result:Object = {}
         for (const key in object)
             if (object.hasOwnProperty(key))
-                result[key] = pipe.transform.transform(
+                result[key] = pipe.transform(
                     object[key], key, ...additionalArguments)
         return result
     }
@@ -1867,13 +1888,14 @@ export class StringReplacePipe/* implements PipeTransform*/ {
  * @property transform - Binded dom sanitizer's validation marker.
  */
 export class StringSafeHTMLPipe/* implements PipeTransform*/ {
+    transform:(value:string) => SafeHtml
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
      */
     constructor(domSanitizer:DomSanitizer) {
         this.transform = domSanitizer.bypassSecurityTrustHtml.bind(
-            this.domSanitizer)
+            domSanitizer)
     }
 }
 // IgnoreTypeCheck
@@ -1883,13 +1905,14 @@ export class StringSafeHTMLPipe/* implements PipeTransform*/ {
  * @property transform - Binded dom sanitizer's validation marker.
  */
 export class StringSafeResourceURLPipe/* implements PipeTransform*/ {
+    transform:(value:string) => SafeUrl
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
      */
     constructor(domSanitizer:DomSanitizer) {
         this.transform = domSanitizer.bypassSecurityTrustResourceUrl.bind(
-            this.domSanitizer)
+            domSanitizer)
     }
 }
 // IgnoreTypeCheck
@@ -1899,13 +1922,14 @@ export class StringSafeResourceURLPipe/* implements PipeTransform*/ {
  * @property transform - Binded dom sanitizer's validation marker.
  */
 export class StringSafeScriptPipe/* implements PipeTransform*/ {
+    transform:(value:string) => SafeScript
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
      */
     constructor(domSanitizer:DomSanitizer) {
         this.transform = domSanitizer.bypassSecurityTrustScript.bind(
-            this.domSanitizer)
+            domSanitizer)
     }
 }
 // IgnoreTypeCheck
@@ -1915,13 +1939,14 @@ export class StringSafeScriptPipe/* implements PipeTransform*/ {
  * @property transform - Binded dom sanitizer's validation marker.
  */
 export class StringSafeStylePipe/* implements PipeTransform*/ {
+    transform:(value:string) => SafeStyle
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
      */
     constructor(domSanitizer:DomSanitizer) {
         this.transform = domSanitizer.bypassSecurityTrustStyle.bind(
-            this.domSanitizer)
+            domSanitizer)
     }
 }
 // IgnoreTypeCheck
@@ -1931,13 +1956,14 @@ export class StringSafeStylePipe/* implements PipeTransform*/ {
  * @property transform - Binded dom sanitizer's validation marker.
  */
 export class StringSafeURLPipe/* implements PipeTransform*/ {
+    transform:(value:string) => SafeUrl
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @returns Nothing.
      */
     constructor(domSanitizer:DomSanitizer) {
         this.transform = domSanitizer.bypassSecurityTrustUrl.bind(
-            this.domSanitizer)
+            domSanitizer)
     }
 }
 // IgnoreTypeCheck
@@ -1960,8 +1986,10 @@ export class StringShowIfPatternMatchesPipe/* implements PipeTransform*/ {
         string:string, pattern:string|RegExp, invert:boolean = false,
         modifier:string = ''
     ):string {
-        // IgnoreTypeCheck
-        let indicator:boolean = new RegExp(pattern, modifier).test(string)
+        let indicator:boolean = (
+            typeof pattern === 'string' ?
+                new RegExp(pattern, modifier) : pattern
+        ).test(string)
         if (invert)
             indicator = !indicator
         return indicator ? string : ''
@@ -1984,7 +2012,7 @@ export class StringSliceMatchPipe/* implements PipeTransform*/ {
      * @returns Matching group.
      */
     transform(
-        subject?:string, pattern:string, index:number = 0,
+        subject:string|null|undefined, pattern:string, index:number = 0,
         modifier:string = ''
     ):string {
         if (typeof subject === 'string') {
@@ -2018,10 +2046,10 @@ export class StringStartsWithPipe/* implements PipeTransform*/ {
 @Pipe({name: 'genericStringTemplate'})
 /**
  * Provides angular's template engine as pipe.
- * @property extendObjectPipe - Extend object pipe instance.
+ * @property extendObject - Extend object's pipe transform method.
  */
 export class StringTemplatePipe/* implements PipeTransform*/ {
-    extendObjectPipe:ExtendObjectPipe
+    extendObject:Function
     /**
      * Sets injected extend object pipe instance as instance property.
      * @param extendObjectPipe - Injected extend object pipe instance.
@@ -2085,12 +2113,15 @@ export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
     /**
      * Calls the component specific "canDeactivate()" method.
      * @param component - Component instance of currently selected route.
+     * @param additionalParameter - All additional parameter are forwarded to
+     * the components "canDeactivate" method.
      * @returns A boolean, promise or observable which wraps the indicator.
      */
     canDeactivate(
-        component:Object
+        component:any, ...additionalParameter:Array<any>
     ):Observable<boolean>|Promise<boolean>|boolean {
-        return 'canDeactivate' in component ? component.canDeactivate() : true
+        return 'canDeactivate' in component ? component.canDeactivate(
+            ...additionalParameter) : true
     }
 }
 // / region confirm
@@ -2160,7 +2191,7 @@ export class ConfirmComponent {
  */
 export class AlertService {
     dialog:MatDialog
-    dialogReference:MatDialogRef
+    dialogReference:MatDialogRef<ConfirmComponent>
     /**
      * Gets needed component dialog service instance injected.
      * @param dialog - Reference to the dialog component instance.
@@ -2239,7 +2270,7 @@ export class DataService {
     equals:Function
     extendObject:Function
     interceptSynchronisationPromise:Promise<any>|null = null
-    ngZone:ngZone
+    ngZone:NgZone
     middlewares:{
         pre:{[key:string]:Array<Function>};
         post:{[key:string]:Array<Function>};
@@ -2252,7 +2283,7 @@ export class DataService {
     runningRequests:Array<PlainObject> = []
     runningRequestsStream:Subject<Array<PlainObject>> = new Subject()
     stringFormat:Function
-    synchronisation:Object|null = null
+    synchronisation:Stream|null = null
     tools:Tools
     /**
      * Creates the database constructor applies all plugins instantiates
@@ -2520,6 +2551,7 @@ export class DataService {
                     ...parameter:Array<any>
                 ):Promise<any> => {
                     const request:{
+                        name:string;
                         parameter:Array<any>;
                         wrappedParameter?:Array<any>;
                     } = {name, parameter}
@@ -2558,7 +2590,7 @@ export class DataService {
                     for (const methodName of [name, '_all'])
                         if (this.middlewares.post.hasOwnProperty(methodName))
                             for (
-                                const intercepto of
+                                const interceptor of
                                 this.middlewares.post[methodName]
                             ) {
                                 result = interceptor.call(
@@ -3310,7 +3342,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
     data:PlainObject
     databaseBaseURL:string
     databaseURL:string
-    databaseURLCache:{[key:string]:SafeRessourceUrl} = {}
+    databaseURLCache:{[key:string]:SafeResourceUrl} = {}
     domSanitizer:DomSanitizer
     escapeRegularExpressions:Function
     extendObject:Function
@@ -3363,7 +3395,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
      * @param item - Given item object.
      * @returns Determined url.
      */
-    getDatabaseURL(item:PlainObject):string {
+    getDatabaseURL(item:PlainObject):SafeResourceUrl {
         const url:string = this.databaseBaseURL + ((
             typeof item[this.specialNames.id] === 'object'
         ) ? item[this.specialNames.id].value : item[this.specialNames.id])
@@ -3745,7 +3777,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
 
     _canceled:boolean = false
     _changeDetectorReference:ChangeDetectorRef
-    _changesStream:ChangesStream
+    _changesStream:Stream
     _data:DataService
     _extendObject:Function
     _liveUpdateOptions:PlainObject = {}
@@ -4814,7 +4846,7 @@ export class IntervalInputComponent {
  */
 export class IntervalsInputComponent {
     @Input() additionalObjectData:PlainObject
-    @ContentChild(TemplateRef) contentTemplate:TemplateRef
+    @ContentChild(TemplateRef) contentTemplate:TemplateRef<any>
     @Input() description:string|null = null
 
     @Input() endDeclaration:string|null = null
@@ -4934,7 +4966,8 @@ export class IntervalsInputComponent {
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     providers: [{
         provide: NG_VALUE_ACCESSOR,
-        useExisting: forwardRef(():CodeEditorComponent => CodeEditorComponent),
+        useExisting: forwardRef(():typeof CodeEditorComponent =>
+            CodeEditorComponent),
         multi: true
     }],
     selector: 'code-editor',
@@ -4965,18 +4998,20 @@ export class CodeEditorComponent extends AbstractValueAccessor
 
     @Output() blur:EventEmitter<{
         event:Object;
-        instance:Object;
+        instance:CodeMirror;
     }> = new EventEmitter()
-    codeMirror:Object
+    codeMirror:{
+        fromTextArea:(domNode:DomNode, configuration:PlainObject) => CodeMirror
+    }
     @Input() configuration:PlainObject = {}
     @Input() disabled:boolean|null = null
     extendObject:Function
     @Output() focus:EventEmitter<{
-        event:Object;instance:Object;
+        event:Object;instance:CodeMirror;
     }> = new EventEmitter()
     @ViewChild('hostDomNode') hostDomNode:ElementRef
     @Output() initialized:EventEmitter<Object> = new EventEmitter()
-    instance:Object|null = null
+    instance:CodeMirror|null = null
     @Input() model:string = ''
     @Output() modelChange:EventEmitter<string> = new EventEmitter()
     tools:ToolsService
@@ -5073,21 +5108,18 @@ export class CodeEditorComponent extends AbstractValueAccessor
                 }
             }
         const configuration:PlainObject = this.extendObject(
-            {}, this.configuration, {readOnly: this.disabled === null ? (
-                this.model.disabled || model.mutable === false ||
-                model.writable === false
-            ) : this.disabled})
+            {}, this.configuration, {readOnly: this.disabled})
         delete configuration.path
         this.instance = this.codeMirror.fromTextArea(
             this.hostDomNode.nativeElement, configuration)
         this.instance.setValue(this.model)
-        this.instance.on('blur', (instance:Object, event:Object):void =>
+        this.instance.on('blur', (instance:CodeMirror, event:Object):void =>
             this.blur.emit({event, instance}))
         this.instance.on('change', ():void => {
             this.model = this.onChangeCallback(this.instance.getValue())
             this.modelChange.emit(this.model)
         })
-        this.instance.on('focus', (instance:Object, event:Object):void =>
+        this.instance.on('focus', (instance:CodeMirror, event:Object):void =>
             this.focus.emit({event, instance}))
         this.initialized.emit(this.codeMirror)
     }
@@ -5263,14 +5295,6 @@ export class InputComponent extends AbstractInputComponent {
     @Input() rows:string
     @Input() selectableEditor:boolean|null = null
     @Input() type:string
-    /**
-     * Delegates injected injector service instance to the super constructor.
-     * @param injector - Injected injector service instance.
-     * @returns Nothing.
-     */
-    constructor(injector:Injector) {
-        super(injector)
-    }
 }
 /* eslint-disable max-len */
 // IgnoreTypeCheck
@@ -6003,8 +6027,8 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
                             await this.retrieveAttachment(
                                 id, {rev: this.revision})
                         } catch (error) {
-                            model[attachmentTypeName][
-                                internalName
+                            this.model[this.attachmentTypeName][
+                                this.internalName
                             ].state.errors.database = (
                                 'message' in error
                             ) ? error.message : this._representObject(error)
@@ -6138,8 +6162,11 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      * @returns A promise which resolves if requested attachment was retrieved.
      */
     async retrieveAttachment(id:any, options:PlainObject = {}):Promise<void> {
-        const file:Object = await this._data.getAttachment(
-            id, this.file.name, options)
+        const file:{
+            size:number;
+            toString:(value:string) => string;
+            type:string;
+        } = await this._data.getAttachment(id, this.file.name, options)
         this.file = {
             /* eslint-disable camelcase */
             content_type: file.type || 'text/plain',
@@ -6403,7 +6430,7 @@ export class PaginationComponent {
      * @param newPage - New page number to change to.
      * @returns Nothing.
      */
-    change(event:Object, newPage:number):void {
+    change(event:Event, newPage:number):void {
         event.preventDefault()
         this._changeDetectorReference.markForCheck()
         this.page = newPage
