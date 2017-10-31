@@ -54,6 +54,7 @@ import {
     /* eslint-enable no-unused-vars */
     ReflectiveInjector,
     Renderer2,
+    SimpleChanges,
     TemplateRef,
     ViewChild,
     ViewContainerRef
@@ -162,7 +163,7 @@ export type Model = {
     _constraintExecutions?:Array<Constraint>;
     _maximumAggregatedSize?:number;
     _minimumAggregatedSize?:number;
-    [key:string]:PropertySpecification;
+    [key:string]:any;//PropertySpecification;
 }
 export type SpecialPropertyNames = {
     additional:string;
@@ -841,7 +842,7 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
      * @param second - Second attachment to compare.
      * @returns Comparison result.
      */
-    async transform(first:PlainObject, second:PlainObject):Promise<boolean> {
+    async transform(first:any, second:any):Promise<boolean> {
         /*
             Identical implies equality and should be checked first for
             performance.
@@ -849,7 +850,15 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
         if (first === second)
             return true
         // Normalize properties.
-        const data:{first:{given:PlainObject};second:{given:PlainObject}} = {
+        type Data = {
+            data?:any;
+            given:any;
+            hash?:any;
+        }
+        const data:{
+            first:Data;
+            second:Data;
+        } = {
             first: {given: first},
             second: {given: second}
         }
@@ -887,7 +896,7 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
                 ))
                     return false
                 const name:string = 'genericTemp'
-                const databaseConnection:Object = new this.data.database(name)
+                const databaseConnection:PouchDB = new this.data.database(name)
                 try {
                     await databaseConnection.put({
                         [this.specialNames.id]: name,
@@ -5116,7 +5125,7 @@ export class CodeEditorComponent extends AbstractValueAccessor
         this.instance.on('blur', (instance:CodeMirror, event:Object):void =>
             this.blur.emit({event, instance}))
         this.instance.on('change', ():void => {
-            this.model = this.onChangeCallback(this.instance.getValue())
+            this.onChangeCallback(this.instance.getValue())
             this.modelChange.emit(this.model)
         })
         this.instance.on('focus', (instance:CodeMirror, event:Object):void =>
@@ -5972,7 +5981,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
      * @param changes - Holds informations about changed bound properties.
      * @returns Nothing.
      */
-    async ngOnChanges(changes:Object):Promise<void> {
+    async ngOnChanges(changes:SimpleChanges):Promise<void> {
         if (typeof this.model[this.idName] === 'object')
             this._idIsObject = true
         if (changes.hasOwnProperty(
@@ -6338,11 +6347,11 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
         } else if (this.file.data) {
             this.determinePresentationType()
             const fileReader:FileReader = new FileReader()
-            fileReader.onload = (event:Object):void => {
+            fileReader.onload = (event:Event):void => {
                 this.file.digest = (new Date()).getTime()
                 this.file.source =
                     this._domSanitizer.bypassSecurityTrustResourceUrl(
-                        event.target.result)
+                        event.target['result'])
                 if (this.mapNameToField)
                     for (const name of this.mapNameToField)
                         this.model[name] = this.file.name
