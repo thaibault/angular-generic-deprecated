@@ -3550,6 +3550,12 @@ export class DataScopeService {
  * @property specialNames - mapping of special database field names.
  * @property type - Model name to handle. Should be overwritten in concrete
  * implementations.
+ * @property useLimit - Indicates whether an upper bound should be used by
+ * retrieving backend items. NOTE: We can't use "limit" if we need total data
+ * set size for pagination e.g.
+ * @property useSkip - Indicates whether an lower bound should be used by
+ * retrieving backend items. NOTE: We can't use "skip" if we need data for
+ * auto completion e.g.
  */
 export class AbstractResolver implements Resolve<PlainObject> {
     data:PlainObject
@@ -3567,6 +3573,8 @@ export class AbstractResolver implements Resolve<PlainObject> {
     representObject:Function
     specialNames:{[key:string]:string}
     type:string = 'Item'
+    useLimit:boolean = false
+    useSkip:boolean = false
     /**
      * Sets all needed injected services as instance properties.
      * @param injector - Application specific injector to use instead auto
@@ -3664,11 +3672,11 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 delete additionalSelector.$or
             }
         }
-        /*
-            NOTE: We can't use "limit" here since we want to provide total data
-            set size for pagination.
-        */
-        const options:PlainObject = {skip: Math.max(page - 1, 0) * limit}
+        const options:PlainObject = {}
+        if (this.useLimit)
+            options.limit = limit
+        if (this.useSkip)
+            options.skip = Math.max(page - 1, 0) * limit
         if (this.relevantKeys)
             options.fields = this.relevantKeys
         if (options.skip === 0)
@@ -4192,10 +4200,10 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             data:PlainObject
         ):void => {
             this.limit = Math.max(1, this.limit || 1)
-            // TODO this are not all items only the rest!
             // TODO wen in pagination "++" ausgewählt wird verschwinden alle
             // pages
             this.allItems = data.items.slice()
+            data.items.splice((this.page - 1) * this.limit)
             if (data.items.length > this.limit)
                 data.items.splice(this.limit, data.items.length - this.limit)
             this.items = data.items
@@ -5591,11 +5599,11 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
                 (initialized)="initialized = true"
                 *ngIf="editorType === 'code' || editor.indentUnit; else tinyMCE"
             ></code-editor>
-            <ng-template #tinyMCE><!--TODO<angular-tinymce
+            <ng-template #tinyMCE><angular-tinymce
                 ${propertyContent.editor}
                 (init)="initialized = true"
                 [settings]="editor"
-            ></angular-tinymce>--></ng-template>
+            ></angular-tinymce></ng-template>
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
@@ -6948,8 +6956,8 @@ export class PaginationComponent {
         MatDialogModule,
         MatInputModule,
         MatSelectModule,
-        MatTooltipModule/*,
-        TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)*/
+        MatTooltipModule,
+        TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
     ],
     /*
         NOTE: Running "determineProviders()" is not yet supported by the
@@ -7066,20 +7074,18 @@ export class PaginationComponent {
         NumberPercentPipe,
         // / endregion
         // endregion
-        DatePipe/* TODO,
+        DatePipe,
         {
-            deps: [DataService, InitialDataService, Injector],
+            deps: [DataService, Injector],
             multi: true,
             provide: APP_INITIALIZER,
-            useFactory: (
-                data:DataService,
-                initialData:InitialDataService,
-                injector:Injector
-            ):Function => ():Promise<void> => {
-                initialData.constructor.injectors.add(injector)
-                return data.initialize()
+            useFactory(data:DataService, injector:Injector):Function {
+                return ():Promise<void> => {
+                    InitialDataService.injectors.add(injector)
+                    return data.initialize()
+                }
             }
-        }*/
+        }
     ]
 })
 /**
