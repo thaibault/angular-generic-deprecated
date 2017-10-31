@@ -23,7 +23,8 @@ import Tools, {
     $, $DomNode, DomNode, globalContext, PlainObject
 } from 'clientnode'
 import {
-    // AfterViewInit,
+    AfterContentChecked,
+    AfterViewInit,
     APP_INITIALIZER,
     ChangeDetectionStrategy,
     ChangeDetectorRef,
@@ -41,8 +42,9 @@ import {
     Input,
     NgModule,
     NgZone,
-    // OnChanges,
-    // OnInit,
+    OnChanges,
+    OnDestroy,
+    OnInit,
     /* eslint-disable no-unused-vars */
     Optional,
     /* eslint-enable no-unused-vars */
@@ -91,9 +93,9 @@ import {
 import {
     ActivatedRoute,
     ActivatedRouteSnapshot,
-    // CanDeactivate,
+    CanDeactivate,
     NavigationEnd,
-    // Resolve,
+    Resolve,
     Router,
     RouterStateSnapshot
 } from '@angular/router'
@@ -3802,7 +3804,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
  * component from showing error messages before the user has submit the form.
  * @property type - Type of given input.
  */
-export class AbstractInputComponent implements OnInit {
+export class AbstractInputComponent {
     @Input() declaration:string|null = null
     @Input() description:string|null = null
     @Input() disabled:boolean|null = null
@@ -4581,7 +4583,7 @@ export class DateDirective {
 /**
  * TODO
  */
-export class SliderDirective {
+export class SliderDirective implements OnInit {
     extendObject:Function
     index:number = 0
     options:{
@@ -5062,7 +5064,7 @@ export class IntervalInputComponent {
  * @property _extendObject - Holds the extend object pipe instance's transform
  * method.
  */
-export class IntervalsInputComponent {
+export class IntervalsInputComponent implements OnInit {
     @Input() additionalObjectData:PlainObject
     @ContentChild(TemplateRef) contentTemplate:TemplateRef<any>
     @Input() description:string|null = null
