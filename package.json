@@ -14,11 +14,10 @@
     "tools"
   ],
   "files": [
+    "aheadOfTime.compiled",
     "aheadOfTimeCompilation.json",
     "animation.js",
-    "animation.ts",
     "index.js",
-    "index.ts",
     "mockup.js",
     "mockup.compiled.js",
     "preRender.js",
@@ -26,14 +25,14 @@
     "testRunner.js",
     "testRunner.compiled.js"
   ],
-  "main": "index.compiled.js",
+  "main": "aheadOfTime.compiled/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/thaibault/angularGeneric"
   },
   "scripts": {
-    "build": "webOptimizer build && npm run build:aot && npm run build:pre-renderer && npm run build:test",
-    "build:aot": "webOptimizer build '{module: {preprocessor: {javaScript: {loader: \"@ngtools/webpack\", options: null}}}}'",
+    "build": "npm run build:aot && webOptimizer build && npm run build:pre-renderer && npm run build:test",
+    "build:aot": "ngc --project aheadOfTimeCompilation.json",
     "build:dll": "webOptimizer build:dll",
     "build:pre-renderer": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types,transform-runtime --presets env,stage-0 --source-maps inline --out-file preRender.compiled.js preRender.js",
     "build:test": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types --presets env,stage-0 --source-maps inline --out-file testRunner.compiled.js testRunner.js",
@@ -98,14 +97,13 @@
     "@angular/platform-browser-dynamic": "^4.4.6",
     "@angular/platform-server": "^4.4.6",
     "@angular/router": "^4.4.6",
-    "@ngtools/webpack": "^1.7.4",
     "babel-cli": "^6.26.0",
     "babel-eslint": "^8.0.1",
     "babel-plugin-angular2-annotations": "^5.1.0",
     "babel-plugin-transform-decorators-legacy": "^1.3.4",
     "babel-polyfill": "^6.26.0",
     "documentation-website": "^1.0.73",
-    "eslint": "^4.9.0",
+    "eslint": "^4.10.0",
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.36.0",
     "eslint-plugin-jsdoc": "^3.1.2",
@@ -116,7 +114,7 @@
     "source-map-support": "^0.5.0",
     "tinymce": "^4.7.1",
     "typescript": "^2.5.3",
-    "weboptimizer": "^1.0.397",
+    "weboptimizer": "^1.0.399",
     "webpack": "^3.8.1",
     "webpack-dev-server": "^2.9.3",
     "zone.js": "^0.8.18"

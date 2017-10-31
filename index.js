@@ -163,7 +163,8 @@ export type Model = {
     _constraintExecutions?:Array<Constraint>;
     _maximumAggregatedSize?:number;
     _minimumAggregatedSize?:number;
-    [key:string]:any;//PropertySpecification;
+    // NOTE: ":PropertySpecification;" break type checks.
+    [key:string]:any;
 }
 export type SpecialPropertyNames = {
     additional:string;
@@ -457,7 +458,7 @@ export const determineInjector:Function = (
  * transformation.
  * @property methodName - Name of forwarded method.
  */
-export class AbstractToolsPipe /* implements PipeTransform*/{
+export class AbstractToolsPipe implements PipeTransform {
     methodName:string
     /**
      * Performs the concrete conversion logic.
@@ -477,7 +478,7 @@ export class AbstractToolsPipe /* implements PipeTransform*/{
  * @property methodName - Name of forwarded method.
  */
 export class AbstractInvertedToolsPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     /**
      * Performs the concrete conversion logic.
      * @param parameter - Saves all generic parameter to
@@ -528,7 +529,7 @@ for (const methodTypePrefix:string in methodGroups)
         for (const methodName:string of methodNames) {
             const pipeName:string = Tools.stringCapitalize(methodName)
             module.exports[`${pipeName}Pipe`] =
-                class extends AbstractToolsPipe /* implements PipeTransform* /{
+                class extends AbstractToolsPipe implements PipeTransform {
                     methodName:string = methodMame
                 }
             Pipe({name: `generic${pipeName}`})(
@@ -547,250 +548,450 @@ for (const methodTypePrefix:string in methodGroups)
 // const ...:PipeTransform = module.exports.ArrayMakeRangePipe
 */
 @Pipe({name: `genericConvertCircularObjectToJSON`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ConvertCircularObjectToJSONPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'convertCircularObjectToJSON'
 }
 @Pipe({name: `genericEquals`})
-export class EqualsPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class EqualsPipe extends AbstractToolsPipe implements PipeTransform {
     methodName:string = 'equals'
 }
 @Pipe({name: `genericExtendObject`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ExtendObjectPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'extendObject'
 }
 @Pipe({name: `genericRepresentObject`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class RepresentObjectPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'representObject'
 }
 @Pipe({name: `genericSort`})
-export class SortPipe extends AbstractToolsPipe /* implements PipeTransform*/{
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class SortPipe extends AbstractToolsPipe implements PipeTransform {
     methodName:string = 'sort'
 }
 @Pipe({name: `genericArrayMerge`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArrayMergePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arrayMerge'
 }
 @Pipe({name: `genericArrayMake`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArrayMakePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arrayMake'
 }
 @Pipe({name: `genericArrayUnique`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArrayUniquePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arrayUnique'
 }
 @Pipe({name: `genericArrayAggregatePropertyIfEqual`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArrayAggregatePropertyIfEqualPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arrayAggregatePropertyIfEqual'
 }
 @Pipe({name: `genericArrayDeleteEmptyItems`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArrayDeleteEmptyItemsPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arrayDeleteEmptyItems'
 }
 @Pipe({name: `genericArrayExtract`})
-export class ArrayExtractPipe extends AbstractToolsPipe /* implements PipeTransform*/{
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class ArrayExtractPipe extends AbstractToolsPipe
+    implements PipeTransform {
     methodName:string = 'arrayExtract'
 }
 @Pipe({name: `genericArrayExtractIfMatches`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArrayExtractIfMatchesPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arrayExtractIfMatches'
 }
 @Pipe({name: `genericArrayExtractIfPropertyExists`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArrayExtractIfPropertyExistsPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arrayExtractIfPropertyExists'
 }
 @Pipe({name: `genericArrayExtractIfPropertyMatches`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArrayExtractIfPropertyMatchesPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arrayExtractIfPropertyMatches'
 }
 @Pipe({name: `genericArrayIntersect`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArrayIntersectPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arrayIntersect'
 }
 @Pipe({name: `genericArrayMakeRange`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArrayMakeRangePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arrayMakeRange'
 }
 @Pipe({name: `genericArraySumUpProperty`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArraySumUpPropertyPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arraySumUpProperty'
 }
 @Pipe({name: `genericArrayAppendAdd`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArrayAppendAddPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arrayAppendAdd'
 }
 @Pipe({name: `genericArrayRemove`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArrayRemovePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arrayRemove'
 }
 @Pipe({name: `genericArraySortTopological`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class ArraySortTopologicalPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'arraySortTopological'
 }
 @Pipe({name: `genericStringEscapeRegularExpressions`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringEscapeRegularExpressionsPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringEscapeRegularExpressions'
 }
 @Pipe({name: `genericStringConvertToValidVariableName`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringConvertToValidVariableNamePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringConvertToValidVariableName'
 }
 @Pipe({name: `genericStringEncodeURIComponent`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringEncodeURIComponentPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringEncodeURIComponent'
 }
 @Pipe({name: `genericStringAddSeparatorToPath`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringAddSeparatorToPathPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringAddSeparatorToPath'
 }
 @Pipe({name: `genericStringHasPathPrefix`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringHasPathPrefixPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringHasPathPrefix'
 }
 @Pipe({name: `genericStringGetDomainName`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringGetDomainNamePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringGetDomainName'
 }
 @Pipe({name: `genericStringGetPortNumber`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringGetPortNumberPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringGetPortNumber'
 }
 @Pipe({name: `genericStringGetProtocolName`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringGetProtocolNamePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringGetProtocolName'
 }
 @Pipe({name: `genericStringGetURLVariable`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringGetURLVariablePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringGetURLVariable'
 }
 @Pipe({name: `genericStringIsInternalURL`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringIsInternalURLPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringIsInternalURL'
 }
 @Pipe({name: `genericStringNormalizeURL`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringNormalizeURLPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringNormalizeURL'
 }
 @Pipe({name: `genericStringRepresentURL`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringRepresentURLPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringRepresentURL'
 }
 @Pipe({name: `genericStringCompressStyleValue`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringCompressStyleValuePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringCompressStyleValue'
 }
 @Pipe({name: `genericStringCamelCaseToDelimited`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringCamelCaseToDelimitedPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringCamelCaseToDelimited'
 }
 @Pipe({name: `genericStringCapitalize`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringCapitalizePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringCapitalize'
 }
 @Pipe({name: `genericStringDelimitedToCamelCase`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringDelimitedToCamelCasePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringDelimitedToCamelCase'
 }
 @Pipe({name: `genericStringFormat`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringFormatPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringFormat'
 }
 @Pipe({name: `genericStringGetRegularExpressionValidated`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringGetRegularExpressionValidatedPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringGetRegularExpressionValidated'
 }
 @Pipe({name: `genericStringLowerCase`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringLowerCasePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringLowerCase'
 }
 @Pipe({name: `genericStringFindNormalizedMatchRange`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringFindNormalizedMatchRangePipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringFindNormalizedMatchRange'
 }
 @Pipe({name: `genericStringMark`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringMarkPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringMark'
 }
 @Pipe({name: `genericStringMD5`})
-export class StringMD5Pipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class StringMD5Pipe extends AbstractToolsPipe implements PipeTransform {
     methodName:string = 'stringMD5'
 }
 @Pipe({name: `genericStringNormalizePhoneNumber`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringNormalizePhoneNumberPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringNormalizePhoneNumber'
 }
 @Pipe({name: `genericStringParseEncodedObject`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringParseEncodedObjectPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringParseEncodedObject'
 }
 @Pipe({name: `genericStringRepresentPhoneNumber`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringRepresentPhoneNumberPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringRepresentPhoneNumber'
 }
 @Pipe({name: `genericStringDecodeHTMLEntities`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringDecodeHTMLEntitiesPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringDecodeHTMLEntities'
 }
 @Pipe({name: `genericStringNormalizeDomNodeSelector`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class StringNormalizeDomNodeSelectorPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'stringNormalizeDomNodeSelector'
 }
 @Pipe({name: `genericNumberGetUTCTimestamp`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class NumberGetUTCTimestampPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'numberGetUTCTimestamp'
 }
 @Pipe({name: `genericNumberIsNotANumber`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
 export class NumberIsNotANumberPipe extends AbstractToolsPipe
-/* implements PipeTransform*/{
+    implements PipeTransform {
     methodName:string = 'numberIsNotANumber'
 }
 @Pipe({name: `genericNumberRound`})
-export class NumberRoundPipe extends AbstractToolsPipe /* implements PipeTransform*/{
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class NumberRoundPipe extends AbstractToolsPipe
+    implements PipeTransform {
     methodName:string = 'numberRound'
 }
 // / endregion
@@ -806,7 +1007,7 @@ export class NumberRoundPipe extends AbstractToolsPipe /* implements PipeTransfo
  * names.
  * @property stringMD5 - String md5 pipe's instance transform method.
  */
-export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
+export class AttachmentsAreEqualPipe implements PipeTransform {
     data:DataService
     ngZone:NgZone
     representObject:Function
@@ -933,7 +1134,7 @@ export class AttachmentsAreEqualPipe/* implements PipeTransform*/ {
 /**
  * Retrieves a matching filename by given filename prefix.
  */
-export class GetFilenameByPrefixPipe/* implements PipeTransform*/ {
+export class GetFilenameByPrefixPipe implements PipeTransform {
     /**
      * Performs the actual transformations process.
      * @param attachments - Documents attachments object to determine file with
@@ -965,7 +1166,7 @@ export class GetFilenameByPrefixPipe/* implements PipeTransform*/ {
  * @property getFilenameByPrefix - Filename by prefix pipe's transformation
  * function.
  */
-export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
+export class AttachmentWithPrefixExistsPipe implements PipeTransform {
     attachmentName:string
     getFilenameByPrefix:Function
     /**
@@ -980,7 +1181,7 @@ export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
     ) {
         this.attachmentName =
             initialData.configuration.database.model.property.name.special
-            .attachment
+                .attachment
         this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
     }
@@ -1011,7 +1212,7 @@ export class AttachmentWithPrefixExistsPipe/* implements PipeTransform*/ {
  * Removes all meta data from a document recursively.
  * @property modelConfiguration - Model configuration object.
  */
-export class ExtractDataPipe/* implements PipeTransform*/ {
+export class ExtractDataPipe implements PipeTransform {
     modelConfiguration:PlainObject
     /**
      * Gets injected services.
@@ -1134,7 +1335,7 @@ export class ExtractDataPipe/* implements PipeTransform*/ {
  * names.
  * @property tools - Holds the tools class from the tools service.
  */
-export class ExtractRawDataPipe/* implements PipeTransform*/ {
+export class ExtractRawDataPipe implements PipeTransform {
     attachmentsAreEqual:Function
     dataScope:DataScopeService
     equals:Function
@@ -1580,7 +1781,7 @@ export class ExtractRawDataPipe/* implements PipeTransform*/ {
 /**
  * Checks if given reference is defined.
  */
-export class IsDefinedPipe/* implements PipeTransform*/ {
+export class IsDefinedPipe implements PipeTransform {
     /**
      * Performs the actual comparison.
      * @param object - Object to compare against "undefined" or "null".
@@ -1597,7 +1798,7 @@ export class IsDefinedPipe/* implements PipeTransform*/ {
 /**
  * Retrieves a matching filename by given filename prefix.
  */
-export class LimitToPipe/* implements PipeTransform*/ {
+export class LimitToPipe implements PipeTransform {
     /**
      * Limits number of items of given string, Object (keys) or Array.
      * @param input - Object to retrieve key names from.
@@ -1637,7 +1838,7 @@ export class LimitToPipe/* implements PipeTransform*/ {
  * @property injector - Pipe specific injector to determine pipe dynamically at
  * runtime.
  */
-export class MapPipe/* implements PipeTransform*/ {
+export class MapPipe implements PipeTransform {
     injector:Injector
     /**
      * Injects the injector and saves as instance property.
@@ -1679,7 +1880,7 @@ export class MapPipe/* implements PipeTransform*/ {
 /**
  * Retrieves a matching filename by given filename prefix.
  */
-export class ObjectKeysPipe/* implements PipeTransform*/ {
+export class ObjectKeysPipe implements PipeTransform {
     /**
      * Performs the "Object" native "keys()" method.
      * @param object - Object to retrieve key names from.
@@ -1722,7 +1923,7 @@ export class ObjectKeysPipe/* implements PipeTransform*/ {
 /**
  * Reverses a given list.
  */
-export class ReversePipe/* implements PipeTransform*/ {
+export class ReversePipe implements PipeTransform {
     /**
      * Performs the "Arrays" native "reverse()" method.
      * @param list - List to reverse.
@@ -1746,7 +1947,7 @@ export class ReversePipe/* implements PipeTransform*/ {
 /**
  * Determines type of given object.
  */
-export class TypePipe/* implements PipeTransform*/ {
+export class TypePipe implements PipeTransform {
     /**
      * Returns type of given object.
      * @param object - Object to determine type of.
@@ -1784,7 +1985,7 @@ export class ArrayDependentConcatPipe/* immplements PipeTransform*/ {
 /**
  * Forwards javaScript's native "stringEndsWith" method.
  */
-export class StringEndsWithPipe/* implements PipeTransform*/ {
+export class StringEndsWithPipe implements PipeTransform {
     /**
      * Performs the actual indicator method.
      * @param string - To check.
@@ -1801,7 +2002,7 @@ export class StringEndsWithPipe/* implements PipeTransform*/ {
 /**
  * Determines if given string has a time indicating suffix.
  */
-export class StringHasTimeSuffixPipe/* implements PipeTransform*/ {
+export class StringHasTimeSuffixPipe implements PipeTransform {
     /**
      * Performs the actual string suffix check.
      * @param string - To search in.
@@ -1820,7 +2021,7 @@ export class StringHasTimeSuffixPipe/* implements PipeTransform*/ {
 /**
  * Tests if given pattern matches against given subject.
  */
-export class StringMatchPipe/* implements PipeTransform*/ {
+export class StringMatchPipe implements PipeTransform {
     /**
      * Performs the actual matching.
      * @param pattern - String or regular expression to search for.
@@ -1839,7 +2040,7 @@ export class StringMatchPipe/* implements PipeTransform*/ {
 /**
  * Trims given string if it is longer then given length.
  */
-export class StringMaximumLengthPipe/* implements PipeTransform*/ {
+export class StringMaximumLengthPipe implements PipeTransform {
     /**
      * Performs the actual indicator method.
      * @param string - To check.
@@ -1868,7 +2069,7 @@ export class StringMaximumLengthPipe/* implements PipeTransform*/ {
 /**
  * Provides javascript's native string replacement method as pipe.
  */
-export class StringReplacePipe/* implements PipeTransform*/ {
+export class StringReplacePipe implements PipeTransform {
     /**
      * Performs the actual replacement.
      * @param string - String to replace content.
@@ -1896,7 +2097,7 @@ export class StringReplacePipe/* implements PipeTransform*/ {
  * Provides angular dom html sanitizer.
  * @property transform - Binded dom sanitizer's validation marker.
  */
-export class StringSafeHTMLPipe/* implements PipeTransform*/ {
+export class StringSafeHTMLPipe implements PipeTransform {
     transform:(value:string) => SafeHtml
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
@@ -1913,7 +2114,7 @@ export class StringSafeHTMLPipe/* implements PipeTransform*/ {
  * Provides angular dom html sanitizer.
  * @property transform - Binded dom sanitizer's validation marker.
  */
-export class StringSafeResourceURLPipe/* implements PipeTransform*/ {
+export class StringSafeResourceURLPipe implements PipeTransform {
     transform:(value:string) => SafeUrl
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
@@ -1930,7 +2131,7 @@ export class StringSafeResourceURLPipe/* implements PipeTransform*/ {
  * Provides angular dom html sanitizer.
  * @property transform - Binded dom sanitizer's validation marker.
  */
-export class StringSafeScriptPipe/* implements PipeTransform*/ {
+export class StringSafeScriptPipe implements PipeTransform {
     transform:(value:string) => SafeScript
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
@@ -1947,7 +2148,7 @@ export class StringSafeScriptPipe/* implements PipeTransform*/ {
  * Provides angular dom html sanitizer.
  * @property transform - Binded dom sanitizer's validation marker.
  */
-export class StringSafeStylePipe/* implements PipeTransform*/ {
+export class StringSafeStylePipe implements PipeTransform {
     transform:(value:string) => SafeStyle
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
@@ -1964,7 +2165,7 @@ export class StringSafeStylePipe/* implements PipeTransform*/ {
  * Provides angular dom html sanitizer.
  * @property transform - Binded dom sanitizer's validation marker.
  */
-export class StringSafeURLPipe/* implements PipeTransform*/ {
+export class StringSafeURLPipe implements PipeTransform {
     transform:(value:string) => SafeUrl
     /**
      * @param domSanitizer - Injected dom sanitizer service instance.
@@ -1980,7 +2181,7 @@ export class StringSafeURLPipe/* implements PipeTransform*/ {
 /**
  * Returns given string if it matches given pattern.
  */
-export class StringShowIfPatternMatchesPipe/* implements PipeTransform*/ {
+export class StringShowIfPatternMatchesPipe implements PipeTransform {
     /**
      * Performs the actual matching.
      * @param string - String to replace content.
@@ -2010,7 +2211,7 @@ export class StringShowIfPatternMatchesPipe/* implements PipeTransform*/ {
  * Returns a matched part of given subject with given pattern. Default is the
  * whole (zero) matched part.
  */
-export class StringSliceMatchPipe/* implements PipeTransform*/ {
+export class StringSliceMatchPipe implements PipeTransform {
     /**
      * Performs the actual matching.
      * @param subject - String to search in.
@@ -2039,7 +2240,7 @@ export class StringSliceMatchPipe/* implements PipeTransform*/ {
 /**
  * Forwards javascript's native "stringStartsWith" method.
  */
-export class StringStartsWithPipe/* implements PipeTransform*/ {
+export class StringStartsWithPipe implements PipeTransform {
     /**
      * Performs the actual indicator method.
      * @param string - To check.
@@ -2057,7 +2258,7 @@ export class StringStartsWithPipe/* implements PipeTransform*/ {
  * Provides angular's template engine as pipe.
  * @property extendObject - Extend object's pipe transform method.
  */
-export class StringTemplatePipe/* implements PipeTransform*/ {
+export class StringTemplatePipe implements PipeTransform {
     extendObject:Function
     /**
      * Sets injected extend object pipe instance as instance property.
@@ -2097,7 +2298,7 @@ export class StringTemplatePipe/* implements PipeTransform*/ {
 /**
  * Returns part in percent of all.
  */
-export class NumberPercentPipe/* implements PipeTransform*/ {
+export class NumberPercentPipe implements PipeTransform {
     /**
      * Performs the actual calculation.
      * @param part - Part to divide "all" through.
@@ -2118,7 +2319,7 @@ export class NumberPercentPipe/* implements PipeTransform*/ {
  * "canDeactivate()" method returns "false", a promise or observable wrapping
  * a boolean.
  */
-export class CanDeactivateRouteLeaveGuard/* implements CanDeactivate<Object>*/ {
+export class CanDeactivateRouteLeaveGuard implements CanDeactivate<Object> {
     /**
      * Calls the component specific "canDeactivate()" method.
      * @param component - Component instance of currently selected route.
@@ -2168,6 +2369,7 @@ export class ConfirmComponent {
     @Input() okText:string = 'OK'
     title:string = ''
     message:string = ''
+    /* eslint-disable indent */
     /**
      * Gets needed component data injected.
      * NOTE: The "@Optional" decorator makes test instances possible.
@@ -2178,12 +2380,11 @@ export class ConfirmComponent {
      * @returns Nothing.
      */
     constructor(
-        /* eslint-disable indent */
         // IgnoreTypeCheck
         @Optional() @Inject(MAT_DIALOG_DATA) data:any,
         @Optional() dialogReference:MatDialogRef<ConfirmComponent>
-        /* eslint-enable indent */
     ) {
+    /* eslint-enable indent */
         this.dialogReference = dialogReference
         if (typeof data === 'object' && data !== null)
             for (const key in data)
@@ -2258,7 +2459,8 @@ export class AlertService {
  * @property tools - Holds the tools class from the tools service.
  */
 export class DataService {
-    static revisionNumberRegularExpression:RegExp = /^([0-9]+)-/
+    // NOTE: Native regular expression definition is not allowed here.
+    static revisionNumberRegularExpression:RegExp = new RegExp('^([0-9]+)-')
     static wrappableMethodNames:Array<string> = [
         'allDocs', 'bulkDocs', 'bulkGet',
         'close',
@@ -3347,7 +3549,7 @@ export class DataScopeService {
  * @property type - Model name to handle. Should be overwritten in concrete
  * implementations.
  */
-export class AbstractResolver/* implements Resolve<PlainObject>*/ {
+export class AbstractResolver implements Resolve<PlainObject> {
     data:PlainObject
     databaseBaseURL:string
     databaseURL:string
@@ -3600,7 +3802,7 @@ export class AbstractResolver/* implements Resolve<PlainObject>*/ {
  * component from showing error messages before the user has submit the form.
  * @property type - Type of given input.
  */
-export class AbstractInputComponent/* implements OnInit*/ {
+export class AbstractInputComponent implements OnInit {
     @Input() declaration:string|null = null
     @Input() description:string|null = null
     @Input() disabled:boolean|null = null
@@ -3628,7 +3830,6 @@ export class AbstractInputComponent/* implements OnInit*/ {
     @Input() showValidationErrorMessages:boolean = false
     @Input() type:string
 }
-/* eslint-disable brace-style */
 /**
  * Generic input component.
  * @property _attachmentWithPrefixExists - Holds the attachment by prefix
@@ -3641,8 +3842,7 @@ export class AbstractInputComponent/* implements OnInit*/ {
  * converter pipe transform method.
  */
 export class AbstractNativeInputComponent extends AbstractInputComponent
-/* implements OnInit*/ {
-/* eslint-enable brace-style */
+    implements OnInit {
     _attachmentWithPrefixExists:Function
     _extendObject:Function
     _getFilenameByPrefix:Function
@@ -3770,7 +3970,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
  * function.
  * @property _tools - Holds the tools class from the tools service.
  */
-export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
+export class AbstractLiveDataComponent implements OnDestroy, OnInit {
     static defaultLiveUpdateOptions:PlainObject = {
         heartbeat: 10000,
         /* eslint-disable camelcase */
@@ -3889,7 +4089,6 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
         return false
     }
 }
-/* eslint-disable brace-style */
 /**
  * A generic abstract component to edit, search, navigate and filter a list of
  * entities.
@@ -3921,8 +4120,7 @@ export class AbstractLiveDataComponent/* implements OnDestroy, OnInit*/ {
  * @property _toolsInstance - Instance of tools service instance property.
  */
 export class AbstractItemsComponent extends AbstractLiveDataComponent
-/* implements AfterContentChecked, OnDestroy*/ {
-/* eslint-enable brace-style */
+    implements AfterContentChecked, OnDestroy {
     allItems:Array<PlainObject>
     allItemsChecked:boolean = false
     debouncedUpdate:Function
@@ -4279,7 +4477,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
  * @property viewContainerReference - View container reference to embed
  * rendered template instance into.
  */
-export class GenericDateDirective {
+export class DateDirective {
     dateFormatter:Function
     extendObject:Function
     options:{
@@ -4315,6 +4513,7 @@ export class GenericDateDirective {
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
     }
+    /* eslint-disable flowtype/require-return-type */
     /**
      * Options setter to merge into options interactively.
      * @param options - Options object to merge into.
@@ -4331,6 +4530,7 @@ export class GenericDateDirective {
             options = {dateTime: options}
         this.extendObject(true, this.options, options)
     }
+    /* eslint-enable flowtype/require-return-type */
     /**
      * Inserts a rendered template instance into current view.
      * @returns Nothing.
@@ -4381,7 +4581,7 @@ export class GenericDateDirective {
 /**
  * TODO
  */
-export class GenericSliderDirective {
+export class SliderDirective {
     extendObject:Function
     index:number = 0
     options:{
@@ -4426,6 +4626,7 @@ export class GenericSliderDirective {
             startIndex = this.index
         return (startIndex + this.options.step) % this.options.slides.length
     }
+    /* eslint-disable flowtype/require-return-type */
     /**
      * Options setter to merge into options interactively.
      * @param options - Options object to merge into.
@@ -4437,6 +4638,7 @@ export class GenericSliderDirective {
             options = {slides: options}
         this.extendObject(true, this.options, options)
     }
+    /* eslint-enable flowtype/require-return-type */
     /**
      * Inserts a rendered template instance into current view.
      * @returns Nothing.
@@ -4500,7 +4702,14 @@ const providers:Array<PlainObject> = [{
 }, DefaultValueAccessor.decorators[0].args[0], {providers}))
 */
 @Directive({
-    selector: 'input:not([type=checkbox])[formControlName],textarea[formControlName],input:not([type=checkbox])[formControl],textarea[formControl],input:not([type=checkbox])[ngModel],textarea[ngModel],[ngDefaultControl]',
+    selector: `
+        input:not([type=checkbox])[formControlName],
+        textarea[formControlName],
+        input:not([type=checkbox])[formControl],
+        textarea[formControl],
+        input:not([type=checkbox])[ngModel],
+        textarea[ngModel],[ngDefaultControl]'
+    `,
     // TODO: vsavkin replace the above selector with the one below it once
     // https://github.com/angular/angular/issues/3011 is implemented
     // selector: '[ngModel],[formControl],[formControlName]',
@@ -4982,7 +5191,6 @@ export class IntervalsInputComponent {
     selector: 'code-editor',
     template: '<textarea #hostDomNode></textarea>'
 })
-/* eslint-disable brace-style */
 /**
  * Provides a generic code editor.
  * @property static:applicationInterfaceLoad - Promise which resolves when
@@ -5000,9 +5208,8 @@ export class IntervalsInputComponent {
  * @property modelChange - Change event emitter.
  */
 export class CodeEditorComponent extends AbstractValueAccessor
-/* implements AfterViewInit*/ {
-/* eslint-enable brace-style */
-    static applicationInterfaceLoad:Promise<Object>
+    implements AfterViewInit {
+    static applicationInterfaceLoad:Promise<Object>|null = null
     static modesLoad:{[key:string]:Promise<void>|true} = {}
 
     @Output() blur:EventEmitter<{
@@ -5382,11 +5589,11 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
                 (initialized)="initialized = true"
                 *ngIf="editorType === 'code' || editor.indentUnit; else tinyMCE"
             ></code-editor>
-            <ng-template #tinyMCE><angular-tinymce
+            <ng-template #tinyMCE><!--TODO<angular-tinymce
                 ${propertyContent.editor}
                 (init)="initialized = true"
                 [settings]="editor"
-            ></angular-tinymce></ng-template>
+            ></angular-tinymce>--></ng-template>
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
@@ -5406,7 +5613,6 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
     `
 })
 /* eslint-enable max-len */
-/* eslint-disable brace-style */
 /**
  * A generic form textarea component with validation, labeling and info
  * description support.
@@ -5421,8 +5627,7 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
  * @property selectableEditor - Indicates whether an editor is selectable.
  */
 export class TextareaComponent extends AbstractNativeInputComponent
-/* implements OnInit*/{
-/* eslint-enable brace-style */
+    implements OnInit {
     static defaultEditorOptions:{code:PlainObject;markup:PlainObject} = {
         code: {},
         markup: {}
@@ -5844,7 +6049,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
  * @property _prefixMatch - Holds the prefix match pipe instance's transform
  * method.
  */
-export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
+export class FileInputComponent implements AfterViewInit, OnChanges {
     static imageMimeTypeRegularExpression:RegExp = new RegExp(
         '^image/(?:p?jpe?g|png|svg(?:\\+xml)?|vnd\\.microsoft\\.icon|gif|' +
         'tiff|webp|vnd\\.wap\\.wbmp|x-(?:icon|jng|ms-bmp))$')
@@ -6371,7 +6576,7 @@ export class FileInputComponent/* implements AfterViewInit, OnChanges */ {
     changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-pagination',
     template: `
-        <ul @defaultAnimation *ngIf="lastPage > 1">
+        <ul class="hans" @defaultAnimation *ngIf="lastPage > 1">
             <li @defaultAnimation *ngIf="page > 2">
                 <a href="" (click)="change($event, 1)">--</a>
             </li>
@@ -6599,8 +6804,8 @@ export class PaginationComponent {
         DateTimeValueAccessor,
         // endregion
         // region directives
-        GenericDateDirective,
-        GenericSliderDirective,
+        DateDirective,
+        SliderDirective,
         // endregion
         // region components
         ConfirmComponent,
@@ -6718,8 +6923,8 @@ export class PaginationComponent {
         // / endregion
         // endregion
         // region directives
-        GenericDateDirective,
-        GenericSliderDirective,
+        DateDirective,
+        SliderDirective,
         // endregion
         // region components
         ConfirmComponent,
@@ -6741,8 +6946,8 @@ export class PaginationComponent {
         MatDialogModule,
         MatInputModule,
         MatSelectModule,
-        MatTooltipModule,
-        TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
+        MatTooltipModule/*,
+        TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)*/
     ],
     /*
         NOTE: Running "determineProviders()" is not yet supported by the
