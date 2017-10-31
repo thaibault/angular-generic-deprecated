@@ -32,8 +32,8 @@
     "url": "https://github.com/thaibault/angularGeneric"
   },
   "scripts": {
-    "build": "webOptimizer build && npm run build:pre-renderer && npm run build:test",
-    "build:aot": "webOptimizer build '{module: {preprocessor: {javaScript: {loader: '@ngtools/webpack', options: null}}}}' # ngc --project aheadOfTimeCompilation.json",
+    "build": "webOptimizer build && npm run build:aot && npm run build:pre-renderer && npm run build:test",
+    "build:aot": "webOptimizer build '{module: {preprocessor: {javaScript: {loader: '@ngtools/webpack', options: null}}}}'",
     "build:dll": "webOptimizer build:dll",
     "build:pre-renderer": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types,transform-runtime --presets env,stage-0 --source-maps inline --out-file preRender.compiled.js preRender.js",
     "build:test": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types --presets env,stage-0 --source-maps inline --out-file testRunner.compiled.js testRunner.js",
