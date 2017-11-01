@@ -5522,7 +5522,7 @@ export class TextEditorComponent extends AbstractEditorComponent
         const initializeInstanceCallback = configuration.init_instance_callback
         /* eslint-disable camelcase */
         configuration.init_instance_callback = (instance:any):void => {
-        /* eslint-enable camelcase */
+        /* eslint-disable camelcase */
             this.instance = instance
             this.instance[this.contentSetterMethodName](this.model)
             this.instance.on('Change', ():void => {
@@ -7048,6 +7048,7 @@ export class PaginationComponent {
         SliderDirective,
         // endregion
         // region components
+        AbstractEditorComponent,
         ConfirmComponent,
         IntervalInputComponent,
         IntervalsInputComponent,
