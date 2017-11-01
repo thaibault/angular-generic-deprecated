@@ -5215,6 +5215,8 @@ export class IntervalsInputComponent implements OnInit {
  * Provides a generic editor.
  * @property static:applicationInterfaceLoad - Promise which resolves when
  * specific editor factories are fully loaded.
+ * @property static:factories - Should saves all seen factories to load from
+ * if the initial provided one was deleted from global scope.
  *
  * @property configuration - Code mirror configuration.
  * @property contentSetterMethodName - Defines the instance method to set
@@ -5232,6 +5234,7 @@ export class IntervalsInputComponent implements OnInit {
 export class AbstractEditorComponent extends AbstractValueAccessor
     implements AfterViewInit {
     static applicationInterfaceLoad:{[key:string]:Promise<any>|null} = {}
+    static factories:{[key:string]:any} = {}
 
     @Input() configuration:PlainObject = {}
     contentSetterMethodName:string = 'setContent'
@@ -5258,27 +5261,35 @@ export class AbstractEditorComponent extends AbstractValueAccessor
         this.extendObject = get(ExtendObjectPipe).transform.bind(get(
             ExtendObjectPipe))
         this.tools = get(ToolsService)
-        if (this.tools.globalContext[this.factoryName])
-            this.factory = this.tools.globalContext[this.factoryName]
     }
     /**
      * Initializes the code editor element.
      * @returns Nothing.
      */
     async ngAfterViewInit():Promise<void> {
-        if (this.factory)
+        if (!this.factory) {
+            if (this.tools.globalContext[this.factoryName])
+                this.factory = this.tools.globalContext[this.factoryName]
+            else if (AbstractEditorComponent.factories[this.factoryName])
+                this.factory = AbstractEditorComponent.factories[
+                    this.factoryName]
+        }
+        if (this.factory) {
+            AbstractEditorComponent.factories[this.factoryName] = this.factory
             /*
                 NOTE: We have to do a dummy timeout to avoid an event emit in
                 first initializing call stack.
             */
             await this.tools.tools.timeout()
-        else
+        } else {
             try {
                 await AbstractEditorComponent.applicationInterfaceLoad[
                     this.factoryName]
             } catch (error) {
                 throw error
             }
+            AbstractEditorComponent.factories[this.factoryName] = this.factory
+        }
     }
     /**
      * Synchronizes given value into internal code mirror instance.
