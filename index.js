@@ -246,9 +246,9 @@ export const TINYMCE_DEFAULT_OPTIONS:PlainObject = {
     /* eslint-disable camelcase */
     // region paths
     baseURL: tinymceBasePath,
+    scriptPath: `${tinymceBasePath}tinymce.min.js`,
     skin_url: `${tinymceBasePath}skins/lightgray`,
     theme_url: `${tinymceBasePath}themes/modern/theme.min.js`,
-    scriptPath: `${tinymceBasePath}tinymce.min.js`,
     // endregion
     allow_conditional_comments: false,
     allow_script_urls: false,
@@ -5337,6 +5337,7 @@ export class CodeEditorComponent extends AbstractEditorComponent
     static modesLoad:{[key:string]:Promise<void>|true} = {}
 
     @Output() blur:EventEmitter<any> = new EventEmitter()
+    @Input() configuration:PlainObject = CODE_MIRROR_DEFAULT_OPTIONS
     contentSetterMethodName:string = 'setValue'
     factoryName:string = 'CodeMirror'
     @Output() focus:EventEmitter<any> = new EventEmitter()
@@ -5457,6 +5458,7 @@ export class CodeEditorComponent extends AbstractEditorComponent
  */
 export class TextEditorComponent extends AbstractEditorComponent
     implements AfterViewInit, OnDestroy {
+    @Input() configuration:PlainObject = TINYMCE_DEFAULT_OPTIONS
     factoryName:string = 'tinymce'
     // region events
     // / region native
@@ -5464,7 +5466,7 @@ export class TextEditorComponent extends AbstractEditorComponent
     @Output() dblclick:EventEmitter<any> = new EventEmitter()
     @Output() MouseDown:EventEmitter<any> = new EventEmitter()
     @Output() MouseUp:EventEmitter<any> = new EventEmitter()
-    @Output() MousemMve:EventEmitter<any> = new EventEmitter()
+    @Output() MouseMove:EventEmitter<any> = new EventEmitter()
     @Output() MouseOver:EventEmitter<any> = new EventEmitter()
     @Output() MouseOut:EventEmitter<any> = new EventEmitter()
     @Output() MouseEnter:EventEmitter<any> = new EventEmitter()
@@ -5476,13 +5478,12 @@ export class TextEditorComponent extends AbstractEditorComponent
     @Output() Paste:EventEmitter<any> = new EventEmitter()
     // / endregion
     // / region core
-    @Output() Init:EventEmitter<any> = new EventEmitter()
     @Output() Focus:EventEmitter<any> = new EventEmitter()
     @Output() Blur:EventEmitter<any> = new EventEmitter()
     @Output() BeforeSetContent:EventEmitter<any> = new EventEmitter()
     @Output() SetContent:EventEmitter<any> = new EventEmitter()
     @Output() GetContent:EventEmitter<any> = new EventEmitter()
-    @Output() OreProcess:EventEmitter<any> = new EventEmitter()
+    @Output() PreProcess:EventEmitter<any> = new EventEmitter()
     @Output() PostProcess:EventEmitter<any> = new EventEmitter()
     @Output() NodeChange:EventEmitter<any> = new EventEmitter()
     @Output() Undo:EventEmitter<any> = new EventEmitter()
@@ -5528,6 +5529,8 @@ export class TextEditorComponent extends AbstractEditorComponent
         await super.ngAfterViewInit()
         const configuration:PlainObject = this.extendObject(
             {}, this.configuration)
+        this.factory.baseURL = configuration.baseURL
+        delete configuration.baseURL
         delete configuration.scriptPath
         configuration.target = this.hostDomNode.nativeElement
         const initializeInstanceCallback = configuration.init_instance_callback
@@ -5545,7 +5548,7 @@ export class TextEditorComponent extends AbstractEditorComponent
             for (const name of [
                 'click',
                 'dblclick',
-                'Mousedown',
+                'MouseDown',
                 'MouseUp',
                 'MouseMove',
                 'MouseOver',
