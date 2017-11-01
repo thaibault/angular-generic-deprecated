@@ -5267,13 +5267,12 @@ export class AbstractEditorComponent extends AbstractValueAccessor
      * @returns Nothing.
      */
     async ngAfterViewInit():Promise<void> {
-        if (!this.factory) {
+        if (!this.factory)
             if (this.tools.globalContext[this.factoryName])
                 this.factory = this.tools.globalContext[this.factoryName]
             else if (AbstractEditorComponent.factories[this.factoryName])
                 this.factory = AbstractEditorComponent.factories[
                     this.factoryName]
-        }
         if (this.factory) {
             AbstractEditorComponent.factories[this.factoryName] = this.factory
             /*
