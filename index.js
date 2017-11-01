@@ -5520,7 +5520,9 @@ export class TextEditorComponent extends AbstractEditorComponent
         delete configuration.scriptPath
         configuration.target = this.hostDomNode.nativeElement
         const initializeInstanceCallback = configuration.init_instance_callback
+        /* eslint-disable camelcase */
         configuration.init_instance_callback = (instance:any):void => {
+        /* eslint-enable camelcase */
             this.instance = instance
             this.instance[this.contentSetterMethodName](this.model)
             this.instance.on('Change', ():void => {
