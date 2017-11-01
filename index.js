@@ -6978,8 +6978,8 @@ export class PaginationComponent {
         MatDialogModule,
         MatInputModule,
         MatSelectModule,
-        MatTooltipModule,
-        TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
+        MatTooltipModule/* TODO,
+        TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)*/
     ],
     /*
         NOTE: Running "determineProviders()" is not yet supported by the
