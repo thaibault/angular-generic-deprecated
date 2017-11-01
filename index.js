@@ -5291,8 +5291,6 @@ export class AbstractEditorComponent extends AbstractValueAccessor
         this.model = [null, undefined].includes(value) ? '' : value.toString()
         if (this.instance)
             this.instance[this.contentSetterMethodName](this.model)
-        else
-            this.initialValue = value
         return super.export(value, ...additionalParameter)
     }
     /**
@@ -5531,7 +5529,7 @@ export class TextEditorComponent extends AbstractEditorComponent
             })
             if (initializeInstanceCallback)
                 initializeInstanceCallback(this.instance)
-            for (const name:string of [
+            for (const name of [
                 'click',
                 'dblclick',
                 'Mousedown',
@@ -5569,8 +5567,8 @@ export class TextEditorComponent extends AbstractEditorComponent
                 this.modelChange.emit(this.model)
             })
             this.instance.on('ExecCommand', (event:any):void => {
-                this.execcommand.emit(event)
-                const content:any = this.editor.getContent()
+                this.ExecCommand.emit(event)
+                const content:any = this.instance.getContent()
                 if (typeof content === 'string' && content.length > 0) {
                     this.onChangeCallback(this.instance.getContent())
                     this.onTouchedCallback()
@@ -5598,7 +5596,7 @@ export class TextEditorComponent extends AbstractEditorComponent
     setDisabledState(isDisabled:boolean):void {
         super.setDisabledState(isDisabled)
         if (this.instance)
-            this.editor.setMode(this.disabled ? 'readonly' : 'design')
+            this.instance.setMode(this.disabled ? 'readonly' : 'design')
     }
 }
 /* eslint-disable max-len */
