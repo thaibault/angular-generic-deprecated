@@ -288,6 +288,7 @@ export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
         /* eslint-enable camelcase */
     })
 // endregion
+console.log(TINY_MCE_DEFAULT_OPTIONS)
 // region basic services
 // IgnoreTypeCheck
 @Injectable()
@@ -3365,7 +3366,28 @@ export class DataScopeService {
                     if (specification[name].hasOwnProperty(type)) {
                         result[name][type].name = type
                         result[name][type].value = null
-                        if (Object.keys(data).length === 0)
+                        if (Object.keys(data).length === 0) {
+                            const scope:Object = {
+                                newDocument: data,
+                                oldDocument: null,
+                                userConteyt: {},
+                                securitySettings: {},
+                                name: type,
+                                models: entities,
+                                modelConfiguration:
+                                    this.configuration.database.model,
+                                serialize: (object:Object):string =>
+                                    JSON.stringify(object, null, 4),
+                                modelName,
+                                model: modelSpecification,
+                                propertySpecification: result[name][type],
+                                now,
+                                nowUTCTimestamp,
+                                getFilenameByPrefix: this.getFilenameByPrefix,
+                                attachmentWithPrefixExists:
+                                    this.attachmentWithPrefixExists.bind(
+                                        data, data)
+                            }
                             for (const hookType of [
                                 'onCreateExecution', 'onCreateExpression'
                             ])
@@ -3373,38 +3395,19 @@ export class DataScopeService {
                                     hookType
                                 ) && result[name][type][hookType]) {
                                     result[name][type].value = (new Function(
-                                        'newDocument', 'oldDocument',
-                                        'userContext', 'securitySettings',
-                                        'name', 'models', 'modelConfiguration',
-                                        'serialize', 'modelName', 'model',
-                                        'propertySpecification', 'now',
-                                        'nowUTCTimestamp',
-                                        'getFilenameByPrefix',
-                                        'attachmentWithPrefixExists', (
+                                        ...Object.keys(scope), (
                                             hookType.endsWith(
                                                 'Expression'
                                             ) ? 'return ' : ''
                                         ) + result[name][type][hookType]
-                                    ))(
-                                        data, null, {}, {}, type,
-                                        entities,
-                                        this.configuration.database.model, (
-                                            object:Object
-                                        ):string => JSON.stringify(
-                                            object, null, 4
-                                        ), modelName, modelSpecification,
-                                        result[name][type], now,
-                                        nowUTCTimestamp,
-                                        this.getFilenameByPrefix,
-                                        this.attachmentWithPrefixExists.bind(
-                                            data, data
-                                        ), result[name][type])
+                                    ))(...Object.values(scope))
                                     if (result[name][type].hasOwnProperty(
                                         'value'
                                     ) && result[name][type].value === undefined
                                     )
                                         delete result[name][type].value
                                 }
+                        }
                         let fileFound:boolean = false
                         if (
                             data.hasOwnProperty(name) &&
@@ -3434,7 +3437,27 @@ export class DataScopeService {
             } else {
                 result[name].name = name
                 result[name].value = null
-                if (Object.keys(data).length === 0)
+                if (Object.keys(data).length === 0) {
+                    const scope:Object = {
+                        newDocument: data,
+                        oldDocument: null,
+                        userContext: {},
+                        securitySettings: {},
+                        name,
+                        models: entities,
+                        modelConfiguration: this.configuration.database.model,
+                        serialize: (object:Object):string => JSON.stringify(
+                            object, null, 4),
+                        modelName,
+                        model: modelSpecification,
+                        propertySpecification: result[name],
+                        now,
+                        nowUTCTimestamp,
+                        getFilenameByPrefix: this.getFilenameByPrefix,
+                        attachmentWithPrefixExists:
+                            this.attachmentWithPrefixExists.bind(
+                                data, data)
+                    }
                     for (const type of [
                         'onCreateExpression', 'onCreateExecution'
                     ])
@@ -3443,28 +3466,15 @@ export class DataScopeService {
                             result[name][type]
                         ) {
                             result[name].value = (new Function(
-                                'newDocument', 'oldDocument', 'userContext',
-                                'securitySettings', 'name', 'models',
-                                'modelConfiguration', 'serialize', 'modelName',
-                                'model', 'propertySpecification', 'now',
-                                'nowUTCTimestamp', 'getFilenameByPrefix',
-                                'attachmentWithPrefixExists', (
+                                ...Object.keys(scope), (
                                     type.endsWith('Expression') ? 'return ' :
                                     ''
                                 ) + result[name][type]
-                            ))(
-                                data, null, {}, {}, name, entities,
-                                this.configuration.database.model,
-                                (object:Object):string => JSON.stringify(
-                                    object, null, 4
-                                ), modelName, modelSpecification, result[name],
-                                now, nowUTCTimestamp, this.getFilenameByPrefix,
-                                this.attachmentWithPrefixExists.bind(
-                                    data, data
-                                ), result[name])
+                            ))(...Object.values(scope))
                             if (result[name].value === undefined)
                                 result[name].value = null
                         }
+                }
                 if (
                     data.hasOwnProperty(name) &&
                     ![undefined, null].includes(data[name])
@@ -5621,11 +5631,11 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
                 (initialized)="initialized = true"
                 *ngIf="editorType === 'code' || editor.indentUnit; else tinyMCE"
             ></code-editor>
-            <ng-template #tinyMCE><!-- TODO<angular-tinymce
+            <ng-template #tinyMCE><angular-tinymce
                 ${propertyContent.editor}
                 (init)="initialized = true"
                 [settings]="editor"
-            ></angular-tinymce>--></ng-template>
+            ></angular-tinymce></ng-template>
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
@@ -6978,8 +6988,8 @@ export class PaginationComponent {
         MatDialogModule,
         MatInputModule,
         MatSelectModule,
-        MatTooltipModule/* TODO,
-        TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)*/
+        MatTooltipModule,
+        TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
     ],
     /*
         NOTE: Running "determineProviders()" is not yet supported by the
