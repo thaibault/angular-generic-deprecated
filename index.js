@@ -18,7 +18,6 @@
     endregion
 */
 // region imports
-import {tinymceDefaultSettings, TinyMceModule} from 'angular-tinymce'
 import Tools, {
     $, $DomNode, DomNode, globalContext, PlainObject
 } from 'clientnode'
@@ -116,13 +115,6 @@ import {defaultAnimation} from './animation'
 export type AllowedRoles = string|Array<string>|{
     read:string|Array<string>;
     write:string|Array<string>;
-}
-export type CodeMirror = {
-    getValue:() => string;
-    on:(name:string, callback:(instance:CodeMirror, event:Object) => void) =>
-        void;
-    setOption:(name:string, value:any) => void;
-    setValue:(value:string) => void;
 }
 export type Constraint = {
     description?:string;
@@ -249,46 +241,44 @@ export const CODE_MIRROR_DEFAULT_OPTIONS:PlainObject = {
     lineNumbers: true,
     scrollbarStyle: 'native'
 }
-const tinyMCEBasePath:string = '/tinymce/'
-export const TINY_MCE_DEFAULT_OPTIONS:PlainObject = Tools.extendObject(
-    true, tinymceDefaultSettings, {
-        /* eslint-disable camelcase */
-        // region paths
-        baseURL: tinyMCEBasePath,
-        skin_url: `${tinyMCEBasePath}skins/lightgray`,
-        theme_url: `${tinyMCEBasePath}themes/modern/theme.min.js`,
-        tinymceScriptURL: `${tinyMCEBasePath}tinymce.min.js`,
-        // endregion
-        allow_conditional_comments: false,
-        allow_script_urls: false,
-        cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
-        convert_fonts_to_spans: true,
-        document_base_url: '/',
-        element_format: 'xhtml',
-        entity_encoding: 'raw',
-        fix_list_elements: true,
-        forced_root_block: null,
-        hidden_input: false,
-        invalid_elements: 'em',
-        invalid_styles: 'color font-size line-height',
-        keep_styles: false,
-        menubar: false,
-        /* eslint-disable max-len */
-        plugins: 'fullscreen link code hr nonbreaking searchreplace visualblocks',
-        /* eslint-enable max-len */
-        relative_urls: false,
-        remove_script_host: false,
-        remove_trailing_brs: true,
-        schema: 'html5',
-        /* eslint-disable max-len */
-        toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect fontselect fontsizeselect | searchreplace visualblocks fullscreen code',
-        toolbar2: 'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',
-        /* eslint-enable max-len */
-        trim: true
-        /* eslint-enable camelcase */
-    })
+const tinymceBasePath:string = '/tinymce/'
+export const TINYMCE_DEFAULT_OPTIONS:PlainObject = {
+    /* eslint-disable camelcase */
+    // region paths
+    baseURL: tinymceBasePath,
+    skin_url: `${tinymceBasePath}skins/lightgray`,
+    theme_url: `${tinymceBasePath}themes/modern/theme.min.js`,
+    scriptPath: `${tinymceBasePath}tinymce.min.js`,
+    // endregion
+    allow_conditional_comments: false,
+    allow_script_urls: false,
+    cache_suffix: `?version=${UTC_BUILD_TIMESTAMP}`,
+    convert_fonts_to_spans: true,
+    document_base_url: '/',
+    element_format: 'xhtml',
+    entity_encoding: 'raw',
+    fix_list_elements: true,
+    forced_root_block: null,
+    hidden_input: false,
+    invalid_elements: 'em',
+    invalid_styles: 'color font-size line-height',
+    keep_styles: false,
+    menubar: false,
+    /* eslint-disable max-len */
+    plugins: 'fullscreen link code hr nonbreaking searchreplace visualblocks',
+    /* eslint-enable max-len */
+    relative_urls: false,
+    remove_script_host: false,
+    remove_trailing_brs: true,
+    schema: 'html5',
+    /* eslint-disable max-len */
+    toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect fontselect fontsizeselect | searchreplace visualblocks fullscreen code',
+    toolbar2: 'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',
+    /* eslint-enable max-len */
+    trim: true
+    /* eslint-enable camelcase */
+}
 // endregion
-console.log(TINY_MCE_DEFAULT_OPTIONS)
 // region basic services
 // IgnoreTypeCheck
 @Injectable()
@@ -5221,107 +5211,62 @@ export class IntervalsInputComponent implements OnInit {
 // // / endregion
 // // endregion
 // // region text/selection
-@Component({
-    animations: [defaultAnimation],
-    changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
-    providers: [{
-        provide: NG_VALUE_ACCESSOR,
-        useExisting: forwardRef(():typeof CodeEditorComponent =>
-            CodeEditorComponent),
-        multi: true
-    }],
-    selector: 'code-editor',
-    template: '<textarea #hostDomNode></textarea>'
-})
 /**
- * Provides a generic code editor.
+ * Provides a generic editor.
  * @property static:applicationInterfaceLoad - Promise which resolves when
- * code editor is fully loaded.
- * @property static:modesLoad - Mapping from mode to their loading state.
+ * specific editor factories are fully loaded.
  *
- * @property blur - Blur event emitter.
- * @property codeMirror - Current code mirror constructor.
  * @property configuration - Code mirror configuration.
- * @property focus - Focus event emitter.
+ * @property contentSetterMethodName - Defines the instance method to set
+ * content updates.
+ * @property disabled - Indicates inputs disabled state.
+ * @property extendObject - Extend object pipe's transform method.
+ * @property factory - Current editor constructor.
  * @property hostDomNode - Host textarea dom element to bind editor to.
+ * @property instance - Currently active editor instance.
  * @property initialized - Initialized event emitter.
- * @property instance - Currently active code editor instance.
+ * @property tools - Tools service instance.
  * @property model - Current editable text string.
  * @property modelChange - Change event emitter.
  */
-export class CodeEditorComponent extends AbstractValueAccessor
+export class AbstractEditorComponent extends AbstractValueAccessor
     implements AfterViewInit {
-    static applicationInterfaceLoad:Promise<Object>|null = null
-    static modesLoad:{[key:string]:Promise<void>|true} = {}
+    static applicationInterfaceLoad:{[key:string]:Promise<any>|null} = {}
 
-    @Output() blur:EventEmitter<{
-        event:Object;
-        instance:CodeMirror;
-    }> = new EventEmitter()
-    codeMirror:{
-        fromTextArea:(domNode:DomNode, configuration:PlainObject) => CodeMirror
-    }
     @Input() configuration:PlainObject = {}
+    contentSetterMethodName:string = 'setContent'
     @Input() disabled:boolean|null = null
     extendObject:Function
-    @Output() focus:EventEmitter<{
-        event:Object;instance:CodeMirror;
-    }> = new EventEmitter()
+    factory:any
     @ViewChild('hostDomNode') hostDomNode:ElementRef
-    @Output() initialized:EventEmitter<Object> = new EventEmitter()
-    instance:CodeMirror|null = null
+    instance:any = null
+    @Output() initialized:EventEmitter<any> = new EventEmitter()
+    tools:ToolsService
     @Input() model:string = ''
     @Output() modelChange:EventEmitter<string> = new EventEmitter()
-    tools:ToolsService
+    factoryName:string = ''
     /**
      * Initializes the code mirror resource loading if not available yet.
-     * @param extendObjectPipe - Injected extend object pipe instance.
      * @param injector - Application specific injector to use instead auto
      * detected one.
-     * @param tools - Tools service instance.
      * @returns Nothing.
      */
-    constructor(
-        extendObjectPipe:ExtendObjectPipe,
-        @Optional() injector:Injector,
-        tools:ToolsService
-    ) {
+    constructor(injector:Injector) {
         super(injector)
-        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
-        this.tools = tools
-        if (this.tools.globalContext.CodeMirror)
-            this.codeMirror = this.tools.globalContext.CodeMirror
-        else if (
-            typeof CodeEditorComponent.applicationInterfaceLoad !== 'object'
-        )
-            CodeEditorComponent.applicationInterfaceLoad = Promise.all([
-                new Promise((resolve:Function):$DomNode => this.tools.$(`<link
-                    href="${CODE_MIRROR_DEFAULT_OPTIONS.path.base}` +
-                    `${CODE_MIRROR_DEFAULT_OPTIONS.path.cascadingStyleSheet}"
-                    rel="stylesheet"
-                    type="text/css"
-                />`).appendTo('head').on('load', resolve)),
-                new Promise((
-                    resolve:Function, reject:Function
-                ):Object => this.tools.$.ajax({
-                    cache: true,
-                    dataType: 'script',
-                    error: reject,
-                    success: ():void => {
-                        this.codeMirror = this.tools.globalContext.CodeMirror
-                        resolve(this.codeMirror)
-                    },
-                    url: CODE_MIRROR_DEFAULT_OPTIONS.path.base +
-                        CODE_MIRROR_DEFAULT_OPTIONS.path.script
-                }))
-            ])
+        const get:Function = determineInjector(
+            injector, this, this.constructor)
+        this.extendObject = get(ExtendObjectPipe).transform.bind(get(
+            ExtendObjectPipe))
+        this.tools = get(ToolsService)
+        if (this.tools.globalContext[this.factoryName])
+            this.factory = this.tools.globalContext[this.factoryName]
     }
     /**
      * Initializes the code editor element.
      * @returns Nothing.
      */
     async ngAfterViewInit():Promise<void> {
-        if (this.codeMirror)
+        if (this.factory)
             /*
                 NOTE: We have to do a dummy timeout to avoid an event emit in
                 first initializing call stack.
@@ -5329,10 +5274,104 @@ export class CodeEditorComponent extends AbstractValueAccessor
             await this.tools.tools.timeout()
         else
             try {
-                await CodeEditorComponent.applicationInterfaceLoad
+                await AbstractEditorComponent.applicationInterfaceLoad[
+                    this.factoryName]
             } catch (error) {
                 throw error
             }
+    }
+    /**
+     * Synchronizes given value into internal code mirror instance.
+     * @param value - Given value to set in code editor.
+     * @param additionalParameter - Additional arguments will be forwarded to
+     * the overridden method invocation.
+     * @returns What inherited method returns.
+     */
+    export(value:any, ...additionalParameter:Array<any>):any {
+        this.model = [null, undefined].includes(value) ? '' : value.toString()
+        if (this.instance)
+            this.instance[this.contentSetterMethodName](this.model)
+        else
+            this.initialValue = value
+        return super.export(value, ...additionalParameter)
+    }
+    /**
+     * Triggers disabled state changes.
+     * @param isDisabled - Indicates disabled state.
+     * @returns Nothing.
+     */
+    setDisabledState(isDisabled:boolean):void {
+        this.disabled = isDisabled
+    }
+}
+@Component({
+    animations: [defaultAnimation],
+    changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
+    providers: [{
+        multi: true,
+        provide: NG_VALUE_ACCESSOR,
+        useExisting: forwardRef(():typeof CodeEditorComponent =>
+            CodeEditorComponent)
+    }],
+    selector: 'code-editor',
+    template: '<textarea #hostDomNode></textarea>'
+})
+/**
+ * Provides a generic code editor.
+ * @property static:modesLoad - Mapping from mode to their loading state.
+ *
+ * @property blur - Blur event emitter.
+ * @property focus - Focus event emitter.
+ */
+export class CodeEditorComponent extends AbstractEditorComponent
+    implements AfterViewInit {
+    static modesLoad:{[key:string]:Promise<void>|true} = {}
+
+    @Output() blur:EventEmitter<any> = new EventEmitter()
+    contentSetterMethodName:string = 'setValue'
+    factoryName:string = 'CodeMirror'
+    @Output() focus:EventEmitter<any> = new EventEmitter()
+    /**
+     * Initializes the code mirror resource loading if not available yet.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
+     * @returns Nothing.
+     */
+    constructor(injector:Injector) {
+        super(injector)
+        if (typeof CodeEditorComponent.applicationInterfaceLoad[
+            this.factoryName
+        ] !== 'object')
+            CodeEditorComponent.applicationInterfaceLoad[
+                this.factoryName
+            ] = Promise.all([
+                new Promise((resolve:Function):$DomNode => this.tools.$(`<link
+                    href="${CODE_MIRROR_DEFAULT_OPTIONS.path.base}` +
+                    `${CODE_MIRROR_DEFAULT_OPTIONS.path.cascadingStyleSheet}"
+                    rel="stylesheet"
+                    type="text/css"
+                />`).appendTo('head').on('load', resolve)),
+                new Promise((resolve:Function, reject:Function):Object =>
+                    this.tools.$.ajax({
+                        cache: true,
+                        dataType: 'script',
+                        error: reject,
+                        success: ():void => {
+                            this.factory =
+                                this.tools.globalContext[this.factoryName]
+                            resolve(this.factory)
+                        },
+                        url: CODE_MIRROR_DEFAULT_OPTIONS.path.base +
+                            CODE_MIRROR_DEFAULT_OPTIONS.path.script
+                    }))
+            ])
+    }
+    /**
+     * Initializes the code editor element.
+     * @returns Nothing.
+     */
+    async ngAfterViewInit():Promise<void> {
+        await super.ngAfterViewInit()
         if (this.configuration.mode)
             if (CodeEditorComponent.modesLoad.hasOwnProperty(
                 this.configuration.mode
@@ -5368,31 +5407,18 @@ export class CodeEditorComponent extends AbstractValueAccessor
         const configuration:PlainObject = this.extendObject(
             {}, this.configuration, {readOnly: this.disabled})
         delete configuration.path
-        this.instance = this.codeMirror.fromTextArea(
+        this.instance = this.factory.fromTextArea(
             this.hostDomNode.nativeElement, configuration)
-        this.instance.setValue(this.model)
-        this.instance.on('blur', (instance:CodeMirror, event:Object):void =>
-            this.blur.emit({event, instance}))
+        this.instance[this.contentSetterMethodName](this.model)
+        this.instance.on('blur', (instance:any, event:any):void =>
+            this.blur.emit(event))
         this.instance.on('change', ():void => {
             this.onChangeCallback(this.instance.getValue())
             this.modelChange.emit(this.model)
         })
-        this.instance.on('focus', (instance:CodeMirror, event:Object):void =>
-            this.focus.emit({event, instance}))
-        this.initialized.emit(this.codeMirror)
-    }
-    /**
-     * Synchronizes given value into internal code mirror instance.
-     * @param value - Given value to set in code editor.
-     * @param additionalParameter - Additional arguments will be forwarded to
-     * the overridden method invocation.
-     * @returns What inherited method returns.
-     */
-    export(value:any, ...additionalParameter:Array<any>):any {
-        this.model = value || ''
-        if (this.instance)
-            this.instance.setValue(this.model)
-        return super.export(value, ...additionalParameter)
+        this.instance.on('focus', (instance:any, event:any):void =>
+            this.focus.emit(event))
+        this.initialized.emit(this.instance)
     }
     /**
      * Triggers disabled state changes.
@@ -5400,8 +5426,179 @@ export class CodeEditorComponent extends AbstractValueAccessor
      * @returns Nothing.
      */
     setDisabledState(isDisabled:boolean):void {
+        super.setDisabledState(isDisabled)
         if (this.instance)
-            this.instance.setOption('readOnly', isDisabled)
+            this.instance.setOption('readOnly', this.disabled)
+    }
+}
+@Component({
+    animations: [defaultAnimation],
+    changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
+    providers: [{
+        multi: true,
+        provide: NG_VALUE_ACCESSOR,
+        useExisting: forwardRef(():typeof TextEditorComponent =>
+            TextEditorComponent)
+    }],
+    selector: 'text-editor',
+    template: '<textarea #hostDomNode></textarea>'
+})
+/**
+ * Provides a generic text editor.
+ */
+export class TextEditorComponent extends AbstractEditorComponent
+    implements AfterViewInit, OnDestroy {
+    factoryName:string = 'tinymce'
+    // region events
+    // / region native
+    @Output() click:EventEmitter<any> = new EventEmitter()
+    @Output() dblclick:EventEmitter<any> = new EventEmitter()
+    @Output() MouseDown:EventEmitter<any> = new EventEmitter()
+    @Output() MouseUp:EventEmitter<any> = new EventEmitter()
+    @Output() MousemMve:EventEmitter<any> = new EventEmitter()
+    @Output() MouseOver:EventEmitter<any> = new EventEmitter()
+    @Output() MouseOut:EventEmitter<any> = new EventEmitter()
+    @Output() MouseEnter:EventEmitter<any> = new EventEmitter()
+    @Output() MouseLeave:EventEmitter<any> = new EventEmitter()
+    @Output() KeyDown:EventEmitter<any> = new EventEmitter()
+    @Output() KeyPress:EventEmitter<any> = new EventEmitter()
+    @Output() KeyUp:EventEmitter<any> = new EventEmitter()
+    @Output() ContextMenu:EventEmitter<any> = new EventEmitter()
+    @Output() Paste:EventEmitter<any> = new EventEmitter()
+    // / endregion
+    // / region core
+    @Output() Init:EventEmitter<any> = new EventEmitter()
+    @Output() Focus:EventEmitter<any> = new EventEmitter()
+    @Output() Blur:EventEmitter<any> = new EventEmitter()
+    @Output() BeforeSetContent:EventEmitter<any> = new EventEmitter()
+    @Output() SetContent:EventEmitter<any> = new EventEmitter()
+    @Output() GetContent:EventEmitter<any> = new EventEmitter()
+    @Output() OreProcess:EventEmitter<any> = new EventEmitter()
+    @Output() PostProcess:EventEmitter<any> = new EventEmitter()
+    @Output() NodeChange:EventEmitter<any> = new EventEmitter()
+    @Output() Undo:EventEmitter<any> = new EventEmitter()
+    @Output() Redo:EventEmitter<any> = new EventEmitter()
+    @Output() Change:EventEmitter<any> = new EventEmitter()
+    @Output() Dirty:EventEmitter<any> = new EventEmitter()
+    @Output() Remove:EventEmitter<any> = new EventEmitter()
+    @Output() ExecCommand:EventEmitter<any> = new EventEmitter()
+    @Output() PastePreProcess:EventEmitter<any> = new EventEmitter()
+    @Output() PastePostProcess:EventEmitter<any> = new EventEmitter()
+    // / endregion
+    // endregion
+    /**
+     * Initializes the tinymce resource loading if not available yet.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
+     * @returns Nothing.
+     */
+    constructor(injector:Injector) {
+        super(injector)
+        if (typeof TextEditorComponent.applicationInterfaceLoad[
+            this.factoryName
+        ] !== 'object')
+            TextEditorComponent.applicationInterfaceLoad[
+                this.factoryName
+            ] = new Promise((resolve:Function, reject:Function):Object =>
+                this.tools.$.ajax({
+                    cache: true,
+                    dataType: 'script',
+                    error: reject,
+                    success: ():void => {
+                        this.factory = this.tools.globalContext.tinymce
+                        resolve(this.factory)
+                    },
+                    url: TINYMCE_DEFAULT_OPTIONS.scriptPath
+                }))
+    }
+    /**
+     * Initializes the text editor element.
+     * @returns Nothing.
+     */
+    async ngAfterViewInit():Promise<void> {
+        await super.ngAfterViewInit()
+        const configuration:PlainObject = this.extendObject(
+            {}, this.configuration)
+        delete configuration.scriptPath
+        configuration.target = this.hostDomNode.nativeElement
+        const initializeInstanceCallback = configuration.init_instance_callback
+        configuration.init_instance_callback = (instance:any):void => {
+            this.instance = instance
+            this.instance[this.contentSetterMethodName](this.model)
+            this.instance.on('Change', ():void => {
+                this.onChangeCallback(this.instance.getContent())
+                this.modelChange.emit(this.model)
+            })
+            if (initializeInstanceCallback)
+                initializeInstanceCallback(this.instance)
+            for (const name:string of [
+                'click',
+                'dblclick',
+                'Mousedown',
+                'MouseUp',
+                'MouseMove',
+                'MouseOver',
+                'MouseOut',
+                'MouseEnter',
+                'MouseLeave',
+                'KeyDown',
+                'KeyPress',
+                'ContextMenu',
+                'Paste',
+                'Focus',
+                'Blur',
+                'BeforeSetContent',
+                'SetContent',
+                'GetContent',
+                'PreProcess',
+                'PostProcess',
+                'NodeChange',
+                'Undo',
+                'Redo',
+                'Change',
+                'Dirty',
+                'Remove',
+                'PastePreProcess',
+                'PastePostProcess'
+            ])
+                this.instance.on(name, this[name].emit.bind(this[name]))
+            this.instance.on('KeyUp', (event:any):void => {
+                this.KeyUp.emit(event)
+                this.onChangeCallback(this.instance.getContent())
+                this.onTouchedCallback()
+                this.modelChange.emit(this.model)
+            })
+            this.instance.on('ExecCommand', (event:any):void => {
+                this.execcommand.emit(event)
+                const content:any = this.editor.getContent()
+                if (typeof content === 'string' && content.length > 0) {
+                    this.onChangeCallback(this.instance.getContent())
+                    this.onTouchedCallback()
+                    this.modelChange.emit(this.model)
+                }
+            })
+        }
+        configuration.setup = (instance:any):void => instance.on('Init', (
+        ):void => this.initialized.emit(instance))
+        this.factory.init(configuration)
+    }
+    /**
+     * Frees all tinymce allocated data from memory if there exists some.
+     * @returns Nothing.
+     */
+    ngOnDestroy():void {
+        if (this.instance)
+            this.factory.remove(this.instance)
+    }
+    /**
+     * Triggers disabled state changes.
+     * @param isDisabled - Indicates disabled state.
+     * @returns Nothing.
+     */
+    setDisabledState(isDisabled:boolean):void {
+        super.setDisabledState(isDisabled)
+        if (this.instance)
+            this.editor.setMode(this.disabled ? 'readonly' : 'design')
     }
 }
 /* eslint-disable max-len */
@@ -5629,13 +5826,14 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
                 [configuration]="editor"
                 [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
                 (initialized)="initialized = true"
-                *ngIf="editorType === 'code' || editor.indentUnit; else tinyMCE"
+                *ngIf="editorType === 'code' || editor.indentUnit; else tinymce"
             ></code-editor>
-            <ng-template #tinyMCE><angular-tinymce
+            <ng-template #tinymce><text-editor
                 ${propertyContent.editor}
-                (init)="initialized = true"
-                [settings]="editor"
-            ></angular-tinymce></ng-template>
+                [configuration]="editor"
+                [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
+                (initialized)="initialized = true"
+            ></text-editor></ng-template>
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
@@ -5766,7 +5964,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
                     TextareaComponent.defaultEditorOptions.code, this.editor)
             else
                 this.editor = this._extendObject(
-                    true, {}, TINY_MCE_DEFAULT_OPTIONS,
+                    true, {}, TINYMCE_DEFAULT_OPTIONS,
                     TextareaComponent.defaultEditorOptions.markup, this.editor)
         else
             this.selectableEditor = false
@@ -6856,6 +7054,7 @@ export class PaginationComponent {
         CodeEditorComponent,
         InputComponent,
         SimpleInputComponent,
+        TextEditorComponent,
         TextareaComponent,
         FileInputComponent,
         PaginationComponent
@@ -6975,6 +7174,7 @@ export class PaginationComponent {
         CodeEditorComponent,
         InputComponent,
         SimpleInputComponent,
+        TextEditorComponent,
         TextareaComponent,
         FileInputComponent,
         PaginationComponent
@@ -6988,8 +7188,7 @@ export class PaginationComponent {
         MatDialogModule,
         MatInputModule,
         MatSelectModule,
-        MatTooltipModule,
-        TinyMceModule.forRoot(TINY_MCE_DEFAULT_OPTIONS)
+        MatTooltipModule
     ],
     /*
         NOTE: Running "determineProviders()" is not yet supported by the
