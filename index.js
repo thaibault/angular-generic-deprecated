@@ -3783,9 +3783,16 @@ export class AbstractResolver implements Resolve<PlainObject> {
 // / endregion
 // endregion
 // region provider
+/**
+ * Creates a database connection and/or synchronisation stream plus missing
+ * local indexes.
+ * @param data - Injected data service instance.
+ * @param injector - Injected injector service instance.
+ * @returns Initializer function.
+ */
 export function dataServiceInitializerFactory(
     data:DataService, injector:Injector
-) {
+):Function {
     /*
         NOTE: We need this statement here to avoid having an ugly typescript
         error.
