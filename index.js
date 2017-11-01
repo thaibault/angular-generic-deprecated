@@ -3782,6 +3782,21 @@ export class AbstractResolver implements Resolve<PlainObject> {
 }
 // / endregion
 // endregion
+// region provider
+export function dataServiceInitializerFactory(
+    data:DataService, injector:Injector
+) {
+    /*
+        NOTE: We need this statement here to avoid having an ugly typescript
+        error.
+    */
+    2
+    return ():Promise<void> => {
+        InitialDataService.injectors.add(injector)
+        return data.initialize()
+    }
+}
+// endregion
 // region components/directives
 // / region abstract
 /**
@@ -5599,11 +5614,11 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
                 (initialized)="initialized = true"
                 *ngIf="editorType === 'code' || editor.indentUnit; else tinyMCE"
             ></code-editor>
-            <ng-template #tinyMCE><angular-tinymce
+            <ng-template #tinyMCE><!-- TODO<angular-tinymce
                 ${propertyContent.editor}
                 (init)="initialized = true"
                 [settings]="editor"
-            ></angular-tinymce></ng-template>
+            ></angular-tinymce>--></ng-template>
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
@@ -7079,12 +7094,7 @@ export class PaginationComponent {
             deps: [DataService, Injector],
             multi: true,
             provide: APP_INITIALIZER,
-            useFactory(data:DataService, injector:Injector):Function {
-                return ():Promise<void> => {
-                    InitialDataService.injectors.add(injector)
-                    return data.initialize()
-                }
-            }
+            useFactory: dataServiceInitializerFactory
         }
     ]
 })
