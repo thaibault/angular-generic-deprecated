@@ -297,7 +297,7 @@ export class UtilityService {
     static globalContext:any = globalContext
     static tools:typeof Tools = Tools
 
-    fixed:UtilityService = UtilityService
+    fixed:typeof UtilityService = UtilityService
     tools:Tools = new Tools()
 }
 // IgnoreTypeCheck
@@ -5244,7 +5244,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
     extendObject:Function
     factory:any
     factoryName:string = ''
-    fixedUtility:UtilityService
+    fixedUtility:typeof UtilityService
     @ViewChild('hostDomNode') hostDomNode:ElementRef
     instance:any = null
     @Output() initialized:EventEmitter<any> = new EventEmitter()
@@ -5357,14 +5357,18 @@ export class CodeEditorComponent extends AbstractEditorComponent
             CodeEditorComponent.applicationInterfaceLoad[
                 this.factoryName
             ] = Promise.all([
-                new Promise((resolve:Function):$DomNode => this.utility.$(`<link
-                    href="${CODE_MIRROR_DEFAULT_OPTIONS.path.base}` +
-                    `${CODE_MIRROR_DEFAULT_OPTIONS.path.cascadingStyleSheet}"
-                    rel="stylesheet"
-                    type="text/css"
-                />`).appendTo('head').on('load', resolve)),
+                new Promise((resolve:Function):$DomNode =>
+                    this.fixedUtility.$(`
+                        <link
+                            href="${CODE_MIRROR_DEFAULT_OPTIONS.path.base}` +
+                            CODE_MIRROR_DEFAULT_OPTIONS.path
+                                .cascadingStyleSheet +
+                            `" rel="stylesheet"
+                            type="text/css"
+                        />
+                    `).appendTo('head').on('load', resolve)),
                 new Promise((resolve:Function, reject:Function):Object =>
-                    this.utility.$.ajax({
+                    this.fixedUtility.$.ajax({
                         cache: true,
                         dataType: 'script',
                         error: reject,
@@ -5400,7 +5404,7 @@ export class CodeEditorComponent extends AbstractEditorComponent
             } else {
                 CodeEditorComponent.modesLoad[this.configuration.mode] =
                     new Promise((resolve:Function, reject:Function):Object =>
-                        this.utility.$.ajax({
+                        this.fixedUtility.$.ajax({
                             cache: true,
                             dataType: 'script',
                             error: reject,
@@ -5512,12 +5516,12 @@ export class TextEditorComponent extends AbstractEditorComponent
             TextEditorComponent.applicationInterfaceLoad[
                 this.factoryName
             ] = new Promise((resolve:Function, reject:Function):Object =>
-                this.utility.$.ajax({
+                this.fixedUtility.$.ajax({
                     cache: true,
                     dataType: 'script',
                     error: reject,
                     success: ():void => {
-                        this.factory = this.utility.fixed.globalContext.tinymce
+                        this.factory = this.fixedUtility.globalContext.tinymce
                         resolve(this.factory)
                     },
                     url: TINYMCE_DEFAULT_OPTIONS.scriptPath
