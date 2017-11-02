@@ -5243,13 +5243,13 @@ export class AbstractEditorComponent extends AbstractValueAccessor
     @Input() disabled:boolean|null = null
     extendObject:Function
     factory:any
+    factoryName:string = ''
+    fixedUtility:UtilityService
     @ViewChild('hostDomNode') hostDomNode:ElementRef
     instance:any = null
     @Output() initialized:EventEmitter<any> = new EventEmitter()
-    tools:Tools
     @Input() model:string = ''
     @Output() modelChange:EventEmitter<string> = new EventEmitter()
-    factoryName:string = ''
     /**
      * Initializes the code mirror resource loading if not available yet.
      * @param injector - Application specific injector to use instead auto
@@ -5262,7 +5262,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
             injector, this, this.constructor)
         this.extendObject = get(ExtendObjectPipe).transform.bind(get(
             ExtendObjectPipe))
-        this.tools = get(UtilityService).fixed.tools
+        this.fixedUtility = get(UtilityService).fixed
     }
     /**
      * Initializes the code editor element.
@@ -5270,8 +5270,9 @@ export class AbstractEditorComponent extends AbstractValueAccessor
      */
     async ngAfterViewInit():Promise<void> {
         if (!this.factory)
-            if (this.utility.globalContext[this.factoryName])
-                this.factory = this.utility.globalContext[this.factoryName]
+            if (this.ficedUtility.globalContext[this.factoryName])
+                this.factory =
+                    this.fixedUtility.globalContext[this.factoryName]
             else if (AbstractEditorComponent.factories[this.factoryName])
                 this.factory = AbstractEditorComponent.factories[
                     this.factoryName]
@@ -5281,7 +5282,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
                 NOTE: We have to do a dummy timeout to avoid an event emit in
                 first initializing call stack.
             */
-            await this.tools.timeout()
+            await this.fixedUtility.tools.timeout()
         } else {
             try {
                 await AbstractEditorComponent.applicationInterfaceLoad[
@@ -5369,7 +5370,8 @@ export class CodeEditorComponent extends AbstractEditorComponent
                         error: reject,
                         success: ():void => {
                             this.factory =
-                                this.utility.globalContext[this.factoryName]
+                                this.utility.fixed.globalContext[
+                                    this.factoryName]
                             resolve(this.factory)
                         },
                         url: CODE_MIRROR_DEFAULT_OPTIONS.path.base +
@@ -5516,7 +5518,7 @@ export class TextEditorComponent extends AbstractEditorComponent
                     dataType: 'script',
                     error: reject,
                     success: ():void => {
-                        this.factory = this.utility.globalContext.tinymce
+                        this.factory = this.utility.fixed.globalContext.tinymce
                         resolve(this.factory)
                     },
                     url: TINYMCE_DEFAULT_OPTIONS.scriptPath
