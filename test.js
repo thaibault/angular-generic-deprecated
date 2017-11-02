@@ -53,6 +53,8 @@ registerAngularTest(function(
     const {NoopAnimationsModule} = require(
         '@angular/platform-browser/animations')
     const {ActivatedRoute, Router} = require('@angular/router')
+    const {createDefaultAnimation, createFadeAnimation} = require(
+        './animation')
     const index:Object = require('./index')
     const {
         ActivatedRouteStub, dummyEvent, getNativeEvent,
@@ -69,11 +71,9 @@ registerAngularTest(function(
         ConfirmComponent,
         DataScopeService,
         DataService,
-        defaultAnimation,
         ExtendObjectPipe,
         ExtractDataPipe,
         ExtractRawDataPipe,
-        fadeAnimation,
         FileInputComponent,
         GetFilenameByPrefixPipe,
         InitialDataService,
@@ -1462,14 +1462,14 @@ registerAngularTest(function(
                         // / endregion
                         // endregion
                         // region animations
-                        self.test(`fadeAnimation (${roundType})`, (
+                        self.test(`createFadeAnimation (${roundType})`, (
                             assert:Object
                         ):void => assert.strictEqual(
-                            typeof fadeAnimation(), 'object'))
-                        self.test(`defaultAnimation (${roundType})`, (
+                            typeof createFadeAnimation(), 'object'))
+                        self.test(`createDefaultAnimation (${roundType})`, (
                             assert:Object
                         ):void => assert.strictEqual(
-                            typeof defaultAnimation(), 'object'))
+                            typeof createDefaultAnimation(), 'object'))
                         // endregion
                         // region services
                         self.test(
@@ -1954,6 +1954,8 @@ registerAngularTest(function(
                                 assert.deepEqual((await resolver.list(
                                     [{[specialNames.id]: 'asc'}], 1, 1, 'es'
                                 ))[0], item)
+                                resolver.useLimit = true
+                                resolver.useSkip = true
                                 assert.strictEqual((await resolver.list(
                                     [{[specialNames.id]: 'asc'}], 2
                                 )).length, 0)
@@ -2222,17 +2224,20 @@ registerAngularTest(function(
                     assert.deepEqual(instance.onDataComplete(), false)
                     assert.deepEqual(instance.onDataError(), false)
                     // endregion
+                    assert.deepEqual(instance.allItems, [])
                     assert.deepEqual(instance.items, [])
                     assert.strictEqual(instance.items.length, 0)
-                    assert.strictEqual(instance.items.total, 0)
+                    assert.strictEqual(instance.allItems.length, 0)
                     // region applyPageConstraints/update
                     instance._route.testData = {items: [{
                         [specialNames.id]: 2}]}
                     fixture.detectChanges()
                     await fixture.whenStable()
+                    assert.deepEqual(
+                        instance.allItems, [{[specialNames.id]: 2}])
                     assert.deepEqual(instance.items, [{[specialNames.id]: 2}])
                     assert.strictEqual(instance.items.length, 1)
-                    assert.strictEqual(instance.items.total, 1)
+                    assert.strictEqual(instance.allItems.length, 1)
                     assert.strictEqual(instance.page, 1)
                     assert.strictEqual(instance.limit, 10)
                     assert.strictEqual(instance.regularExpression, false)
@@ -2251,16 +2256,16 @@ registerAngularTest(function(
                     await fixture.whenStable()
                     assert.strictEqual(
                         instance._router.url,
-                        `${instance._itemsPath}/${specialNames.id}-asc/0/2/` +
+                        `${instance._itemsPath}/${specialNames.id}/0/2/` +
                         'regex-test')
                     // endregion
                     await instance._router.navigate([
-                        instance._itemsPath, `${specialNames.id}-asc`, 1, 2,
+                        instance._itemsPath, `${specialNames.id}`, 1, 2,
                         'regex-'])
                     await fixture.whenStable()
                     assert.strictEqual(
                         instance._router.url,
-                        `${instance._itemsPath}/${specialNames.id}-asc/1/2/` +
+                        `${instance._itemsPath}/${specialNames.id}/1/2/` +
                         'regex-')
                     // region changeItemWrapperFactory
                     assert.strictEqual(await instance.changeItemWrapperFactory(
@@ -2268,7 +2273,7 @@ registerAngularTest(function(
                     await fixture.whenStable()
                     assert.strictEqual(
                         instance._router.url,
-                        `${instance._itemsPath}/${specialNames.id}-asc/0/2/` +
+                        `${instance._itemsPath}/${specialNames.id}/0/2/` +
                         'regex-test')
                     // endregion
                     assert.deepEqual(instance.selectedItems, new Set())
