@@ -4349,7 +4349,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
         const result:any = super.ngOnDestroy(...parameter)
         for (const subscription of this._subscriptions)
             subscription.unsubscribe()
-        this._toolsInstance.releaseLock(`${this.constructor.name}Update`)
         return result
     }
     /**
@@ -4407,6 +4406,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             if (result)
                 this.allItemsChecked = false
         }
+        this._toolsInstance.releaseLock(`${this.constructor.name}Update`)
         return result
     }
     /**
@@ -5270,7 +5270,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
      */
     async ngAfterViewInit():Promise<void> {
         if (!this.factory)
-            if (this.ficedUtility.globalContext[this.factoryName])
+            if (this.fixedUtility.globalContext[this.factoryName])
                 this.factory =
                     this.fixedUtility.globalContext[this.factoryName]
             else if (AbstractEditorComponent.factories[this.factoryName])
@@ -5369,9 +5369,8 @@ export class CodeEditorComponent extends AbstractEditorComponent
                         dataType: 'script',
                         error: reject,
                         success: ():void => {
-                            this.factory =
-                                this.utility.fixed.globalContext[
-                                    this.factoryName]
+                            this.factory = this.fixedUtility.globalContext[
+                                this.factoryName]
                             resolve(this.factory)
                         },
                         url: CODE_MIRROR_DEFAULT_OPTIONS.path.base +
