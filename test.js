@@ -97,7 +97,7 @@ registerAngularTest(function(
         StringStartsWithPipe,
         StringTemplatePipe,
         TextareaComponent,
-        ToolsService,
+        UtilityService,
         TypePipe
     } = index
     const Module:Object = index.default
@@ -274,17 +274,17 @@ registerAngularTest(function(
                             StringStartsWithPipe)
                         const stringTemplatePipe:StringTemplatePipe = get(
                             StringTemplatePipe)
-                        const tools:ToolsService = get(ToolsService)
+                        const utility:UtilityService = get(UtilityService)
                         const typePipe:TypePipe = get(TypePipe)
                         specialNames = initialData.configuration.database.model
                             .property.name.special
                         // region basic services
-                        self.test(`ToolsService (${roundType})`, (
+                        self.test(`UtilityService (${roundType})`, (
                             assert:Object
                         ):void => {
-                            assert.ok(tools.$)
-                            assert.ok(tools.globalContext)
-                            assert.strictEqual(tools.tools.stringMD5(
+                            assert.ok(utility.fixed.$)
+                            assert.ok(utility.fixed.globalContext)
+                            assert.strictEqual(utility.fixed.tools.stringMD5(
                                 'test'
                             ), '098f6bcd4621d373cade4e832627b4f6')
                         })
@@ -904,7 +904,7 @@ registerAngularTest(function(
                                 const result:any = await extractRawDataPipe
                                     .getNotAlreadyExistingAttachmentData(
                                         test[0], test[1], test[2])
-                                let equal:any = Tools.equals(
+                                let equal:any = utility.fixed.tools.equals(
                                     result, test[3], null, -1, [], true, true)
                                 if (
                                     typeof equal === 'object' &&
@@ -914,9 +914,11 @@ registerAngularTest(function(
                                 assert.ok(equal)
                                 if (!equal)
                                     console.warn(
-                                        Tools.representObject(result),
+                                        utility.fixed.tools.representObject(
+                                            result),
                                         '!=',
-                                        Tools.representObject(test[3]))
+                                        utility.fixed.tools.representObject(
+                                            test[3]))
                             }
                             // endregion
                             // region removeAlreadyExistingData
@@ -2091,7 +2093,7 @@ registerAngularTest(function(
                     inputDomNode.dispatchEvent(getNativeEvent('input'))
                     await fixture.whenStable()
                     assert.strictEqual(instance.model.value, 'aa')
-                    instance.model = Tools.extendObject(
+                    instance.model = UtilityService.tools.extendObject(
                         {}, instance.model, {maximumLength: 2})
                     fixture.detectChanges()
                     await fixture.whenStable()
@@ -2139,7 +2141,7 @@ registerAngularTest(function(
                             inputDomNode.dispatchEvent(getNativeEvent('input'))
                             await fixture.whenStable()
                             assert.strictEqual(instance.model.value, 'aa')
-                            instance.model = Tools.extendObject(
+                            instance.model = UtilityService.tools.extendObject(
                                 {}, instance.model, {maximumLength: 2})
                             fixture.detectChanges()
                             await fixture.whenStable()

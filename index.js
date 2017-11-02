@@ -53,7 +53,6 @@ import {
     /* eslint-disable no-unused-vars */
     PLATFORM_ID,
     /* eslint-enable no-unused-vars */
-    ReflectiveInjector,
     Renderer2,
     SimpleChanges,
     TemplateRef,
@@ -284,16 +283,22 @@ export const TINYMCE_DEFAULT_OPTIONS:PlainObject = {
 @Injectable()
 /**
  * Injectable angular service for the tools class.
- * @property $ - Holds an instance of a generic dom abstraction layer like
- * jquery.
- * @property globalContext - Hold a reference to the environment specific
+ * @property static:$ - Holds an instance of a generic dom abstraction layer
+ * like jquery.
+ * @property static:globalContext - Hold a reference to the environment specific
  * global scope.
- * @property tools - Holds a reference to the wrapped tools class.
+ * @property static:tools - Holds a reference to the wrapped tools class.
+ *
+ * @property fixed - Reference to this static members.
+ * @property tools - Holds an injector scope specific tools instance.
  */
-export class ToolsService {
-    $:any = $
-    globalContext:any = globalContext
-    tools:typeof Tools = Tools
+export class UtilityService {
+    static $:any = $
+    static globalContext:any = globalContext
+    static tools:typeof Tools = Tools
+
+    fixed:UtilityService = UtilityService
+    tools:Tools = new Tools()
 }
 // IgnoreTypeCheck
 @Injectable()
@@ -306,7 +311,7 @@ export class ToolsService {
  * tidy up global scope or free memory (by removing dom node attributes).
  *
  * @property configuration - Expected initial data name.
- * @property tools - Injected or given tools service instance.
+ * @property utility - Injected or given utility service instance.
  */
 export class InitialDataService {
     static defaultScope:PlainObject = {configuration: {database: {
@@ -364,27 +369,28 @@ export class InitialDataService {
     /**
      * Sets all properties of given initial data as properties to this
      * initializing instance.
-     * @param tools - Saves the generic tools service instance.
+     * @param utility - Saves the generic tools service instance.
      * @returns Nothing.
      */
-    constructor(tools:ToolsService) {
-        if (!tools)
-            tools = new ToolsService()
-        this.tools = tools.tools
+    constructor(utility:UtilityService) {
+        if (!utility)
+            utility = new UtilityService()
+        this.tools = utility.fixed.tools
         this.set(
             InitialDataService.defaultScope,
-            'genericInitialData' in tools.globalContext ?
-                tools.globalContext.genericInitialData :
+            'genericInitialData' in utility.fixed.globalContext ?
+                utility.fixed.globalContext.genericInitialData :
                 {})
         if (InitialDataService.removeFoundData)
-            delete tools.globalContext.genericInitialData
+            delete utility.fixed.globalContext.genericInitialData
         if (
-            'document' in tools.globalContext &&
-            'querySelector' in tools.globalContext.document
+            'document' in utility.fixed.globalContext &&
+            'querySelector' in utility.fixed.globalContext.document
         ) {
             // TODO how to get right dom node?
-            const domNode:DomNode = tools.globalContext.document.querySelector(
-                'application')
+            const domNode:DomNode =
+                utility.fixed.globalContext.document.querySelector(
+                    'application')
             if (domNode && 'getAttribute' in domNode && domNode.getAttribute(
                 'initialData'
             )) {
@@ -460,9 +466,7 @@ export class AbstractToolsPipe implements PipeTransform {
      * @returns Whatever the underlying tools function returns.
      */
     transform(...parameter:Array<any>):any {
-        return ReflectiveInjector.resolveAndCreate([ToolsService]).get(
-            ToolsService
-        ).tools[this.methodName](...parameter)
+        return UtilityService.tools[this.methodName](...parameter)
     }
 }
 /**
@@ -479,9 +483,7 @@ export class AbstractInvertedToolsPipe extends AbstractToolsPipe
      * @returns Whatever the underlying tools function returns.
      */
     transform(...parameter:Array<any>):any {
-        const tools:typeof Tools = ReflectiveInjector.resolveAndCreate([
-            ToolsService
-        ]).get(ToolsService).tools
+        const tools:typeof Tools = UtilityService.tools
         // IgnoreTypeCheck
         return tools.invertArrayFilter(tools[this.methodName])(...parameter)
     }
@@ -1345,7 +1347,7 @@ export class ExtractRawDataPipe implements PipeTransform {
      * @param injector - Injector service instance.
      * @param numberGetUTCTimestampPipe - Date (and time) to unix timestamp
      * conversion.
-     * @param tools - Injected tools service instance.
+     * @param utility - Injected utility service instance.
      * @returns Nothing.
      */
     constructor(
@@ -1354,7 +1356,7 @@ export class ExtractRawDataPipe implements PipeTransform {
         initialData:InitialDataService,
         injector:Injector,
         numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe,
-        tools:ToolsService
+        utility:UtilityService
     ) {
         this.attachmentsAreEqual = attachmentsAreEqualPipe.transform.bind(
             attachmentsAreEqualPipe)
@@ -1364,7 +1366,7 @@ export class ExtractRawDataPipe implements PipeTransform {
         this.numberGetUTCTimestamp = numberGetUTCTimestampPipe.transform.bind(
             numberGetUTCTimestampPipe)
         this.specialNames = this.modelConfiguration.property.name.special
-        this.tools = tools.tools
+        this.tools = utility.fixed.tools
     }
     /**
      * Converts all (nested) date object in given data structure to their
@@ -2498,7 +2500,7 @@ export class DataService {
      * @param ngZone - Injected execution context service instance.
      * @param platformID - Platform identification string.
      * @param stringFormatPipe - Injected string format pipe instance.
-     * @param tools - Injected tools service instance.
+     * @param utility - Injected utility service instance.
      * @returns Nothing.
      */
     constructor(
@@ -2508,7 +2510,7 @@ export class DataService {
         ngZone:NgZone,
         @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe,
-        tools:ToolsService
+        utility:UtilityService
     ) {
         this.configuration = initialData.configuration
         if (this.configuration.database.hasOwnProperty('publicURL'))
@@ -2520,7 +2522,7 @@ export class DataService {
         this.ngZone = ngZone
         this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
-        this.tools = tools.tools
+        this.tools = utility.fixed.tools
         const idName:string =
             this.configuration.database.model.property.name.special.id
         const revisionName:string =
@@ -3111,7 +3113,7 @@ export class DataScopeService {
      * @param numberGetUTCTimestampPipe - Date (and time) to unix timestamp
      * converter pipe instance.
      * @param representObjectPipe - Represent object pipe instance.
-     * @param tools - Injected tools service instance.
+     * @param utility - Injected utility service instance.
      * @returns Nothing.
      */
     constructor(
@@ -3123,7 +3125,7 @@ export class DataScopeService {
         initialData:InitialDataService,
         numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe,
         representObjectPipe:RepresentObjectPipe,
-        tools:ToolsService
+        utility:UtilityService
     ) {
         this.attachmentWithPrefixExists =
             attachmentWithPrefixExistsPipe.transform.bind(
@@ -3138,7 +3140,7 @@ export class DataScopeService {
             numberGetUTCTimestampPipe)
         this.representObject = representObjectPipe.transform.bind(
             representObjectPipe)
-        this.tools = tools.tools
+        this.tools = utility.fixed.tools
     }
     /**
      * Useful to sets route specific data in a resolver.
@@ -4039,7 +4041,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
             ExtendObjectPipe))
         this._stringCapitalize = get(StringCapitalizePipe).transform.bind(get(
             StringCapitalizePipe))
-        this._tools = get(ToolsService).tools
+        this._tools = get(UtilityService).fixed.tools
     }
     /**
      * Initializes data observation when view has been initialized.
@@ -4200,7 +4202,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
         this._route = get(ActivatedRoute)
         this._router = get(Router)
         // IgnoreTypeCheck
-        this._toolsInstance = new this._tools()
+        this._toolsInstance = get(UtilityService).tools
         /*
             NOTE: Parameter have to be read before data to ensure that all page
             constraints have been set correctly before item slicing.
@@ -4347,6 +4349,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
         const result:any = super.ngOnDestroy(...parameter)
         for (const subscription of this._subscriptions)
             subscription.unsubscribe()
+        this._toolsInstance.releaseLock(`${this.constructor.name}Update`)
         return result
     }
     /**
@@ -4404,7 +4407,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             if (result)
                 this.allItemsChecked = false
         }
-        this._toolsInstance.releaseLock(`${this.constructor.name}Update`)
         return result
     }
     /**
@@ -4422,8 +4424,8 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
  * @property type - Saves current input type.
  */
 export class AbstractValueAccessor extends DefaultValueAccessor {
-    onChangeCallback:(value:any) => void = Tools.noop
-    onTouchedCallback:() => void = Tools.noop
+    onChangeCallback:(value:any) => void = UtilityService.tools.noop
+    onTouchedCallback:() => void = UtilityService.tools.noop
     @Input() type:string|null = null
     /**
      * Initializes and forwards needed services to the default value accessor
@@ -4730,7 +4732,7 @@ const providers:Array<PlainObject> = [{
     ahead of time compilation.
 
 // IgnoreTypeCheck
-@Directive(Tools.extendObject(true, {
+@Directive(UtilityService.tools.extendObject(true, {
 }, DefaultValueAccessor.decorators[0].args[0], {providers}))
 */
 @Directive({
@@ -5244,7 +5246,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
     @ViewChild('hostDomNode') hostDomNode:ElementRef
     instance:any = null
     @Output() initialized:EventEmitter<any> = new EventEmitter()
-    tools:ToolsService
+    tools:Tools
     @Input() model:string = ''
     @Output() modelChange:EventEmitter<string> = new EventEmitter()
     factoryName:string = ''
@@ -5260,7 +5262,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
             injector, this, this.constructor)
         this.extendObject = get(ExtendObjectPipe).transform.bind(get(
             ExtendObjectPipe))
-        this.tools = get(ToolsService)
+        this.tools = get(UtilityService).fixed.tools
     }
     /**
      * Initializes the code editor element.
@@ -5268,8 +5270,8 @@ export class AbstractEditorComponent extends AbstractValueAccessor
      */
     async ngAfterViewInit():Promise<void> {
         if (!this.factory)
-            if (this.tools.globalContext[this.factoryName])
-                this.factory = this.tools.globalContext[this.factoryName]
+            if (this.utility.globalContext[this.factoryName])
+                this.factory = this.utility.globalContext[this.factoryName]
             else if (AbstractEditorComponent.factories[this.factoryName])
                 this.factory = AbstractEditorComponent.factories[
                     this.factoryName]
@@ -5279,7 +5281,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
                 NOTE: We have to do a dummy timeout to avoid an event emit in
                 first initializing call stack.
             */
-            await this.tools.tools.timeout()
+            await this.tools.timeout()
         } else {
             try {
                 await AbstractEditorComponent.applicationInterfaceLoad[
@@ -5354,20 +5356,20 @@ export class CodeEditorComponent extends AbstractEditorComponent
             CodeEditorComponent.applicationInterfaceLoad[
                 this.factoryName
             ] = Promise.all([
-                new Promise((resolve:Function):$DomNode => this.tools.$(`<link
+                new Promise((resolve:Function):$DomNode => this.utility.$(`<link
                     href="${CODE_MIRROR_DEFAULT_OPTIONS.path.base}` +
                     `${CODE_MIRROR_DEFAULT_OPTIONS.path.cascadingStyleSheet}"
                     rel="stylesheet"
                     type="text/css"
                 />`).appendTo('head').on('load', resolve)),
                 new Promise((resolve:Function, reject:Function):Object =>
-                    this.tools.$.ajax({
+                    this.utility.$.ajax({
                         cache: true,
                         dataType: 'script',
                         error: reject,
                         success: ():void => {
                             this.factory =
-                                this.tools.globalContext[this.factoryName]
+                                this.utility.globalContext[this.factoryName]
                             resolve(this.factory)
                         },
                         url: CODE_MIRROR_DEFAULT_OPTIONS.path.base +
@@ -5397,7 +5399,7 @@ export class CodeEditorComponent extends AbstractEditorComponent
             } else {
                 CodeEditorComponent.modesLoad[this.configuration.mode] =
                     new Promise((resolve:Function, reject:Function):Object =>
-                        this.tools.$.ajax({
+                        this.utility.$.ajax({
                             cache: true,
                             dataType: 'script',
                             error: reject,
@@ -5509,12 +5511,12 @@ export class TextEditorComponent extends AbstractEditorComponent
             TextEditorComponent.applicationInterfaceLoad[
                 this.factoryName
             ] = new Promise((resolve:Function, reject:Function):Object =>
-                this.tools.$.ajax({
+                this.utility.$.ajax({
                     cache: true,
                     dataType: 'script',
                     error: reject,
                     success: ():void => {
-                        this.factory = this.tools.globalContext.tinymce
+                        this.factory = this.utility.globalContext.tinymce
                         resolve(this.factory)
                     },
                     url: TINYMCE_DEFAULT_OPTIONS.scriptPath
@@ -6377,7 +6379,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
      * @param representObjectPipe - Saves the object to string representation
      * pipe instance.
      * @param stringFormatPipe - Saves the string formation pipe instance.
-     * @param tools - Tools service instance.
+     * @param utility - Utility service instance.
      * @returns Nothing.
      */
     constructor(
@@ -6388,12 +6390,12 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         initialData:InitialDataService,
         representObjectPipe:RepresentObjectPipe,
         stringFormatPipe:StringFormatPipe,
-        tools:ToolsService
+        utility:UtilityService
     ) {
         this.configuration = initialData.configuration
         this.attachmentTypeName =
             this.configuration.database.model.property.name.special.attachment
-        this.keyCode = tools.tools.keyCode
+        this.keyCode = utility.fixed.tools.keyCode
         this.deletedName =
             this.configuration.database.model.property.name.special.deleted
         this.idName =
@@ -7210,7 +7212,7 @@ export class PaginationComponent {
     */
     providers: [
         // region services
-        ToolsService,
+        UtilityService,
         InitialDataService,
         AlertService,
         DataService,
