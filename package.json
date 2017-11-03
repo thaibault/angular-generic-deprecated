@@ -25,7 +25,9 @@
     "testRunner.js",
     "testRunner.compiled.js"
   ],
-  "main": "aheadOfTime.compiled/index.js",
+  "main": "index.compiled.js",
+  "jsnext:main": "aheadOfTime.compiled/index.js",
+  "types": "aheadOfTime.compiled/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/thaibault/angularGeneric"
