@@ -48,5 +48,5 @@
         "suppressImplicitAnyIndexErrors": false,
         "target": "esnext"
     },
-    "files": ["index.ts"]
+    "files": ["../../index.ts"]
 }

@@ -45,7 +45,7 @@ try {
     module.require('source-map-support/register');
 }
 catch (error) { }
-import { defaultAnimation } from './animation';
+import defaultAnimation from './animation';
 // endregion
 if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
     /* eslint-disable no-var */

@@ -80,6 +80,7 @@ export const defaultAnimation = trigger('defaultAnimation', [
             defaultOptions.style.enter.initial))
     ])
 ]);
+export default defaultAnimation;
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:

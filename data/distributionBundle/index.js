@@ -108,7 +108,7 @@ try {
     module.require('source-map-support/register')
 } catch (error) {}
 
-import {defaultAnimation} from './animation'
+import defaultAnimation from './animation'
 // endregion
 // region types
 export type AllowedRoles = string|Array<string>|{

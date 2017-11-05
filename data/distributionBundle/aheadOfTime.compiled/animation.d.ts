@@ -9,3 +9,4 @@ export declare const defaultOptions: PlainObject;
 export declare function createFadeAnimation(options?: string | PlainObject): AnimationTriggerMetadata;
 export declare const createDefaultAnimation: Function;
 export declare const defaultAnimation: AnimationTriggerMetadata;
+export default defaultAnimation;
