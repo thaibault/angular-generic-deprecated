@@ -42,7 +42,7 @@
     "build:typescript": "tsc --project aheadOfTimeCompilation.json",
     "clear": "webOptimizer clear",
     "document": "webOptimizer document",
-    "export": "webOptimizer build '{development:{tool:false},module:{preprocessor:{javaScript:{options:{plugins:{__remove__:\"transform-runtime\"}}}}}}' && npm run build:pre-renderer && npm run build:test",
+    "export": "npm run build:config && npm run build:aot && webOptimizer build '{development:{tool:false},module:{preprocessor:{javaScript:{options:{plugins:{__remove__:\"transform-runtime\"}}}}}}' && npm run build:pre-renderer && npm run build:test",
     "lint": "webOptimizer check:type; webOptimizer lint",
     "prepare": "npm run build",
     "serve": "webOptimizer serve",
