@@ -4224,8 +4224,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             data:PlainObject
         ):void => {
             this.limit = Math.max(1, this.limit || 1)
-            // TODO wen in pagination "++" ausgewählt wird verschwinden alle
-            // pages
             this.allItems = data.items.slice()
             data.items.splice(0, (this.page - 1) * this.limit)
             if (data.items.length > this.limit)
