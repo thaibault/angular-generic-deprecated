@@ -15,7 +15,7 @@
   ],
   "files": [
     "aheadOfTime.compiled",
-    "genericAheadOfTimeCompilation.compiled.json",
+    "aheadOfTimeCompilation.compiled.json",
     "animation.js",
     "index.js",
     "mockup.js",
