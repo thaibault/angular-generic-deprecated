@@ -35,7 +35,7 @@
   "scripts": {
     "build": "npm run build:config && npm run build:aot && webOptimizer build && npm run build:pre-renderer && npm run build:test",
     "build:aot": "ngc --project aheadOfTimeCompilation.json",
-    "build:config": "sed 's/\"genDir\"\\: *\"/\\0..\\/..\\//' aheadOfTimeCompilation.json | sed 's/\"outDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"rootDir\"\\: *\"/\\0..\\/..\\//' >aheadOfTimeCompilation.compiled.json",
+    "build:config": "sed 's/\"genDir\"\\: *\"/\\0..\\/..\\//' aheadOfTimeCompilation.json | sed 's/\"outDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"rootDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"index\\.ts\"/\"..\\/..\\/index.ts\"/' >aheadOfTimeCompilation.compiled.json",
     "build:dll": "webOptimizer build:dll",
     "build:pre-renderer": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types,transform-runtime --presets env,stage-0 --source-maps inline --out-file preRender.compiled.js preRender.js",
     "build:test": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types --presets env,stage-0 --source-maps inline --out-file testRunner.compiled.js testRunner.js",
