@@ -9791,7 +9791,7 @@ useful services, filters and directives for every project needs
 <a href="http://torben.website/angularGeneric/data/distributionBundle.zip" class="website-start-up-animation-number-7 zip-distribution-bundle-download">app.zip</a>
 <i class="icon-download-arrow website-start-up-animation-number-6"></i>
 <span class="glyphicon glyphicon-arrow-left arrow-left-api website-start-up-animation-number-5"></span>
-<a href="http://torben.website/angularGeneric/api/angular-generic/1.0.368/" class="api-link website-start-up-animation-number-4">
+<a href="http://torben.website/angularGeneric/api/angular-generic/1.0.389/" class="api-link website-start-up-animation-number-4">
 <langreplace>
 API<span>Documentation</span>
 </langreplace>
@@ -9804,11 +9804,13 @@ API<span>Documentation</span>
 <div class="inner main-content">
 <p><a href="https://travis-ci.org/thaibault/angularGeneric"><img alt="Build Status" src="https://travis-ci.org/thaibault/angularGeneric.svg?branch=master"></a></p>
 <h2 id="use-case">Use case</h2>
-<p>This module provides generic tools needed for angular:</p>
+<p>This modules is ahead of time compatible and ready for tree-shaking, can be used as umd module for just in time compilation and supports the babel-stack as esnext with flow.js annotations or typescript within the same codebase!</p>
+<p>This module provides generic tools needed for any non trivial appliction:</p>
 <ul>
 <li>Services<ul>
 <li>Initial data management (pre-)rendered by any backend.</li>
-<li>Database abstraction</li>
+<li>Database abstraction layer and in-browser integration.</li>
+<li>Easy extendable injector tokens through application specific injector auto detection.</li>
 </ul>
 </li>
 <li>Pipes<ul>
@@ -9818,12 +9820,20 @@ API<span>Documentation</span>
 </ul>
 </li>
 <li>Components build on top of material2<ul>
-<li>Simple slider.</li>
-<li>File input / preview</li>
-<li>Form fields with generic description, placeholder and validation.</li>
-<li>Text- and Codeeditor.</li>
+<li>Abstract (auto updatedable) item and/or items components.</li>
+<li>Simple content carousel.</li>
+<li>File input / preview.</li>
+<li>Form fields with generic description, placeholder and validation auto generated from a model specifications.</li>
+<li>Text- and Codeeditor with lazy and optional resource loading.</li>
 <li>Live Date and Time representation.</li>
 <li>Pagination</li>
+</ul>
+</li>
+<li>Helper<ul>
+<li>Easy and pre-configured prerendering utility.</li>
+<li>Central default animation concept.</li>
+<li>Generic pre-configured ahead of time compilation specification.</li>
+<li>Automatic module asset determination of (exports, declarations and provider).</li>
 </ul>
 </li>
 </ul>
@@ -9947,6 +9957,6 @@ about this website
 </p>
 </div></footer>
 <a href="#top">top<!--deDE:nach oben--><!--frFR:ascendant--></a>
-<script src="index.js?md5=6935ffa76eb0bf6c559a"></script>
+<script src="index.js?md5=cc0220b30e04218f7254"></script>
 
 </body></html>

@@ -95,7 +95,8 @@ export function determinePaths(
  * @returns A promise which resolves to a list of pre-rendered html strings.
  */
 export default function(
-    ApplicationComponent:Object, ApplicationModule:Object,
+    ApplicationComponent:Object,
+    ApplicationModule:Object,
     // IgnoreTypeCheck
     routes:string|Array<string>|Routes = [],
     globalVariableNamesToInject:string|Array<string> = 'genericInitialData',
@@ -106,7 +107,8 @@ export default function(
     scope:Object = {genericInitialData: {configuration: {database: {
         connector: {adapter: 'memory'},
         plugins: [PouchDBAdapterMemory]
-    }}}}, encoding:string = 'utf-8'
+    }}}},
+    encoding:string = 'utf-8'
 ):Promise<Array<string>> {
     globalVariableNamesToInject = [].concat(globalVariableNamesToInject)
     routes = [].concat(routes)
