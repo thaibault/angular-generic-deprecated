@@ -18,6 +18,7 @@
     endregion
 */
 // region imports
+// IgnoreTypeCheck
 import Tools, {PlainObject} from 'clientnode'
 import {
     animate, AnimationTriggerMetadata, style, transition, trigger

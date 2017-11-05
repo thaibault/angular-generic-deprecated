@@ -6958,8 +6958,8 @@ export class PaginationComponent {
 // IgnoreTypeCheck
 @NgModule({
     /*
-        NOTE: Running "determineDeclarations()" is not yet supported by the
-        AOT-Compiler.
+        NOTE: Running "moduleHelper.determineDeclarations()" is not yet
+        supported by the AOT-Compiler.
     */
     declarations: [
         // region pipes
@@ -7083,8 +7083,8 @@ export class PaginationComponent {
     ],
     entryComponents: [ConfirmComponent],
     /*
-        NOTE: Running "determineExports()" is not yet supported by the
-        AOT-Compiler.
+        NOTE: Running "moduleHelper.determineExports()" is not yet supported by
+        the AOT-Compiler.
     */
     exports: [
         // region pipes
@@ -7212,8 +7212,8 @@ export class PaginationComponent {
         MatTooltipModule
     ],
     /*
-        NOTE: Running "determineProviders()" is not yet supported by the
-        AOT-Compiler.
+        NOTE: Running "moduleHelper.determineProviders()" is not yet supported
+        by the AOT-Compiler.
     */
     providers: [
         // region services
