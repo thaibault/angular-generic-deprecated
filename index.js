@@ -2439,8 +2439,6 @@ export class AlertService {
  * @property equals - Hilds the equals pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
- * @property interceptSynchronisationPromise - Promise which have to be
- * resolved before synchronisation for local database starts.
  * @property middlewares - Mapping of post and pre callback arrays to trigger
  * before or after each database transaction.
  * @property ngZone - Execution service instance.
@@ -2475,7 +2473,7 @@ export class DataService {
     database:typeof PouchDB
     equals:Function
     extendObject:Function
-    interceptSynchronisationPromise:Promise<any>|null = null
+    onlineState:boolean|null = null
     ngZone:NgZone
     middlewares:{
         pre:{[key:string]:Array<Function>};
@@ -2676,6 +2674,11 @@ export class DataService {
      * @returns A promise resolving when initialisation has finished.
      */
     async initialize():Promise<void> {
+        /*
+            NOTE: We want to allow other services to manipulate the database
+            constructor before initializing them.
+        */
+        await this.tools.timeout()
         const options:PlainObject = this.extendObject(
             /* eslint-disable camelcase */
             true, {skip_setup: true},
@@ -2823,17 +2826,6 @@ export class DataService {
                 }
             }
         this.connection.installValidationMethods()
-        if (this.configuration.database.local && this.remoteConnection)
-            /*
-                NOTE: We want to allow other services to integrate an
-                interception promise.
-            */
-            // IgnoreTypeCheck
-            this.tools.timeout(async ():Promise<void> => {
-                if (this.interceptSynchronisationPromise)
-                    await this.interceptSynchronisationPromise
-                this.startSynchronisation()
-            })
         if (
             isPlatformServer(this.platformID) &&
             this.configuration.database.createGenericFlatIndex
@@ -2902,8 +2894,8 @@ export class DataService {
                             throw error
                         }
                 }
+            // endregion
         }
-        // endregion
     }
     /**
      * Creates a database index.
@@ -2988,6 +2980,18 @@ export class DataService {
     getAttachment(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.getAttachment(...parameter)
     }
+    // TODO
+    get online():boolean {
+        if (this.onlineState !== null)
+            return this.onlineState
+        if ('navigator' in this.tools.global)
+            return this.tools.global.navigator.onLine
+        return false
+    }
+    // TODO
+    set online(value:boolean):void {
+        this.onlineState = value
+    }
     /**
      * Creates or updates given data.
      * @param parameter - All parameter will be forwarded to the underlining
@@ -3056,19 +3060,71 @@ export class DataService {
     }
     /**
      * Starts synchronisation between a local and remote database.
-     * @returns Nothing.
+     * @returns A promise if a synchronisation has been started and is in sync
+     * with remote database or null if no stream was initialized due to
+     * corresponding database configuration.
      */
-    startSynchronisation():Object {
-        return this.synchronisation = this.connection.sync(
-            this.remoteConnection, {live: true, retry: true}
+    async startSynchronisation():Promise<Stream|null> {
+        let resolved:boolean = false
+        if (
+            this.configuration.database.local &&
+            this.remoteConnection &&
+            this.synchronisation === null
         )
-            .on('change', (info:Object):void => console.info('change', info))
-            .on('paused', ():void => console.info('paused'))
-            .on('active', ():void => console.info('active'))
-            .on('denied', (error:Object):void => console.warn('denied', error))
-            .on('complete', (info:Object):void =>
-                console.info('complete', info))
-            .on('error', (error:Object):void => console.error('error', error))
+            return await new Promise((
+                resolve:Function, reject:Function
+            ):void => {
+                this.synchronisation = this.connection.sync(
+                    this.remoteConnection, {live: true, retry: true}
+                )
+                    .on('change', (info:Object):void =>
+                        console.info('change', info))
+                    .on('paused', ():void => {
+                        if (!resolved) {
+                            resolved = true
+                            resolve(this.synchronisation)
+                        }
+                        console.info('paused')
+                    })
+                    .on('active', ():void => console.info('active'))
+                    .on('denied', (error:Object):void => {
+                        if (!resolved) {
+                            resolved = true
+                            reject({name: 'denied', error})
+                        }
+                        console.warn('denied', error)
+                    })
+                    .on('complete', (info:Object):void =>
+                        console.info('complete', info))
+                    .on('error', (error:Object):void => {
+                        if (!resolved) {
+                            resolved = true
+                            reject({name: 'error', error})
+                        }
+                        console.error('error', error)
+                    })
+            })
+        return null
+    }
+    /**
+     * Stop a current running data synchronisation.
+     * @returns A boolean indicating whether a synchronisation was really
+     * stopped or there were none.
+     */
+    async stopSynchronisation():Promise<boolean> {
+        if (this.synchronisation) {
+            const promise:Promise<Object> = new Promise((
+                resolve:Function, reject:Function
+            ):void => {
+                this.synchronisation.on('complete', resolve)
+                this.synchronisation.on('error', reject)
+            })
+            this.synchronisation.cancel()
+            await promise
+            this.synchronisation = null
+            return true
+        }
+        return false
     }
 }
 // IgnoreTypeCheck
