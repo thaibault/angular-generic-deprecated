@@ -17,9 +17,12 @@
     "aheadOfTime.compiled",
     "aheadOfTimeCompilation.compiled.json",
     "animation.js",
+    "animation.compiled.js",
     "index.js",
     "mockup.js",
     "mockup.compiled.js",
+    "moduleHelper.js",
+    "moduleHelper.compiled.js",
     "preRender.js",
     "preRender.compiled.js",
     "testRunner.js",
@@ -136,11 +139,17 @@
         }
       },
       "internal": {
+        "animation": {
+          "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './animation'"
+        },
         "index": {
           "__evaluate__": "(self.givenCommandLineArguments.length && ['build', 'export'].includes(self.givenCommandLineArguments[2]) ? [] : ['babel-polyfill', 'reflect-metadata', 'zone.js']).concat(self.givenCommandLineArguments.length && ['build:dll', 'serve', 'test:browser', 'watch:dll'].includes(self.givenCommandLineArguments[2]) ? `webpack-dev-server/client?http${self.development.server.cert ? 's' : ''}://0.0.0.0:${self.development.server.port}` : []).concat(self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? './test' : './index')"
         },
         "mockup": {
           "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './mockup'"
+        },
+        "moduleHelper": {
+          "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './moduleHelper'"
         },
         "vendor": {
           "__evaluate__": "self.debug && 2 < self.givenCommandLineArguments.length && ['build:dll', 'serve', 'test:browser', 'watch:dll'].includes(self.givenCommandLineArguments[2]) ? ['babel-polyfill', 'blob-util', 'clientnode', 'hammerjs', 'pouchdb', 'pouchdb-adapter-memory', 'pouchdb-find', 'pouchdb-validation', 'reflect-metadata', 'zone.js', 'rxjs', '@angular/animations', '@angular/common', '@angular/core', '@angular/http', '@angular/material', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router'].concat(self.givenCommandLineArguments[2] === 'serve' ? [] : ['script!qunitjs', 'weboptimizer/browserAPI', './mockup']) : []"
