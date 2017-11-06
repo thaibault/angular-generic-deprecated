@@ -2989,7 +2989,7 @@ export class DataService {
         return false
     }
     // TODO
-    set online(value:boolean):void {
+    set online(value:boolean) {
         this.onlineState = value
     }
     /**
@@ -3064,7 +3064,7 @@ export class DataService {
      * with remote database or null if no stream was initialized due to
      * corresponding database configuration.
      */
-    async startSynchronisation():Promise<Stream|null> {
+    async startSynchronisation():Promise<any> {
         let resolved:boolean = false
         if (
             this.configuration.database.local &&
