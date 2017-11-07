@@ -3065,12 +3065,12 @@ export class DataService {
      * corresponding database configuration.
      */
     async startSynchronisation():Promise<any> {
-        let resolved:boolean = false
         if (
             this.configuration.database.local &&
             this.remoteConnection &&
             this.synchronisation === null
-        )
+        ) {
+            let resolved:boolean = false
             return await new Promise((
                 resolve:Function, reject:Function
             ):void => {
@@ -3104,6 +3104,7 @@ export class DataService {
                         console.error('error', error)
                     })
             })
+        }
         return null
     }
     /**
