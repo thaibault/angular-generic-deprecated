@@ -2065,7 +2065,9 @@ registerAngularTest(function(
                 })
             // / endregion
             // / region input/select/textarea
-            this.test(`${InputComponent.name} (${roundType})`, async (
+            this[
+                targetTechnology === 'web' ? 'test' : 'skip'
+            ](`${InputComponent.name} (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
@@ -2108,7 +2110,7 @@ registerAngularTest(function(
             for (const component:AbstractNativeInputComponent of [
                 TextareaComponent, SimpleInputComponent
             ])
-                this.test(
+                this[targetTechnology === 'web' ? 'test' : 'skip'](
                     `${AbstractNativeInputComponent.name}/${component.name} ` +
                         `(${roundType})`,
                     async (assert:Object):Promise<void> => {
@@ -2211,7 +2213,9 @@ registerAngularTest(function(
             const testName:string =
                 'AbstractLiveDataComponent/AbstractItemsComponent (' +
                 `${roundType})`
-            this.test(testName, async (assert:Object):Promise<void> => {
+            this[
+                targetTechnology === 'web' ? 'test' : 'skip'
+            ](testName, async (assert:Object):Promise<void> => {
                 const done:Function = assert.async()
                 const fixture:ComponentFixture<ItemsComponent> =
                     TestBed.createComponent(ItemsComponent)
@@ -2323,7 +2327,9 @@ registerAngularTest(function(
                 }
                 done()
             })
-            this.test(`FileInputComponent (${roundType})`, async (
+            this[
+                targetTechnology === 'web' ? 'test' : 'skip'
+            ](`FileInputComponent (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
@@ -2411,7 +2417,9 @@ registerAngularTest(function(
                 done()
             })
             // / region pagination
-            this.test(`PaginationComponent (${roundType})`, async (
+            this[
+                targetTechnology === 'web' ? 'test' : 'skip'
+            ](`PaginationComponent (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
