@@ -5441,55 +5441,60 @@ export class CodeEditorComponent extends AbstractEditorComponent
      * Initializes the code editor element.
      * @returns Nothing.
      */
-    async ngAfterViewInit():Promise<void> {
-        await super.ngAfterViewInit()
-        if (this.configuration.mode)
-            if (CodeEditorComponent.modesLoad.hasOwnProperty(
-                this.configuration.mode
-            )) {
-                if (CodeEditorComponent.modesLoad[
+    ngAfterViewInit():Promise<void> {
+        /*
+            NOTE: "await super.ngAfterViewInit()" is not supported by
+            transpiler yet.
+        */
+        return super.ngAfterViewInit().then(async ():Promise<void> => {
+            if (this.configuration.mode)
+                if (CodeEditorComponent.modesLoad.hasOwnProperty(
                     this.configuration.mode
-                ] !== true)
+                )) {
+                    if (CodeEditorComponent.modesLoad[
+                        this.configuration.mode
+                    ] !== true)
+                        try {
+                            await CodeEditorComponent.modesLoad[
+                                this.configuration.mode]
+                        } catch (error) {
+                            throw error
+                        }
+                } else {
+                    CodeEditorComponent.modesLoad[this.configuration.mode] =
+                        new Promise((resolve:Function, reject:Function):Object =>
+                            this.fixedUtility.$.ajax({
+                                cache: true,
+                                dataType: 'script',
+                                error: reject,
+                                success: resolve,
+                                url: this.configuration.path.base +
+                                    this.configuration.path.mode.replace(
+                                        /{mode}/g, this.configuration.mode)
+                            }))
                     try {
                         await CodeEditorComponent.modesLoad[
                             this.configuration.mode]
                     } catch (error) {
                         throw error
                     }
-            } else {
-                CodeEditorComponent.modesLoad[this.configuration.mode] =
-                    new Promise((resolve:Function, reject:Function):Object =>
-                        this.fixedUtility.$.ajax({
-                            cache: true,
-                            dataType: 'script',
-                            error: reject,
-                            success: resolve,
-                            url: this.configuration.path.base +
-                                this.configuration.path.mode.replace(
-                                    /{mode}/g, this.configuration.mode)
-                        }))
-                try {
-                    await CodeEditorComponent.modesLoad[
-                        this.configuration.mode]
-                } catch (error) {
-                    throw error
                 }
-            }
-        const configuration:PlainObject = this.extendObject(
-            {}, this.configuration, {readOnly: this.disabled})
-        delete configuration.path
-        this.instance = this.factory.fromTextArea(
-            this.hostDomNode.nativeElement, configuration)
-        this.instance[this.contentSetterMethodName](this.model)
-        this.instance.on('blur', (instance:any, event:any):void =>
-            this.blur.emit(event))
-        this.instance.on('change', ():void => {
-            this.onChangeCallback(this.instance.getValue())
-            this.modelChange.emit(this.model)
+            const configuration:PlainObject = this.extendObject(
+                {}, this.configuration, {readOnly: this.disabled})
+            delete configuration.path
+            this.instance = this.factory.fromTextArea(
+                this.hostDomNode.nativeElement, configuration)
+            this.instance[this.contentSetterMethodName](this.model)
+            this.instance.on('blur', (instance:any, event:any):void =>
+                this.blur.emit(event))
+            this.instance.on('change', ():void => {
+                this.onChangeCallback(this.instance.getValue())
+                this.modelChange.emit(this.model)
+            })
+            this.instance.on('focus', (instance:any, event:any):void =>
+                this.focus.emit(event))
+            this.initialized.emit(this.instance)
         })
-        this.instance.on('focus', (instance:any, event:any):void =>
-            this.focus.emit(event))
-        this.initialized.emit(this.instance)
     }
     /**
      * Triggers disabled state changes.
@@ -5586,76 +5591,82 @@ export class TextEditorComponent extends AbstractEditorComponent
      * Initializes the text editor element.
      * @returns Nothing.
      */
-    async ngAfterViewInit():Promise<void> {
-        await super.ngAfterViewInit()
-        const configuration:PlainObject = this.extendObject(
-            {}, this.configuration)
-        this.factory.baseURL = configuration.baseURL
-        delete configuration.baseURL
-        delete configuration.scriptPath
-        configuration.target = this.hostDomNode.nativeElement
-        const initializeInstanceCallback = configuration.init_instance_callback
-        /* eslint-disable camelcase */
-        configuration.init_instance_callback = (instance:any):void => {
-        /* eslint-disable camelcase */
-            this.instance = instance
-            this.instance[this.contentSetterMethodName](this.model)
-            this.instance.on('Change', ():void => {
-                this.onChangeCallback(this.instance.getContent())
-                this.modelChange.emit(this.model)
-            })
-            if (initializeInstanceCallback)
-                initializeInstanceCallback(this.instance)
-            for (const name of [
-                'click',
-                'dblclick',
-                'MouseDown',
-                'MouseUp',
-                'MouseMove',
-                'MouseOver',
-                'MouseOut',
-                'MouseEnter',
-                'MouseLeave',
-                'KeyDown',
-                'KeyPress',
-                'ContextMenu',
-                'Paste',
-                'Focus',
-                'Blur',
-                'BeforeSetContent',
-                'SetContent',
-                'GetContent',
-                'PreProcess',
-                'PostProcess',
-                'NodeChange',
-                'Undo',
-                'Redo',
-                'Change',
-                'Dirty',
-                'Remove',
-                'PastePreProcess',
-                'PastePostProcess'
-            ])
-                this.instance.on(name, this[name].emit.bind(this[name]))
-            this.instance.on('KeyUp', (event:any):void => {
-                this.KeyUp.emit(event)
-                this.onChangeCallback(this.instance.getContent())
-                this.onTouchedCallback()
-                this.modelChange.emit(this.model)
-            })
-            this.instance.on('ExecCommand', (event:any):void => {
-                this.ExecCommand.emit(event)
-                const content:any = this.instance.getContent()
-                if (typeof content === 'string' && content.length > 0) {
+    ngAfterViewInit():Promise<void> {
+        /*
+            NOTE: "await super.ngAfterViewInit()" is not supported by
+            transpiler yet.
+        */
+        return super.ngAfterViewInit().then(():void => {
+            const configuration:PlainObject = this.extendObject(
+                {}, this.configuration)
+            this.factory.baseURL = configuration.baseURL
+            delete configuration.baseURL
+            delete configuration.scriptPath
+            configuration.target = this.hostDomNode.nativeElement
+            const initializeInstanceCallback:Function =
+                configuration.init_instance_callback
+            /* eslint-disable camelcase */
+            configuration.init_instance_callback = (instance:any):void => {
+            /* eslint-disable camelcase */
+                this.instance = instance
+                this.instance[this.contentSetterMethodName](this.model)
+                this.instance.on('Change', ():void => {
+                    this.onChangeCallback(this.instance.getContent())
+                    this.modelChange.emit(this.model)
+                })
+                if (initializeInstanceCallback)
+                    initializeInstanceCallback(this.instance)
+                for (const name of [
+                    'click',
+                    'dblclick',
+                    'MouseDown',
+                    'MouseUp',
+                    'MouseMove',
+                    'MouseOver',
+                    'MouseOut',
+                    'MouseEnter',
+                    'MouseLeave',
+                    'KeyDown',
+                    'KeyPress',
+                    'ContextMenu',
+                    'Paste',
+                    'Focus',
+                    'Blur',
+                    'BeforeSetContent',
+                    'SetContent',
+                    'GetContent',
+                    'PreProcess',
+                    'PostProcess',
+                    'NodeChange',
+                    'Undo',
+                    'Redo',
+                    'Change',
+                    'Dirty',
+                    'Remove',
+                    'PastePreProcess',
+                    'PastePostProcess'
+                ])
+                    this.instance.on(name, this[name].emit.bind(this[name]))
+                this.instance.on('KeyUp', (event:any):void => {
+                    this.KeyUp.emit(event)
                     this.onChangeCallback(this.instance.getContent())
                     this.onTouchedCallback()
                     this.modelChange.emit(this.model)
-                }
-            })
-        }
-        configuration.setup = (instance:any):void => instance.on('Init', (
-        ):void => this.initialized.emit(instance))
-        this.factory.init(configuration)
+                })
+                this.instance.on('ExecCommand', (event:any):void => {
+                    this.ExecCommand.emit(event)
+                    const content:any = this.instance.getContent()
+                    if (typeof content === 'string' && content.length > 0) {
+                        this.onChangeCallback(this.instance.getContent())
+                        this.onTouchedCallback()
+                        this.modelChange.emit(this.model)
+                    }
+                })
+            }
+            configuration.setup = (instance:any):void => instance.on('Init', (
+            ):void => this.initialized.emit(instance))
+            this.factory.init(configuration)
+        })
     }
     /**
      * Frees all tinymce allocated data from memory if there exists some.
