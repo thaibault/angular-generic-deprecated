@@ -39,7 +39,6 @@
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "preserveConstEnums": false,
-        "preserveSymlinks": false,
         "pretty": true,
         "outDir": "aheadOfTime.compiled",
         "rootDir": "./",
