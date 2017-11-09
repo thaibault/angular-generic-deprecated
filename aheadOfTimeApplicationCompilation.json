@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "lib": ["esnext", "dom"],
+        "module": "esnext",
+        "moduleResolution": "node",
+        "noImplicitAny": false,
+        "sourceMap": false,
+        "suppressImplicitAnyIndexErrors": true,
+        "target": "esnext"
+    },
+    "files": ["source/index.ts"]
+}
