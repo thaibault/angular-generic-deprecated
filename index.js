@@ -41,7 +41,6 @@ import {
     Injector,
     Input,
     NgModule,
-    NgZone,
     OnChanges,
     OnDestroy,
     OnInit,
@@ -1002,7 +1001,6 @@ export class NumberRoundPipe extends AbstractToolsPipe
 /**
  * Determines if given attachments are representing the same data.
  * @property data - Database service instance.
- * @property ngZone - Execution context service instance.
  * @property representObject - Represent object pipe's method.
  * @property specialNames - A mapping to database specific special property
  * names.
@@ -1010,7 +1008,6 @@ export class NumberRoundPipe extends AbstractToolsPipe
  */
 export class AttachmentsAreEqualPipe implements PipeTransform {
     data:DataService
-    ngZone:NgZone
     representObject:Function
     specialNames:PlainObject
     stringMD5:Function
@@ -1018,7 +1015,6 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
      * Gets needed services injected.
      * @param initialData - Injected initial data service instance.
      * @param injector - Application specific injector instance.
-     * @param ngZone - Injected execution context service instance.
      * @param representObjectPipe - Represent object pipe instance.
      * @param stringMD5Pipe - Injected string md5 pipe instance.
      * @returns Nothing.
@@ -1026,12 +1022,10 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
     constructor(
         initialData:InitialDataService,
         injector:Injector,
-        ngZone:NgZone,
         representObjectPipe:RepresentObjectPipe,
         stringMD5Pipe:StringMD5Pipe
     ) {
         this.data = injector.get(DataService)
-        this.ngZone = ngZone
         this.representObject = representObjectPipe.transform.bind(
             representObjectPipe)
         this.specialNames =
@@ -2447,7 +2441,6 @@ export class AlertService {
  * method.
  * @property middlewares - Mapping of post and pre callback arrays to trigger
  * before or after each database transaction.
- * @property ngZone - Execution service instance.
  * @property platformID - Platform identification string.
  * @property remoteConnection - The current remote database connection
  * instance.
@@ -2479,8 +2472,6 @@ export class DataService {
     database:typeof PouchDB
     equals:Function
     extendObject:Function
-    onlineState:boolean|null = null
-    ngZone:NgZone
     middlewares:{
         pre:{[key:string]:Array<Function>};
         post:{[key:string]:Array<Function>};
@@ -2501,7 +2492,6 @@ export class DataService {
      * @param equalsPipe - Equals pipe service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
-     * @param ngZone - Injected execution context service instance.
      * @param platformID - Platform identification string.
      * @param stringFormatPipe - Injected string format pipe instance.
      * @param utility - Injected utility service instance.
@@ -2511,7 +2501,6 @@ export class DataService {
         equalsPipe:EqualsPipe,
         extendObjectPipe:ExtendObjectPipe,
         initialData:InitialDataService,
-        ngZone:NgZone,
         @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe,
         utility:UtilityService
@@ -2523,7 +2512,6 @@ export class DataService {
         this.database = PouchDB
         this.equals = equalsPipe.transform.bind(equalsPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
-        this.ngZone = ngZone
         this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.tools = utility.fixed.tools
@@ -2985,18 +2973,6 @@ export class DataService {
      */
     getAttachment(...parameter:Array<any>):Promise<PlainObject> {
         return this.connection.getAttachment(...parameter)
-    }
-    // TODO
-    get online():boolean {
-        if (this.onlineState !== null)
-            return this.onlineState
-        if ('navigator' in this.tools.global)
-            return this.tools.global.navigator.onLine
-        return false
-    }
-    // TODO
-    set online(value:boolean) {
-        this.onlineState = value
     }
     /**
      * Creates or updates given data.
@@ -5468,16 +5444,17 @@ export class CodeEditorComponent extends AbstractEditorComponent
                         }
                 } else {
                     CodeEditorComponent.modesLoad[this.configuration.mode] =
-                        new Promise((resolve:Function, reject:Function):Object =>
-                            this.fixedUtility.$.ajax({
-                                cache: true,
-                                dataType: 'script',
-                                error: reject,
-                                success: resolve,
-                                url: this.configuration.path.base +
-                                    this.configuration.path.mode.replace(
-                                        /{mode}/g, this.configuration.mode)
-                            }))
+                        new Promise((
+                            resolve:Function, reject:Function
+                        ):Object => this.fixedUtility.$.ajax({
+                            cache: true,
+                            dataType: 'script',
+                            error: reject,
+                            success: resolve,
+                            url: this.configuration.path.base +
+                                this.configuration.path.mode.replace(
+                                    /{mode}/g, this.configuration.mode)
+                        }))
                     try {
                         await CodeEditorComponent.modesLoad[
                             this.configuration.mode]
