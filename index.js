@@ -21,6 +21,7 @@
 import Tools, {
     $, $DomNode, DomNode, globalContext, PlainObject
 } from 'clientnode'
+import {AnimationTriggerMetadata} from '@angular/animations'
 import {
     AfterContentChecked,
     AfterViewInit,
@@ -108,7 +109,11 @@ try {
     module.require('source-map-support/register')
 } catch (error) {}
 
-import defaultAnimation from './animation'
+/*
+    NOTE: Default import is not yet support for angular's ahead of time
+    compiler.
+*/
+import {defaultAnimation} from './animation'
 // endregion
 // region types
 export type AllowedRoles = string|Array<string>|{
@@ -224,6 +229,7 @@ export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
 export let currentInstanceToSearchInjectorFor:Object|null = null
 export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
 // region configuration
+const animations:Array<AnimationTriggerMetadata> = [defaultAnimation]
 export const CODE_MIRROR_DEFAULT_OPTIONS:PlainObject = {
     // region paths
     path: {
@@ -2332,7 +2338,7 @@ export class CanDeactivateRouteLeaveGuard implements CanDeactivate<Object> {
 // / region confirm
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-confirm',
     template: `
@@ -4880,7 +4886,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
 // // / region interval
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-interval-input',
     template: `
@@ -5023,7 +5029,7 @@ export class IntervalInputComponent {
 }
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-intervals-input',
     /* eslint-disable max-len */
@@ -5371,7 +5377,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
     }
 }
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     providers: [{
         multi: true,
@@ -5508,7 +5514,7 @@ export class CodeEditorComponent extends AbstractEditorComponent
     }
 }
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     providers: [{
         multi: true,
@@ -5795,7 +5801,7 @@ const inputContent:string = `
 /* eslint-enable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-input',
     template: `
@@ -5840,7 +5846,7 @@ export class InputComponent extends AbstractInputComponent {
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-simple-input',
     template: `
@@ -5895,7 +5901,7 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-textarea',
     template: `
@@ -6061,7 +6067,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-file-input',
     template: `
@@ -6898,7 +6904,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-pagination',
     template: `

@@ -94,7 +94,7 @@ export function determinePaths(
  * @param encoding - Encoding to use for reading given html file reference.
  * @returns A promise which resolves to a list of pre-rendered html strings.
  */
-export default function(
+export function render(
     ApplicationComponent:Object,
     ApplicationModule:Object,
     // IgnoreTypeCheck
@@ -267,6 +267,7 @@ export default function(
         resolve(results)
     }))
 }
+export default render
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:
