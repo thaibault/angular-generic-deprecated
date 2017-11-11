@@ -1138,7 +1138,7 @@ export class GetFilenameByPrefixPipe implements PipeTransform {
      * file name will be returned.
      * @returns Matching file name or null if no file matches.
      */
-    transform(attachments:PlainObject, prefix?:string):string|void {
+    transform(attachments:PlainObject, prefix?:string):string|null {
         if (prefix) {
             for (const name in attachments)
                 if (attachments.hasOwnProperty(name) && name.startsWith(
