@@ -151,6 +151,7 @@ export type PropertySpecification = {
     selection?:Array<any>;
     trim?:boolean;
     type?:any;
+    value?:any;
     writable?:boolean;
 }
 export type Model = {
