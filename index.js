@@ -3795,18 +3795,14 @@ export class AbstractResolver implements Resolve<PlainObject> {
     async update(
         item:PlainObject, data?:PlainObject, message:string = ''
     ):Promise<boolean> {
-        let newData:PlainObject
-        if (data)
-            newData = this.extendObject({
-                [this.specialNames.id]: (
-                    typeof item[this.specialNames.id] === 'object'
-                ) ? item[this.specialNames.id].value :
-                    item[this.specialNames.id],
-                [this.specialNames.revision]: 'latest',
-                [this.specialNames.type]: item[this.specialNames.type]
-            }, data)
-        else
-            newData = item
+        const newData:PlainObject = data ? this.extendObject({
+            [this.specialNames.id]: (
+                typeof item[this.specialNames.id] === 'object'
+            ) ? item[this.specialNames.id].value :
+                item[this.specialNames.id],
+            [this.specialNames.revision]: 'latest',
+            [this.specialNames.type]: item[this.specialNames.type]
+        }, data) : item
         try {
             item[this.specialNames.revision] =
                 (await this.data.put(newData)).rev
@@ -4111,7 +4107,8 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
                         `onData${this._stringCapitalize(type)}`
                     ](action)
                     if (
-                        result !== null && typeof result === 'object' &&
+                        result !== null &&
+                        typeof result === 'object' &&
                         'then' in result
                     )
                         result = await result
@@ -4139,26 +4136,32 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
     }
     /**
      * Triggers on any data changes.
-     * @returns A boolean indicating whether a view update should be triggered
-     * or not.
+     * @param event - An event object holding informations about the triggered
+     * reason.
+     * @returns A boolean (or promise wrapped) indicating whether a view update
+     * should be triggered or not.
      */
-    onDataChange():boolean {
+    onDataChange(event:any = null):Promise<boolean>|boolean {
         return true
     }
     /**
      * Triggers on completed data change observation.
-     * @returns A boolean indicating whether a view update should be triggered
-     * or not.
+     * @param event - An event object holding informations about the triggered
+     * reason.
+     * @returns A boolean (or promise wrapped) indicating whether a view update
+     * should be triggered or not.
      */
-    onDataComplete():boolean {
+    onDataComplete(event:any = null):Promise<boolean>|boolean {
         return false
     }
     /**
      * Triggers on data change observation errors.
-     * @returns A boolean indicating whether a view update should be triggered
-     * or not.
+     * @param event - An event object holding informations about the triggered
+     * reason.
+     * @returns A boolean (or promise wrapped) indicating whether a view update
+     * should be triggered or not.
      */
-    onDataError():boolean {
+    onDataError(event:any = null):Promise<boolean>|boolean {
         return false
     }
 }
