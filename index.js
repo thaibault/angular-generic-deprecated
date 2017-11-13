@@ -123,6 +123,9 @@ export type Constraint = {
     description?:string;
     evaluation:string;
 }
+export type MetaData = {
+    submitted:boolean
+}
 export type PropertySpecification = {
     allowedRoles?:AllowedRoles;
     constraintExecution?:Constraint;
