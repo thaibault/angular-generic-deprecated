@@ -126,7 +126,7 @@ export type Constraint = {
 export type MetaData = {
     submitted:boolean
 }
-export type PropertySpecification = {
+export type Property = {
     allowedRoles?:AllowedRoles;
     constraintExecution?:Constraint;
     constraintExpression?:Constraint;
@@ -164,7 +164,7 @@ export type Model = {
     _constraintExecutions?:Array<Constraint>;
     _maximumAggregatedSize?:number;
     _minimumAggregatedSize?:number;
-    // NOTE: ":PropertySpecification;" break type checks.
+    // NOTE: ":Property;" break type checks.
     [key:string]:any;
 }
 export type SpecialPropertyNames = {
