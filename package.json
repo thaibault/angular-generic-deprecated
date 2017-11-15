@@ -121,7 +121,7 @@
     "source-map-support": "^0.5.0",
     "tinymce": "^4.7.2",
     "typescript": "2.4.2",
-    "weboptimizer": "^1.0.411",
+    "weboptimizer": "^1.0.412",
     "webpack": "^3.8.1",
     "webpack-dev-server": "^2.9.3",
     "zone.js": "^0.8.18"
