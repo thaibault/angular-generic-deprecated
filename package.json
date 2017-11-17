@@ -116,6 +116,7 @@
     "eslint-plugin-jsdoc": "^3.2.0",
     "flow-bin": "^0.59.0",
     "jsdoc": "^3.5.4",
+    "qunit": "^2.4.1",
     "reflect-metadata": "^0.1.10",
     "rxjs": "^5.5.2",
     "source-map-support": "^0.5.0",
