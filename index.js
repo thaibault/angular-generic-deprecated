@@ -4124,7 +4124,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
         }, 3000)
         /*
             NOTE: We have to break out of the "zone.js" since long polling
-            themes to confuse its mocked environment.
+            seems to confuse its mocked environment.
         */
         this._tools.timeout(initialize)
     }
@@ -6703,7 +6703,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             /* eslint-enable camelcase */
             data: typeof Blob === 'undefined' ?
                 file.toString('base64') :
-                await eval('require')('blob-util').blobToBase64String(file),
+                await require('blob-util').blobToBase64String(file),
             length: file.size,
             name: this.file.name
         }
