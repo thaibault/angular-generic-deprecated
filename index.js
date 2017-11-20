@@ -6244,36 +6244,33 @@ export class TextareaComponent extends AbstractNativeInputComponent
                 >
                     <p
                         @defaultAnimation
-                        *ngIf="model[attachmentTypeName][internalName].state.errors.required"
-                    >
-                        {{
-                            requiredText | genericStringTemplate:{
-                                attachmentTypeName: attachmentTypeName,
-                                file: file,
-                                internalName: internalName,
-                                model: model[attachmentTypeName][internalName]
-                            }
-                        }}
-                    </p>
-                    <p
-                        @defaultAnimation
-                        *ngIf="model[attachmentTypeName][internalName].state.errors.name"
-                    >
-                        {{
-                            namePatternText | genericStringTemplate:{
-                                attachmentTypeName: attachmentTypeName,
-                                file: file,
-                                internalName: internalName,
-                                model: model[attachmentTypeName][internalName]
-                            }
-                        }}
-                    </p>
-                    <p
-                        @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.contentType"
                     >
                         {{
                             typePatternText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.database"
+                    >
+                        {{
+                            model[attachmentTypeName][
+                                internalName
+                            ].state.errors.database
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.maximumSize"
+                    >
+                        {{
+                            maximumSizeText | genericStringTemplate:{
                                 attachmentTypeName: attachmentTypeName,
                                 file: file,
                                 internalName: internalName,
@@ -6296,10 +6293,10 @@ export class TextareaComponent extends AbstractNativeInputComponent
                     </p>
                     <p
                         @defaultAnimation
-                        *ngIf="model[attachmentTypeName][internalName].state.errors.maximumSize"
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.name"
                     >
                         {{
-                            maximumSizeText | genericStringTemplate:{
+                            namePatternText | genericStringTemplate:{
                                 attachmentTypeName: attachmentTypeName,
                                 file: file,
                                 internalName: internalName,
@@ -6309,12 +6306,15 @@ export class TextareaComponent extends AbstractNativeInputComponent
                     </p>
                     <p
                         @defaultAnimation
-                        *ngIf="model[attachmentTypeName][internalName].state.errors.database"
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.required"
                     >
                         {{
-                            model[attachmentTypeName][
-                                internalName
-                            ].state.errors.database
+                            requiredText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
                         }}
                     </p>
                 </div>
@@ -6394,6 +6394,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
  * @property synchronizeImmediately - Indicates whether file upload should be
  * done immediately after a file was selected (or synchronously with other
  * model data).
+ * @property template - String template pipes transform method.
  * @property typeName - Name of type field.
  * @property typePatternText - File type validation text.
  *
@@ -6461,11 +6462,13 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     @Input() newButtonText:string = 'new'
     @Input() noFileText:string = ''
     @Input() noPreviewText:string = ''
+    @Input() oneDocumentPerFileMode:boolean = true
     @Input() requiredText:string = 'Please select a file.'
     @Input() revision:string|null = null
     revisionName:string
     @Input() showValidationErrorMessages:boolean = false
     @Input() synchronizeImmediately:boolean|PlainObject = false
+    template:Function
     @Input() typePatternText:string =
         'Filetype "${file.content_type}" doesn\'t match specified pattern "' +
         '${model.contentTypeRegularExpressionPattern}".'
@@ -6490,6 +6493,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
      * @param representObjectPipe - Saves the object to string representation
      * pipe instance.
      * @param stringFormatPipe - Saves the string formation pipe instance.
+     * @param stringTemplatePipe - Injected sString template pipe instance,
      * @param utility - Utility service instance.
      * @returns Nothing.
      */
@@ -6502,6 +6506,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         initialData:InitialDataService,
         representObjectPipe:RepresentObjectPipe,
         stringFormatPipe:StringFormatPipe,
+        stringTemplatePipe:StringTemplatePipe,
         utility:UtilityService
     ) {
         this.abstractResolver = abstractResolver
@@ -6516,6 +6521,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         this.model = {[this.attachmentTypeName]: {}, id: null}
         this.revisionName =
             this.configuration.database.model.property.name.special.revision
+        this.template = stringTemplatePipe.transform.bind(stringTemplatePipe)
         this.typeName =
             this.configuration.database.model.property.name.special.type
         this._data = data
@@ -6671,9 +6677,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 ].value : this.model[this.idName],
                 [this.revisionName]: this.model[this.revisionName]
             }
-            if (this.mapNameToField && this.mapNameToField.includes(
-                this.idName
-            ))
+            if (this.oneDocumentPerFileMode)
                 update[this.deletedName] = true
             else
                 update[this.attachmentTypeName] = {[this.file.name]: {
@@ -6830,6 +6834,31 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         ].state.errors).length === 0)
             delete this.model[this.attachmentTypeName][this.internalName]
                 .state.errors
+        else {
+            let message:string =
+                'Database has encountered an error during uploading file "' +
+                `${this.file.name}": `
+            for (const name in this.model[this.attachmentTypeName][
+                this.internalName
+            ].state.errors)
+                if (this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors.hasOwnProperty(name))
+                    message += `\n${name} - ` + this.template(this[{
+                        contentType: 'typePatternText',
+                        maximumSize: 'maximumSizeText',
+                        minimumSize: 'minimumSizeText',
+                        name: 'namePatterntext',
+                        required: 'requiredText'
+                    }[name]], {
+                        attachmentTypeName: this.attachmentTypeName,
+                        file: this.file,
+                        internalName: this.internalName,
+                        model: this.model[this.attachmentTypeName][
+                            this.internalName]
+                    })
+            this.abstractResolver.message(message)
+        }
         // endregion
         if (this.synchronizeImmediately && !this.model[
             this.attachmentTypeName
@@ -6840,9 +6869,17 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                     this.idName
                 ].value : this.model[this.idName]
             }
-            if (this.synchronizeImmediately !== true)
-                this._extendObject(
-                    true, newData, this.synchronizeImmediately)
+            if (
+                this.synchronizeImmediately !== null &&
+                typeof this.synchronizeImmediately === 'object'
+            ) {
+                const data = {}
+                for (const name in this.synchronizeImmediately)
+                    if (this.synchronizeImmediately.hasOwnProperty(name))
+                        data[name] = this.template(
+                            this.synchronizeImmediately[name], this.file)
+                this._extendObject(true, newData, data)
+            }
             let id:any = this._idIsObject ? this.model[
                 this.idName
             ].value : this.model[this.idName]
