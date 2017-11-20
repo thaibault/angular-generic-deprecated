@@ -6355,6 +6355,8 @@ export class TextareaComponent extends AbstractNativeInputComponent
  * should match to each known video mime type.
  *
  * @property attachmentTypeName - Current attachment type name.
+ * @property autoMessages - Indicates whether to show messages as file upload
+ * results.
  * @property change - File change event emitter.
  * @property configuration - Configuration object.
  * @property delete - Event emitter which triggers its handler when current
@@ -6421,6 +6423,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         '(?:application/(?:x-)?shockwave-flash)$')
 
     attachmentTypeName:string
+    @Input() autoMessages:boolean = true
     configuration:PlainObject
     @Output() delete:EventEmitter<string> = new EventEmitter()
     @Input() deleteButtonText:string = 'delete'
@@ -6475,6 +6478,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     _prefixMatch:boolean = false
     /**
      * Sets needed services as property values.
+     * @param abstractResolver - Injected abstract resolver service instance.
      * @param data - Injected data service instance.
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
@@ -6488,6 +6492,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
      * @returns Nothing.
      */
     constructor(
+        abstractResolver:AbstractResolver,
         data:DataService,
         domSanitizer:DomSanitizer,
         extendObjectPipe:ExtendObjectPipe,
@@ -6497,6 +6502,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         stringFormatPipe:StringFormatPipe,
         utility:UtilityService
     ) {
+        this.abstractResolver = abstractResolver
         this.configuration = initialData.configuration
         this.attachmentTypeName =
             this.configuration.database.model.property.name.special.attachment
@@ -6882,6 +6888,13 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 ].state.errors = {database: (
                     'message' in error
                 ) ? error.message : this._representObject(error)}
+                if (this.autoMessages)
+                    this.abstractResolver.message(
+                        'Database has encountered an error during uploading ' +
+                        `file "${this.file.name}": ` +
+                        this.model[this.attachmentTypeName][
+                            this.internalName
+                        ].state.errors.database)
                 return
             }
             id = newData[this.idName]
@@ -6891,6 +6904,11 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                     this.model[this.attachmentTypeName][
                         this.internalName
                     ].state.errors = {database: item.message}
+                    if (this.autoMessages)
+                        this.abstractResolver.message(
+                            'Database has encountered an error during ' +
+                            `uploading file "${this.file.name}": ` +
+                            item.message)
                     return
                 }
                 if (item.id === id)
@@ -6907,6 +6925,9 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                         `${this.file.name}${this.file.query}`)
                 this.determinePresentationType()
             }
+            if (this.autoMessages)
+                this.abstractResolver.message(
+                    `Uploading file ${this.file.name} was succesful.`)
             this.modelChange.emit(this.model)
             this.fileChange.emit(this.file)
         } else if (this.file.data) {
