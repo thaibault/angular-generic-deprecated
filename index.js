@@ -6354,6 +6354,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
  * @property static:videoMimeTypeRegularExpression - Regular expression which
  * should match to each known video mime type.
  *
+ * @property abstractResolver - Abstract resolver service instance.
  * @property attachmentTypeName - Current attachment type name.
  * @property autoMessages - Indicates whether to show messages as file upload
  * results.
@@ -6422,6 +6423,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
         '(?:application/(?:x-)?shockwave-flash)$')
 
+    abstractResolver:AbstractResolver
     attachmentTypeName:string
     @Input() autoMessages:boolean = true
     configuration:PlainObject
