@@ -3575,6 +3575,11 @@ export class DataScopeService {
 /**
  * Helper class to extend from to have some basic methods to deal with database
  * entities.
+ * @property cache - Indicates whether retrieved resources should be cached.
+ * @property cacheStore - Saves cached items.
+ * @property changesStream - Changes stream to invalidate cache store.
+ * @property convertCircularObjectToJSON - Saves convert circular object to
+ * json's pipe transform method.
  * @property data - Holds currently retrieved data.
  * @property databaseBaseURL - Determined database base url.
  * @property databaseURL - Determined database url.
@@ -3603,6 +3608,10 @@ export class DataScopeService {
  * auto completion e.g.
  */
 export class AbstractResolver implements Resolve<PlainObject> {
+    cache:boolean = true
+    cacheStore:PlainObject = {}
+    changesStream:Stream
+    convertCircularObjectToJSON:Function
     data:PlainObject
     databaseBaseURL:string
     databaseURL:string
@@ -3629,6 +3638,9 @@ export class AbstractResolver implements Resolve<PlainObject> {
     constructor(@Optional() injector:Injector) {
         const get:Function = determineInjector(
             injector, this, this.constructor)
+        this.convertCircularObjectToJSON = get(
+            ConvertCircularObjectToJSONPipe
+        ).transform.bind(get(ConvertCircularObjectToJSONPipe))
         this.data = get(DataService)
         this.domSanitizer = get(DomSanitizer)
         const databaseBaseURL:string = get(StringFormatPipe).transform(
@@ -3655,6 +3667,23 @@ export class AbstractResolver implements Resolve<PlainObject> {
         this.specialNames = get(
             InitialDataService
         ).configuration.database.model.property.name.special
+        if (this.cache) {
+            const initialize:Function = ():void => {
+                this.changesStream = this.data.connection.changes(
+                    this.extendObject(
+                        true, {}, {since: 'now'},
+                        AbstractLiveDataComponent.defaultLiveUpdateOptions,
+                        /* eslint-disable camelcase */
+                        {include_docs: false}
+                        /* eslint-enable camelcase */
+                    ))
+                this.changesStream.on('change', ():void => {
+                    this.cacheStore = {}
+                })
+                this.changesStream.on('error', initialize)
+            }
+            initialize()
+        }
     }
     /**
      * Determines item specific database url by given item data object.
@@ -3680,7 +3709,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
      * @param additionalSelector - Custom filter criteria.
      * @returns A promise wrapping retrieved data.
      */
-    list(
+    async list(
         sort:Array<PlainObject> = [{
             [
             InitialDataService.defaultScope.configuration.database.model
@@ -3731,14 +3760,20 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 item:PlainObject
             ):PlainObject|string =>
                 Object.values(item)[0] === 'asc' ? Object.keys(item)[0] : item)
-        return this.data.find(this.extendObject(
-            true, selector, additionalSelector
-        ), options)
+        this.extendObject(true, selector, additionalSelector)
+        if (this.cache) {
+            const key:string = this.convertCircularObjectToJSON({
+                selector, options})
+            if (!this.cacheStore.hasOwnProperty(key))
+                this.cacheStore[key] = await this.data.find(selector, options)
+            return this.cacheStore[key]
+        }
+        return await this.data.find(selector, options)
     }
     /**
      * Removes given item.
      * @param item - Item or id to delete.
-     * @param message - Message to show after successful removement.
+     * @param message - Message to show after successful deletion.
      * @returns Nothing.
      */
     remove(item:PlainObject, message:string = ''):Promise<boolean> {
@@ -4138,6 +4173,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
         if (this._changesStream)
             this._changesStream.cancel()
     }
+    /* eslint-disable no-unused-vars */
     /**
      * Triggers on any data changes.
      * @param event - An event object holding informations about the triggered
@@ -4168,6 +4204,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
     onDataError(event:any = null):Promise<boolean>|boolean {
         return false
     }
+    /* eslint-enable no-unused-vars */
 }
 /**
  * A generic abstract component to edit, search, navigate and filter a list of
