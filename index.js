@@ -3598,6 +3598,7 @@ export class DataScopeService {
  * into during searching.
  * @property representObject - Represent object pipe transformation function.
  * @property specialNames - mapping of special database field names.
+ * @property tools - Tools service instance.
  * @property type - Model name to handle. Should be overwritten in concrete
  * implementations.
  * @property useLimit - Indicates whether an upper bound should be used by
@@ -3626,6 +3627,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
     relevantSearchKeys:Array<string>|null = null
     representObject:Function
     specialNames:{[key:string]:string}
+    tools:Tools
     type:string = 'Item'
     useLimit:boolean = false
     useSkip:boolean = false
@@ -3667,6 +3669,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
         this.specialNames = get(
             InitialDataService
         ).configuration.database.model.property.name.special
+        this.tools = get(UtilityService).fixed.tools
         if (this.cache) {
             const initialize:Function = ():void => {
                 this.changesStream = this.data.connection.changes(
@@ -3682,7 +3685,11 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 })
                 this.changesStream.on('error', initialize)
             }
-            initialize()
+            /*
+                NOTE: We have to break out of the "zone.js" since long polling
+                seems to confuse its mocked environment.
+            */
+            this.tools.timeout(initialize)
         }
     }
     /**
@@ -3766,7 +3773,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 selector, options})
             if (!this.cacheStore.hasOwnProperty(key))
                 this.cacheStore[key] = await this.data.find(selector, options)
-            return this.cacheStore[key]
+            return this.tools.copyLimitedRecursively(this.cacheStore[key])
         }
         return await this.data.find(selector, options)
     }
