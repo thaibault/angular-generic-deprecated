@@ -6493,7 +6493,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
      * @param representObjectPipe - Saves the object to string representation
      * pipe instance.
      * @param stringFormatPipe - Saves the string formation pipe instance.
-     * @param stringTemplatePipe - Injected sString template pipe instance,
+     * @param stringTemplatePipe - Injected sString template pipe instance.
      * @param utility - Utility service instance.
      * @returns Nothing.
      */
@@ -6836,7 +6836,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 .state.errors
         else {
             let message:string =
-                'Database has encountered an error during uploading file "' +
+                'There was encountered an error during uploading file "' +
                 `${this.file.name}": `
             for (const name in this.model[this.attachmentTypeName][
                 this.internalName
@@ -6844,11 +6844,11 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 if (this.model[this.attachmentTypeName][
                     this.internalName
                 ].state.errors.hasOwnProperty(name))
-                    message += `\n${name} - ` + this.template(this[{
+                    message += (`\n${name} - ` + this.template(this[{
                         contentType: 'typePatternText',
                         maximumSize: 'maximumSizeText',
                         minimumSize: 'minimumSizeText',
-                        name: 'namePatterntext',
+                        name: 'namePatternText',
                         required: 'requiredText'
                     }[name]], {
                         attachmentTypeName: this.attachmentTypeName,
@@ -6856,7 +6856,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                         internalName: this.internalName,
                         model: this.model[this.attachmentTypeName][
                             this.internalName]
-                    })
+                    }))
             this.abstractResolver.message(message)
         }
         // endregion
