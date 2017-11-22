@@ -166,7 +166,6 @@
         "babelMinify": {
           "module": {
             "guards": false,
-            "mangle": false,
             "simplify": false
           }
         }
