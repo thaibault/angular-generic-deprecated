@@ -21,6 +21,7 @@
 import Tools, {
     $, $DomNode, DomNode, globalContext, PlainObject
 } from 'clientnode'
+import {AnimationTriggerMetadata} from '@angular/animations'
 import {
     AfterContentChecked,
     AfterViewInit,
@@ -40,7 +41,6 @@ import {
     Injector,
     Input,
     NgModule,
-    NgZone,
     OnChanges,
     OnDestroy,
     OnInit,
@@ -108,7 +108,11 @@ try {
     module.require('source-map-support/register')
 } catch (error) {}
 
-import defaultAnimation from './animation'
+/*
+    NOTE: Default import is not yet support for angular's ahead of time
+    compiler.
+*/
+import {defaultAnimation} from './animation'
 // endregion
 // region types
 export type AllowedRoles = string|Array<string>|{
@@ -119,7 +123,10 @@ export type Constraint = {
     description?:string;
     evaluation:string;
 }
-export type PropertySpecification = {
+export type MetaData = {
+    submitted:boolean
+}
+export type Property = {
     allowedRoles?:AllowedRoles;
     constraintExecution?:Constraint;
     constraintExpression?:Constraint;
@@ -147,6 +154,7 @@ export type PropertySpecification = {
     selection?:Array<any>;
     trim?:boolean;
     type?:any;
+    value?:any;
     writable?:boolean;
 }
 export type Model = {
@@ -156,7 +164,7 @@ export type Model = {
     _constraintExecutions?:Array<Constraint>;
     _maximumAggregatedSize?:number;
     _minimumAggregatedSize?:number;
-    // NOTE: ":PropertySpecification;" break type checks.
+    // NOTE: ":Property;" break type checks.
     [key:string]:any;
 }
 export type SpecialPropertyNames = {
@@ -224,6 +232,7 @@ export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
 export let currentInstanceToSearchInjectorFor:Object|null = null
 export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
 // region configuration
+const animations:Array<AnimationTriggerMetadata> = [defaultAnimation]
 export const CODE_MIRROR_DEFAULT_OPTIONS:PlainObject = {
     // region paths
     path: {
@@ -996,7 +1005,6 @@ export class NumberRoundPipe extends AbstractToolsPipe
 /**
  * Determines if given attachments are representing the same data.
  * @property data - Database service instance.
- * @property ngZone - Execution context service instance.
  * @property representObject - Represent object pipe's method.
  * @property specialNames - A mapping to database specific special property
  * names.
@@ -1004,7 +1012,6 @@ export class NumberRoundPipe extends AbstractToolsPipe
  */
 export class AttachmentsAreEqualPipe implements PipeTransform {
     data:DataService
-    ngZone:NgZone
     representObject:Function
     specialNames:PlainObject
     stringMD5:Function
@@ -1012,7 +1019,6 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
      * Gets needed services injected.
      * @param initialData - Injected initial data service instance.
      * @param injector - Application specific injector instance.
-     * @param ngZone - Injected execution context service instance.
      * @param representObjectPipe - Represent object pipe instance.
      * @param stringMD5Pipe - Injected string md5 pipe instance.
      * @returns Nothing.
@@ -1020,12 +1026,10 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
     constructor(
         initialData:InitialDataService,
         injector:Injector,
-        ngZone:NgZone,
         representObjectPipe:RepresentObjectPipe,
         stringMD5Pipe:StringMD5Pipe
     ) {
         this.data = injector.get(DataService)
-        this.ngZone = ngZone
         this.representObject = representObjectPipe.transform.bind(
             representObjectPipe)
         this.specialNames =
@@ -1138,7 +1142,7 @@ export class GetFilenameByPrefixPipe implements PipeTransform {
      * file name will be returned.
      * @returns Matching file name or null if no file matches.
      */
-    transform(attachments:PlainObject, prefix?:string):string|void {
+    transform(attachments:PlainObject, prefix?:string):string|null {
         if (prefix) {
             for (const name in attachments)
                 if (attachments.hasOwnProperty(name) && name.startsWith(
@@ -2332,7 +2336,7 @@ export class CanDeactivateRouteLeaveGuard implements CanDeactivate<Object> {
 // / region confirm
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-confirm',
     template: `
@@ -2439,11 +2443,8 @@ export class AlertService {
  * @property equals - Hilds the equals pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
- * @property interceptSynchronisationPromise - Promise which have to be
- * resolved before synchronisation for local database starts.
  * @property middlewares - Mapping of post and pre callback arrays to trigger
  * before or after each database transaction.
- * @property ngZone - Execution service instance.
  * @property platformID - Platform identification string.
  * @property remoteConnection - The current remote database connection
  * instance.
@@ -2475,8 +2476,6 @@ export class DataService {
     database:typeof PouchDB
     equals:Function
     extendObject:Function
-    interceptSynchronisationPromise:Promise<any>|null = null
-    ngZone:NgZone
     middlewares:{
         pre:{[key:string]:Array<Function>};
         post:{[key:string]:Array<Function>};
@@ -2497,7 +2496,6 @@ export class DataService {
      * @param equalsPipe - Equals pipe service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
-     * @param ngZone - Injected execution context service instance.
      * @param platformID - Platform identification string.
      * @param stringFormatPipe - Injected string format pipe instance.
      * @param utility - Injected utility service instance.
@@ -2507,7 +2505,6 @@ export class DataService {
         equalsPipe:EqualsPipe,
         extendObjectPipe:ExtendObjectPipe,
         initialData:InitialDataService,
-        ngZone:NgZone,
         @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe,
         utility:UtilityService
@@ -2519,7 +2516,6 @@ export class DataService {
         this.database = PouchDB
         this.equals = equalsPipe.transform.bind(equalsPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
-        this.ngZone = ngZone
         this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.tools = utility.fixed.tools
@@ -2676,6 +2672,11 @@ export class DataService {
      * @returns A promise resolving when initialisation has finished.
      */
     async initialize():Promise<void> {
+        /*
+            NOTE: We want to allow other services to manipulate the database
+            constructor before initializing them.
+        */
+        await this.tools.timeout()
         const options:PlainObject = this.extendObject(
             /* eslint-disable camelcase */
             true, {skip_setup: true},
@@ -2823,17 +2824,6 @@ export class DataService {
                 }
             }
         this.connection.installValidationMethods()
-        if (this.configuration.database.local && this.remoteConnection)
-            /*
-                NOTE: We want to allow other services to integrate an
-                interception promise.
-            */
-            // IgnoreTypeCheck
-            this.tools.timeout(async ():Promise<void> => {
-                if (this.interceptSynchronisationPromise)
-                    await this.interceptSynchronisationPromise
-                this.startSynchronisation()
-            })
         if (
             isPlatformServer(this.platformID) &&
             this.configuration.database.createGenericFlatIndex
@@ -2902,8 +2892,8 @@ export class DataService {
                             throw error
                         }
                 }
+            // endregion
         }
-        // endregion
     }
     /**
      * Creates a database index.
@@ -3056,19 +3046,72 @@ export class DataService {
     }
     /**
      * Starts synchronisation between a local and remote database.
-     * @returns Nothing.
+     * @returns A promise if a synchronisation has been started and is in sync
+     * with remote database or null if no stream was initialized due to
+     * corresponding database configuration.
      */
-    startSynchronisation():Object {
-        return this.synchronisation = this.connection.sync(
-            this.remoteConnection, {live: true, retry: true}
-        )
-            .on('change', (info:Object):void => console.info('change', info))
-            .on('paused', ():void => console.info('paused'))
-            .on('active', ():void => console.info('active'))
-            .on('denied', (error:Object):void => console.warn('denied', error))
-            .on('complete', (info:Object):void =>
-                console.info('complete', info))
-            .on('error', (error:Object):void => console.error('error', error))
+    async startSynchronisation():Promise<any> {
+        if (
+            this.configuration.database.local &&
+            this.remoteConnection &&
+            this.synchronisation === null
+        ) {
+            let resolved:boolean = false
+            return await new Promise((
+                resolve:Function, reject:Function
+            ):void => {
+                this.synchronisation = this.connection.sync(
+                    this.remoteConnection, {live: true, retry: true}
+                )
+                    .on('change', (info:Object):void =>
+                        console.info('change', info))
+                    .on('paused', ():void => {
+                        if (!resolved) {
+                            resolved = true
+                            resolve(this.synchronisation)
+                        }
+                        console.info('paused')
+                    })
+                    .on('active', ():void => console.info('active'))
+                    .on('denied', (error:Object):void => {
+                        if (!resolved) {
+                            resolved = true
+                            reject({name: 'denied', error})
+                        }
+                        console.warn('denied', error)
+                    })
+                    .on('complete', (info:Object):void =>
+                        console.info('complete', info))
+                    .on('error', (error:Object):void => {
+                        if (!resolved) {
+                            resolved = true
+                            reject({name: 'error', error})
+                        }
+                        console.error('error', error)
+                    })
+            })
+        }
+        return null
+    }
+    /**
+     * Stop a current running data synchronisation.
+     * @returns A boolean indicating whether a synchronisation was really
+     * stopped or there were none.
+     */
+    async stopSynchronisation():Promise<boolean> {
+        if (this.synchronisation) {
+            const promise:Promise<Object> = new Promise((
+                resolve:Function, reject:Function
+            ):void => {
+                this.synchronisation.on('complete', resolve)
+                this.synchronisation.on('error', reject)
+            })
+            this.synchronisation.cancel()
+            await promise
+            this.synchronisation = null
+            return true
+        }
+        return false
     }
 }
 // IgnoreTypeCheck
@@ -3532,6 +3575,11 @@ export class DataScopeService {
 /**
  * Helper class to extend from to have some basic methods to deal with database
  * entities.
+ * @property cache - Indicates whether retrieved resources should be cached.
+ * @property cacheStore - Saves cached items.
+ * @property changesStream - Changes stream to invalidate cache store.
+ * @property convertCircularObjectToJSON - Saves convert circular object to
+ * json's pipe transform method.
  * @property data - Holds currently retrieved data.
  * @property databaseBaseURL - Determined database base url.
  * @property databaseURL - Determined database url.
@@ -3550,6 +3598,7 @@ export class DataScopeService {
  * into during searching.
  * @property representObject - Represent object pipe transformation function.
  * @property specialNames - mapping of special database field names.
+ * @property tools - Tools service instance.
  * @property type - Model name to handle. Should be overwritten in concrete
  * implementations.
  * @property useLimit - Indicates whether an upper bound should be used by
@@ -3560,6 +3609,10 @@ export class DataScopeService {
  * auto completion e.g.
  */
 export class AbstractResolver implements Resolve<PlainObject> {
+    cache:boolean = true
+    cacheStore:PlainObject = {}
+    changesStream:Stream
+    convertCircularObjectToJSON:Function
     data:PlainObject
     databaseBaseURL:string
     databaseURL:string
@@ -3574,6 +3627,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
     relevantSearchKeys:Array<string>|null = null
     representObject:Function
     specialNames:{[key:string]:string}
+    tools:Tools
     type:string = 'Item'
     useLimit:boolean = false
     useSkip:boolean = false
@@ -3586,6 +3640,9 @@ export class AbstractResolver implements Resolve<PlainObject> {
     constructor(@Optional() injector:Injector) {
         const get:Function = determineInjector(
             injector, this, this.constructor)
+        this.convertCircularObjectToJSON = get(
+            ConvertCircularObjectToJSONPipe
+        ).transform.bind(get(ConvertCircularObjectToJSONPipe))
         this.data = get(DataService)
         this.domSanitizer = get(DomSanitizer)
         const databaseBaseURL:string = get(StringFormatPipe).transform(
@@ -3612,6 +3669,28 @@ export class AbstractResolver implements Resolve<PlainObject> {
         this.specialNames = get(
             InitialDataService
         ).configuration.database.model.property.name.special
+        this.tools = get(UtilityService).fixed.tools
+        if (this.cache) {
+            const initialize:Function = ():void => {
+                this.changesStream = this.data.connection.changes(
+                    this.extendObject(
+                        true, {}, {since: 'now'},
+                        AbstractLiveDataComponent.defaultLiveUpdateOptions,
+                        /* eslint-disable camelcase */
+                        {include_docs: false}
+                        /* eslint-enable camelcase */
+                    ))
+                this.changesStream.on('change', ():void => {
+                    this.cacheStore = {}
+                })
+                this.changesStream.on('error', initialize)
+            }
+            /*
+                NOTE: We have to break out of the "zone.js" since long polling
+                seems to confuse its mocked environment.
+            */
+            this.tools.timeout(initialize)
+        }
     }
     /**
      * Determines item specific database url by given item data object.
@@ -3637,7 +3716,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
      * @param additionalSelector - Custom filter criteria.
      * @returns A promise wrapping retrieved data.
      */
-    list(
+    async list(
         sort:Array<PlainObject> = [{
             [
             InitialDataService.defaultScope.configuration.database.model
@@ -3688,14 +3767,20 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 item:PlainObject
             ):PlainObject|string =>
                 Object.values(item)[0] === 'asc' ? Object.keys(item)[0] : item)
-        return this.data.find(this.extendObject(
-            true, selector, additionalSelector
-        ), options)
+        this.extendObject(true, selector, additionalSelector)
+        if (this.cache) {
+            const key:string = this.convertCircularObjectToJSON({
+                selector, options})
+            if (!this.cacheStore.hasOwnProperty(key))
+                this.cacheStore[key] = await this.data.find(selector, options)
+            return this.tools.copyLimitedRecursively(this.cacheStore[key])
+        }
+        return await this.data.find(selector, options)
     }
     /**
      * Removes given item.
      * @param item - Item or id to delete.
-     * @param message - Message to show after successful removement.
+     * @param message - Message to show after successful deletion.
      * @returns Nothing.
      */
     remove(item:PlainObject, message:string = ''):Promise<boolean> {
@@ -3756,18 +3841,14 @@ export class AbstractResolver implements Resolve<PlainObject> {
     async update(
         item:PlainObject, data?:PlainObject, message:string = ''
     ):Promise<boolean> {
-        let newData:PlainObject
-        if (data)
-            newData = this.extendObject({
-                [this.specialNames.id]: (
-                    typeof item[this.specialNames.id] === 'object'
-                ) ? item[this.specialNames.id].value :
-                    item[this.specialNames.id],
-                [this.specialNames.revision]: 'latest',
-                [this.specialNames.type]: item[this.specialNames.type]
-            }, data)
-        else
-            newData = item
+        const newData:PlainObject = data ? this.extendObject({
+            [this.specialNames.id]: (
+                typeof item[this.specialNames.id] === 'object'
+            ) ? item[this.specialNames.id].value :
+                item[this.specialNames.id],
+            [this.specialNames.revision]: 'latest',
+            [this.specialNames.type]: item[this.specialNames.type]
+        }, data) : item
         try {
             item[this.specialNames.revision] =
                 (await this.data.put(newData)).rev
@@ -4072,7 +4153,8 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
                         `onData${this._stringCapitalize(type)}`
                     ](action)
                     if (
-                        result !== null && typeof result === 'object' &&
+                        result !== null &&
+                        typeof result === 'object' &&
                         'then' in result
                     )
                         result = await result
@@ -4084,7 +4166,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
         }, 3000)
         /*
             NOTE: We have to break out of the "zone.js" since long polling
-            themes to confuse its mocked environment.
+            seems to confuse its mocked environment.
         */
         this._tools.timeout(initialize)
     }
@@ -4098,30 +4180,38 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
         if (this._changesStream)
             this._changesStream.cancel()
     }
+    /* eslint-disable no-unused-vars */
     /**
      * Triggers on any data changes.
-     * @returns A boolean indicating whether a view update should be triggered
-     * or not.
+     * @param event - An event object holding informations about the triggered
+     * reason.
+     * @returns A boolean (or promise wrapped) indicating whether a view update
+     * should be triggered or not.
      */
-    onDataChange():boolean {
+    onDataChange(event:any = null):Promise<boolean>|boolean {
         return true
     }
     /**
      * Triggers on completed data change observation.
-     * @returns A boolean indicating whether a view update should be triggered
-     * or not.
+     * @param event - An event object holding informations about the triggered
+     * reason.
+     * @returns A boolean (or promise wrapped) indicating whether a view update
+     * should be triggered or not.
      */
-    onDataComplete():boolean {
+    onDataComplete(event:any = null):Promise<boolean>|boolean {
         return false
     }
     /**
      * Triggers on data change observation errors.
-     * @returns A boolean indicating whether a view update should be triggered
-     * or not.
+     * @param event - An event object holding informations about the triggered
+     * reason.
+     * @returns A boolean (or promise wrapped) indicating whether a view update
+     * should be triggered or not.
      */
-    onDataError():boolean {
+    onDataError(event:any = null):Promise<boolean>|boolean {
         return false
     }
+    /* eslint-enable no-unused-vars */
 }
 /**
  * A generic abstract component to edit, search, navigate and filter a list of
@@ -4224,8 +4314,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             data:PlainObject
         ):void => {
             this.limit = Math.max(1, this.limit || 1)
-            // TODO wen in pagination "++" ausgewählt wird verschwinden alle
-            // pages
             this.allItems = data.items.slice()
             data.items.splice(0, (this.page - 1) * this.limit)
             if (data.items.length > this.limit)
@@ -4825,7 +4913,7 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
 // // / region interval
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-interval-input',
     template: `
@@ -4968,7 +5056,7 @@ export class IntervalInputComponent {
 }
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-intervals-input',
     /* eslint-disable max-len */
@@ -5316,7 +5404,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
     }
 }
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     providers: [{
         multi: true,
@@ -5386,25 +5474,30 @@ export class CodeEditorComponent extends AbstractEditorComponent
      * Initializes the code editor element.
      * @returns Nothing.
      */
-    async ngAfterViewInit():Promise<void> {
-        await super.ngAfterViewInit()
-        if (this.configuration.mode)
-            if (CodeEditorComponent.modesLoad.hasOwnProperty(
-                this.configuration.mode
-            )) {
-                if (CodeEditorComponent.modesLoad[
+    ngAfterViewInit():Promise<void> {
+        /*
+            NOTE: "await super.ngAfterViewInit()" is not supported by
+            transpiler yet.
+        */
+        return super.ngAfterViewInit().then(async ():Promise<void> => {
+            if (this.configuration.mode)
+                if (CodeEditorComponent.modesLoad.hasOwnProperty(
                     this.configuration.mode
-                ] !== true)
-                    try {
-                        await CodeEditorComponent.modesLoad[
-                            this.configuration.mode]
-                    } catch (error) {
-                        throw error
-                    }
-            } else {
-                CodeEditorComponent.modesLoad[this.configuration.mode] =
-                    new Promise((resolve:Function, reject:Function):Object =>
-                        this.fixedUtility.$.ajax({
+                )) {
+                    if (CodeEditorComponent.modesLoad[
+                        this.configuration.mode
+                    ] !== true)
+                        try {
+                            await CodeEditorComponent.modesLoad[
+                                this.configuration.mode]
+                        } catch (error) {
+                            throw error
+                        }
+                } else {
+                    CodeEditorComponent.modesLoad[this.configuration.mode] =
+                        new Promise((
+                            resolve:Function, reject:Function
+                        ):Object => this.fixedUtility.$.ajax({
                             cache: true,
                             dataType: 'script',
                             error: reject,
@@ -5413,28 +5506,29 @@ export class CodeEditorComponent extends AbstractEditorComponent
                                 this.configuration.path.mode.replace(
                                     /{mode}/g, this.configuration.mode)
                         }))
-                try {
-                    await CodeEditorComponent.modesLoad[
-                        this.configuration.mode]
-                } catch (error) {
-                    throw error
+                    try {
+                        await CodeEditorComponent.modesLoad[
+                            this.configuration.mode]
+                    } catch (error) {
+                        throw error
+                    }
                 }
-            }
-        const configuration:PlainObject = this.extendObject(
-            {}, this.configuration, {readOnly: this.disabled})
-        delete configuration.path
-        this.instance = this.factory.fromTextArea(
-            this.hostDomNode.nativeElement, configuration)
-        this.instance[this.contentSetterMethodName](this.model)
-        this.instance.on('blur', (instance:any, event:any):void =>
-            this.blur.emit(event))
-        this.instance.on('change', ():void => {
-            this.onChangeCallback(this.instance.getValue())
-            this.modelChange.emit(this.model)
+            const configuration:PlainObject = this.extendObject(
+                {}, this.configuration, {readOnly: this.disabled})
+            delete configuration.path
+            this.instance = this.factory.fromTextArea(
+                this.hostDomNode.nativeElement, configuration)
+            this.instance[this.contentSetterMethodName](this.model)
+            this.instance.on('blur', (instance:any, event:any):void =>
+                this.blur.emit(event))
+            this.instance.on('change', ():void => {
+                this.onChangeCallback(this.instance.getValue())
+                this.modelChange.emit(this.model)
+            })
+            this.instance.on('focus', (instance:any, event:any):void =>
+                this.focus.emit(event))
+            this.initialized.emit(this.instance)
         })
-        this.instance.on('focus', (instance:any, event:any):void =>
-            this.focus.emit(event))
-        this.initialized.emit(this.instance)
     }
     /**
      * Triggers disabled state changes.
@@ -5448,7 +5542,7 @@ export class CodeEditorComponent extends AbstractEditorComponent
     }
 }
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     providers: [{
         multi: true,
@@ -5531,76 +5625,82 @@ export class TextEditorComponent extends AbstractEditorComponent
      * Initializes the text editor element.
      * @returns Nothing.
      */
-    async ngAfterViewInit():Promise<void> {
-        await super.ngAfterViewInit()
-        const configuration:PlainObject = this.extendObject(
-            {}, this.configuration)
-        this.factory.baseURL = configuration.baseURL
-        delete configuration.baseURL
-        delete configuration.scriptPath
-        configuration.target = this.hostDomNode.nativeElement
-        const initializeInstanceCallback = configuration.init_instance_callback
-        /* eslint-disable camelcase */
-        configuration.init_instance_callback = (instance:any):void => {
-        /* eslint-disable camelcase */
-            this.instance = instance
-            this.instance[this.contentSetterMethodName](this.model)
-            this.instance.on('Change', ():void => {
-                this.onChangeCallback(this.instance.getContent())
-                this.modelChange.emit(this.model)
-            })
-            if (initializeInstanceCallback)
-                initializeInstanceCallback(this.instance)
-            for (const name of [
-                'click',
-                'dblclick',
-                'MouseDown',
-                'MouseUp',
-                'MouseMove',
-                'MouseOver',
-                'MouseOut',
-                'MouseEnter',
-                'MouseLeave',
-                'KeyDown',
-                'KeyPress',
-                'ContextMenu',
-                'Paste',
-                'Focus',
-                'Blur',
-                'BeforeSetContent',
-                'SetContent',
-                'GetContent',
-                'PreProcess',
-                'PostProcess',
-                'NodeChange',
-                'Undo',
-                'Redo',
-                'Change',
-                'Dirty',
-                'Remove',
-                'PastePreProcess',
-                'PastePostProcess'
-            ])
-                this.instance.on(name, this[name].emit.bind(this[name]))
-            this.instance.on('KeyUp', (event:any):void => {
-                this.KeyUp.emit(event)
-                this.onChangeCallback(this.instance.getContent())
-                this.onTouchedCallback()
-                this.modelChange.emit(this.model)
-            })
-            this.instance.on('ExecCommand', (event:any):void => {
-                this.ExecCommand.emit(event)
-                const content:any = this.instance.getContent()
-                if (typeof content === 'string' && content.length > 0) {
+    ngAfterViewInit():Promise<void> {
+        /*
+            NOTE: "await super.ngAfterViewInit()" is not supported by
+            transpiler yet.
+        */
+        return super.ngAfterViewInit().then(():void => {
+            const configuration:PlainObject = this.extendObject(
+                {}, this.configuration)
+            this.factory.baseURL = configuration.baseURL
+            delete configuration.baseURL
+            delete configuration.scriptPath
+            configuration.target = this.hostDomNode.nativeElement
+            const initializeInstanceCallback:Function =
+                configuration.init_instance_callback
+            /* eslint-disable camelcase */
+            configuration.init_instance_callback = (instance:any):void => {
+            /* eslint-disable camelcase */
+                this.instance = instance
+                this.instance[this.contentSetterMethodName](this.model)
+                this.instance.on('Change', ():void => {
+                    this.onChangeCallback(this.instance.getContent())
+                    this.modelChange.emit(this.model)
+                })
+                if (initializeInstanceCallback)
+                    initializeInstanceCallback(this.instance)
+                for (const name of [
+                    'click',
+                    'dblclick',
+                    'MouseDown',
+                    'MouseUp',
+                    'MouseMove',
+                    'MouseOver',
+                    'MouseOut',
+                    'MouseEnter',
+                    'MouseLeave',
+                    'KeyDown',
+                    'KeyPress',
+                    'ContextMenu',
+                    'Paste',
+                    'Focus',
+                    'Blur',
+                    'BeforeSetContent',
+                    'SetContent',
+                    'GetContent',
+                    'PreProcess',
+                    'PostProcess',
+                    'NodeChange',
+                    'Undo',
+                    'Redo',
+                    'Change',
+                    'Dirty',
+                    'Remove',
+                    'PastePreProcess',
+                    'PastePostProcess'
+                ])
+                    this.instance.on(name, this[name].emit.bind(this[name]))
+                this.instance.on('KeyUp', (event:any):void => {
+                    this.KeyUp.emit(event)
                     this.onChangeCallback(this.instance.getContent())
                     this.onTouchedCallback()
                     this.modelChange.emit(this.model)
-                }
-            })
-        }
-        configuration.setup = (instance:any):void => instance.on('Init', (
-        ):void => this.initialized.emit(instance))
-        this.factory.init(configuration)
+                })
+                this.instance.on('ExecCommand', (event:any):void => {
+                    this.ExecCommand.emit(event)
+                    const content:any = this.instance.getContent()
+                    if (typeof content === 'string' && content.length > 0) {
+                        this.onChangeCallback(this.instance.getContent())
+                        this.onTouchedCallback()
+                        this.modelChange.emit(this.model)
+                    }
+                })
+            }
+            configuration.setup = (instance:any):void => instance.on('Init', (
+            ):void => this.initialized.emit(instance))
+            this.factory.init(configuration)
+        })
     }
     /**
      * Frees all tinymce allocated data from memory if there exists some.
@@ -5729,7 +5829,7 @@ const inputContent:string = `
 /* eslint-enable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-input',
     template: `
@@ -5774,7 +5874,7 @@ export class InputComponent extends AbstractInputComponent {
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-simple-input',
     template: `
@@ -5829,7 +5929,7 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-textarea',
     template: `
@@ -5995,7 +6095,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
     selector: 'generic-file-input',
     template: `
@@ -6144,36 +6244,33 @@ export class TextareaComponent extends AbstractNativeInputComponent
                 >
                     <p
                         @defaultAnimation
-                        *ngIf="model[attachmentTypeName][internalName].state.errors.required"
-                    >
-                        {{
-                            requiredText | genericStringTemplate:{
-                                attachmentTypeName: attachmentTypeName,
-                                file: file,
-                                internalName: internalName,
-                                model: model[attachmentTypeName][internalName]
-                            }
-                        }}
-                    </p>
-                    <p
-                        @defaultAnimation
-                        *ngIf="model[attachmentTypeName][internalName].state.errors.name"
-                    >
-                        {{
-                            namePatternText | genericStringTemplate:{
-                                attachmentTypeName: attachmentTypeName,
-                                file: file,
-                                internalName: internalName,
-                                model: model[attachmentTypeName][internalName]
-                            }
-                        }}
-                    </p>
-                    <p
-                        @defaultAnimation
                         *ngIf="model[attachmentTypeName][internalName].state.errors.contentType"
                     >
                         {{
                             typePatternText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.database"
+                    >
+                        {{
+                            model[attachmentTypeName][
+                                internalName
+                            ].state.errors.database
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.maximumSize"
+                    >
+                        {{
+                            maximumSizeText | genericStringTemplate:{
                                 attachmentTypeName: attachmentTypeName,
                                 file: file,
                                 internalName: internalName,
@@ -6196,10 +6293,10 @@ export class TextareaComponent extends AbstractNativeInputComponent
                     </p>
                     <p
                         @defaultAnimation
-                        *ngIf="model[attachmentTypeName][internalName].state.errors.maximumSize"
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.name"
                     >
                         {{
-                            maximumSizeText | genericStringTemplate:{
+                            namePatternText | genericStringTemplate:{
                                 attachmentTypeName: attachmentTypeName,
                                 file: file,
                                 internalName: internalName,
@@ -6209,12 +6306,15 @@ export class TextareaComponent extends AbstractNativeInputComponent
                     </p>
                     <p
                         @defaultAnimation
-                        *ngIf="model[attachmentTypeName][internalName].state.errors.database"
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.required"
                     >
                         {{
-                            model[attachmentTypeName][
-                                internalName
-                            ].state.errors.database
+                            requiredText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
                         }}
                     </p>
                 </div>
@@ -6254,7 +6354,10 @@ export class TextareaComponent extends AbstractNativeInputComponent
  * @property static:videoMimeTypeRegularExpression - Regular expression which
  * should match to each known video mime type.
  *
+ * @property abstractResolver - Abstract resolver service instance.
  * @property attachmentTypeName - Current attachment type name.
+ * @property autoMessages - Indicates whether to show messages as file upload
+ * results.
  * @property change - File change event emitter.
  * @property configuration - Configuration object.
  * @property delete - Event emitter which triggers its handler when current
@@ -6291,6 +6394,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
  * @property synchronizeImmediately - Indicates whether file upload should be
  * done immediately after a file was selected (or synchronously with other
  * model data).
+ * @property template - String template pipes transform method.
  * @property typeName - Name of type field.
  * @property typePatternText - File type validation text.
  *
@@ -6320,7 +6424,9 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
         '(?:application/(?:x-)?shockwave-flash)$')
 
+    abstractResolver:AbstractResolver
     attachmentTypeName:string
+    @Input() autoMessages:boolean = true
     configuration:PlainObject
     @Output() delete:EventEmitter<string> = new EventEmitter()
     @Input() deleteButtonText:string = 'delete'
@@ -6356,11 +6462,13 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     @Input() newButtonText:string = 'new'
     @Input() noFileText:string = ''
     @Input() noPreviewText:string = ''
+    @Input() oneDocumentPerFileMode:boolean = true
     @Input() requiredText:string = 'Please select a file.'
     @Input() revision:string|null = null
     revisionName:string
     @Input() showValidationErrorMessages:boolean = false
     @Input() synchronizeImmediately:boolean|PlainObject = false
+    template:Function
     @Input() typePatternText:string =
         'Filetype "${file.content_type}" doesn\'t match specified pattern "' +
         '${model.contentTypeRegularExpressionPattern}".'
@@ -6375,6 +6483,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     _prefixMatch:boolean = false
     /**
      * Sets needed services as property values.
+     * @param abstractResolver - Injected abstract resolver service instance.
      * @param data - Injected data service instance.
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
@@ -6384,10 +6493,12 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
      * @param representObjectPipe - Saves the object to string representation
      * pipe instance.
      * @param stringFormatPipe - Saves the string formation pipe instance.
+     * @param stringTemplatePipe - Injected sString template pipe instance.
      * @param utility - Utility service instance.
      * @returns Nothing.
      */
     constructor(
+        abstractResolver:AbstractResolver,
         data:DataService,
         domSanitizer:DomSanitizer,
         extendObjectPipe:ExtendObjectPipe,
@@ -6395,8 +6506,10 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         initialData:InitialDataService,
         representObjectPipe:RepresentObjectPipe,
         stringFormatPipe:StringFormatPipe,
+        stringTemplatePipe:StringTemplatePipe,
         utility:UtilityService
     ) {
+        this.abstractResolver = abstractResolver
         this.configuration = initialData.configuration
         this.attachmentTypeName =
             this.configuration.database.model.property.name.special.attachment
@@ -6408,6 +6521,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         this.model = {[this.attachmentTypeName]: {}, id: null}
         this.revisionName =
             this.configuration.database.model.property.name.special.revision
+        this.template = stringTemplatePipe.transform.bind(stringTemplatePipe)
         this.typeName =
             this.configuration.database.model.property.name.special.type
         this._data = data
@@ -6563,9 +6677,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 ].value : this.model[this.idName],
                 [this.revisionName]: this.model[this.revisionName]
             }
-            if (this.mapNameToField && this.mapNameToField.includes(
-                this.idName
-            ))
+            if (this.oneDocumentPerFileMode)
                 update[this.deletedName] = true
             else
                 update[this.attachmentTypeName] = {[this.file.name]: {
@@ -6647,7 +6759,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             /* eslint-enable camelcase */
             data: typeof Blob === 'undefined' ?
                 file.toString('base64') :
-                await eval('require')('blob-util').blobToBase64String(file),
+                await require('blob-util').blobToBase64String(file),
             length: file.size,
             name: this.file.name
         }
@@ -6722,6 +6834,31 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         ].state.errors).length === 0)
             delete this.model[this.attachmentTypeName][this.internalName]
                 .state.errors
+        else {
+            let message:string =
+                'There was encountered an error during uploading file "' +
+                `${this.file.name}": `
+            for (const name in this.model[this.attachmentTypeName][
+                this.internalName
+            ].state.errors)
+                if (this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors.hasOwnProperty(name))
+                    message += (`\n${name} - ` + this.template(this[{
+                        contentType: 'typePatternText',
+                        maximumSize: 'maximumSizeText',
+                        minimumSize: 'minimumSizeText',
+                        name: 'namePatternText',
+                        required: 'requiredText'
+                    }[name]], {
+                        attachmentTypeName: this.attachmentTypeName,
+                        file: this.file,
+                        internalName: this.internalName,
+                        model: this.model[this.attachmentTypeName][
+                            this.internalName]
+                    }))
+            this.abstractResolver.message(message)
+        }
         // endregion
         if (this.synchronizeImmediately && !this.model[
             this.attachmentTypeName
@@ -6732,9 +6869,17 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                     this.idName
                 ].value : this.model[this.idName]
             }
-            if (this.synchronizeImmediately !== true)
-                this._extendObject(
-                    true, newData, this.synchronizeImmediately)
+            if (
+                this.synchronizeImmediately !== null &&
+                typeof this.synchronizeImmediately === 'object'
+            ) {
+                const data = {}
+                for (const name in this.synchronizeImmediately)
+                    if (this.synchronizeImmediately.hasOwnProperty(name))
+                        data[name] = this.template(
+                            this.synchronizeImmediately[name], this.file)
+                this._extendObject(true, newData, data)
+            }
             let id:any = this._idIsObject ? this.model[
                 this.idName
             ].value : this.model[this.idName]
@@ -6782,6 +6927,13 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 ].state.errors = {database: (
                     'message' in error
                 ) ? error.message : this._representObject(error)}
+                if (this.autoMessages)
+                    this.abstractResolver.message(
+                        'Database has encountered an error during uploading ' +
+                        `file "${this.file.name}": ` +
+                        this.model[this.attachmentTypeName][
+                            this.internalName
+                        ].state.errors.database)
                 return
             }
             id = newData[this.idName]
@@ -6791,6 +6943,11 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                     this.model[this.attachmentTypeName][
                         this.internalName
                     ].state.errors = {database: item.message}
+                    if (this.autoMessages)
+                        this.abstractResolver.message(
+                            'Database has encountered an error during ' +
+                            `uploading file "${this.file.name}": ` +
+                            item.message)
                     return
                 }
                 if (item.id === id)
@@ -6807,6 +6964,9 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                         `${this.file.name}${this.file.query}`)
                 this.determinePresentationType()
             }
+            if (this.autoMessages)
+                this.abstractResolver.message(
+                    `Uploading file ${this.file.name} was succesful.`)
             this.modelChange.emit(this.model)
             this.fileChange.emit(this.file)
         } else if (this.file.data) {
@@ -6832,7 +6992,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 @Component({
-    animations: [defaultAnimation],
+    animations,
     changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-pagination',
     template: `

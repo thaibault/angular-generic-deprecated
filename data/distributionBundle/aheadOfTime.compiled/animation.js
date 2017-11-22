@@ -19,8 +19,8 @@
 */
 // region imports
 // IgnoreTypeCheck
-import Tools, { PlainObject } from 'clientnode';
-import { animate, AnimationTriggerMetadata, style, transition, trigger } from '@angular/animations';
+import Tools from 'clientnode';
+import { animate, style, transition, trigger } from '@angular/animations';
 // NOTE: Only needed for debugging this file.
 try {
     module.require('source-map-support/register');

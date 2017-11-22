@@ -41,7 +41,7 @@ declare var TARGET_TECHNOLOGY:string
  * the underlying clientnode test environment.
  * @returns Whatever the underlying clientnode test runner returns.
  */
-export default function(
+export function registerAngularTest(
     callback:Function|{bootstrap:Function;component:Function},
     template:string = '<div></div>', roundTypes:Array<string> = ['full'],
     productionMode:boolean = false, ...additionalParameter:Array<any>
@@ -194,6 +194,7 @@ export default function(
         // endregion
     }, roundTypes, ...additionalParameter)
 }
+export default registerAngularTest
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

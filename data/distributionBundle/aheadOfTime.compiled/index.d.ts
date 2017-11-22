@@ -1,5 +1,5 @@
 import Tools, { PlainObject } from 'clientnode';
-import { AfterContentChecked, AfterViewInit, ChangeDetectorRef, ElementRef, EventEmitter, Injector, NgZone, OnChanges, OnDestroy, OnInit, PipeTransform, SimpleChanges, TemplateRef, ViewContainerRef } from '@angular/core';
+import { AfterContentChecked, AfterViewInit, ChangeDetectorRef, ElementRef, EventEmitter, Injector, OnChanges, OnDestroy, OnInit, PipeTransform, SimpleChanges, TemplateRef, ViewContainerRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { DefaultValueAccessor } from '@angular/forms';
 import { MatDialog, MatDialogRef } from '@angular/material';
@@ -17,7 +17,10 @@ export declare type Constraint = {
     description?: string;
     evaluation: string;
 };
-export declare type PropertySpecification = {
+export declare type MetaData = {
+    submitted: boolean;
+};
+export declare type Property = {
     allowedRoles?: AllowedRoles;
     constraintExecution?: Constraint;
     constraintExpression?: Constraint;
@@ -45,6 +48,7 @@ export declare type PropertySpecification = {
     selection?: Array<any>;
     trim?: boolean;
     type?: any;
+    value?: any;
     writable?: boolean;
 };
 export declare type Model = {
@@ -336,7 +340,6 @@ export declare class NumberRoundPipe extends AbstractToolsPipe implements PipeTr
 }
 export declare class AttachmentsAreEqualPipe implements PipeTransform {
     data: DataService;
-    ngZone: NgZone;
     representObject: Function;
     specialNames: PlainObject;
     stringMD5: Function;
@@ -344,12 +347,11 @@ export declare class AttachmentsAreEqualPipe implements PipeTransform {
      * Gets needed services injected.
      * @param initialData - Injected initial data service instance.
      * @param injector - Application specific injector instance.
-     * @param ngZone - Injected execution context service instance.
      * @param representObjectPipe - Represent object pipe instance.
      * @param stringMD5Pipe - Injected string md5 pipe instance.
      * @returns Nothing.
      */
-    constructor(initialData: InitialDataService, injector: Injector, ngZone: NgZone, representObjectPipe: RepresentObjectPipe, stringMD5Pipe: StringMD5Pipe);
+    constructor(initialData: InitialDataService, injector: Injector, representObjectPipe: RepresentObjectPipe, stringMD5Pipe: StringMD5Pipe);
     /**
      * Performs the actual transformations process.
      * @param first - First attachment to compare.
@@ -367,7 +369,7 @@ export declare class GetFilenameByPrefixPipe implements PipeTransform {
      * file name will be returned.
      * @returns Matching file name or null if no file matches.
      */
-    transform(attachments: PlainObject, prefix?: string): string | void;
+    transform(attachments: PlainObject, prefix?: string): string | null;
 }
 export declare class AttachmentWithPrefixExistsPipe implements PipeTransform {
     attachmentName: string;
@@ -768,8 +770,6 @@ export declare class DataService {
     database: typeof PouchDB;
     equals: Function;
     extendObject: Function;
-    interceptSynchronisationPromise: Promise<any> | null;
-    ngZone: NgZone;
     middlewares: {
         pre: {
             [key: string]: Array<Function>;
@@ -791,13 +791,12 @@ export declare class DataService {
      * @param equalsPipe - Equals pipe service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
-     * @param ngZone - Injected execution context service instance.
      * @param platformID - Platform identification string.
      * @param stringFormatPipe - Injected string format pipe instance.
      * @param utility - Injected utility service instance.
      * @returns Nothing.
      */
-    constructor(equalsPipe: EqualsPipe, extendObjectPipe: ExtendObjectPipe, initialData: InitialDataService, ngZone: NgZone, platformID: string, stringFormatPipe: StringFormatPipe, utility: UtilityService);
+    constructor(equalsPipe: EqualsPipe, extendObjectPipe: ExtendObjectPipe, initialData: InitialDataService, platformID: string, stringFormatPipe: StringFormatPipe, utility: UtilityService);
     /**
      * Determines all property names which are indexable in a generic manner.
      * @param modelConfiguration - Model specification object.
@@ -892,9 +891,17 @@ export declare class DataService {
     removeAttachment(...parameter: Array<any>): Promise<PlainObject>;
     /**
      * Starts synchronisation between a local and remote database.
-     * @returns Nothing.
+     * @returns A promise if a synchronisation has been started and is in sync
+     * with remote database or null if no stream was initialized due to
+     * corresponding database configuration.
      */
-    startSynchronisation(): Object;
+    startSynchronisation(): Promise<any>;
+    /**
+     * Stop a current running data synchronisation.
+     * @returns A boolean indicating whether a synchronisation was really
+     * stopped or there were none.
+     */
+    stopSynchronisation(): Promise<boolean>;
 }
 export declare class DataScopeService {
     attachmentWithPrefixExists: Function;
@@ -966,6 +973,10 @@ export declare class DataScopeService {
     generate(modelName: string, propertyNames?: Array<string>, data?: PlainObject, propertyNamesToIgnore?: Array<string>): PlainObject;
 }
 export declare class AbstractResolver implements Resolve<PlainObject> {
+    cache: boolean;
+    cacheStore: PlainObject;
+    changesStream: Stream;
+    convertCircularObjectToJSON: Function;
     data: PlainObject;
     databaseBaseURL: string;
     databaseURL: string;
@@ -984,6 +995,7 @@ export declare class AbstractResolver implements Resolve<PlainObject> {
     specialNames: {
         [key: string]: string;
     };
+    tools: Tools;
     type: string;
     useLimit: boolean;
     useSkip: boolean;
@@ -1013,7 +1025,7 @@ export declare class AbstractResolver implements Resolve<PlainObject> {
     /**
      * Removes given item.
      * @param item - Item or id to delete.
-     * @param message - Message to show after successful removement.
+     * @param message - Message to show after successful deletion.
      * @returns Nothing.
      */
     remove(item: PlainObject, message?: string): Promise<boolean>;
@@ -1185,22 +1197,28 @@ export declare class AbstractLiveDataComponent implements OnDestroy, OnInit {
     ngOnDestroy(): void;
     /**
      * Triggers on any data changes.
-     * @returns A boolean indicating whether a view update should be triggered
-     * or not.
+     * @param event - An event object holding informations about the triggered
+     * reason.
+     * @returns A boolean (or promise wrapped) indicating whether a view update
+     * should be triggered or not.
      */
-    onDataChange(): boolean;
+    onDataChange(event?: any): Promise<boolean> | boolean;
     /**
      * Triggers on completed data change observation.
-     * @returns A boolean indicating whether a view update should be triggered
-     * or not.
+     * @param event - An event object holding informations about the triggered
+     * reason.
+     * @returns A boolean (or promise wrapped) indicating whether a view update
+     * should be triggered or not.
      */
-    onDataComplete(): boolean;
+    onDataComplete(event?: any): Promise<boolean> | boolean;
     /**
      * Triggers on data change observation errors.
-     * @returns A boolean indicating whether a view update should be triggered
-     * or not.
+     * @param event - An event object holding informations about the triggered
+     * reason.
+     * @returns A boolean (or promise wrapped) indicating whether a view update
+     * should be triggered or not.
      */
-    onDataError(): boolean;
+    onDataError(event?: any): Promise<boolean> | boolean;
 }
 /**
  * A generic abstract component to edit, search, navigate and filter a list of
@@ -1809,7 +1827,9 @@ export declare class FileInputComponent implements AfterViewInit, OnChanges {
     static imageMimeTypeRegularExpression: RegExp;
     static textMimeTypeRegularExpression: RegExp;
     static videoMimeTypeRegularExpression: RegExp;
+    abstractResolver: AbstractResolver;
     attachmentTypeName: string;
+    autoMessages: boolean;
     configuration: PlainObject;
     delete: EventEmitter<string>;
     deleteButtonText: string;
@@ -1845,11 +1865,13 @@ export declare class FileInputComponent implements AfterViewInit, OnChanges {
     newButtonText: string;
     noFileText: string;
     noPreviewText: string;
+    oneDocumentPerFileMode: boolean;
     requiredText: string;
     revision: string | null;
     revisionName: string;
     showValidationErrorMessages: boolean;
     synchronizeImmediately: boolean | PlainObject;
+    template: Function;
     typePatternText: string;
     _data: DataService;
     _domSanitizer: DomSanitizer;
@@ -1861,6 +1883,7 @@ export declare class FileInputComponent implements AfterViewInit, OnChanges {
     _prefixMatch: boolean;
     /**
      * Sets needed services as property values.
+     * @param abstractResolver - Injected abstract resolver service instance.
      * @param data - Injected data service instance.
      * @param domSanitizer - Injected dom sanitizer service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
@@ -1870,10 +1893,11 @@ export declare class FileInputComponent implements AfterViewInit, OnChanges {
      * @param representObjectPipe - Saves the object to string representation
      * pipe instance.
      * @param stringFormatPipe - Saves the string formation pipe instance.
+     * @param stringTemplatePipe - Injected sString template pipe instance.
      * @param utility - Utility service instance.
      * @returns Nothing.
      */
-    constructor(data: DataService, domSanitizer: DomSanitizer, extendObjectPipe: ExtendObjectPipe, getFilenameByPrefixPipe: GetFilenameByPrefixPipe, initialData: InitialDataService, representObjectPipe: RepresentObjectPipe, stringFormatPipe: StringFormatPipe, utility: UtilityService);
+    constructor(abstractResolver: AbstractResolver, data: DataService, domSanitizer: DomSanitizer, extendObjectPipe: ExtendObjectPipe, getFilenameByPrefixPipe: GetFilenameByPrefixPipe, initialData: InitialDataService, representObjectPipe: RepresentObjectPipe, stringFormatPipe: StringFormatPipe, stringTemplatePipe: StringTemplatePipe, utility: UtilityService);
     /**
      * Determines which type of file we have to present.
      * @returns Nothing.

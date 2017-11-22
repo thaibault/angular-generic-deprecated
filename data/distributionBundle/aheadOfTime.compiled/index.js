@@ -17,14 +17,14 @@
     endregion
 */
 // region imports
-import Tools, { $, $DomNode, DomNode, globalContext, PlainObject } from 'clientnode';
-import { AfterContentChecked, AfterViewInit, APP_INITIALIZER, ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Directive, ElementRef, EventEmitter, forwardRef, Injectable, /* eslint-disable no-unused-vars */
+import Tools, { $, globalContext, PlainObject } from 'clientnode';
+import { APP_INITIALIZER, ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Directive, ElementRef, EventEmitter, forwardRef, Injectable, /* eslint-disable no-unused-vars */
 Inject, /* eslint-enable no-unused-vars */
-Injector, Input, NgModule, NgZone, OnChanges, OnDestroy, OnInit, /* eslint-disable no-unused-vars */
+Injector, Input, NgModule, /* eslint-disable no-unused-vars */
 Optional, /* eslint-enable no-unused-vars */
-Output, Pipe, PipeTransform, /* eslint-disable no-unused-vars */
+Output, Pipe, /* eslint-disable no-unused-vars */
 PLATFORM_ID, /* eslint-enable no-unused-vars */
-Renderer2, SimpleChanges, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
+Renderer2, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { DatePipe, isPlatformServer } from '@angular/common';
 import { DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { 
@@ -32,20 +32,22 @@ import {
 MatButtonModule, MatCardModule, /* eslint-disable no-unused-vars */
 MAT_DIALOG_DATA, /* eslint-enable no-unused-vars */
 MatDialog, MatDialogRef, MatDialogModule, MatInputModule, MatSelectModule, MatSnackBar, MatSnackBarConfig, MatTooltipModule } from '@angular/material';
-import { BrowserModule, DomSanitizer, SafeScript, SafeHtml, SafeResourceUrl, SafeStyle, SafeUrl } from '@angular/platform-browser';
-import { ActivatedRoute, ActivatedRouteSnapshot, CanDeactivate, NavigationEnd, Resolve, Router, RouterStateSnapshot } from '@angular/router';
+import { BrowserModule, DomSanitizer } from '@angular/platform-browser';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import PouchDB from 'pouchdb';
 import PouchDBFindPlugin from 'pouchdb-find';
 import PouchDBValidationPlugin from 'pouchdb-validation';
 import { Subject } from 'rxjs';
-import { Observable } from 'rxjs/Observable';
-import { ISubscription } from 'rxjs/Subscription';
 // NOTE: Only needed for debugging this file.
 try {
     module.require('source-map-support/register');
 }
 catch (error) { }
-import defaultAnimation from './animation';
+/*
+    NOTE: Default import is not yet support for angular's ahead of time
+    compiler.
+*/
+import { defaultAnimation } from './animation';
 // endregion
 if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
     /* eslint-disable no-var */
@@ -61,6 +63,7 @@ export let LAST_KNOWN_DATA = {
 export let currentInstanceToSearchInjectorFor = null;
 export const SYMBOL = `${new Date().getTime()}/${Math.random()}`;
 // region configuration
+const animations = [defaultAnimation];
 export const CODE_MIRROR_DEFAULT_OPTIONS = {
     // region paths
     path: {
@@ -112,6 +115,7 @@ export const TINYMCE_DEFAULT_OPTIONS = {
     toolbar2: 'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',
     /* eslint-enable max-len */
     trim: true
+    /* eslint-enable camelcase */
 };
 // endregion
 // region basic services
@@ -128,7 +132,19 @@ export const TINYMCE_DEFAULT_OPTIONS = {
  * @property tools - Holds an injector scope specific tools instance.
  */
 export class UtilityService {
+    constructor() {
+        this.fixed = UtilityService;
+        this.tools = new Tools();
+    }
 }
+UtilityService.$ = $;
+UtilityService.globalContext = globalContext;
+UtilityService.tools = Tools;
+UtilityService.decorators = [
+    { type: Injectable },
+];
+/** @nocollapse */
+UtilityService.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Serves initial data provided via a global variable.
@@ -178,6 +194,60 @@ export class InitialDataService {
         return this.tools.extendObject(true, this, ...parameter);
     }
 }
+InitialDataService.defaultScope = { configuration: { database: {
+            connector: {
+                /* eslint-disable camelcase */
+                auto_compaction: true,
+                revs_limit: 10
+                /* eslint-enable camelcase */
+            },
+            model: {
+                entities: {},
+                property: {
+                    defaultSpecification: {
+                        minimum: 0,
+                        minimumLength: 0,
+                        minimumNumber: 0
+                    },
+                    name: {
+                        reserved: [],
+                        special: {
+                            allowedRole: '_allowedRoles',
+                            attachment: '_attachments',
+                            conflict: '_conflicts',
+                            constraint: {
+                                execution: '_constraintExecutions',
+                                expression: '_constraintExpressions'
+                            },
+                            deleted: '_deleted',
+                            deletedConflict: '_deleted_conflicts',
+                            extend: '_extends',
+                            id: '_id',
+                            localSequence: '_local_seq',
+                            maximumAggregatedSize: '_maximumAggregatedSize',
+                            minimumAggregatedSize: '_minimumAggregatedSize',
+                            revision: '_rev',
+                            revisions: '_revisions',
+                            revisionsInformation: '_revs_info',
+                            strategy: '_updateStrategy',
+                            type: '-type'
+                        },
+                        validatedDocumentsCache: '_validatedDocuments'
+                    }
+                }
+            },
+            plugins: [],
+            url: 'generic'
+        } } };
+InitialDataService.injectors = new Set();
+InitialDataService.removeFoundData = true;
+InitialDataService.decorators = [
+    { type: Injectable },
+];
+/** @nocollapse */
+InitialDataService.ctorParameters = () => [
+    { type: UtilityService, },
+];
 /**
  * Helper function to easy create abstract classes without tight bounds.
  * @param injector - Application specific injector to use instead auto
@@ -310,308 +380,757 @@ for (const methodTypePrefix:string in methodGroups)
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ConvertCircularObjectToJSONPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'convertCircularObjectToJSON';
+    }
 }
+ConvertCircularObjectToJSONPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericConvertCircularObjectToJSON` },] },
+];
+/** @nocollapse */
+ConvertCircularObjectToJSONPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class EqualsPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'equals';
+    }
 }
+EqualsPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericEquals` },] },
+];
+/** @nocollapse */
+EqualsPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ExtendObjectPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'extendObject';
+    }
 }
+ExtendObjectPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericExtendObject` },] },
+];
+/** @nocollapse */
+ExtendObjectPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class RepresentObjectPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'representObject';
+    }
 }
+RepresentObjectPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericRepresentObject` },] },
+];
+/** @nocollapse */
+RepresentObjectPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class SortPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'sort';
+    }
 }
+SortPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericSort` },] },
+];
+/** @nocollapse */
+SortPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayMergePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayMerge';
+    }
 }
+ArrayMergePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayMerge` },] },
+];
+/** @nocollapse */
+ArrayMergePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayMakePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayMake';
+    }
 }
+ArrayMakePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayMake` },] },
+];
+/** @nocollapse */
+ArrayMakePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayUniquePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayUnique';
+    }
 }
+ArrayUniquePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayUnique` },] },
+];
+/** @nocollapse */
+ArrayUniquePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayAggregatePropertyIfEqualPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayAggregatePropertyIfEqual';
+    }
 }
+ArrayAggregatePropertyIfEqualPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayAggregatePropertyIfEqual` },] },
+];
+/** @nocollapse */
+ArrayAggregatePropertyIfEqualPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayDeleteEmptyItemsPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayDeleteEmptyItems';
+    }
 }
+ArrayDeleteEmptyItemsPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayDeleteEmptyItems` },] },
+];
+/** @nocollapse */
+ArrayDeleteEmptyItemsPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayExtractPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayExtract';
+    }
 }
+ArrayExtractPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayExtract` },] },
+];
+/** @nocollapse */
+ArrayExtractPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayExtractIfMatchesPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayExtractIfMatches';
+    }
 }
+ArrayExtractIfMatchesPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayExtractIfMatches` },] },
+];
+/** @nocollapse */
+ArrayExtractIfMatchesPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayExtractIfPropertyExistsPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayExtractIfPropertyExists';
+    }
 }
+ArrayExtractIfPropertyExistsPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayExtractIfPropertyExists` },] },
+];
+/** @nocollapse */
+ArrayExtractIfPropertyExistsPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayExtractIfPropertyMatchesPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayExtractIfPropertyMatches';
+    }
 }
+ArrayExtractIfPropertyMatchesPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayExtractIfPropertyMatches` },] },
+];
+/** @nocollapse */
+ArrayExtractIfPropertyMatchesPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayIntersectPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayIntersect';
+    }
 }
+ArrayIntersectPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayIntersect` },] },
+];
+/** @nocollapse */
+ArrayIntersectPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayMakeRangePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayMakeRange';
+    }
 }
+ArrayMakeRangePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayMakeRange` },] },
+];
+/** @nocollapse */
+ArrayMakeRangePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArraySumUpPropertyPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arraySumUpProperty';
+    }
 }
+ArraySumUpPropertyPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArraySumUpProperty` },] },
+];
+/** @nocollapse */
+ArraySumUpPropertyPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayAppendAddPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayAppendAdd';
+    }
 }
+ArrayAppendAddPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayAppendAdd` },] },
+];
+/** @nocollapse */
+ArrayAppendAddPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArrayRemovePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arrayRemove';
+    }
 }
+ArrayRemovePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArrayRemove` },] },
+];
+/** @nocollapse */
+ArrayRemovePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class ArraySortTopologicalPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'arraySortTopological';
+    }
 }
+ArraySortTopologicalPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericArraySortTopological` },] },
+];
+/** @nocollapse */
+ArraySortTopologicalPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringEscapeRegularExpressionsPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringEscapeRegularExpressions';
+    }
 }
+StringEscapeRegularExpressionsPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringEscapeRegularExpressions` },] },
+];
+/** @nocollapse */
+StringEscapeRegularExpressionsPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringConvertToValidVariableNamePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringConvertToValidVariableName';
+    }
 }
+StringConvertToValidVariableNamePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringConvertToValidVariableName` },] },
+];
+/** @nocollapse */
+StringConvertToValidVariableNamePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringEncodeURIComponentPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringEncodeURIComponent';
+    }
 }
+StringEncodeURIComponentPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringEncodeURIComponent` },] },
+];
+/** @nocollapse */
+StringEncodeURIComponentPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringAddSeparatorToPathPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringAddSeparatorToPath';
+    }
 }
+StringAddSeparatorToPathPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringAddSeparatorToPath` },] },
+];
+/** @nocollapse */
+StringAddSeparatorToPathPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringHasPathPrefixPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringHasPathPrefix';
+    }
 }
+StringHasPathPrefixPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringHasPathPrefix` },] },
+];
+/** @nocollapse */
+StringHasPathPrefixPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringGetDomainNamePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringGetDomainName';
+    }
 }
+StringGetDomainNamePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringGetDomainName` },] },
+];
+/** @nocollapse */
+StringGetDomainNamePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringGetPortNumberPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringGetPortNumber';
+    }
 }
+StringGetPortNumberPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringGetPortNumber` },] },
+];
+/** @nocollapse */
+StringGetPortNumberPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringGetProtocolNamePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringGetProtocolName';
+    }
 }
+StringGetProtocolNamePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringGetProtocolName` },] },
+];
+/** @nocollapse */
+StringGetProtocolNamePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringGetURLVariablePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringGetURLVariable';
+    }
 }
+StringGetURLVariablePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringGetURLVariable` },] },
+];
+/** @nocollapse */
+StringGetURLVariablePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringIsInternalURLPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringIsInternalURL';
+    }
 }
+StringIsInternalURLPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringIsInternalURL` },] },
+];
+/** @nocollapse */
+StringIsInternalURLPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringNormalizeURLPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringNormalizeURL';
+    }
 }
+StringNormalizeURLPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringNormalizeURL` },] },
+];
+/** @nocollapse */
+StringNormalizeURLPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringRepresentURLPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringRepresentURL';
+    }
 }
+StringRepresentURLPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringRepresentURL` },] },
+];
+/** @nocollapse */
+StringRepresentURLPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringCompressStyleValuePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringCompressStyleValue';
+    }
 }
+StringCompressStyleValuePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringCompressStyleValue` },] },
+];
+/** @nocollapse */
+StringCompressStyleValuePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringCamelCaseToDelimitedPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringCamelCaseToDelimited';
+    }
 }
+StringCamelCaseToDelimitedPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringCamelCaseToDelimited` },] },
+];
+/** @nocollapse */
+StringCamelCaseToDelimitedPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringCapitalizePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringCapitalize';
+    }
 }
+StringCapitalizePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringCapitalize` },] },
+];
+/** @nocollapse */
+StringCapitalizePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringDelimitedToCamelCasePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringDelimitedToCamelCase';
+    }
 }
+StringDelimitedToCamelCasePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringDelimitedToCamelCase` },] },
+];
+/** @nocollapse */
+StringDelimitedToCamelCasePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringFormatPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringFormat';
+    }
 }
+StringFormatPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringFormat` },] },
+];
+/** @nocollapse */
+StringFormatPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringGetRegularExpressionValidatedPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringGetRegularExpressionValidated';
+    }
 }
+StringGetRegularExpressionValidatedPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringGetRegularExpressionValidated` },] },
+];
+/** @nocollapse */
+StringGetRegularExpressionValidatedPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringLowerCasePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringLowerCase';
+    }
 }
+StringLowerCasePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringLowerCase` },] },
+];
+/** @nocollapse */
+StringLowerCasePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringFindNormalizedMatchRangePipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringFindNormalizedMatchRange';
+    }
 }
+StringFindNormalizedMatchRangePipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringFindNormalizedMatchRange` },] },
+];
+/** @nocollapse */
+StringFindNormalizedMatchRangePipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringMarkPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringMark';
+    }
 }
+StringMarkPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringMark` },] },
+];
+/** @nocollapse */
+StringMarkPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringMD5Pipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringMD5';
+    }
 }
+StringMD5Pipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringMD5` },] },
+];
+/** @nocollapse */
+StringMD5Pipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringNormalizePhoneNumberPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringNormalizePhoneNumber';
+    }
 }
+StringNormalizePhoneNumberPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringNormalizePhoneNumber` },] },
+];
+/** @nocollapse */
+StringNormalizePhoneNumberPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringParseEncodedObjectPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringParseEncodedObject';
+    }
 }
+StringParseEncodedObjectPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringParseEncodedObject` },] },
+];
+/** @nocollapse */
+StringParseEncodedObjectPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringRepresentPhoneNumberPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringRepresentPhoneNumber';
+    }
 }
+StringRepresentPhoneNumberPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringRepresentPhoneNumber` },] },
+];
+/** @nocollapse */
+StringRepresentPhoneNumberPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringDecodeHTMLEntitiesPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringDecodeHTMLEntities';
+    }
 }
+StringDecodeHTMLEntitiesPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringDecodeHTMLEntities` },] },
+];
+/** @nocollapse */
+StringDecodeHTMLEntitiesPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class StringNormalizeDomNodeSelectorPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'stringNormalizeDomNodeSelector';
+    }
 }
+StringNormalizeDomNodeSelectorPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericStringNormalizeDomNodeSelector` },] },
+];
+/** @nocollapse */
+StringNormalizeDomNodeSelectorPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class NumberGetUTCTimestampPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'numberGetUTCTimestamp';
+    }
 }
+NumberGetUTCTimestampPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericNumberGetUTCTimestamp` },] },
+];
+/** @nocollapse */
+NumberGetUTCTimestampPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class NumberIsNotANumberPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'numberIsNotANumber';
+    }
 }
+NumberIsNotANumberPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericNumberIsNotANumber` },] },
+];
+/** @nocollapse */
+NumberIsNotANumberPipe.ctorParameters = () => [];
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
 export class NumberRoundPipe extends AbstractToolsPipe {
+    constructor() {
+        super(...arguments);
+        this.methodName = 'numberRound';
+    }
 }
+NumberRoundPipe.decorators = [
+    { type: Pipe, args: [{ name: `genericNumberRound` },] },
+];
+/** @nocollapse */
+NumberRoundPipe.ctorParameters = () => [];
 // / endregion
 // / region object
 // IgnoreTypeCheck
 /**
  * Determines if given attachments are representing the same data.
  * @property data - Database service instance.
- * @property ngZone - Execution context service instance.
  * @property representObject - Represent object pipe's method.
  * @property specialNames - A mapping to database specific special property
  * names.
@@ -622,14 +1141,12 @@ export class AttachmentsAreEqualPipe {
          * Gets needed services injected.
          * @param initialData - Injected initial data service instance.
          * @param injector - Application specific injector instance.
-         * @param ngZone - Injected execution context service instance.
          * @param representObjectPipe - Represent object pipe instance.
          * @param stringMD5Pipe - Injected string md5 pipe instance.
          * @returns Nothing.
          */
-    constructor(initialData, injector, ngZone, representObjectPipe, stringMD5Pipe) {
+    constructor(initialData, injector, representObjectPipe, stringMD5Pipe) {
         this.data = injector.get(DataService);
-        this.ngZone = ngZone;
         this.representObject = representObjectPipe.transform.bind(representObjectPipe);
         this.specialNames =
             initialData.configuration.database.model.property.name.special;
@@ -687,6 +1204,7 @@ export class AttachmentsAreEqualPipe {
                                 data: data[type].data,
                                 /* eslint-disable camelcase */
                                 content_type: 'application/octet-stream'
+                                /* eslint-enable camelcase */
                             }
                         }
                     });
@@ -709,6 +1227,16 @@ export class AttachmentsAreEqualPipe {
         return data.first.hash === data.second.hash;
     }
 }
+AttachmentsAreEqualPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericAttachmentsAreEqual' },] },
+];
+/** @nocollapse */
+AttachmentsAreEqualPipe.ctorParameters = () => [
+    { type: InitialDataService, },
+    { type: Injector, },
+    { type: RepresentObjectPipe, },
+    { type: StringMD5Pipe, },
+];
 // IgnoreTypeCheck
 /**
  * Retrieves a matching filename by given filename prefix.
@@ -736,6 +1264,11 @@ export class GetFilenameByPrefixPipe {
         return null;
     }
 }
+GetFilenameByPrefixPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericGetFilenameByPrefix' },] },
+];
+/** @nocollapse */
+GetFilenameByPrefixPipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Retrieves if a filename with given prefix exists.
@@ -772,6 +1305,14 @@ export class AttachmentWithPrefixExistsPipe {
         return false;
     }
 }
+AttachmentWithPrefixExistsPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericAttachmentWithPrefixExists' },] },
+];
+/** @nocollapse */
+AttachmentWithPrefixExistsPipe.ctorParameters = () => [
+    { type: GetFilenameByPrefixPipe, },
+    { type: InitialDataService, },
+];
 // IgnoreTypeCheck
 /**
  * Removes all meta data from a document recursively.
@@ -860,6 +1401,13 @@ export class ExtractDataPipe {
         return result;
     }
 }
+ExtractDataPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericExtractData' },] },
+];
+/** @nocollapse */
+ExtractDataPipe.ctorParameters = () => [
+    { type: InitialDataService, },
+];
 // IgnoreTypeCheck
 /**
  * Removes all meta data and already existing data (compared to an old
@@ -1100,6 +1648,7 @@ export class ExtractRawDataPipe {
                                             content_type: data[name][fileName]
                                                 .content_type ||
                                                 'application/octet-stream'
+                                            /* eslint-enable camelcase */
                                         };
                                     if (data[name][fileName].hasOwnProperty('data'))
                                         result[name][fileName].data =
@@ -1176,6 +1725,18 @@ export class ExtractRawDataPipe {
         return payloadExists ? result : null;
     }
 }
+ExtractRawDataPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericExtractRawData' },] },
+];
+/** @nocollapse */
+ExtractRawDataPipe.ctorParameters = () => [
+    { type: AttachmentsAreEqualPipe, },
+    { type: EqualsPipe, },
+    { type: InitialDataService, },
+    { type: Injector, },
+    { type: NumberGetUTCTimestampPipe, },
+    { type: UtilityService, },
+];
 // IgnoreTypeCheck
 /**
  * Checks if given reference is defined.
@@ -1192,6 +1753,11 @@ export class IsDefinedPipe {
         return !(object === undefined || nullIsUndefined && object === null);
     }
 }
+IsDefinedPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericIsDefined' },] },
+];
+/** @nocollapse */
+IsDefinedPipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Retrieves a matching filename by given filename prefix.
@@ -1224,6 +1790,11 @@ export class LimitToPipe {
         return input.slice(Math.max(0, begin + limit), begin);
     }
 }
+LimitToPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericLimitTo' },] },
+];
+/** @nocollapse */
+LimitToPipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Returns a copy of given object where each item was processed through given
@@ -1264,6 +1835,13 @@ export class MapPipe {
         return result;
     }
 }
+MapPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericMap' },] },
+];
+/** @nocollapse */
+MapPipe.ctorParameters = () => [
+    { type: Injector, },
+];
 // IgnoreTypeCheck
 /**
  * Retrieves a matching filename by given filename prefix.
@@ -1303,6 +1881,11 @@ export class ObjectKeysPipe {
         return [];
     }
 }
+ObjectKeysPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericObjectKeys' },] },
+];
+/** @nocollapse */
+ObjectKeysPipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Reverses a given list.
@@ -1327,6 +1910,11 @@ export class ReversePipe {
         return list;
     }
 }
+ReversePipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericReverse' },] },
+];
+/** @nocollapse */
+ReversePipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Determines type of given object.
@@ -1341,6 +1929,11 @@ export class TypePipe {
         return typeof object;
     }
 }
+TypePipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericType' },] },
+];
+/** @nocollapse */
+TypePipe.ctorParameters = () => [];
 // / endregion
 // region array
 // IgnoreTypeCheck
@@ -1361,6 +1954,11 @@ export class ArrayDependentConcatPipe {
         return array;
     }
 }
+ArrayDependentConcatPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericArrayDependentConcat' },] },
+];
+/** @nocollapse */
+ArrayDependentConcatPipe.ctorParameters = () => [];
 // endregion
 // region string
 // IgnoreTypeCheck
@@ -1379,6 +1977,11 @@ export class StringEndsWithPipe {
             string.endsWith(needle);
     }
 }
+StringEndsWithPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringEndsWith' },] },
+];
+/** @nocollapse */
+StringEndsWithPipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Determines if given string has a time indicating suffix.
@@ -1395,6 +1998,11 @@ export class StringHasTimeSuffixPipe {
         return string.endsWith('Date') || string.endsWith('Time') || string === 'timestamp';
     }
 }
+StringHasTimeSuffixPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringHasTimeSuffix' },] },
+];
+/** @nocollapse */
+StringHasTimeSuffixPipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Tests if given pattern matches against given subject.
@@ -1413,6 +2021,11 @@ export class StringMatchPipe {
         return (new RegExp(pattern, modifier)).test(subject);
     }
 }
+StringMatchPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringMatch' },] },
+];
+/** @nocollapse */
+StringMatchPipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Trims given string if it is longer then given length.
@@ -1435,6 +2048,11 @@ export class StringMaximumLengthPipe {
         return '';
     }
 }
+StringMaximumLengthPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringMaximumLength' },] },
+];
+/** @nocollapse */
+StringMaximumLengthPipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Provides javascript's native string replacement method as pipe.
@@ -1456,6 +2074,11 @@ export class StringReplacePipe {
             search, replacement);
     }
 }
+StringReplacePipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringReplace' },] },
+];
+/** @nocollapse */
+StringReplacePipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Provides angular dom html sanitizer.
@@ -1470,6 +2093,13 @@ export class StringSafeHTMLPipe {
         this.transform = domSanitizer.bypassSecurityTrustHtml.bind(domSanitizer);
     }
 }
+StringSafeHTMLPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringSafeHTML' },] },
+];
+/** @nocollapse */
+StringSafeHTMLPipe.ctorParameters = () => [
+    { type: DomSanitizer, },
+];
 // IgnoreTypeCheck
 /**
  * Provides angular dom html sanitizer.
@@ -1484,6 +2114,13 @@ export class StringSafeResourceURLPipe {
         this.transform = domSanitizer.bypassSecurityTrustResourceUrl.bind(domSanitizer);
     }
 }
+StringSafeResourceURLPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringSafeResourceURL' },] },
+];
+/** @nocollapse */
+StringSafeResourceURLPipe.ctorParameters = () => [
+    { type: DomSanitizer, },
+];
 // IgnoreTypeCheck
 /**
  * Provides angular dom html sanitizer.
@@ -1498,6 +2135,13 @@ export class StringSafeScriptPipe {
         this.transform = domSanitizer.bypassSecurityTrustScript.bind(domSanitizer);
     }
 }
+StringSafeScriptPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringSafeScript' },] },
+];
+/** @nocollapse */
+StringSafeScriptPipe.ctorParameters = () => [
+    { type: DomSanitizer, },
+];
 // IgnoreTypeCheck
 /**
  * Provides angular dom html sanitizer.
@@ -1512,6 +2156,13 @@ export class StringSafeStylePipe {
         this.transform = domSanitizer.bypassSecurityTrustStyle.bind(domSanitizer);
     }
 }
+StringSafeStylePipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringSafeStyle' },] },
+];
+/** @nocollapse */
+StringSafeStylePipe.ctorParameters = () => [
+    { type: DomSanitizer, },
+];
 // IgnoreTypeCheck
 /**
  * Provides angular dom html sanitizer.
@@ -1526,6 +2177,13 @@ export class StringSafeURLPipe {
         this.transform = domSanitizer.bypassSecurityTrustUrl.bind(domSanitizer);
     }
 }
+StringSafeURLPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringSafeURL' },] },
+];
+/** @nocollapse */
+StringSafeURLPipe.ctorParameters = () => [
+    { type: DomSanitizer, },
+];
 // IgnoreTypeCheck
 /**
  * Returns given string if it matches given pattern.
@@ -1549,6 +2207,11 @@ export class StringShowIfPatternMatchesPipe {
         return indicator ? string : '';
     }
 }
+StringShowIfPatternMatchesPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringShowIfPatternMatches' },] },
+];
+/** @nocollapse */
+StringShowIfPatternMatchesPipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Returns a matched part of given subject with given pattern. Default is the
@@ -1573,6 +2236,11 @@ export class StringSliceMatchPipe {
         return '';
     }
 }
+StringSliceMatchPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringSliceMatch' },] },
+];
+/** @nocollapse */
+StringSliceMatchPipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Forwards javascript's native "stringStartsWith" method.
@@ -1589,6 +2257,11 @@ export class StringStartsWithPipe {
             string.startsWith(needle);
     }
 }
+StringStartsWithPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringStartsWith' },] },
+];
+/** @nocollapse */
+StringStartsWithPipe.ctorParameters = () => [];
 // IgnoreTypeCheck
 /**
  * Provides angular's template engine as pipe.
@@ -1624,6 +2297,13 @@ export class StringTemplatePipe {
         return new Function('scope', ...validNames, `return \`${string}\``)(scope, ...validNames.map((name) => scope[name]));
     }
 }
+StringTemplatePipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericStringTemplate' },] },
+];
+/** @nocollapse */
+StringTemplatePipe.ctorParameters = () => [
+    { type: ExtendObjectPipe, },
+];
 // / endregion
 // / region number
 // IgnoreTypeCheck
@@ -1641,6 +2321,11 @@ export class NumberPercentPipe {
         return (part / all) * 100;
     }
 }
+NumberPercentPipe.decorators = [
+    { type: Pipe, args: [{ name: 'genericNumberPercent' },] },
+];
+/** @nocollapse */
+NumberPercentPipe.ctorParameters = () => [];
 // / endregion
 // endregion
 // region services
@@ -1662,6 +2347,11 @@ export class CanDeactivateRouteLeaveGuard {
         return 'canDeactivate' in component ? component.canDeactivate(...additionalParameter) : true;
     }
 }
+CanDeactivateRouteLeaveGuard.decorators = [
+    { type: Injectable },
+];
+/** @nocollapse */
+CanDeactivateRouteLeaveGuard.ctorParameters = () => [];
 // / region confirm
 // IgnoreTypeCheck
 /**
@@ -1686,6 +2376,11 @@ export class ConfirmComponent {
     constructor(
         // IgnoreTypeCheck
         data, dialogReference) {
+        this.cancelText = 'Cancel';
+        this.dialogReference = null;
+        this.okText = 'OK';
+        this.title = '';
+        this.message = '';
         /* eslint-enable indent */
         this.dialogReference = dialogReference;
         if (typeof data === 'object' && data !== null)
@@ -1694,6 +2389,36 @@ export class ConfirmComponent {
                     this[key] = data[key];
     }
 }
+ConfirmComponent.decorators = [
+    { type: Component, args: [{
+                animations,
+                changeDetection: ChangeDetectionStrategy.OnPush,
+                selector: 'generic-confirm',
+                template: `
+        <h2 @defaultAnimation mat-dialog-title *ngIf="title">{{title}}</h2>
+        <mat-dialog-content @defaultAnimation *ngIf="message">
+            {{message}}
+        </mat-dialog-content>
+        <mat-dialog-actions>
+            <button (click)="dialogReference.close(true)" mat-raised-button>
+                {{okText}}
+            </button>
+            <button (click)="dialogReference.close(false)" mat-raised-button>
+                {{cancelText}}
+            </button>
+        </mat-dialog-actions>
+    `
+            },] },
+];
+/** @nocollapse */
+ConfirmComponent.ctorParameters = () => [
+    { type: undefined, decorators: [{ type: Optional }, { type: Inject, args: [MAT_DIALOG_DATA,] },] },
+    { type: MatDialogRef, decorators: [{ type: Optional },] },
+];
+ConfirmComponent.propDecorators = {
+    "cancelText": [{ type: Input },],
+    "okText": [{ type: Input },],
+};
 // IgnoreTypeCheck
 /**
  * Alert service to trigger a dialog window which can be confirmed.
@@ -1725,6 +2450,13 @@ export class AlertService {
         return this.dialogReference.afterClosed().toPromise();
     }
 }
+AlertService.decorators = [
+    { type: Injectable },
+];
+/** @nocollapse */
+AlertService.ctorParameters = () => [
+    { type: MatDialog, },
+];
 // / endregion
 // IgnoreTypeCheck
 /**
@@ -1739,11 +2471,8 @@ export class AlertService {
  * @property equals - Hilds the equals pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
- * @property interceptSynchronisationPromise - Promise which have to be
- * resolved before synchronisation for local database starts.
  * @property middlewares - Mapping of post and pre callback arrays to trigger
  * before or after each database transaction.
- * @property ngZone - Execution service instance.
  * @property platformID - Platform identification string.
  * @property remoteConnection - The current remote database connection
  * instance.
@@ -1760,13 +2489,20 @@ export class DataService {
          * @param equalsPipe - Equals pipe service instance.
          * @param extendObjectPipe - Injected extend object pipe instance.
          * @param initialData - Injected initial data service instance.
-         * @param ngZone - Injected execution context service instance.
          * @param platformID - Platform identification string.
          * @param stringFormatPipe - Injected string format pipe instance.
          * @param utility - Injected utility service instance.
          * @returns Nothing.
          */
-    constructor(equalsPipe, extendObjectPipe, initialData, ngZone, platformID, stringFormatPipe, utility) {
+    constructor(equalsPipe, extendObjectPipe, initialData, platformID, stringFormatPipe, utility) {
+        this.middlewares = {
+            post: {},
+            pre: {}
+        };
+        this.remoteConnection = null;
+        this.runningRequests = [];
+        this.runningRequestsStream = new Subject();
+        this.synchronisation = null;
         this.configuration = initialData.configuration;
         if (this.configuration.database.hasOwnProperty('publicURL'))
             this.configuration.database.url =
@@ -1774,7 +2510,6 @@ export class DataService {
         this.database = PouchDB;
         this.equals = equalsPipe.transform.bind(equalsPipe);
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe);
-        this.ngZone = ngZone;
         this.platformID = platformID;
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe);
         this.tools = utility.fixed.tools;
@@ -1890,6 +2625,11 @@ export class DataService {
          * @returns A promise resolving when initialisation has finished.
          */
     async initialize() {
+        /*
+                    NOTE: We want to allow other services to manipulate the database
+                    constructor before initializing them.
+                */
+        await this.tools.timeout();
         const options = this.extendObject(/* eslint-disable camelcase */
         true, { skip_setup: true }, /* eslint-enable camelcase */
         this.configuration.database.connector || {});
@@ -1997,17 +2737,6 @@ export class DataService {
                 };
             }
         this.connection.installValidationMethods();
-        if (this.configuration.database.local && this.remoteConnection)
-            /*
-                            NOTE: We want to allow other services to integrate an
-                            interception promise.
-                        */
-            // IgnoreTypeCheck
-            this.tools.timeout(async () => {
-                if (this.interceptSynchronisationPromise)
-                    await this.interceptSynchronisationPromise;
-                this.startSynchronisation();
-            });
         if (isPlatformServer(this.platformID) &&
             this.configuration.database.createGenericFlatIndex) {
             // region create/remove needed/unneeded generic indexes
@@ -2056,8 +2785,8 @@ export class DataService {
                             throw error;
                         }
                 }
+            // endregion
         }
-        // endregion
     }
     /**
          * Creates a database index.
@@ -2193,18 +2922,91 @@ export class DataService {
     }
     /**
          * Starts synchronisation between a local and remote database.
-         * @returns Nothing.
+         * @returns A promise if a synchronisation has been started and is in sync
+         * with remote database or null if no stream was initialized due to
+         * corresponding database configuration.
          */
-    startSynchronisation() {
-        return this.synchronisation = this.connection.sync(this.remoteConnection, { live: true, retry: true })
-            .on('change', (info) => console.info('change', info))
-            .on('paused', () => console.info('paused'))
-            .on('active', () => console.info('active'))
-            .on('denied', (error) => console.warn('denied', error))
-            .on('complete', (info) => console.info('complete', info))
-            .on('error', (error) => console.error('error', error));
+    async startSynchronisation() {
+        if (this.configuration.database.local &&
+            this.remoteConnection &&
+            this.synchronisation === null) {
+            let resolved = false;
+            return await new Promise((resolve, reject) => {
+                this.synchronisation = this.connection.sync(this.remoteConnection, { live: true, retry: true })
+                    .on('change', (info) => console.info('change', info))
+                    .on('paused', () => {
+                    if (!resolved) {
+                        resolved = true;
+                        resolve(this.synchronisation);
+                    }
+                    console.info('paused');
+                })
+                    .on('active', () => console.info('active'))
+                    .on('denied', (error) => {
+                    if (!resolved) {
+                        resolved = true;
+                        reject({ name: 'denied', error });
+                    }
+                    console.warn('denied', error);
+                })
+                    .on('complete', (info) => console.info('complete', info))
+                    .on('error', (error) => {
+                    if (!resolved) {
+                        resolved = true;
+                        reject({ name: 'error', error });
+                    }
+                    console.error('error', error);
+                });
+            });
+        }
+        return null;
+    }
+    /**
+         * Stop a current running data synchronisation.
+         * @returns A boolean indicating whether a synchronisation was really
+         * stopped or there were none.
+         */
+    async stopSynchronisation() {
+        if (this.synchronisation) {
+            const promise = new Promise((resolve, reject) => {
+                this.synchronisation.on('complete', resolve);
+                this.synchronisation.on('error', reject);
+            });
+            this.synchronisation.cancel();
+            await promise;
+            this.synchronisation = null;
+            return true;
+        }
+        return false;
     }
 }
+// NOTE: Native regular expression definition is not allowed here.
+DataService.revisionNumberRegularExpression = new RegExp('^([0-9]+)-');
+DataService.wrappableMethodNames = [
+    'allDocs', 'bulkDocs', 'bulkGet',
+    'close',
+    'compact', 'compactDocument',
+    'createIndex', 'deleteIndexs',
+    'destroy',
+    'find', 'get',
+    'getAttachment', 'getIndexes',
+    'info',
+    'post', 'put', 'putAttachment',
+    'query',
+    'remove', 'removeAttachment'
+];
+DataService.decorators = [
+    { type: Injectable },
+];
+/** @nocollapse */
+DataService.ctorParameters = () => [
+    { type: EqualsPipe, },
+    { type: ExtendObjectPipe, },
+    { type: InitialDataService, },
+    { type: undefined, decorators: [{ type: Inject, args: [PLATFORM_ID,] },] },
+    { type: StringFormatPipe, },
+    { type: UtilityService, },
+];
 // IgnoreTypeCheck
 /**
  * Auto generates a components scope environment for a specified model.
@@ -2398,7 +3200,9 @@ export class DataScopeService {
             propertyNames = Object.keys(specification).filter((key) => typeof specification[key] === 'object' &&
                 typeof specification[key] !== null &&
                 !Array.isArray(specification[key]));
-            propertyNames = propertyNames.concat(Object.keys(data).filter((name) => !propertyNames.concat(reservedNames).includes(name)));
+            propertyNames = propertyNames.concat(Object.keys(data).filter((name
+                // IgnoreTypeCheck
+            ) => !propertyNames.concat(reservedNames).includes(name)));
         }
         const result = {};
         for (const name of propertyNames) {
@@ -2533,11 +3337,31 @@ export class DataScopeService {
         return result;
     }
 }
+DataScopeService.decorators = [
+    { type: Injectable },
+];
+/** @nocollapse */
+DataScopeService.ctorParameters = () => [
+    { type: AttachmentWithPrefixExistsPipe, },
+    { type: DataService, },
+    { type: ExtendObjectPipe, },
+    { type: ExtractDataPipe, },
+    { type: GetFilenameByPrefixPipe, },
+    { type: InitialDataService, },
+    { type: NumberGetUTCTimestampPipe, },
+    { type: RepresentObjectPipe, },
+    { type: UtilityService, },
+];
 // / region abstract
 // IgnoreTypeCheck
 /**
  * Helper class to extend from to have some basic methods to deal with database
  * entities.
+ * @property cache - Indicates whether retrieved resources should be cached.
+ * @property cacheStore - Saves cached items.
+ * @property changesStream - Changes stream to invalidate cache store.
+ * @property convertCircularObjectToJSON - Saves convert circular object to
+ * json's pipe transform method.
  * @property data - Holds currently retrieved data.
  * @property databaseBaseURL - Determined database base url.
  * @property databaseURL - Determined database url.
@@ -2556,6 +3380,7 @@ export class DataScopeService {
  * into during searching.
  * @property representObject - Represent object pipe transformation function.
  * @property specialNames - mapping of special database field names.
+ * @property tools - Tools service instance.
  * @property type - Model name to handle. Should be overwritten in concrete
  * implementations.
  * @property useLimit - Indicates whether an upper bound should be used by
@@ -2573,7 +3398,17 @@ export class AbstractResolver {
          * @returns Nothing.
          */
     constructor(injector) {
+        this.cache = true;
+        this.cacheStore = {};
+        this.databaseURLCache = {};
+        this.messageConfiguration = new MatSnackBarConfig();
+        this.relevantKeys = null;
+        this.relevantSearchKeys = null;
+        this.type = 'Item';
+        this.useLimit = false;
+        this.useSkip = false;
         const get = determineInjector(injector, this, this.constructor);
+        this.convertCircularObjectToJSON = get(ConvertCircularObjectToJSONPipe).transform.bind(get(ConvertCircularObjectToJSONPipe));
         this.data = get(DataService);
         this.domSanitizer = get(DomSanitizer);
         const databaseBaseURL = get(StringFormatPipe).transform(get(InitialDataService).configuration.database.url, '') + '/';
@@ -2590,6 +3425,24 @@ export class AbstractResolver {
         this.modelConfiguration = get(InitialDataService).configuration.database.model;
         this.representObject = get(RepresentObjectPipe).transform.bind(get(RepresentObjectPipe));
         this.specialNames = get(InitialDataService).configuration.database.model.property.name.special;
+        this.tools = get(UtilityService).fixed.tools;
+        if (this.cache) {
+            const initialize = () => {
+                this.changesStream = this.data.connection.changes(this.extendObject(true, {}, { since: 'now' }, AbstractLiveDataComponent.defaultLiveUpdateOptions, /* eslint-disable camelcase */
+                { include_docs: false }
+                /* eslint-enable camelcase */
+                ));
+                this.changesStream.on('change', () => {
+                    this.cacheStore = {};
+                });
+                this.changesStream.on('error', initialize);
+            };
+            /*
+                            NOTE: We have to break out of the "zone.js" since long polling
+                            seems to confuse its mocked environment.
+                        */
+            this.tools.timeout(initialize);
+        }
     }
     /**
          * Determines item specific database url by given item data object.
@@ -2613,7 +3466,7 @@ export class AbstractResolver {
          * @param additionalSelector - Custom filter criteria.
          * @returns A promise wrapping retrieved data.
          */
-    list(sort = [{
+    async list(sort = [{
                 [InitialDataService.defaultScope.configuration.database.model
                     .property.name.special.id]: 'asc'
             }], page = 1, limit = 10, searchTerm = '', additionalSelector = {}) {
@@ -2651,12 +3504,21 @@ export class AbstractResolver {
             delete options.skip;
         if (sort.length)
             options.sort = [this.specialNames.type].concat(sort).map((item) => Object.values(item)[0] === 'asc' ? Object.keys(item)[0] : item);
-        return this.data.find(this.extendObject(true, selector, additionalSelector), options);
+        this.extendObject(true, selector, additionalSelector);
+        if (this.cache) {
+            const key = this.convertCircularObjectToJSON({
+                selector, options
+            });
+            if (!this.cacheStore.hasOwnProperty(key))
+                this.cacheStore[key] = await this.data.find(selector, options);
+            return this.tools.copyLimitedRecursively(this.cacheStore[key]);
+        }
+        return await this.data.find(selector, options);
     }
     /**
          * Removes given item.
          * @param item - Item or id to delete.
-         * @param message - Message to show after successful removement.
+         * @param message - Message to show after successful deletion.
          * @returns Nothing.
          */
     remove(item, message = '') {
@@ -2709,16 +3571,12 @@ export class AbstractResolver {
          * @returns A boolean indicating if requested update was successful.
          */
     async update(item, data, message = '') {
-        let newData;
-        if (data)
-            newData = this.extendObject({
-                [this.specialNames.id]: (typeof item[this.specialNames.id] === 'object') ? item[this.specialNames.id].value :
-                    item[this.specialNames.id],
-                [this.specialNames.revision]: 'latest',
-                [this.specialNames.type]: item[this.specialNames.type]
-            }, data);
-        else
-            newData = item;
+        const newData = data ? this.extendObject({
+            [this.specialNames.id]: (typeof item[this.specialNames.id] === 'object') ? item[this.specialNames.id].value :
+                item[this.specialNames.id],
+            [this.specialNames.revision]: 'latest',
+            [this.specialNames.type]: item[this.specialNames.type]
+        }, data) : item;
         try {
             item[this.specialNames.revision] =
                 (await this.data.put(newData)).rev;
@@ -2732,6 +3590,13 @@ export class AbstractResolver {
         return true;
     }
 }
+AbstractResolver.decorators = [
+    { type: Injectable },
+];
+/** @nocollapse */
+AbstractResolver.ctorParameters = () => [
+    { type: Injector, decorators: [{ type: Optional },] },
+];
 // / endregion
 // endregion
 // region provider
@@ -2785,7 +3650,50 @@ export function dataServiceInitializerFactory(data, injector) {
  * @property type - Type of given input.
  */
 export class AbstractInputComponent {
+    constructor() {
+        this.declaration = null;
+        this.description = null;
+        this.disabled = null;
+        this.maximum = null;
+        this.maximumLength = null;
+        this.maximumLengthText = 'Please type less or equal than ${model.maximumLength} symbols.';
+        this.maximumText = 'Please give a number less or equal than ${model.maximum}.';
+        this.minimum = null;
+        this.minimumLength = null;
+        this.minimumLengthText = 'Please type at least or equal ${model.minimumLength} symbols.';
+        this.minimumText = 'Please given a number at least or equal to {{model.minimum}}.';
+        this.model = {};
+        this.modelChange = new EventEmitter();
+        this.patternText = 'Your string have to match the regular expression: "' +
+            '${model.regularExpressionPattern}".';
+        this.required = null;
+        this.requiredText = 'Please fill this field.';
+        this.showDeclarationText = 'ℹ';
+        this.showValidationErrorMessages = false;
+    }
 }
+AbstractInputComponent.propDecorators = {
+    "declaration": [{ type: Input },],
+    "description": [{ type: Input },],
+    "disabled": [{ type: Input },],
+    "maximum": [{ type: Input },],
+    "maximumLength": [{ type: Input },],
+    "maximumLengthText": [{ type: Input },],
+    "maximumText": [{ type: Input },],
+    "minimum": [{ type: Input },],
+    "minimumLength": [{ type: Input },],
+    "minimumLengthText": [{ type: Input },],
+    "minimumText": [{ type: Input },],
+    "model": [{ type: Input },],
+    "modelChange": [{ type: Output },],
+    "pattern": [{ type: Input },],
+    "patternText": [{ type: Input },],
+    "required": [{ type: Input },],
+    "requiredText": [{ type: Input },],
+    "showDeclarationText": [{ type: Input },],
+    "showValidationErrorMessages": [{ type: Input },],
+    "type": [{ type: Input },],
+};
 /**
  * Generic input component.
  * @property _attachmentWithPrefixExists - Holds the attachment by prefix
@@ -2868,6 +3776,10 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
         return newValue;
     }
 }
+/** @nocollapse */
+AbstractNativeInputComponent.ctorParameters = () => [
+    { type: Injector, decorators: [{ type: Optional },] },
+];
 /**
  * Observes database for any data changes and triggers corresponding methods
  * on corresponding events.
@@ -2898,6 +3810,10 @@ export class AbstractLiveDataComponent {
          * @returns Nothing.
          */
     constructor(injector) {
+        this.actions = [];
+        this.autoRestartOnError = true;
+        this._canceled = false;
+        this._liveUpdateOptions = {};
         const get = determineInjector(injector, this, this.constructor);
         this._changeDetectorReference = get(ChangeDetectorRef);
         this._data = get(DataService);
@@ -2925,7 +3841,8 @@ export class AbstractLiveDataComponent {
                     this.actions.unshift(action);
                     // IgnoreTypeCheck
                     let result = this[`onData${this._stringCapitalize(type)}`](action);
-                    if (result !== null && typeof result === 'object' &&
+                    if (result !== null &&
+                        typeof result === 'object' &&
                         'then' in result)
                         result = await result;
                     if (result)
@@ -2936,7 +3853,7 @@ export class AbstractLiveDataComponent {
         }, 3000);
         /*
                     NOTE: We have to break out of the "zone.js" since long polling
-                    themes to confuse its mocked environment.
+                    seems to confuse its mocked environment.
                 */
         this._tools.timeout(initialize);
     }
@@ -2950,31 +3867,52 @@ export class AbstractLiveDataComponent {
         if (this._changesStream)
             this._changesStream.cancel();
     }
+    /* eslint-disable no-unused-vars */
     /**
          * Triggers on any data changes.
-         * @returns A boolean indicating whether a view update should be triggered
-         * or not.
+         * @param event - An event object holding informations about the triggered
+         * reason.
+         * @returns A boolean (or promise wrapped) indicating whether a view update
+         * should be triggered or not.
          */
-    onDataChange() {
+    onDataChange(event = null) {
         return true;
     }
     /**
          * Triggers on completed data change observation.
-         * @returns A boolean indicating whether a view update should be triggered
-         * or not.
+         * @param event - An event object holding informations about the triggered
+         * reason.
+         * @returns A boolean (or promise wrapped) indicating whether a view update
+         * should be triggered or not.
          */
-    onDataComplete() {
+    onDataComplete(event = null) {
         return false;
     }
     /**
          * Triggers on data change observation errors.
-         * @returns A boolean indicating whether a view update should be triggered
-         * or not.
+         * @param event - An event object holding informations about the triggered
+         * reason.
+         * @returns A boolean (or promise wrapped) indicating whether a view update
+         * should be triggered or not.
          */
-    onDataError() {
+    onDataError(event = null) {
         return false;
     }
 }
+AbstractLiveDataComponent.defaultLiveUpdateOptions = {
+    heartbeat: 10000,
+    /* eslint-disable camelcase */
+    include_docs: true,
+    /* eslint-enable camelcase */
+    live: true,
+    since: 'now',
+    timeout: false
+};
+/* eslint-enable no-unused-vars */
+/** @nocollapse */
+AbstractLiveDataComponent.ctorParameters = () => [
+    { type: Injector, decorators: [{ type: Optional },] },
+];
 /**
  * A generic abstract component to edit, search, navigate and filter a list of
  * entities.
@@ -3014,6 +3952,20 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
          */
     constructor(injector) {
         super(injector);
+        this.allItemsChecked = false;
+        this.navigateAway = false;
+        this.preventedDataUpdate = null;
+        this.regularExpression = false;
+        this.searchTerm = '';
+        this.searchTermStream = new Subject();
+        this.selectedItems = new Set();
+        this.sort = {
+            [InitialDataService.defaultScope.configuration.database.model.property
+                .name.special.id]: 'asc'
+        };
+        this._itemPath = 'item';
+        this._itemsPath = 'items';
+        this._subscriptions = [];
         const get = determineInjector(injector);
         this.idName = get(InitialDataService).configuration.database.model.property.name.special.id;
         this.revisionName = get(InitialDataService).configuration.database.model.property.name.special.revision;
@@ -3038,8 +3990,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
         }));
         this._subscriptions.push(this._route.data.subscribe((data) => {
             this.limit = Math.max(1, this.limit || 1);
-            // TODO wen in pagination "++" ausgewählt wird verschwinden alle
-            // pages
             this.allItems = data.items.slice();
             data.items.splice(0, (this.page - 1) * this.limit);
             if (data.items.length > this.limit)
@@ -3225,6 +4175,10 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
         this.searchTermStream.next(this.searchTerm);
     }
 }
+/** @nocollapse */
+AbstractItemsComponent.ctorParameters = () => [
+    { type: Injector, decorators: [{ type: Optional },] },
+];
 /**
  * Generic value accessor with "ngModel" support.
  * @property onChangeCallback - Saves current on change callback.
@@ -3241,6 +4195,9 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
          */
     constructor(injector) {
         super(injector.get(Renderer2), injector.get(ElementRef), null);
+        this.onChangeCallback = UtilityService.tools.noop;
+        this.onTouchedCallback = UtilityService.tools.noop;
+        this.type = null;
     }
     /**
          * Manipulates editable value representation.
@@ -3291,6 +4248,9 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
         return super.writeValue(this.export(value, ...additionalParameter), ...additionalParameter);
     }
 }
+AbstractValueAccessor.propDecorators = {
+    "type": [{ type: Input },],
+};
 // / endregion
 // // region date/time
 // IgnoreTypeCheck
@@ -3315,6 +4275,12 @@ export class DateDirective {
          * @returns Nothing.
          */
     constructor(datePipe, extendObjectPipe, templateReference, viewContainerReference) {
+        this.options = {
+            dateTime: 'now',
+            format: 'HH:mm:ss',
+            freeze: false,
+            updateIntervalInMilliseconds: 1000
+        };
         this.dateFormatter = datePipe.transform.bind(datePipe);
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe);
         this.templateReference = templateReference;
@@ -3375,6 +4341,19 @@ export class DateDirective {
         this.insert();
     }
 }
+DateDirective.decorators = [
+    { type: Directive, args: [{ selector: '[genericDate]' },] },
+];
+/** @nocollapse */
+DateDirective.ctorParameters = () => [
+    { type: DatePipe, },
+    { type: ExtendObjectPipe, },
+    { type: TemplateRef, },
+    { type: ViewContainerRef, },
+];
+DateDirective.propDecorators = {
+    "insertOptions": [{ type: Input, args: ['genericDate',] },],
+};
 // IgnoreTypeCheck
 /**
  * TODO
@@ -3388,6 +4367,14 @@ export class SliderDirective {
          * @returns Nothing.
          */
     constructor(extendObjectPipe, templateReference, viewContainerReference) {
+        this.index = 0;
+        this.options = {
+            freeze: false,
+            startIndex: 0,
+            step: 1,
+            slides: [],
+            updateIntervalInMilliseconds: 6000
+        };
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe);
         this.templateReference = templateReference;
         this.viewContainerReference = viewContainerReference;
@@ -3457,6 +4444,18 @@ export class SliderDirective {
         this.update();
     }
 }
+SliderDirective.decorators = [
+    { type: Directive, args: [{ selector: '[genericSlider]' },] },
+];
+/** @nocollapse */
+SliderDirective.ctorParameters = () => [
+    { type: ExtendObjectPipe, },
+    { type: TemplateRef, },
+    { type: ViewContainerRef, },
+];
+SliderDirective.propDecorators = {
+    "insertOptions": [{ type: Input, args: ['genericSlider',] },],
+};
 const providers = [{
         provide: NG_VALUE_ACCESSOR,
         useExisting: forwardRef(() => DateTimeValueAccessor),
@@ -3534,6 +4533,32 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
         return value;
     }
 }
+DateTimeValueAccessor.decorators = [
+    { type: Directive, args: [{
+                selector: `
+        input:not([type=checkbox])[formControlName],
+        textarea[formControlName],
+        input:not([type=checkbox])[formControl],
+        textarea[formControl],
+        input:not([type=checkbox])[ngModel],
+        textarea[ngModel],[ngDefaultControl]'
+    `,
+                // TODO: vsavkin replace the above selector with the one below it once
+                // https://github.com/angular/angular/issues/3011 is implemented
+                // selector: '[ngModel],[formControl],[formControlName]',
+                host: {
+                    '(input)': '_handleInput($event.target.value)',
+                    '(blur)': 'onTouched()',
+                    '(compositionstart)': '_compositionStart()',
+                    '(compositionend)': '_compositionEnd($event.target.value)'
+                },
+                providers
+            },] },
+];
+/** @nocollapse */
+DateTimeValueAccessor.ctorParameters = () => [
+    { type: Injector, },
+];
 // // / region interval
 // IgnoreTypeCheck
 /**
@@ -3586,6 +4611,35 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
  * change.
  */
 export class IntervalInputComponent {
+    constructor() {
+        this.endDeclaration = null;
+        this.startDeclaration = null;
+        this.endDescription = null;
+        this.startDescription = null;
+        this.endDisabled = null;
+        this.startDisabled = null;
+        this.endMaximum = null;
+        this.startMaximum = null;
+        this.endMaximumText = 'Please give a number less or equal than ${model.maximum}.';
+        this.startMaximumText = 'Please give a number less or equal than ${model.maximum}.';
+        this.endMinimum = null;
+        this.startMinimum = null;
+        this.endMinimumText = 'Please given a number at least or equal to {{model.minimum}}.';
+        this.startMinimumText = 'Please given a number at least or equal to {{model.minimum}}.';
+        this.endRequired = null;
+        this.startRequired = null;
+        this.endRequiredText = 'Please fill this field.';
+        this.startRequiredText = 'Please fill this field.';
+        this.endShowDeclarationText = 'ℹ';
+        this.startShowDeclarationText = 'ℹ';
+        this.endShowValidationErrorMessages = false;
+        this.startShowValidationErrorMessages = false;
+        this.model = {
+            end: { value: new Date(1970, 0, 1) },
+            start: { value: new Date(1970, 0, 1) }
+        };
+        this.modelChange = new EventEmitter();
+    }
     /**
          * Triggers on any change events of any nested input.
          * @param event - Events payload data.
@@ -3596,6 +4650,76 @@ export class IntervalInputComponent {
         this.modelChange.emit({ value: event, type });
     }
 }
+IntervalInputComponent.decorators = [
+    { type: Component, args: [{
+                animations,
+                changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
+                selector: 'generic-interval-input',
+                template: `
+        <generic-input
+            [declaration]="startDeclaration"
+            [description]="startDescription"
+            [disabled]="startDisabled"
+            [showDeclarationText]="startShowDeclarationText"
+            [maximum]="startMaximum"
+            [maximumText]="startMaximumText"
+            [minimum]="startMinimum"
+            [required]="startRequired"
+            [requiredText]="startRequiredText"
+            [minimumText]="startMinimumText"
+            [model]="model.start"
+            (model)="change($event, 'start')"
+            [showValidationErrorMessages]="startShowValidationErrorMessages"
+            type="time"
+        ></generic-input>
+        <ng-content></ng-content>
+        <generic-input
+            [declaration]="endDeclaration"
+            [description]="endDescription"
+            [disabled]="endDisabled"
+            [showDeclarationText]="endShowDeclarationText"
+            [maximum]="endMaximum"
+            [maximumText]="endMaximumText"
+            [minimum]="endMinimum"
+            [required]="endRequired"
+            [requiredText]="endRequiredText"
+            [minimumText]="endMinimumText"
+            [model]="model.end"
+            (model)="change($event, 'end')"
+            [showValidationErrorMessages]="endShowValidationErrorMessages"
+            type="time"
+        ></generic-input>
+    `
+            },] },
+];
+/** @nocollapse */
+IntervalInputComponent.ctorParameters = () => [];
+IntervalInputComponent.propDecorators = {
+    "endDeclaration": [{ type: Input },],
+    "startDeclaration": [{ type: Input },],
+    "endDescription": [{ type: Input },],
+    "startDescription": [{ type: Input },],
+    "endDisabled": [{ type: Input },],
+    "startDisabled": [{ type: Input },],
+    "endMaximum": [{ type: Input },],
+    "startMaximum": [{ type: Input },],
+    "endMaximumText": [{ type: Input },],
+    "startMaximumText": [{ type: Input },],
+    "endMinimum": [{ type: Input },],
+    "startMinimum": [{ type: Input },],
+    "endMinimumText": [{ type: Input },],
+    "startMinimumText": [{ type: Input },],
+    "endRequired": [{ type: Input },],
+    "startRequired": [{ type: Input },],
+    "endRequiredText": [{ type: Input },],
+    "startRequiredText": [{ type: Input },],
+    "endShowDeclarationText": [{ type: Input },],
+    "startShowDeclarationText": [{ type: Input },],
+    "endShowValidationErrorMessages": [{ type: Input },],
+    "startShowValidationErrorMessages": [{ type: Input },],
+    "model": [{ type: Input },],
+    "modelChange": [{ type: Output },],
+};
 // IgnoreTypeCheck
 /**
  * Represents an editable list of intervals.
@@ -3661,6 +4785,31 @@ export class IntervalsInputComponent {
          * @returns Nothing.
          */
     constructor(dataScope, extendObjectPipe) {
+        this.description = null;
+        this.endDeclaration = null;
+        this.startDeclaration = null;
+        this.endDescription = null;
+        this.startDescription = null;
+        this.endDisabled = null;
+        this.startDisabled = null;
+        this.endMaximum = null;
+        this.startMaximum = null;
+        this.endMaximumText = 'Please give a number less or equal than ${model.maximum}.';
+        this.startMaximumText = 'Please give a number less or equal than ${model.maximum}.';
+        this.endMinimum = null;
+        this.startMinimum = null;
+        this.endMinimumText = 'Please given a number at least or equal to {{model.minimum}}.';
+        this.startMinimumText = 'Please given a number at least or equal to {{model.minimum}}.';
+        this.endRequired = null;
+        this.startRequired = null;
+        this.endRequiredText = 'Please fill this field.';
+        this.startRequiredText = 'Please fill this field.';
+        this.endShowDeclarationText = 'ℹ';
+        this.startShowDeclarationText = 'ℹ';
+        this.endShowValidationErrorMessages = false;
+        this.startShowValidationErrorMessages = false;
+        this.model = { value: [] };
+        this.modelChange = new EventEmitter();
         this._dataScope = dataScope;
         this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe);
     }
@@ -3714,6 +4863,115 @@ export class IntervalsInputComponent {
         }
     }
 }
+IntervalsInputComponent.decorators = [
+    { type: Component, args: [{
+                animations,
+                changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
+                selector: 'generic-intervals-input',
+                /* eslint-disable max-len */
+                template: `
+        <div
+            *ngIf="description !== '' && (description || model.description || model.name)"
+        >{{description || model.description || model.name}}</div>
+        <div
+            @defaultAnimation
+            *ngFor="let interval of (model.value || []); let first = first; let index = index"
+        >
+            <generic-interval-input
+                [endDisabled]="endDisabled"
+                [startDisabled]="startDisabled"
+
+                [endShowDeclarationText]="endShowDeclarationText"
+                [startShowDeclarationText]="startShowDeclarationText"
+
+                [endMaximum]="endMaximum"
+                [startMaximum]="startMaximum"
+
+                [endMaximumText]="endMaximumText"
+                [startMaximumText]="startMaximumText"
+
+                [endMinimum]="endMinimum"
+                [startMinimum]="startMinimum"
+
+                [endRequired]="endRequired"
+                [startRequired]="startRequired"
+
+                [endRequiredText]="endRequiredText"
+                [startRequiredText]="startRequiredText"
+
+                [endMinimumText]="endMinimumText"
+                [startMinimumText]="startMinimumText"
+
+                [endDescription]="first ? endDescription : ''"
+                [startDescription]="first ? startDescription : ''"
+
+                [model]="interval"
+                (model)="change($event, index)"
+
+                [endDeclaration]="endDeclaration"
+                [startDeclaration]="startDeclaration"
+
+                [endShowValidationErrorMessages]="endShowValidationErrorMessages"
+                [startShowValidationErrorMessages]="startShowValidationErrorMessages"
+            >
+                <ng-container *ngIf="contentTemplate; else fallback">
+                    <ng-container
+                        *ngTemplateOutlet="contentTemplate; context: {\$implicit:interval}"
+                    ></ng-container>
+                </ng-container>
+            </generic-interval-input>
+            <a
+                class="remove"
+                (click)="$event.preventDefault(); $event.stopPropagation(); remove(interval)"
+                href=""
+                *ngIf="model.minimumNumber === null || model.value.length > model.minimumNumber"
+            >-</a>
+        </div>
+        <a
+            class="add"
+            (click)="$event.preventDefault(); $event.stopPropagation(); add()"
+            href=""
+            *ngIf="model.maximumNumber === null || (model.value?.length || 0) < model.maximumNumber"
+        >+</a>
+        <ng-template #fallback>--</ng-template>
+    `
+                /* eslint-enable max-len */
+            },] },
+];
+/** @nocollapse */
+IntervalsInputComponent.ctorParameters = () => [
+    { type: DataScopeService, },
+    { type: ExtendObjectPipe, },
+];
+IntervalsInputComponent.propDecorators = {
+    "additionalObjectData": [{ type: Input },],
+    "contentTemplate": [{ type: ContentChild, args: [TemplateRef,] },],
+    "description": [{ type: Input },],
+    "endDeclaration": [{ type: Input },],
+    "startDeclaration": [{ type: Input },],
+    "endDescription": [{ type: Input },],
+    "startDescription": [{ type: Input },],
+    "endDisabled": [{ type: Input },],
+    "startDisabled": [{ type: Input },],
+    "endMaximum": [{ type: Input },],
+    "startMaximum": [{ type: Input },],
+    "endMaximumText": [{ type: Input },],
+    "startMaximumText": [{ type: Input },],
+    "endMinimum": [{ type: Input },],
+    "startMinimum": [{ type: Input },],
+    "endMinimumText": [{ type: Input },],
+    "startMinimumText": [{ type: Input },],
+    "endRequired": [{ type: Input },],
+    "startRequired": [{ type: Input },],
+    "endRequiredText": [{ type: Input },],
+    "startRequiredText": [{ type: Input },],
+    "endShowDeclarationText": [{ type: Input },],
+    "startShowDeclarationText": [{ type: Input },],
+    "endShowValidationErrorMessages": [{ type: Input },],
+    "startShowValidationErrorMessages": [{ type: Input },],
+    "model": [{ type: Input },],
+    "modelChange": [{ type: Output },],
+};
 // // / endregion
 // // endregion
 // // region text/selection
@@ -3746,6 +5004,14 @@ export class AbstractEditorComponent extends AbstractValueAccessor {
          */
     constructor(injector) {
         super(injector);
+        this.configuration = {};
+        this.contentSetterMethodName = 'setContent';
+        this.disabled = null;
+        this.factoryName = '';
+        this.instance = null;
+        this.initialized = new EventEmitter();
+        this.model = '';
+        this.modelChange = new EventEmitter();
         const get = determineInjector(injector, this, this.constructor);
         this.extendObject = get(ExtendObjectPipe).transform.bind(get(ExtendObjectPipe));
         this.fixedUtility = get(UtilityService).fixed;
@@ -3801,6 +5067,16 @@ export class AbstractEditorComponent extends AbstractValueAccessor {
         this.disabled = isDisabled;
     }
 }
+AbstractEditorComponent.applicationInterfaceLoad = {};
+AbstractEditorComponent.factories = {};
+AbstractEditorComponent.propDecorators = {
+    "configuration": [{ type: Input },],
+    "disabled": [{ type: Input },],
+    "hostDomNode": [{ type: ViewChild, args: ['hostDomNode',] },],
+    "initialized": [{ type: Output },],
+    "model": [{ type: Input },],
+    "modelChange": [{ type: Output },],
+};
 /**
  * Provides a generic code editor.
  * @property static:modesLoad - Mapping from mode to their loading state.
@@ -3817,6 +5093,11 @@ export class CodeEditorComponent extends AbstractEditorComponent {
          */
     constructor(injector) {
         super(injector);
+        this.blur = new EventEmitter();
+        this.configuration = CODE_MIRROR_DEFAULT_OPTIONS;
+        this.contentSetterMethodName = 'setValue';
+        this.factoryName = 'CodeMirror';
+        this.focus = new EventEmitter();
         if (typeof CodeEditorComponent.applicationInterfaceLoad[this.factoryName] !== 'object')
             CodeEditorComponent.applicationInterfaceLoad[this.factoryName] = Promise.all([
                 new Promise((resolve) => this.fixedUtility.$(`
@@ -3845,46 +5126,51 @@ export class CodeEditorComponent extends AbstractEditorComponent {
          * Initializes the code editor element.
          * @returns Nothing.
          */
-    async ngAfterViewInit() {
-        await super.ngAfterViewInit();
-        if (this.configuration.mode)
-            if (CodeEditorComponent.modesLoad.hasOwnProperty(this.configuration.mode)) {
-                if (CodeEditorComponent.modesLoad[this.configuration.mode] !== true)
+    ngAfterViewInit() {
+        /*
+                    NOTE: "await super.ngAfterViewInit()" is not supported by
+                    transpiler yet.
+                */
+        return super.ngAfterViewInit().then(async () => {
+            if (this.configuration.mode)
+                if (CodeEditorComponent.modesLoad.hasOwnProperty(this.configuration.mode)) {
+                    if (CodeEditorComponent.modesLoad[this.configuration.mode] !== true)
+                        try {
+                            await CodeEditorComponent.modesLoad[this.configuration.mode];
+                        }
+                        catch (error) {
+                            throw error;
+                        }
+                }
+                else {
+                    CodeEditorComponent.modesLoad[this.configuration.mode] =
+                        new Promise((resolve, reject) => this.fixedUtility.$.ajax({
+                            cache: true,
+                            dataType: 'script',
+                            error: reject,
+                            success: resolve,
+                            url: this.configuration.path.base +
+                                this.configuration.path.mode.replace(/{mode}/g, this.configuration.mode)
+                        }));
                     try {
                         await CodeEditorComponent.modesLoad[this.configuration.mode];
                     }
                     catch (error) {
                         throw error;
                     }
-            }
-            else {
-                CodeEditorComponent.modesLoad[this.configuration.mode] =
-                    new Promise((resolve, reject) => this.fixedUtility.$.ajax({
-                        cache: true,
-                        dataType: 'script',
-                        error: reject,
-                        success: resolve,
-                        url: this.configuration.path.base +
-                            this.configuration.path.mode.replace(/{mode}/g, this.configuration.mode)
-                    }));
-                try {
-                    await CodeEditorComponent.modesLoad[this.configuration.mode];
                 }
-                catch (error) {
-                    throw error;
-                }
-            }
-        const configuration = this.extendObject({}, this.configuration, { readOnly: this.disabled });
-        delete configuration.path;
-        this.instance = this.factory.fromTextArea(this.hostDomNode.nativeElement, configuration);
-        this.instance[this.contentSetterMethodName](this.model);
-        this.instance.on('blur', (instance, event) => this.blur.emit(event));
-        this.instance.on('change', () => {
-            this.onChangeCallback(this.instance.getValue());
-            this.modelChange.emit(this.model);
+            const configuration = this.extendObject({}, this.configuration, { readOnly: this.disabled });
+            delete configuration.path;
+            this.instance = this.factory.fromTextArea(this.hostDomNode.nativeElement, configuration);
+            this.instance[this.contentSetterMethodName](this.model);
+            this.instance.on('blur', (instance, event) => this.blur.emit(event));
+            this.instance.on('change', () => {
+                this.onChangeCallback(this.instance.getValue());
+                this.modelChange.emit(this.model);
+            });
+            this.instance.on('focus', (instance, event) => this.focus.emit(event));
+            this.initialized.emit(this.instance);
         });
-        this.instance.on('focus', (instance, event) => this.focus.emit(event));
-        this.initialized.emit(this.instance);
     }
     /**
          * Triggers disabled state changes.
@@ -3897,6 +5183,29 @@ export class CodeEditorComponent extends AbstractEditorComponent {
             this.instance.setOption('readOnly', this.disabled);
     }
 }
+CodeEditorComponent.modesLoad = {};
+CodeEditorComponent.decorators = [
+    { type: Component, args: [{
+                animations,
+                changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
+                providers: [{
+                        multi: true,
+                        provide: NG_VALUE_ACCESSOR,
+                        useExisting: forwardRef(() => CodeEditorComponent)
+                    }],
+                selector: 'code-editor',
+                template: '<textarea #hostDomNode></textarea>'
+            },] },
+];
+/** @nocollapse */
+CodeEditorComponent.ctorParameters = () => [
+    { type: Injector, },
+];
+CodeEditorComponent.propDecorators = {
+    "blur": [{ type: Output },],
+    "configuration": [{ type: Input },],
+    "focus": [{ type: Output },],
+};
 /**
  * Provides a generic text editor.
  */
@@ -3911,6 +5220,42 @@ export class TextEditorComponent extends AbstractEditorComponent {
          */
     constructor(injector) {
         super(injector);
+        this.configuration = TINYMCE_DEFAULT_OPTIONS;
+        this.factoryName = 'tinymce';
+        // region events
+        // / region native
+        this.click = new EventEmitter();
+        this.dblclick = new EventEmitter();
+        this.MouseDown = new EventEmitter();
+        this.MouseUp = new EventEmitter();
+        this.MouseMove = new EventEmitter();
+        this.MouseOver = new EventEmitter();
+        this.MouseOut = new EventEmitter();
+        this.MouseEnter = new EventEmitter();
+        this.MouseLeave = new EventEmitter();
+        this.KeyDown = new EventEmitter();
+        this.KeyPress = new EventEmitter();
+        this.KeyUp = new EventEmitter();
+        this.ContextMenu = new EventEmitter();
+        this.Paste = new EventEmitter();
+        // / endregion
+        // / region core
+        this.Focus = new EventEmitter();
+        this.Blur = new EventEmitter();
+        this.BeforeSetContent = new EventEmitter();
+        this.SetContent = new EventEmitter();
+        this.GetContent = new EventEmitter();
+        this.PreProcess = new EventEmitter();
+        this.PostProcess = new EventEmitter();
+        this.NodeChange = new EventEmitter();
+        this.Undo = new EventEmitter();
+        this.Redo = new EventEmitter();
+        this.Change = new EventEmitter();
+        this.Dirty = new EventEmitter();
+        this.Remove = new EventEmitter();
+        this.ExecCommand = new EventEmitter();
+        this.PastePreProcess = new EventEmitter();
+        this.PastePostProcess = new EventEmitter();
         if (typeof TextEditorComponent.applicationInterfaceLoad[this.factoryName] !== 'object')
             TextEditorComponent.applicationInterfaceLoad[this.factoryName] = new Promise((resolve, reject) => this.fixedUtility.$.ajax({
                 cache: true,
@@ -3927,74 +5272,79 @@ export class TextEditorComponent extends AbstractEditorComponent {
          * Initializes the text editor element.
          * @returns Nothing.
          */
-    async ngAfterViewInit() {
-        await super.ngAfterViewInit();
-        const configuration = this.extendObject({}, this.configuration);
-        this.factory.baseURL = configuration.baseURL;
-        delete configuration.baseURL;
-        delete configuration.scriptPath;
-        configuration.target = this.hostDomNode.nativeElement;
-        const initializeInstanceCallback = configuration.init_instance_callback;
-        /* eslint-disable camelcase */
-        configuration.init_instance_callback = (instance) => {
+    ngAfterViewInit() {
+        /*
+                    NOTE: "await super.ngAfterViewInit()" is not supported by
+                    transpiler yet.
+                */
+        return super.ngAfterViewInit().then(() => {
+            const configuration = this.extendObject({}, this.configuration);
+            this.factory.baseURL = configuration.baseURL;
+            delete configuration.baseURL;
+            delete configuration.scriptPath;
+            configuration.target = this.hostDomNode.nativeElement;
+            const initializeInstanceCallback = configuration.init_instance_callback;
             /* eslint-disable camelcase */
-            this.instance = instance;
-            this.instance[this.contentSetterMethodName](this.model);
-            this.instance.on('Change', () => {
-                this.onChangeCallback(this.instance.getContent());
-                this.modelChange.emit(this.model);
-            });
-            if (initializeInstanceCallback)
-                initializeInstanceCallback(this.instance);
-            for (const name of [
-                'click',
-                'dblclick',
-                'MouseDown',
-                'MouseUp',
-                'MouseMove',
-                'MouseOver',
-                'MouseOut',
-                'MouseEnter',
-                'MouseLeave',
-                'KeyDown',
-                'KeyPress',
-                'ContextMenu',
-                'Paste',
-                'Focus',
-                'Blur',
-                'BeforeSetContent',
-                'SetContent',
-                'GetContent',
-                'PreProcess',
-                'PostProcess',
-                'NodeChange',
-                'Undo',
-                'Redo',
-                'Change',
-                'Dirty',
-                'Remove',
-                'PastePreProcess',
-                'PastePostProcess'
-            ])
-                this.instance.on(name, this[name].emit.bind(this[name]));
-            this.instance.on('KeyUp', (event) => {
-                this.KeyUp.emit(event);
-                this.onChangeCallback(this.instance.getContent());
-                this.onTouchedCallback();
-                this.modelChange.emit(this.model);
-            });
-            this.instance.on('ExecCommand', (event) => {
-                this.ExecCommand.emit(event);
-                const content = this.instance.getContent();
-                if (typeof content === 'string' && content.length > 0) {
+            configuration.init_instance_callback = (instance) => {
+                /* eslint-disable camelcase */
+                this.instance = instance;
+                this.instance[this.contentSetterMethodName](this.model);
+                this.instance.on('Change', () => {
+                    this.onChangeCallback(this.instance.getContent());
+                    this.modelChange.emit(this.model);
+                });
+                if (initializeInstanceCallback)
+                    initializeInstanceCallback(this.instance);
+                for (const name of [
+                    'click',
+                    'dblclick',
+                    'MouseDown',
+                    'MouseUp',
+                    'MouseMove',
+                    'MouseOver',
+                    'MouseOut',
+                    'MouseEnter',
+                    'MouseLeave',
+                    'KeyDown',
+                    'KeyPress',
+                    'ContextMenu',
+                    'Paste',
+                    'Focus',
+                    'Blur',
+                    'BeforeSetContent',
+                    'SetContent',
+                    'GetContent',
+                    'PreProcess',
+                    'PostProcess',
+                    'NodeChange',
+                    'Undo',
+                    'Redo',
+                    'Change',
+                    'Dirty',
+                    'Remove',
+                    'PastePreProcess',
+                    'PastePostProcess'
+                ])
+                    this.instance.on(name, this[name].emit.bind(this[name]));
+                this.instance.on('KeyUp', (event) => {
+                    this.KeyUp.emit(event);
                     this.onChangeCallback(this.instance.getContent());
                     this.onTouchedCallback();
                     this.modelChange.emit(this.model);
-                }
-            });
-        };
-        configuration.setup = (instance) => instance.on('Init', () => this.initialized.emit(instance));
-        this.factory.init(configuration);
+                });
+                this.instance.on('ExecCommand', (event) => {
+                    this.ExecCommand.emit(event);
+                    const content = this.instance.getContent();
+                    if (typeof content === 'string' && content.length > 0) {
+                        this.onChangeCallback(this.instance.getContent());
+                        this.onTouchedCallback();
+                        this.modelChange.emit(this.model);
+                    }
+                });
+            };
+            configuration.setup = (instance) => instance.on('Init', () => this.initialized.emit(instance));
+            this.factory.init(configuration);
+        });
     }
     /**
          * Frees all tinymce allocated data from memory if there exists some.
@@ -4015,6 +5365,56 @@ export class TextEditorComponent extends AbstractEditorComponent {
             this.instance.setMode(this.disabled ? 'readonly' : 'design');
     }
 }
+TextEditorComponent.decorators = [
+    { type: Component, args: [{
+                animations,
+                changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
+                providers: [{
+                        multi: true,
+                        provide: NG_VALUE_ACCESSOR,
+                        useExisting: forwardRef(() => TextEditorComponent)
+                    }],
+                selector: 'text-editor',
+                template: '<textarea #hostDomNode></textarea>'
+            },] },
+];
+/** @nocollapse */
+TextEditorComponent.ctorParameters = () => [
+    { type: Injector, },
+];
+TextEditorComponent.propDecorators = {
+    "configuration": [{ type: Input },],
+    "click": [{ type: Output },],
+    "dblclick": [{ type: Output },],
+    "MouseDown": [{ type: Output },],
+    "MouseUp": [{ type: Output },],
+    "MouseMove": [{ type: Output },],
+    "MouseOver": [{ type: Output },],
+    "MouseOut": [{ type: Output },],
+    "MouseEnter": [{ type: Output },],
+    "MouseLeave": [{ type: Output },],
+    "KeyDown": [{ type: Output },],
+    "KeyPress": [{ type: Output },],
+    "KeyUp": [{ type: Output },],
+    "ContextMenu": [{ type: Output },],
+    "Paste": [{ type: Output },],
+    "Focus": [{ type: Output },],
+    "Blur": [{ type: Output },],
+    "BeforeSetContent": [{ type: Output },],
+    "SetContent": [{ type: Output },],
+    "GetContent": [{ type: Output },],
+    "PreProcess": [{ type: Output },],
+    "PostProcess": [{ type: Output },],
+    "NodeChange": [{ type: Output },],
+    "Undo": [{ type: Output },],
+    "Redo": [{ type: Output },],
+    "Change": [{ type: Output },],
+    "Dirty": [{ type: Output },],
+    "Remove": [{ type: Output },],
+    "ExecCommand": [{ type: Output },],
+    "PastePreProcess": [{ type: Output },],
+    "PastePostProcess": [{ type: Output },],
+};
 /* eslint-disable max-len */
 const propertyContent = {
     editor: `
@@ -4135,7 +5535,49 @@ const inputContent = `
  * @property type - Optionally defines an input type explicitly.
  */
 export class InputComponent extends AbstractInputComponent {
+    constructor() {
+        super(...arguments);
+        this.activeEditor = null;
+        this.editor = null;
+        this.labels = {};
+        this.selectableEditor = null;
+    }
 }
+InputComponent.decorators = [
+    { type: Component, args: [{
+                animations,
+                changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
+                selector: 'generic-input',
+                template: `
+        <generic-textarea
+            ${propertyContent.wrapper}
+            [activeEditor]="activeEditor"
+            [editor]="editor"
+            [maximumNumberOfRows]="maximumNumberOfRows"
+            [minimumNumberOfRows]="minimumNumberOfRows"
+            *ngIf="editor || model.editor; else simpleInput"
+            [rows]="rows"
+            [selectableEditor]="selectableEditor"
+        ><ng-content></ng-content></generic-textarea>
+        <ng-template #simpleInput><generic-simple-input
+            ${propertyContent.wrapper}
+            [labels]="labels"
+        ><ng-content></ng-content></generic-simple-input></ng-template>
+    `
+            },] },
+];
+/** @nocollapse */
+InputComponent.ctorParameters = () => [];
+InputComponent.propDecorators = {
+    "activeEditor": [{ type: Input },],
+    "editor": [{ type: Input },],
+    "labels": [{ type: Input },],
+    "maximumNumberOfRows": [{ type: Input },],
+    "minimumNumberOfRows": [{ type: Input },],
+    "rows": [{ type: Input },],
+    "selectableEditor": [{ type: Input },],
+    "type": [{ type: Input },],
+};
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 /* eslint-enable max-len */
@@ -4153,8 +5595,53 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
          */
     constructor(injector) {
         super(injector);
+        this.labels = {};
     }
 }
+SimpleInputComponent.decorators = [
+    { type: Component, args: [{
+                animations,
+                changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
+                selector: 'generic-simple-input',
+                template: `
+        <ng-container
+            @defaultAnimation *ngIf="model.selection; else textInput"
+        >
+            <mat-form-field>
+                <mat-select [(ngModel)]="model.value" ${propertyContent.nativ}>
+                    <mat-option
+                        *ngFor="let value of model.selection" [value]="value"
+                    >
+                        {{labels.hasOwnProperty(value) ? labels[value] : value}}
+                    </mat-option>
+                </mat-select>
+                ${inputContent}
+                <ng-content></ng-content>
+            </mat-form-field>
+        </ng-container>
+        <ng-template #textInput><mat-form-field>
+            <input
+                ${propertyContent.nativ}
+                ${propertyContent.nativText}
+                [max]="maximum === null ? (model.type === 'number' ? model.maximum : null) : maximum"
+                matInput
+                [min]="minimum === null ? (model.type === 'number' ? model.minimum : null) : minimum"
+                [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+            />
+            ${inputContent}
+            <ng-content></ng-content>
+        </mat-form-field></ng-template>
+    `
+            },] },
+];
+/** @nocollapse */
+SimpleInputComponent.ctorParameters = () => [
+    { type: Injector, },
+];
+SimpleInputComponent.propDecorators = {
+    "labels": [{ type: Input },],
+    "type": [{ type: Input },],
+};
 /* eslint-disable max-len */
 // IgnoreTypeCheck
 /* eslint-enable max-len */
@@ -4182,6 +5669,10 @@ export class TextareaComponent extends AbstractNativeInputComponent {
          */
     constructor(initialData, injector) {
         super(injector);
+        this.activeEditor = null;
+        this.editor = null;
+        this.editorType = 'custom';
+        this.selectableEditor = null;
         if (initialData.configuration.hasOwnProperty('defaultEditorOptions') && typeof initialData.configuration.defaultEditorOptions ===
             'object' && initialData.configuration.defaultEditorOptions !== null)
             TextareaComponent.defaultEditorOptions =
@@ -4227,11 +5718,13 @@ export class TextareaComponent extends AbstractNativeInputComponent {
                     /* eslint-disable max-len */
                     toolbar1: 'cut copy paste | undo redo removeformat | bold italic underline strikethrough subscript superscript | fullscreen',
                     toolbar2: false
+                    /* eslint-enable max-len */
                 };
             else if (this.editor === 'normal')
                 this.editor = {
                     /* eslint-disable max-len */
                     toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect | searchreplace visualblocks fullscreen code'
+                    /* eslint-enable max-len */
                 };
             else
                 // Advanced editor.
@@ -4255,6 +5748,69 @@ export class TextareaComponent extends AbstractNativeInputComponent {
             this.selectableEditor = false;
     }
 }
+TextareaComponent.defaultEditorOptions = {
+    code: {},
+    markup: {}
+};
+TextareaComponent.decorators = [
+    { type: Component, args: [{
+                animations,
+                changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
+                selector: 'generic-textarea',
+                template: `
+        <ng-container *ngIf="activeEditor; else plain">
+            <span [class.focused]="focused" class="editor-label">
+                {{
+                    description === '' ? null : description ? description : (
+                        model.description || model.name
+                    )
+                }}
+            </span>
+            <code-editor
+                ${propertyContent.editor}
+                [configuration]="editor"
+                [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
+                (initialized)="initialized = true"
+                *ngIf="editorType === 'code' || editor.indentUnit; else tinymce"
+            ></code-editor>
+            <ng-template #tinymce><text-editor
+                ${propertyContent.editor}
+                [configuration]="editor"
+                [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
+                (initialized)="initialized = true"
+            ></text-editor></ng-template>
+            ${inputContent}
+            <ng-content></ng-content>
+        </ng-container>
+        <ng-template #plain><mat-form-field @defaultAnimation>
+            <textarea
+                ${propertyContent.nativ}
+                ${propertyContent.nativText}
+                [matAutosizeMaxRows]="maximumNumberOfRows"
+                [matAutosizeMinRows]="minimumNumberOfRows"
+                matInput
+                matTextareaAutosize
+                [rows]="rows"
+            ></textarea>
+            ${inputContent}
+            <ng-content></ng-content>
+        </mat-form-field></ng-template>
+    `
+            },] },
+];
+/** @nocollapse */
+TextareaComponent.ctorParameters = () => [
+    { type: InitialDataService, },
+    { type: Injector, },
+];
+TextareaComponent.propDecorators = {
+    "activeEditor": [{ type: Input },],
+    "editor": [{ type: Input },],
+    "maximumNumberOfRows": [{ type: Input },],
+    "minimumNumberOfRows": [{ type: Input },],
+    "rows": [{ type: Input },],
+    "selectableEditor": [{ type: Input },],
+};
 // // endregion
 // / region file input
 /* eslint-disable max-len */
@@ -4270,7 +5826,10 @@ export class TextareaComponent extends AbstractNativeInputComponent {
  * @property static:videoMimeTypeRegularExpression - Regular expression which
  * should match to each known video mime type.
  *
+ * @property abstractResolver - Abstract resolver service instance.
  * @property attachmentTypeName - Current attachment type name.
+ * @property autoMessages - Indicates whether to show messages as file upload
+ * results.
  * @property change - File change event emitter.
  * @property configuration - Configuration object.
  * @property delete - Event emitter which triggers its handler when current
@@ -4307,6 +5866,7 @@ export class TextareaComponent extends AbstractNativeInputComponent {
  * @property synchronizeImmediately - Indicates whether file upload should be
  * done immediately after a file was selected (or synchronously with other
  * model data).
+ * @property template - String template pipes transform method.
  * @property typeName - Name of type field.
  * @property typePatternText - File type validation text.
  *
@@ -4328,6 +5888,7 @@ export class TextareaComponent extends AbstractNativeInputComponent {
 export class FileInputComponent {
     /**
          * Sets needed services as property values.
+         * @param abstractResolver - Injected abstract resolver service instance.
          * @param data - Injected data service instance.
          * @param domSanitizer - Injected dom sanitizer service instance.
          * @param extendObjectPipe - Injected extend object pipe instance.
@@ -4337,10 +5898,44 @@ export class FileInputComponent {
          * @param representObjectPipe - Saves the object to string representation
          * pipe instance.
          * @param stringFormatPipe - Saves the string formation pipe instance.
+         * @param stringTemplatePipe - Injected sString template pipe instance.
          * @param utility - Utility service instance.
          * @returns Nothing.
          */
-    constructor(data, domSanitizer, extendObjectPipe, getFilenameByPrefixPipe, initialData, representObjectPipe, stringFormatPipe, utility) {
+    constructor(abstractResolver, data, domSanitizer, extendObjectPipe, getFilenameByPrefixPipe, initialData, representObjectPipe, stringFormatPipe, stringTemplatePipe, utility) {
+        this.autoMessages = true;
+        this.delete = new EventEmitter();
+        this.deleteButtonText = 'delete';
+        this.downloadButtonText = 'download';
+        this.editableName = true;
+        this.file = null;
+        this.fileChange = new EventEmitter();
+        this.headerText = null;
+        this.resetNameText = '×';
+        this.saveNameText = '✓';
+        this.showDeclarationText = 'ℹ';
+        this.mapNameToField = null;
+        this.maximumSizeText = 'Filesize (${file.length} byte) is more than specified maximum of ' +
+            '${model.maximumSize} byte.';
+        this.minimumSizeText = 'Filesize (${file.length} byte) is less than specified minimum of ' +
+            '${model.minimumSize} byte.';
+        this.modelChange = new EventEmitter();
+        this.name = null;
+        this.namePatternText = 'Given filename "${file.name}" doesn\'t match specified pattern "' +
+            '${internalName}".';
+        this.newButtonText = 'new';
+        this.noFileText = '';
+        this.noPreviewText = '';
+        this.oneDocumentPerFileMode = true;
+        this.requiredText = 'Please select a file.';
+        this.revision = null;
+        this.showValidationErrorMessages = false;
+        this.synchronizeImmediately = false;
+        this.typePatternText = 'Filetype "${file.content_type}" doesn\'t match specified pattern "' +
+            '${model.contentTypeRegularExpressionPattern}".';
+        this._idIsObject = false;
+        this._prefixMatch = false;
+        this.abstractResolver = abstractResolver;
         this.configuration = initialData.configuration;
         this.attachmentTypeName =
             this.configuration.database.model.property.name.special.attachment;
@@ -4352,6 +5947,7 @@ export class FileInputComponent {
         this.model = { [this.attachmentTypeName]: {}, id: null };
         this.revisionName =
             this.configuration.database.model.property.name.special.revision;
+        this.template = stringTemplatePipe.transform.bind(stringTemplatePipe);
         this.typeName =
             this.configuration.database.model.property.name.special.type;
         this._data = data;
@@ -4468,7 +6064,7 @@ export class FileInputComponent {
                 [this.idName]: this._idIsObject ? this.model[this.idName].value : this.model[this.idName],
                 [this.revisionName]: this.model[this.revisionName]
             };
-            if (this.mapNameToField && this.mapNameToField.includes(this.idName))
+            if (this.oneDocumentPerFileMode)
                 update[this.deletedName] = true;
             else
                 update[this.attachmentTypeName] = { [this.file.name]: {
@@ -4534,7 +6130,7 @@ export class FileInputComponent {
             /* eslint-enable camelcase */
             data: typeof Blob === 'undefined' ?
                 file.toString('base64') :
-                await eval('require')('blob-util').blobToBase64String(file),
+                await require('blob-util').blobToBase64String(file),
             length: file.size,
             name: this.file.name
         };
@@ -4571,14 +6167,39 @@ export class FileInputComponent {
         if (Object.keys(this.model[this.attachmentTypeName][this.internalName].state.errors).length === 0)
             delete this.model[this.attachmentTypeName][this.internalName]
                 .state.errors;
+        else {
+            let message = 'There was encountered an error during uploading file "' +
+                `${this.file.name}": `;
+            for (const name in this.model[this.attachmentTypeName][this.internalName].state.errors)
+                if (this.model[this.attachmentTypeName][this.internalName].state.errors.hasOwnProperty(name))
+                    message += (`\n${name} - ` + this.template(this[{
+                        contentType: 'typePatternText',
+                        maximumSize: 'maximumSizeText',
+                        minimumSize: 'minimumSizeText',
+                        name: 'namePatternText',
+                        required: 'requiredText'
+                    }[name]], {
+                        attachmentTypeName: this.attachmentTypeName,
+                        file: this.file,
+                        internalName: this.internalName,
+                        model: this.model[this.attachmentTypeName][this.internalName]
+                    }));
+            this.abstractResolver.message(message);
+        }
         // endregion
         if (this.synchronizeImmediately && !this.model[this.attachmentTypeName][this.internalName].state.errors) {
             let newData = {
                 [this.typeName]: this.model[this.typeName],
                 [this.idName]: this._idIsObject ? this.model[this.idName].value : this.model[this.idName]
             };
-            if (this.synchronizeImmediately !== true)
-                this._extendObject(true, newData, this.synchronizeImmediately);
+            if (this.synchronizeImmediately !== null &&
+                typeof this.synchronizeImmediately === 'object') {
+                const data = {};
+                for (const name in this.synchronizeImmediately)
+                    if (this.synchronizeImmediately.hasOwnProperty(name))
+                        data[name] = this.template(this.synchronizeImmediately[name], this.file);
+                this._extendObject(true, newData, data);
+            }
             let id = this._idIsObject ? this.model[this.idName].value : this.model[this.idName];
             // NOTE: We want to replace old medium.
             if (oldName && oldName !== this.file.name && !(this.mapNameToField && id &&
@@ -4616,6 +6237,10 @@ export class FileInputComponent {
             }
             catch (error) {
                 this.model[this.attachmentTypeName][this.internalName].state.errors = { database: ('message' in error) ? error.message : this._representObject(error) };
+                if (this.autoMessages)
+                    this.abstractResolver.message('Database has encountered an error during uploading ' +
+                        `file "${this.file.name}": ` +
+                        this.model[this.attachmentTypeName][this.internalName].state.errors.database);
                 return;
             }
             id = newData[this.idName];
@@ -4623,6 +6248,10 @@ export class FileInputComponent {
             for (const item of result) {
                 if (item.error) {
                     this.model[this.attachmentTypeName][this.internalName].state.errors = { database: item.message };
+                    if (this.autoMessages)
+                        this.abstractResolver.message('Database has encountered an error during ' +
+                            `uploading file "${this.file.name}": ` +
+                            item.message);
                     return;
                 }
                 if (item.id === id)
@@ -4636,6 +6265,8 @@ export class FileInputComponent {
                         `${this.file.name}${this.file.query}`);
                 this.determinePresentationType();
             }
+            if (this.autoMessages)
+                this.abstractResolver.message(`Uploading file ${this.file.name} was succesful.`);
             this.modelChange.emit(this.model);
             this.fileChange.emit(this.file);
         }
@@ -4656,6 +6287,305 @@ export class FileInputComponent {
         }
     }
 }
+FileInputComponent.imageMimeTypeRegularExpression = new RegExp('^image/(?:p?jpe?g|png|svg(?:\\+xml)?|vnd\\.microsoft\\.icon|gif|' +
+    'tiff|webp|vnd\\.wap\\.wbmp|x-(?:icon|jng|ms-bmp))$');
+FileInputComponent.textMimeTypeRegularExpression = new RegExp('^(?:application/xml)|(?:text/(?:plain|x-ndpb[wy]html|(?:x-)?csv))$');
+FileInputComponent.videoMimeTypeRegularExpression = new RegExp('^video/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|' +
+    '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
+    '(?:application/(?:x-)?shockwave-flash)$');
+FileInputComponent.decorators = [
+    { type: Component, args: [{
+                animations,
+                changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
+                selector: 'generic-file-input',
+                template: `
+        <mat-card>
+            <mat-card-header
+                @defaultAnimation
+                *ngIf="headerText !== '' && (headerText || file?.name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description || name)"
+            >
+                <mat-card-title>
+                    <span
+                        @defaultAnimation
+                        *ngIf="!editableName || revision || headerText || !file?.name; else editable"
+                    >
+                        {{
+                            headerText ||
+                            file?.name ||
+                            model[attachmentTypeName][
+                                internalName
+                            ]?.description ||
+                            name
+                        }}
+                    </span>
+                    <ng-template #editable>
+                        <ng-container *ngIf="synchronizeImmediately; else parent">
+                            <mat-form-field
+                                [class.dirty]="editedName && editedName !== file.name"
+                                matTooltip="Focus to edit."
+                            >
+                                <input
+                                    matInput
+                                    [ngModel]="editedName || file.name"
+                                    (ngModelChange)="editedName = $event"
+                                />
+                                <mat-hint
+                                    [class.active]="showDeclaration"
+                                    (click)="showDeclaration = !showDeclaration"
+                                    @defaultAnimation
+                                    matTooltip="info"
+                                    *ngIf="model[attachmentTypeName][internalName]?.declaration"
+                                >
+                                    <a
+                                        (click)="$event.preventDefault()"
+                                        @defaultAnimation
+                                        href=""
+                                        *ngIf="showDeclarationText"
+                                    >{{showDeclarationText}}</a>
+                                    <span
+                                        @defaultAnimation
+                                        *ngIf="showDeclaration"
+                                    >
+                                        {{
+                                            model[attachmentTypeName][
+                                                internalName
+                                            ].declaration
+                                        }}
+                                    </span>
+                                </mat-hint>
+                            </mat-form-field>
+                            <ng-container
+                                *ngIf="editedName && editedName !== file.name"
+                            >
+                                <a
+                                    (click)="$event.preventDefault();rename(editedName)"
+                                    @defaultAnimation
+                                    href=""
+                                >{{saveNameText}}</a>
+                                <a
+                                    (click)="$event.preventDefault();editedName = file.name"
+                                    @defaultAnimation
+                                    href=""
+                                >{{resetNameText}}</a>
+                            </ng-container>
+                        </ng-container>
+                        <ng-template #parent><mat-form-field
+                            [class.dirty]="file.initialName !== file.name"
+                            @defaultAnimation
+                            matTooltip="Focus to edit."
+                            *ngIf="!synchronizeImmediately"
+                        >
+                            <input
+                                matInput [ngModel]="file.name"
+                                (ngModelChange)="file.name = $event;modelChange.emit(this.model); fileChange.emit(file)"
+                            />
+                            <mat-hint
+                                [class.active]="showDeclaration"
+                                (click)="showDeclaration = !showDeclaration"
+                                @defaultAnimation
+                                matTooltip="info"
+                                *ngIf="model[attachmentTypeName][internalName]?.declaration"
+                            >
+                                <a
+                                    (click)="$event.preventDefault()"
+                                    @defaultAnimation
+                                    href=""
+                                    *ngIf="showDeclarationText"
+                                >{{showDeclarationText}}</a>
+                                <span
+                                    @defaultAnimation
+                                    *ngIf="showDeclaration"
+                                >
+                                    {{
+                                        model[attachmentTypeName][
+                                            internalName
+                                        ].declaration
+                                    }}
+                                </span>
+                            </mat-hint>
+                        </mat-form-field></ng-template>
+                    </ng-template>
+                </mat-card-title>
+            </mat-card-header>
+            <img mat-card-image
+                [attr.alt]="name"
+                [attr.src]="file.source"
+                @defaultAnimation
+                *ngIf="file?.type === 'image' && file?.source"
+            >
+            <video
+                autoplay
+                @defaultAnimation
+                mat-card-image
+                muted
+                *ngIf="file?.type === 'video' && file?.source"
+                loop
+            >
+                <source [attr.src]="file.source" [type]="file.content_type">
+                No preview possible.
+            </video>
+            <iframe
+                @defaultAnimation
+                *ngIf="file?.type === 'text' && file?.source"
+                [src]="file.source"
+                style="border: none; width: 100%; max-height: 150px"
+            ></iframe>
+            <div
+                @defaultAnimation
+                mat-card-image
+                *ngIf="(!file?.type && (file?.source || (file?.source | genericType) === 'string') ? noPreviewText : noFileText) as text"
+            ><p>{{text}}</p></div>
+            <mat-card-content>
+                <ng-content></ng-content>
+                <div
+                    @defaultAnimation
+                    generic-error
+                    *ngIf="showValidationErrorMessages && model[attachmentTypeName][internalName]?.state?.errors"
+                >
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.contentType"
+                    >
+                        {{
+                            typePatternText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.database"
+                    >
+                        {{
+                            model[attachmentTypeName][
+                                internalName
+                            ].state.errors.database
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.maximumSize"
+                    >
+                        {{
+                            maximumSizeText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.minimumSize"
+                    >
+                        {{
+                            minimumSizeText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.name"
+                    >
+                        {{
+                            namePatternText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.required"
+                    >
+                        {{
+                            requiredText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                </div>
+            </mat-card-content>
+            <mat-card-actions>
+                <input #input style="display: none" type="file" />
+                <button
+                    @defaultAnimation
+                    (click)="input.click()"
+                    mat-raised-button
+                    *ngIf="newButtonText"
+                >{{newButtonText}}</button>
+                <button
+                    (click)="remove()"
+                    @defaultAnimation
+                    mat-raised-button
+                    *ngIf="deleteButtonText && file"
+                >{{deleteButtonText}}</button>
+                <button mat-raised-button
+                    @defaultAnimation
+                    *ngIf="downloadButtonText && file"
+                ><a [download]="file.name" [href]="file.source">
+                    {{downloadButtonText}}
+                </a></button>
+            </mat-card-actions>
+        </mat-card>
+    `
+            },] },
+];
+/** @nocollapse */
+FileInputComponent.ctorParameters = () => [
+    { type: AbstractResolver, },
+    { type: DataService, },
+    { type: DomSanitizer, },
+    { type: ExtendObjectPipe, },
+    { type: GetFilenameByPrefixPipe, },
+    { type: InitialDataService, },
+    { type: RepresentObjectPipe, },
+    { type: StringFormatPipe, },
+    { type: StringTemplatePipe, },
+    { type: UtilityService, },
+];
+FileInputComponent.propDecorators = {
+    "autoMessages": [{ type: Input },],
+    "delete": [{ type: Output },],
+    "deleteButtonText": [{ type: Input },],
+    "downloadButtonText": [{ type: Input },],
+    "editableName": [{ type: Input },],
+    "fileChange": [{ type: Output },],
+    "headerText": [{ type: Input },],
+    "input": [{ type: ViewChild, args: ['input',] },],
+    "resetNameText": [{ type: Input },],
+    "saveNameText": [{ type: Input },],
+    "showDeclarationText": [{ type: Input },],
+    "mapNameToField": [{ type: Input },],
+    "maximumSizeText": [{ type: Input },],
+    "minimumSizeText": [{ type: Input },],
+    "model": [{ type: Input },],
+    "modelChange": [{ type: Output },],
+    "name": [{ type: Input },],
+    "namePatternText": [{ type: Input },],
+    "newButtonText": [{ type: Input },],
+    "noFileText": [{ type: Input },],
+    "noPreviewText": [{ type: Input },],
+    "oneDocumentPerFileMode": [{ type: Input },],
+    "requiredText": [{ type: Input },],
+    "revision": [{ type: Input },],
+    "showValidationErrorMessages": [{ type: Input },],
+    "synchronizeImmediately": [{ type: Input },],
+    "typePatternText": [{ type: Input },],
+};
 // / endregion
 // / region pagination
 /* eslint-disable max-len */
@@ -4682,6 +6612,11 @@ export class PaginationComponent {
          * @returns Nothing.
          */
     constructor(changeDetectorReference, makeRangePipe) {
+        this.itemsPerPage = 10;
+        this.page = 1;
+        this.pageChange = new EventEmitter();
+        this.pageRangeLimit = 4;
+        this.total = 0;
         this._changeDetectorReference = changeDetectorReference;
         this._makeRange = makeRangePipe.transform.bind(makeRangePipe);
     }
@@ -4735,6 +6670,51 @@ export class PaginationComponent {
         return Math.max(1, this.page - 1);
     }
 }
+PaginationComponent.decorators = [
+    { type: Component, args: [{
+                animations,
+                changeDetection: ChangeDetectionStrategy.OnPush,
+                selector: 'generic-pagination',
+                template: `
+        <ul class="hans" @defaultAnimation *ngIf="lastPage > 1">
+            <li @defaultAnimation *ngIf="page > 2">
+                <a href="" (click)="change($event, 1)">--</a>
+            </li>
+            <li @defaultAnimation *ngIf="page > 1">
+                <a href="" (click)="change($event, previousPage)">-</a>
+            </li>
+            <li
+                class="page-{{currentPage}}"
+                @defaultAnimation
+                [ngClass]="{current: currentPage === page, previous: currentPage === previousPage, next: currentPage === nextPage, even: even, 'even-page': currentPage % 2 === 0, first: currentPage === firstPage, last: currentPage === lastPage}"
+                *ngFor="let currentPage of pagesRange;let even = even"
+            >
+                <a (click)="change($event, currentPage)" href="">
+                    {{currentPage}}
+                </a>
+            </li>
+            <li @defaultAnimation *ngIf="lastPage > page">
+                <a href="" (click)="change($event, nextPage)">+</a>
+            </li>
+            <li @defaultAnimation *ngIf="lastPage > page + 1">
+                <a href="" (click)="change($event, lastPage)">++</a>
+            </li>
+        </ul>
+    `
+            },] },
+];
+/** @nocollapse */
+PaginationComponent.ctorParameters = () => [
+    { type: ChangeDetectorRef, },
+    { type: ArrayMakeRangePipe, },
+];
+PaginationComponent.propDecorators = {
+    "itemsPerPage": [{ type: Input },],
+    "page": [{ type: Input },],
+    "pageChange": [{ type: Output },],
+    "pageRangeLimit": [{ type: Input },],
+    "total": [{ type: Input },],
+};
 // / endregion
 // endregion
 // region module
@@ -4744,6 +6724,315 @@ export class PaginationComponent {
  */
 export class Module {
 }
+Module.decorators = [
+    { type: NgModule, args: [{
+                /*
+                        NOTE: Running "moduleHelper.determineDeclarations()" is not yet
+                        supported by the AOT-Compiler.
+                    */
+                declarations: [
+                    ConvertCircularObjectToJSONPipe,
+                    EqualsPipe,
+                    ExtendObjectPipe,
+                    RepresentObjectPipe,
+                    SortPipe,
+                    ArrayMergePipe,
+                    ArrayMakePipe,
+                    ArrayUniquePipe,
+                    ArrayAggregatePropertyIfEqualPipe,
+                    ArrayDeleteEmptyItemsPipe,
+                    ArrayExtractPipe,
+                    ArrayExtractIfMatchesPipe,
+                    ArrayExtractIfPropertyExistsPipe,
+                    ArrayExtractIfPropertyMatchesPipe,
+                    ArrayIntersectPipe,
+                    ArrayMakeRangePipe,
+                    ArraySumUpPropertyPipe,
+                    ArrayAppendAddPipe,
+                    ArrayRemovePipe,
+                    ArraySortTopologicalPipe,
+                    StringEscapeRegularExpressionsPipe,
+                    StringConvertToValidVariableNamePipe,
+                    StringEncodeURIComponentPipe,
+                    StringAddSeparatorToPathPipe,
+                    StringHasPathPrefixPipe,
+                    StringGetDomainNamePipe,
+                    StringGetPortNumberPipe,
+                    StringGetProtocolNamePipe,
+                    StringGetURLVariablePipe,
+                    StringIsInternalURLPipe,
+                    StringNormalizeURLPipe,
+                    StringRepresentURLPipe,
+                    StringCompressStyleValuePipe,
+                    StringCamelCaseToDelimitedPipe,
+                    StringCapitalizePipe,
+                    StringDelimitedToCamelCasePipe,
+                    StringFormatPipe,
+                    StringGetRegularExpressionValidatedPipe,
+                    StringLowerCasePipe,
+                    StringFindNormalizedMatchRangePipe,
+                    StringMarkPipe,
+                    StringMD5Pipe,
+                    StringNormalizePhoneNumberPipe,
+                    StringParseEncodedObjectPipe,
+                    StringRepresentPhoneNumberPipe,
+                    StringDecodeHTMLEntitiesPipe,
+                    StringNormalizeDomNodeSelectorPipe,
+                    NumberGetUTCTimestampPipe,
+                    NumberIsNotANumberPipe,
+                    NumberRoundPipe,
+                    AttachmentsAreEqualPipe,
+                    GetFilenameByPrefixPipe,
+                    AttachmentWithPrefixExistsPipe,
+                    ExtractDataPipe,
+                    ExtractRawDataPipe,
+                    IsDefinedPipe,
+                    LimitToPipe,
+                    MapPipe,
+                    ObjectKeysPipe,
+                    ReversePipe,
+                    TypePipe,
+                    ArrayDependentConcatPipe,
+                    StringEndsWithPipe,
+                    StringHasTimeSuffixPipe,
+                    StringMatchPipe,
+                    StringMaximumLengthPipe,
+                    StringReplacePipe,
+                    StringSafeHTMLPipe,
+                    StringSafeResourceURLPipe,
+                    StringSafeScriptPipe,
+                    StringSafeStylePipe,
+                    StringSafeURLPipe,
+                    StringShowIfPatternMatchesPipe,
+                    StringSliceMatchPipe,
+                    StringStartsWithPipe,
+                    StringTemplatePipe,
+                    NumberPercentPipe,
+                    AbstractValueAccessor,
+                    DateTimeValueAccessor,
+                    DateDirective,
+                    SliderDirective,
+                    AbstractEditorComponent,
+                    ConfirmComponent,
+                    IntervalInputComponent,
+                    IntervalsInputComponent,
+                    CodeEditorComponent,
+                    InputComponent,
+                    SimpleInputComponent,
+                    TextEditorComponent,
+                    TextareaComponent,
+                    FileInputComponent,
+                    PaginationComponent
+                    // endregion
+                ],
+                entryComponents: [ConfirmComponent],
+                /*
+                        NOTE: Running "moduleHelper.determineExports()" is not yet supported by
+                        the AOT-Compiler.
+                    */
+                exports: [
+                    ConvertCircularObjectToJSONPipe,
+                    EqualsPipe,
+                    ExtendObjectPipe,
+                    RepresentObjectPipe,
+                    SortPipe,
+                    ArrayMergePipe,
+                    ArrayMakePipe,
+                    ArrayUniquePipe,
+                    ArrayAggregatePropertyIfEqualPipe,
+                    ArrayDeleteEmptyItemsPipe,
+                    ArrayExtractPipe,
+                    ArrayExtractIfMatchesPipe,
+                    ArrayExtractIfPropertyExistsPipe,
+                    ArrayExtractIfPropertyMatchesPipe,
+                    ArrayIntersectPipe,
+                    ArrayMakeRangePipe,
+                    ArraySumUpPropertyPipe,
+                    ArrayAppendAddPipe,
+                    ArrayRemovePipe,
+                    ArraySortTopologicalPipe,
+                    StringEscapeRegularExpressionsPipe,
+                    StringConvertToValidVariableNamePipe,
+                    StringEncodeURIComponentPipe,
+                    StringAddSeparatorToPathPipe,
+                    StringHasPathPrefixPipe,
+                    StringGetDomainNamePipe,
+                    StringGetPortNumberPipe,
+                    StringGetProtocolNamePipe,
+                    StringGetURLVariablePipe,
+                    StringIsInternalURLPipe,
+                    StringNormalizeURLPipe,
+                    StringRepresentURLPipe,
+                    StringCompressStyleValuePipe,
+                    StringCamelCaseToDelimitedPipe,
+                    StringCapitalizePipe,
+                    StringDelimitedToCamelCasePipe,
+                    StringFormatPipe,
+                    StringGetRegularExpressionValidatedPipe,
+                    StringLowerCasePipe,
+                    StringFindNormalizedMatchRangePipe,
+                    StringMarkPipe,
+                    StringMD5Pipe,
+                    StringNormalizePhoneNumberPipe,
+                    StringParseEncodedObjectPipe,
+                    StringRepresentPhoneNumberPipe,
+                    StringDecodeHTMLEntitiesPipe,
+                    StringNormalizeDomNodeSelectorPipe,
+                    NumberGetUTCTimestampPipe,
+                    NumberIsNotANumberPipe,
+                    NumberRoundPipe,
+                    AttachmentsAreEqualPipe,
+                    GetFilenameByPrefixPipe,
+                    AttachmentWithPrefixExistsPipe,
+                    ExtractDataPipe,
+                    ExtractRawDataPipe,
+                    IsDefinedPipe,
+                    LimitToPipe,
+                    MapPipe,
+                    ObjectKeysPipe,
+                    ReversePipe,
+                    TypePipe,
+                    ArrayDependentConcatPipe,
+                    StringEndsWithPipe,
+                    StringHasTimeSuffixPipe,
+                    StringMatchPipe,
+                    StringMaximumLengthPipe,
+                    StringReplacePipe,
+                    StringSafeHTMLPipe,
+                    StringSafeResourceURLPipe,
+                    StringSafeScriptPipe,
+                    StringSafeStylePipe,
+                    StringSafeURLPipe,
+                    StringShowIfPatternMatchesPipe,
+                    StringSliceMatchPipe,
+                    StringStartsWithPipe,
+                    StringTemplatePipe,
+                    NumberPercentPipe,
+                    DateDirective,
+                    SliderDirective,
+                    ConfirmComponent,
+                    IntervalInputComponent,
+                    IntervalsInputComponent,
+                    CodeEditorComponent,
+                    InputComponent,
+                    SimpleInputComponent,
+                    TextEditorComponent,
+                    TextareaComponent,
+                    FileInputComponent,
+                    PaginationComponent
+                    // endregion
+                ],
+                imports: [
+                    BrowserModule.withServerTransition({ appId: 'generic-universal' }),
+                    FormsModule,
+                    MatButtonModule,
+                    MatCardModule,
+                    MatDialogModule,
+                    MatInputModule,
+                    MatSelectModule,
+                    MatTooltipModule
+                ],
+                /*
+                        NOTE: Running "moduleHelper.determineProviders()" is not yet supported
+                        by the AOT-Compiler.
+                    */
+                providers: [
+                    UtilityService,
+                    InitialDataService,
+                    AlertService,
+                    DataService,
+                    DataScopeService,
+                    CanDeactivateRouteLeaveGuard,
+                    AbstractResolver,
+                    ConvertCircularObjectToJSONPipe,
+                    EqualsPipe,
+                    ExtendObjectPipe,
+                    RepresentObjectPipe,
+                    SortPipe,
+                    ArrayMergePipe,
+                    ArrayMakePipe,
+                    ArrayUniquePipe,
+                    ArrayAggregatePropertyIfEqualPipe,
+                    ArrayDeleteEmptyItemsPipe,
+                    ArrayExtractPipe,
+                    ArrayExtractIfMatchesPipe,
+                    ArrayExtractIfPropertyExistsPipe,
+                    ArrayExtractIfPropertyMatchesPipe,
+                    ArrayIntersectPipe,
+                    ArrayMakeRangePipe,
+                    ArraySumUpPropertyPipe,
+                    ArrayAppendAddPipe,
+                    ArrayRemovePipe,
+                    ArraySortTopologicalPipe,
+                    StringEscapeRegularExpressionsPipe,
+                    StringConvertToValidVariableNamePipe,
+                    StringEncodeURIComponentPipe,
+                    StringAddSeparatorToPathPipe,
+                    StringHasPathPrefixPipe,
+                    StringGetDomainNamePipe,
+                    StringGetPortNumberPipe,
+                    StringGetProtocolNamePipe,
+                    StringGetURLVariablePipe,
+                    StringIsInternalURLPipe,
+                    StringNormalizeURLPipe,
+                    StringRepresentURLPipe,
+                    StringCompressStyleValuePipe,
+                    StringCamelCaseToDelimitedPipe,
+                    StringCapitalizePipe,
+                    StringDelimitedToCamelCasePipe,
+                    StringFormatPipe,
+                    StringGetRegularExpressionValidatedPipe,
+                    StringLowerCasePipe,
+                    StringFindNormalizedMatchRangePipe,
+                    StringMarkPipe,
+                    StringMD5Pipe,
+                    StringNormalizePhoneNumberPipe,
+                    StringParseEncodedObjectPipe,
+                    StringRepresentPhoneNumberPipe,
+                    StringDecodeHTMLEntitiesPipe,
+                    StringNormalizeDomNodeSelectorPipe,
+                    NumberGetUTCTimestampPipe,
+                    NumberIsNotANumberPipe,
+                    NumberRoundPipe,
+                    AttachmentsAreEqualPipe,
+                    GetFilenameByPrefixPipe,
+                    AttachmentWithPrefixExistsPipe,
+                    ExtractDataPipe,
+                    ExtractRawDataPipe,
+                    IsDefinedPipe,
+                    LimitToPipe,
+                    MapPipe,
+                    ObjectKeysPipe,
+                    ReversePipe,
+                    TypePipe,
+                    ArrayDependentConcatPipe,
+                    StringEndsWithPipe,
+                    StringHasTimeSuffixPipe,
+                    StringMatchPipe,
+                    StringMaximumLengthPipe,
+                    StringReplacePipe,
+                    StringSafeHTMLPipe,
+                    StringSafeResourceURLPipe,
+                    StringSafeScriptPipe,
+                    StringSafeStylePipe,
+                    StringSafeURLPipe,
+                    StringShowIfPatternMatchesPipe,
+                    StringSliceMatchPipe,
+                    StringStartsWithPipe,
+                    StringTemplatePipe,
+                    NumberPercentPipe,
+                    DatePipe,
+                    {
+                        deps: [DataService, Injector],
+                        multi: true,
+                        provide: APP_INITIALIZER,
+                        useFactory: dataServiceInitializerFactory
+                    }
+                ]
+            },] },
+];
+/** @nocollapse */
+Module.ctorParameters = () => [];
 export default Module;
 // endregion
 // region vim modline
