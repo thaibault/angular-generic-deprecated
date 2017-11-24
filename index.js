@@ -3581,6 +3581,9 @@ export class DataScopeService {
  * @property changesStream - Changes stream to invalidate cache store.
  * @property convertCircularObjectToJSON - Saves convert circular object to
  * json's pipe transform method.
+ * @property copyItems - Indicates whether each item should be copied from
+ * cache. Defaults to "true" to avoid errors but could have avoidable impact
+ * on performance for large data sets.
  * @property data - Holds currently retrieved data.
  * @property databaseBaseURL - Determined database base url.
  * @property databaseURL - Determined database url.
@@ -3614,6 +3617,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
     cacheStore:PlainObject = {}
     changesStream:Stream
     convertCircularObjectToJSON:Function
+    copyItems:boolean = true
     data:PlainObject
     databaseBaseURL:string
     databaseURL:string
@@ -3774,6 +3778,9 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 selector, options})
             if (!this.cacheStore.hasOwnProperty(key))
                 this.cacheStore[key] = await this.data.find(selector, options)
+            const t = Date.now()
+            if (this.copyItems)
+                return this.cacheStore[key]
             return this.tools.copyLimitedRecursively(this.cacheStore[key])
         }
         return await this.data.find(selector, options)
