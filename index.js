@@ -3778,7 +3778,6 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 selector, options})
             if (!this.cacheStore.hasOwnProperty(key))
                 this.cacheStore[key] = await this.data.find(selector, options)
-            const t = Date.now()
             if (this.copyItems)
                 return this.cacheStore[key]
             return this.tools.copyLimitedRecursively(this.cacheStore[key])
