@@ -3779,8 +3779,8 @@ export class AbstractResolver implements Resolve<PlainObject> {
             if (!this.cacheStore.hasOwnProperty(key))
                 this.cacheStore[key] = await this.data.find(selector, options)
             if (this.copyItems)
-                return this.cacheStore[key]
-            return this.tools.copyLimitedRecursively(this.cacheStore[key])
+                return this.tools.copyLimitedRecursively(this.cacheStore[key])
+            return this.cacheStore[key]
         }
         return await this.data.find(selector, options)
     }
