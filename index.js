@@ -437,7 +437,7 @@ export const determineInjector:Function = (
     if (currentInstanceToSearchInjectorFor === this)
         throw SYMBOL
     currentInstanceToSearchInjectorFor = this
-    for (const injector of InitialDataService.injectors)
+    for (const injector of Array.from(InitialDataService.injectors))
         try {
             if (injector.get(constructor, NaN) === instance)
                 return injector.get.bind(injector)
