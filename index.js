@@ -3581,13 +3581,13 @@ export class DataScopeService {
  * @property changesStream - Changes stream to invalidate cache store.
  * @property convertCircularObjectToJSON - Saves convert circular object to
  * json's pipe transform method.
- * @property copyItems - Indicates whether each item should be copied from
- * cache. Defaults to "true" to avoid errors but could have avoidable impact
- * on performance for large data sets.
  * @property data - Holds currently retrieved data.
  * @property databaseBaseURL - Determined database base url.
  * @property databaseURL - Determined database url.
  * @property domSanitizer - Dom sanitizer service instance.
+ * @property deepCopyItems - Indicates whether each item should be copied from
+ * cache. Defaults to "true" to avoid errors but could have avoidable impact
+ * on performance for large data sets.
  * @property escapeRegularExpressions - Holds the escape regular expressions's
  * pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
@@ -3617,11 +3617,11 @@ export class AbstractResolver implements Resolve<PlainObject> {
     cacheStore:PlainObject = {}
     changesStream:Stream
     convertCircularObjectToJSON:Function
-    copyItems:boolean = true
     data:PlainObject
     databaseBaseURL:string
     databaseURL:string
     databaseURLCache:{[key:string]:SafeResourceUrl} = {}
+    deepCopyItems:boolean = true
     domSanitizer:DomSanitizer
     escapeRegularExpressions:Function
     extendObject:Function
@@ -3778,9 +3778,9 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 selector, options})
             if (!this.cacheStore.hasOwnProperty(key))
                 this.cacheStore[key] = await this.data.find(selector, options)
-            if (this.copyItems)
+            if (this.deepCopyItems)
                 return this.tools.copyLimitedRecursively(this.cacheStore[key])
-            return this.cacheStore[key]
+            return this.cacheStore[key].slice()
         }
         return await this.data.find(selector, options)
     }
