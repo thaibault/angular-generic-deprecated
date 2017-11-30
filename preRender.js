@@ -23,7 +23,6 @@ import makeDirectoryPath from 'mkdirp'
 import path from 'path'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 import removeDirectoryRecursively from 'rimraf'
-import 'zone.js/dist/zone-node'
 // endregion
 /**
  * Determines pre-renderable paths from given angular routes configuration
