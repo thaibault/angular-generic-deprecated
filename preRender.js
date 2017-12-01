@@ -13,9 +13,11 @@
 // region imports
 import type {File, Window} from 'clientnode'
 import Tools, {globalContext} from 'clientnode'
-import {enableProdMode, NgModule} from '@angular/core'
+import {APP_INITIALIZER, enableProdMode, NgModule} from '@angular/core'
 import {APP_BASE_HREF} from '@angular/common'
-import {renderModule, ServerModule} from '@angular/platform-server'
+import {
+    renderModule, renderModuleFactory, ServerModule
+} from '@angular/platform-server'
 import {Routes} from '@angular/router'
 import fileSystem from 'fs'
 import {JSDOM, VirtualConsole} from 'jsdom'
@@ -23,6 +25,10 @@ import makeDirectoryPath from 'mkdirp'
 import path from 'path'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 import removeDirectoryRecursively from 'rimraf'
+
+import {
+    applicationDomNodeSelector, globalVariableNameToRetrieveDataFrom
+} from './index'
 // endregion
 /**
  * Determines pre-renderable paths from given angular routes configuration
@@ -79,10 +85,12 @@ export function determinePaths(
 }
 /**
  * Pre-renders given application routes to given target directory structure.
- * @param ApplicationComponent - Application component to pre-render.
- * @param ApplicationModule - Application module to pre-render.
+ * @param component - Application component to pre-render.
+ * @param module - Application module to pre-render.
  * @param routes - Route or routes configuration object or array of paths to
  * pre-render.
+ * @param domNodeReferenceToRetrieveInitialDataFrom - A reference or instance
+ * of a dom node to retrieve initial data from.
  * @param globalVariableNamesToInject - Global variable names to inject into
  * the node context evaluated from given index html file.
  * @param htmlFilePath - HTML file path to use as index.
@@ -94,19 +102,24 @@ export function determinePaths(
  * @returns A promise which resolves to a list of pre-rendered html strings.
  */
 export function render(
-    ApplicationComponent:Object,
-    ApplicationModule:Object,
+    component:Object,
+    module:Object,
     // IgnoreTypeCheck
     routes:string|Array<string>|Routes = [],
-    globalVariableNamesToInject:string|Array<string> = 'genericInitialData',
+    domNodeReferenceToRetrieveInitialDataFrom:DomNode|string =
+        applicationDomNodeSelector,
+    globalVariableNamesToInject:string|Array<string> =
+        globalVariableNameToRetrieveDataFrom,
     htmlFilePath:string = path.resolve(
         path.dirname(process.argv[1]), 'index.html'),
     targetDirectoryPath:string = path.resolve(
         path.dirname(process.argv[1]), 'preRendered'),
-    scope:Object = {genericInitialData: {configuration: {database: {
-        connector: {adapter: 'memory'},
-        plugins: [PouchDBAdapterMemory]
-    }}}},
+    scope:Object = {[globalVariableNameToRetrieveDataFrom]: {configuration: {
+        database: {
+            connector: {adapter: 'memory'},
+            plugins: [PouchDBAdapterMemory]
+        }
+    }}},
     encoding:string = 'utf-8'
 ):Promise<Array<string>> {
     globalVariableNamesToInject = [].concat(globalVariableNamesToInject)
@@ -129,6 +142,8 @@ export function render(
         const window:Window = (new JSDOM(data, {
             runScripts: 'dangerously', virtualConsole
         })).window
+        const applicationDomNode:DomNode|null = window.document.querySelector(
+            applicationDomNodeSelector)
         const basePath:string = window.document.getElementsByTagName(
             'base'
         )[0].href
@@ -146,9 +161,7 @@ export function render(
         Tools.plainObjectPrototypes = Tools.plainObjectPrototypes.concat(
             // IgnoreTypeCheck
             window.Object.prototype)
-        for (const name:string in scope)
-            if (scope.hasOwnProperty(name))
-                Tools.extendObject(true, globalContext[name], scope[name])
+        Tools.extendObject(true, globalContext, scope)
         // endregion
         // region determine pre-renderable paths
         const links:Array<string> = []
@@ -202,9 +215,18 @@ export function render(
          * Dummy server compatible root application module to pre-render.
          */
         @NgModule({
-            bootstrap: [ApplicationComponent],
-            imports: [ApplicationModule, ServerModule],
-            providers: [{provide: APP_BASE_HREF, useValue: basePath}]
+            bootstrap: [component],
+            imports: [module, ServerModule],
+            providers: [
+                {provide: APP_BASE_HREF, useValue: basePath},
+                {
+                    deps: [InitialDataService],
+                    multi: true,
+                    provide: APP_INITIALIZER,
+                    useFactory: (initialData:InitialDataService):void =>
+                        initialData.retrieveFromDomNode(applicationDomNode)
+                }
+            ]
         })
         class ApplicationServerModule {}
         // endregion

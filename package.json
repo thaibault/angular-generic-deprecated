@@ -164,9 +164,7 @@
       },
       "optimizer": {
         "babelMinify": {
-          "module": {
-            "mangle": false
-          }
+          "module": null
         }
       },
       "preprocessor": {

@@ -230,6 +230,8 @@ export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
 export let currentInstanceToSearchInjectorFor:Object|null = null
+export const globalVariableNameToRetrieveDataFrom:string = 'genericInitialData'
+export const applicationDomNodeSelector:string = 'application'
 export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
 // region configuration
 const animations:Array<AnimationTriggerMetadata> = [defaultAnimation]
@@ -374,6 +376,7 @@ export class InitialDataService {
     static removeFoundData:boolean = true
 
     configuration:PlainObject
+    globalContext:any
     tools:Tools
     /**
      * Sets all properties of given initial data as properties to this
@@ -384,29 +387,48 @@ export class InitialDataService {
     constructor(utility:UtilityService) {
         if (!utility)
             utility = new UtilityService()
+        this.globalContext = utility.fixed.globalContext
         this.tools = utility.fixed.tools
         this.set(
             InitialDataService.defaultScope,
-            'genericInitialData' in utility.fixed.globalContext ?
-                utility.fixed.globalContext.genericInitialData :
+            globalVariableNameToRetrieveDataFrom in utility.fixed.globalContext
+                ?
+                utility.fixed.globalContext[
+                    globalVariableNameToRetrieveDataFrom]
+                :
                 {})
         if (InitialDataService.removeFoundData)
-            delete utility.fixed.globalContext.genericInitialData
-        if (
-            'document' in utility.fixed.globalContext &&
-            'querySelector' in utility.fixed.globalContext.document
-        ) {
-            // TODO how to get right dom node?
-            const domNode:DomNode =
-                utility.fixed.globalContext.document.querySelector(
-                    'application')
-            if (domNode && 'getAttribute' in domNode && domNode.getAttribute(
-                'initialData'
-            )) {
-                this.set(JSON.parse(domNode.getAttribute('initialData')))
-                if (InitialDataService.removeFoundData)
-                    domNode.removeAttribute('initialData')
-            }
+            delete utility.fixed.globalContext[
+                globalVariableNameToRetrieveDataFrom]
+    }
+    /**
+     * Retrieve initial data from given dom node or dom node identifier.
+     * @param domNodeReference - Dom node or a selector to retrieve a dom node.
+     * @param attributeName - An attribute name to retrieve data from.
+     * @param removeFoundData - Removes found attribute value from dom node.
+     * @returns Nothing.
+     */
+    retrieveFromDomNode(
+        domNodeReference:DomNode|string = applicationDomNodeSelector,
+        attributeName:string = 'initialData',
+        removeFoundData:boolean = InitialDataService.removeFoundData
+    ):void {
+        let domNode:DomNode|null = null
+        if (typeof domNodeReference === 'string') {
+            if (
+                'document' in this.globalContext &&
+                'querySelector' in this.globalContext.document
+            )
+                domNode = this.globalContext.document.querySelector(
+                    domNodeReference)
+        } else
+            domNode = domNodeReference
+        if (domNode && 'getAttribute' in domNode && domNode.getAttribute(
+            attributeName
+        )) {
+            this.set(JSON.parse(domNode.getAttribute(attributeName)))
+            if (removeFoundData)
+                domNode.removeAttribute(attributeName)
         }
     }
     /**
@@ -3877,16 +3899,18 @@ export class AbstractResolver implements Resolve<PlainObject> {
  * Creates a database connection and/or synchronisation stream plus missing
  * local indexes.
  * @param data - Injected data service instance.
+ * @param initialData - Injected initial data service instance.
  * @param injector - Injected injector service instance.
  * @returns Initializer function.
  */
 export function dataServiceInitializerFactory(
-    data:DataService, injector:Injector
+    data:DataService, initialData:InitialDataService, injector:Injector
 ):Function {
     /*
         NOTE: We need this statement here to avoid having an ugly typescript
         error.
     */
+    // TODO remove if corresponding aot bug is fixed.
     2
     return ():Promise<void> => {
         InitialDataService.injectors.add(injector)
