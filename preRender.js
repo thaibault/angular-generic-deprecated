@@ -91,9 +91,9 @@ export function determinePaths(
  * pre-render.
  * @param domNodeReferenceToRetrieveInitialDataFrom - A reference or instance
  * of a dom node to retrieve initial data from.
+ * @param htmlFilePath - HTML file path to use as index.
  * @param globalVariableNamesToInject - Global variable names to inject into
  * the node context evaluated from given index html file.
- * @param htmlFilePath - HTML file path to use as index.
  * @param targetDirectoryPath - Target directory path to generate pre-rendered
  * html files in.
  * @param scope - Object to inject into the global scope before running
@@ -108,10 +108,10 @@ export function render(
     routes:string|Array<string>|Routes = [],
     domNodeReferenceToRetrieveInitialDataFrom:DomNode|string =
         applicationDomNodeSelector,
-    globalVariableNamesToInject:string|Array<string> =
-        globalVariableNameToRetrieveDataFrom,
     htmlFilePath:string = path.resolve(
         path.dirname(process.argv[1]), 'index.html'),
+    globalVariableNamesToInject:string|Array<string> =
+        globalVariableNameToRetrieveDataFrom,
     targetDirectoryPath:string = path.resolve(
         path.dirname(process.argv[1]), 'preRendered'),
     scope:Object = {[globalVariableNameToRetrieveDataFrom]: {configuration: {
