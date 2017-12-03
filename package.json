@@ -41,7 +41,7 @@
     "build:aot": "ngc --project aheadOfTimeLibraryCompilation.json",
     "build:config": "sed 's/\"genDir\"\\: *\"/\\0..\\/..\\//' aheadOfTimeLibraryCompilation.json | sed 's/\"outDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"rootDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"index\\.ts\"/\"..\\/..\\/index.ts\"/' >aheadOfTimeLibraryCompilation.compiled.json",
     "build:dll": "webOptimizer build:dll",
-    "build:pre-renderer": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types,transform-runtime --presets env,stage-0 --source-maps inline --out-file preRender.compiled.js preRender.js",
+    "build:pre-renderer": "webOptimizer build '{assetPattern: {javaScript: {pattern: \"#!/usr/bin/env node\\n// -*- coding: utf-8 -*-\\n\\n{1}\\n\"}}, exportFormat: {external: \"commonjs2\", self: \"commonjs2\"}, injection: {internal: {animation: [], developmentHelper: [], index: [], mockup: [], moduleHelper: [], preRender: \"./preRender\", vendor: []}}, targetTechnology: \"node\"}'",
     "build:test": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types --presets env,stage-0 --source-maps inline --out-file testRunner.compiled.js testRunner.js",
     "build:typescript": "tsc --project aheadOfTimeLibraryCompilation.json",
     "clear": "webOptimizer clear",
