@@ -404,14 +404,14 @@ export class InitialDataService {
     /**
      * Retrieve initial data from given dom node or dom node identifier.
      * @param domNodeReference - Dom node or a selector to retrieve a dom node.
-     * @param attributeName - An attribute name to retrieve data from.
      * @param removeFoundData - Removes found attribute value from dom node.
+     * @param attributeName - An attribute name to retrieve data from.
      * @returns Nothing.
      */
     retrieveFromDomNode(
         domNodeReference:DomNode|string = applicationDomNodeSelector,
-        attributeName:string = 'initialData',
-        removeFoundData:boolean = InitialDataService.removeFoundData
+        removeFoundData:boolean = InitialDataService.removeFoundData,
+        attributeName:string = 'initialData'
     ):void {
         let domNode:DomNode|null = null
         if (typeof domNodeReference === 'string') {

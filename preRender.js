@@ -13,7 +13,7 @@
 // region imports
 import type {DomNode, File, Window} from 'clientnode'
 import Tools, {globalContext} from 'clientnode'
-import {APP_INITIALIZER, enableProdMode, NgModule} from '@angular/core'
+import {enableProdMode, NgModule} from '@angular/core'
 import {APP_BASE_HREF} from '@angular/common'
 import {renderModule, ServerModule} from '@angular/platform-server'
 import {Routes} from '@angular/router'
@@ -25,10 +25,7 @@ import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 import removeDirectoryRecursively from 'rimraf'
 
 import {
-    applicationDomNodeSelector,
-    globalVariableNameToRetrieveDataFrom,
-    InitialDataService,
-    UtilityService
+    applicationDomNodeSelector, globalVariableNameToRetrieveDataFrom
 } from './index'
 // endregion
 /**
@@ -93,6 +90,8 @@ export function determinePaths(
  * @param domNodeReferenceToRetrieveInitialDataFrom - A reference or instance
  * of a dom node to retrieve initial data from.
  * @param htmlFilePath - HTML file path to use as index.
+ * @param throwError - Indicates whether thrown errors should be handled as
+ * warning.
  * @param globalVariableNamesToInject - Global variable names to inject into
  * the node context evaluated from given index html file.
  * @param targetDirectoryPath - Target directory path to generate pre-rendered
@@ -111,7 +110,7 @@ export function render(
     applicationDomNodeSelector,
     htmlFilePath:string = path.resolve(
         path.dirname(process.argv[1]), 'index.html'),
-    throwError:boolean = true,
+    throwError:boolean = false,
     globalVariableNamesToInject:string|Array<string> =
     globalVariableNameToRetrieveDataFrom,
     targetDirectoryPath:string = path.resolve(
@@ -135,37 +134,38 @@ export function render(
         if (error)
             return reject(error)
         // region prepare environment
-        const virtualConsole:Object = new VirtualConsole()
+        renderScope.virtualConsole = new VirtualConsole()
         for (const name:string of [
             'assert', 'dir', 'error', 'info', 'log', 'time', 'timeEnd',
             'trace', 'warn'
         ])
-            virtualConsole.on(name, console[name].bind(console))
-        const window:Window = (new JSDOM(data, {
-            runScripts: 'dangerously', virtualConsole
+            renderScope.virtualConsole.on(name, console[name].bind(console))
+        renderScope.window = (new JSDOM(data, {
+            runScripts: 'dangerously',
+            virtualConsole: renderScope.virtualConsole
         })).window
-        const domNodeToRetrieveInitialDataFrom:DomNode|null = (
+        renderScope.domNodeToRetrieveInitialDataFrom = (
             typeof domNodeReferenceToRetrieveInitialDataFrom === 'string'
-        ) ? window.document.querySelector(
+        ) ? renderScope.window.document.querySelector(
                 domNodeReferenceToRetrieveInitialDataFrom
             ) : domNodeReferenceToRetrieveInitialDataFrom
-        const basePath:string = window.document.getElementsByTagName(
-            'base'
-        )[0].href
-        for (const name:string in window)
+        renderScope.basePath =
+            renderScope.window.document.getElementsByTagName('base')[0].href
+        for (const name:string in renderScope.window)
             if (
-                window.hasOwnProperty(name) &&
+                renderScope.window.hasOwnProperty(name) &&
                 !globalContext.hasOwnProperty(name) && (
                     globalVariableNamesToInject.length === 0 ||
                     globalVariableNamesToInject.includes(name)
                 )
             ) {
                 console.info(`Inject variable "${name}".`)
-                globalContext[name] = window[name]
+                // IgnoreTypeCheck
+                globalContext[name] = renderScope.window[name]
             }
         Tools.plainObjectPrototypes = Tools.plainObjectPrototypes.concat(
             // IgnoreTypeCheck
-            window.Object.prototype)
+            renderScope.window.Object.prototype)
         Tools.extendObject(true, globalContext, scope)
         // endregion
         // region determine pre-renderable paths
@@ -179,18 +179,20 @@ export function render(
                 const result:{
                     links:{[key:string]:string};
                     paths:Set<string>;
-                } = determinePaths(basePath, routes)
+                } = determinePaths(renderScope.basePath, routes)
                 for (const sourcePath:string in result.links)
                     if (result.links.hasOwnProperty(sourcePath)) {
                         const realSourcePath:string = path.join(
                             targetDirectoryPath, sourcePath.substring(
-                                basePath.length
+                                // IgnoreTypeCheck
+                                renderScope.basePath.length
                             ).replace(/^\/+(.+)/, '$1'))
                         links.push(realSourcePath)
                         const targetPath:string = path.join(
                             targetDirectoryPath,
                             result.links[sourcePath].substring(
-                                basePath.length
+                                // IgnoreTypeCheck
+                                renderScope.basePath.length
                             ).replace(/^\/+(.+)/, '$1')) + '.html'
                         await makeDirectoryPath(path.dirname(
                             realSourcePath
@@ -212,7 +214,8 @@ export function render(
                 urls = Array.from(result.paths).sort()
             }
         else
-            urls = [basePath]
+            // IgnoreTypeCheck
+            urls = [renderScope.basePath]
         // endregion
         console.info(`Found ${urls.length} pre-renderable urls.`)
         // region create server pre-renderable module
@@ -222,18 +225,10 @@ export function render(
         @NgModule({
             bootstrap: [component],
             imports: [module, ServerModule],
-            providers: [
-                InitialDataService,
-                UtilityService,
-                {provide: APP_BASE_HREF, useValue: basePath}
-            ].concat(domNodeToRetrieveInitialDataFrom ? {
-                deps: [InitialDataService],
-                multi: true,
-                provide: APP_INITIALIZER,
-                useFactory: (initialData:InitialDataService):void => ():void =>
-                    initialData.retrieveFromDomNode(
-                        domNodeToRetrieveInitialDataFrom)
-            } : [])
+            providers: [{
+                provide: APP_BASE_HREF,
+                useValue: renderScope.basePath
+            }]
         })
         class ApplicationServerModule {}
         // endregion
@@ -241,12 +236,14 @@ export function render(
         // region generate pre-rendered html files
         const results:Array<string> = []
         const filePaths:Array<string> = []
+        // IgnoreTypeCheck
         for (const url:string of urls) {
             const filePath:string = path.join(targetDirectoryPath, (
-                url === basePath
+                url === renderScope.basePath
             ) ? '/' :
-                url.substring(basePath.length).replace(/^\/+(.+)/, '$1')) +
-                '.html'
+                url.substring(renderScope.basePath.length).replace(
+                    /^\/+(.+)/, '$1'
+                )) + '.html'
             filePaths.push(filePath)
             try {
                 await new Promise((
@@ -298,6 +295,12 @@ export function render(
     }))
 }
 export default render
+export const renderScope:{
+    basePath?:string;
+    domNodeToRetrieveInitialDataFrom?:DomNode|null;
+    virtualConsole?:Object;
+    window?:Window;
+} = {}
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:
