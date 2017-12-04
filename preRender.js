@@ -27,7 +27,8 @@ import removeDirectoryRecursively from 'rimraf'
 import {
     applicationDomNodeSelector,
     globalVariableNameToRetrieveDataFrom,
-    InitialDataService
+    InitialDataService,
+    UtilityService
 } from './index'
 // endregion
 /**
@@ -223,12 +224,13 @@ export function render(
             imports: [module, ServerModule],
             providers: [
                 InitialDataService,
+                UtilityService,
                 {provide: APP_BASE_HREF, useValue: basePath}
             ].concat(domNodeToRetrieveInitialDataFrom ? {
                 deps: [InitialDataService],
                 multi: true,
                 provide: APP_INITIALIZER,
-                useFactory: (initialData:InitialDataService):void =>
+                useFactory: (initialData:InitialDataService):void => ():void =>
                     initialData.retrieveFromDomNode(
                         domNodeToRetrieveInitialDataFrom)
             } : [])
