@@ -17,6 +17,7 @@
     "aheadOfTime.compiled",
     "aheadOfTimeApplicationCompilation.json",
     "aheadOfTimeLibraryCompilation.compiled.json",
+    "aheadOfTimePrerenderableModule.ts",
     "animation.js",
     "animation.compiled.js",
     "index.js",
