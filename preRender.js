@@ -85,12 +85,10 @@ export function determinePaths(
 }
 /**
  * Pre-renders given application routes to given target directory structure.
- * @param component - Application component to pre-render.
  * @param module - Application module to pre-render.
  * @param routes - Route or routes configuration object or array of paths to
  * pre-render.
- * @param aheadOfTimeCompiled - Indicates whether given module is ahead of time
- * compiled.
+ * @param component - Indicates whether given module is ahead of time compiled.
  * @param domNodeReferenceToRetrieveInitialDataFrom - A reference or instance
  * of a dom node to retrieve initial data from.
  * @param htmlFilePath - HTML file path to use as index.
@@ -106,11 +104,10 @@ export function determinePaths(
  * @returns A promise which resolves to a list of pre-rendered html strings.
  */
 export function render(
-    component:Object,
     module:Object,
     // IgnoreTypeCheck
     routes:string|Array<string>|Routes = [],
-    aheadOfTimeCompiled:boolean = false,
+    component:Object|null = null,
     domNodeReferenceToRetrieveInitialDataFrom:DomNode|string =
     applicationDomNodeSelector,
     htmlFilePath:string = path.resolve(
@@ -246,19 +243,7 @@ export function render(
                         return reject(error)
                     console.info(`Pre-render url "${url}".`)
                     let result:string = ''
-                    if (aheadOfTimeCompiled)
-                        try {
-                            result = await renderModuleFactory(
-                                module, {document: data, url})
-                        } catch (error) {
-                            if (throwError)
-                                throw error
-                            console.warn(
-                                'Error occurred during dynamic pre-rendering' +
-                                ` path "${url}": ` +
-                                Tools.representObject(error))
-                        }
-                    else {
+                    if (component) {
                         // region create server pre-renderable module
                         /**
                          * Dummy server compatible root application module to
@@ -285,7 +270,18 @@ export function render(
                                 `compiled pre-rendering path "${url}": ` +
                                 Tools.representObject(error))
                         }
-                    }
+                    } else
+                        try {
+                            result = await renderModuleFactory(
+                                module, {document: data, url})
+                        } catch (error) {
+                            if (throwError)
+                                throw error
+                            console.warn(
+                                'Error occurred during dynamic pre-rendering' +
+                                ` path "${url}": ` +
+                                Tools.representObject(error))
+                        }
                     results.push(result)
                     console.info(`Write file "${filePath}".`)
                     fileSystem.writeFile(filePath, result, ((
