@@ -7518,7 +7518,7 @@ export class PaginationComponent {
         // endregion
         DatePipe,
         {
-            deps: [DataService, Injector],
+            deps: [DataService, InitialDataService, Injector],
             multi: true,
             provide: APP_INITIALIZER,
             useFactory: dataServiceInitializerFactory
