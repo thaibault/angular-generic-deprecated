@@ -25,7 +25,9 @@ import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 import removeDirectoryRecursively from 'rimraf'
 
 import {
-    applicationDomNodeSelector, globalVariableNameToRetrieveDataFrom
+    applicationDomNodeSelector,
+    globalVariableNameToRetrieveDataFrom,
+    InitialDataService
 } from './index'
 // endregion
 /**
