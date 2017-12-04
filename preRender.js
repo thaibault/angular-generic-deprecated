@@ -110,6 +110,7 @@ export function render(
     applicationDomNodeSelector,
     htmlFilePath:string = path.resolve(
         path.dirname(process.argv[1]), 'index.html'),
+    throwError:boolean = true,
     globalVariableNamesToInject:string|Array<string> =
     globalVariableNameToRetrieveDataFrom,
     targetDirectoryPath:string = path.resolve(
@@ -120,7 +121,7 @@ export function render(
             plugins: [PouchDBAdapterMemory]
         }
     }}},
-    encoding:string = 'utf-8'
+    encoding:string = 'utf-8',
 ):Promise<Array<string>> {
     globalVariableNamesToInject = [].concat(globalVariableNamesToInject)
     routes = [].concat(routes)
@@ -259,6 +260,8 @@ export function render(
                         result = await renderModule(
                             ApplicationServerModule, {document: data, url})
                     } catch (error) {
+                        if (throwError)
+                            throw error
                         console.warn(
                             'Error occurred during pre-rendering path "' +
                             `${url}": ${Tools.representObject(error)}`)
