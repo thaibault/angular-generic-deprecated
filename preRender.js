@@ -11,13 +11,11 @@
     endregion
 */
 // region imports
-import type {File, Window} from 'clientnode'
+import type {DomNode, File, Window} from 'clientnode'
 import Tools, {globalContext} from 'clientnode'
 import {APP_INITIALIZER, enableProdMode, NgModule} from '@angular/core'
 import {APP_BASE_HREF} from '@angular/common'
-import {
-    renderModule, renderModuleFactory, ServerModule
-} from '@angular/platform-server'
+import {renderModule, ServerModule} from '@angular/platform-server'
 import {Routes} from '@angular/router'
 import fileSystem from 'fs'
 import {JSDOM, VirtualConsole} from 'jsdom'
@@ -107,11 +105,11 @@ export function render(
     // IgnoreTypeCheck
     routes:string|Array<string>|Routes = [],
     domNodeReferenceToRetrieveInitialDataFrom:DomNode|string =
-        applicationDomNodeSelector,
+    applicationDomNodeSelector,
     htmlFilePath:string = path.resolve(
         path.dirname(process.argv[1]), 'index.html'),
     globalVariableNamesToInject:string|Array<string> =
-        globalVariableNameToRetrieveDataFrom,
+    globalVariableNameToRetrieveDataFrom,
     targetDirectoryPath:string = path.resolve(
         path.dirname(process.argv[1]), 'preRendered'),
     scope:Object = {[globalVariableNameToRetrieveDataFrom]: {configuration: {
@@ -142,8 +140,11 @@ export function render(
         const window:Window = (new JSDOM(data, {
             runScripts: 'dangerously', virtualConsole
         })).window
-        const applicationDomNode:DomNode|null = window.document.querySelector(
-            applicationDomNodeSelector)
+        const domNodeToRetrieveInitialDataFrom:DomNode|null = (
+            typeof domNodeReferenceToRetrieveInitialDataFrom === 'string'
+        ) ? window.document.querySelector(
+                domNodeReferenceToRetrieveInitialDataFrom
+            ) : domNodeReferenceToRetrieveInitialDataFrom
         const basePath:string = window.document.getElementsByTagName(
             'base'
         )[0].href
@@ -218,15 +219,16 @@ export function render(
             bootstrap: [component],
             imports: [module, ServerModule],
             providers: [
-                {provide: APP_BASE_HREF, useValue: basePath},
-                {
-                    deps: [InitialDataService],
-                    multi: true,
-                    provide: APP_INITIALIZER,
-                    useFactory: (initialData:InitialDataService):void =>
-                        initialData.retrieveFromDomNode(applicationDomNode)
-                }
-            ]
+                InitialDataService,
+                {provide: APP_BASE_HREF, useValue: basePath}
+            ].concat(domNodeToRetrieveInitialDataFrom ? {
+                deps: [InitialDataService],
+                multi: true,
+                provide: APP_INITIALIZER,
+                useFactory: (initialData:InitialDataService):void =>
+                    initialData.retrieveFromDomNode(
+                        domNodeToRetrieveInitialDataFrom)
+            } : [])
         })
         class ApplicationServerModule {}
         // endregion

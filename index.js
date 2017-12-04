@@ -2533,19 +2533,12 @@ export class DataService {
         utility:UtilityService
     ) {
         this.configuration = initialData.configuration
-        if (this.configuration.database.hasOwnProperty('publicURL'))
-            this.configuration.database.url =
-                this.configuration.database.publicURL
         this.database = PouchDB
         this.equals = equalsPipe.transform.bind(equalsPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.tools = utility.fixed.tools
-        const idName:string =
-            this.configuration.database.model.property.name.special.id
-        const revisionName:string =
-            this.configuration.database.model.property.name.special.revision
         const nativeBulkDocs:Function = this.database.prototype.bulkDocs
         const self:DataService = this
         this.database.plugin({bulkDocs: async function(
@@ -2555,6 +2548,11 @@ export class DataService {
                 Implements a generic retry mechanism for "upsert" and "latest"
                 updates and optionally supports to ignore "NoChange" errors.
             */
+            const idName:string =
+                self.configuration.database.model.property.name.special.id
+            const revisionName:string =
+                self.configuration.database.model.property.name.special
+                    .revision
             if (
                 !Array.isArray(firstParameter) &&
                 typeof firstParameter === 'object' &&
@@ -2644,11 +2642,7 @@ export class DataService {
             }
             return result
         }})
-        this.database
-            .plugin(PouchDBFindPlugin)
-            .plugin(PouchDBValidationPlugin)
-        for (const plugin of this.configuration.database.plugins)
-            this.database.plugin(plugin)
+        this.database.plugin(PouchDBFindPlugin).plugin(PouchDBValidationPlugin)
     }
     /**
      * Determines all property names which are indexable in a generic manner.
@@ -2697,9 +2691,14 @@ export class DataService {
     async initialize():Promise<void> {
         /*
             NOTE: We want to allow other services to manipulate the database
-            constructor before initializing them.
+            constructor and configurations before initializing them.
         */
         await this.tools.timeout()
+        if (this.configuration.database.hasOwnProperty('publicURL'))
+            this.configuration.database.url =
+                this.configuration.database.publicURL
+        for (const plugin of this.configuration.database.plugins)
+            this.database.plugin(plugin)
         const options:PlainObject = this.extendObject(
             /* eslint-disable camelcase */
             true, {skip_setup: true},
