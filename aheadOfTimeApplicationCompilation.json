@@ -6,6 +6,7 @@
         "module": "esnext",
         "moduleResolution": "node",
         "noImplicitAny": false,
+        "preserveSymlinks": true,
         "sourceMap": false,
         "suppressImplicitAnyIndexErrors": true,
         "target": "esnext"
