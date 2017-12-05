@@ -201,7 +201,23 @@ export function render(
                         ), async (error:?Error):Promise<void> => {
                             if (error)
                                 return reject(error)
-                            if (await Tools.isFile(realSourcePath))
+                            let exists:boolean = true
+                            try {
+                                const stats:Stats = await new Promise((
+                                    resolve:Function, reject:Function
+                                ):void => fileSystem.lstat(realSourcePath, (
+                                    error?:Error, stats:Object
+                                ):void => error ? reject(error) : resolve(stats)))
+                            } catch (error) {
+                                if (error.code === 'ENOENT')
+                                    exists = false
+                                else
+                                    throw error
+                            }
+                            if (exists && (
+                                stats.isSymbolicLink() ||
+                                stats.isFile()
+                            ))
                                 await new Promise((
                                     resolve:Function, reject:Function
                                 ):void => removeDirectoryRecursively(
