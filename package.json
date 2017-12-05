@@ -27,6 +27,7 @@
     "moduleHelper.compiled.js",
     "preRender.js",
     "preRender.compiled.js",
+    "source",
     "testRunner.js",
     "testRunner.compiled.js"
   ],
