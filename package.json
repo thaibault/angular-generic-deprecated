@@ -27,7 +27,6 @@
     "moduleHelper.compiled.js",
     "preRender.js",
     "preRender.compiled.js",
-    "source",
     "testRunner.js",
     "testRunner.compiled.js"
   ],
@@ -49,6 +48,7 @@
     "clear": "webOptimizer clear",
     "document": "webOptimizer document",
     "export": "npm run build:config && npm run build:aot && webOptimizer build '{development:{tool:false},module:{preprocessor:{javaScript:{options:{plugins:{__remove__:\"transform-runtime\"}}}}}}' && npm run build:pre-renderer && npm run build:test",
+    "install": "ln --symbolic ../../source ./ &>/dev/null || echo No symbolic link from could be set for generic ahead of time pre-rendering. || true",
     "lint": "webOptimizer check:type; webOptimizer lint",
     "prepare": "npm run build",
     "serve": "webOptimizer serve",

@@ -13,7 +13,7 @@ import {APP_BASE_HREF} from '@angular/common'
 import {NgModule} from '@angular/core'
 import {ServerModule} from '@angular/platform-server'
 
-import {ApplicationComponent, Module} from '../../source/module'
+import {ApplicationComponent, Module} from './source/module'
 // endregion
 // region server pre-renderable module
 /**
