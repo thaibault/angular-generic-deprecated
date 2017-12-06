@@ -112,7 +112,6 @@ export function render(
     applicationDomNodeSelector,
     htmlFilePath:string = path.resolve(
         path.dirname(process.argv[1]), 'index.html'),
-    throwError:boolean = false,
     globalVariableNamesToInject:string|Array<string> =
     globalVariableNameToRetrieveDataFrom,
     targetDirectoryPath:string = path.resolve(
@@ -279,24 +278,22 @@ export function render(
                             result = await renderModule(
                                 ApplicationServerModule, {document: data, url})
                         } catch (error) {
-                            if (throwError)
-                                throw error
                             console.warn(
                                 'Error occurred during dynamic pre-rendering' +
                                 ` path "${url}": ` +
                                 Tools.representObject(error))
+                            return reject(error)
                         }
                     } else
                         try {
                             result = await renderModuleFactory(
                                 module, {document: data, url})
                         } catch (error) {
-                            if (throwError)
-                                throw error
                             console.warn(
                                 'Error occurred during ahead of time ' +
                                 `compiled pre-rendering path "${url}": ` +
                                 Tools.representObject(error))
+                            return reject(error)
                         }
                     results.push(result)
                     console.info(`Write file "${filePath}".`)
