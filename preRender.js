@@ -282,8 +282,8 @@ export function render(
                             if (throwError)
                                 throw error
                             console.warn(
-                                'Error occurred during ahead of time ' +
-                                `compiled pre-rendering path "${url}": ` +
+                                'Error occurred during dynamic pre-rendering' +
+                                ` path "${url}": ` +
                                 Tools.representObject(error))
                         }
                     } else
@@ -294,8 +294,8 @@ export function render(
                             if (throwError)
                                 throw error
                             console.warn(
-                                'Error occurred during dynamic pre-rendering' +
-                                ` path "${url}": ` +
+                                'Error occurred during ahead of time ' +
+                                `compiled pre-rendering path "${url}": ` +
                                 Tools.representObject(error))
                         }
                     results.push(result)
