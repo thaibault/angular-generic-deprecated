@@ -2458,6 +2458,10 @@ export class AlertService {
  * A generic database connector.
  * @property static:revisionNumberRegularExpression - Compiled regular
  * expression to retrieve revision number from revision hash.
+ * @property static:skipGenericIndexManagementOnServer - Indicates whether
+ * generic index creation deletion should be done on server context.
+ * @property static:skipRemoteConnectionOnServer - Indicates whether remote
+ * connections should be avoided on server contexts.
  * @property static:wrappableMethodNames - Saves a list of method names which
  * can be intercepted.
  *
@@ -2480,6 +2484,8 @@ export class AlertService {
 export class DataService {
     // NOTE: Native regular expression definition is not allowed here.
     static revisionNumberRegularExpression:RegExp = new RegExp('^([0-9]+)-')
+    static skipGenericIndexManagementOnServer:boolean = true
+    static skipRemoteConnectionOnServer:boolean = true
     static wrappableMethodNames:Array<string> = [
         'allDocs', 'bulkDocs', 'bulkGet',
         'close',
@@ -2705,13 +2711,18 @@ export class DataService {
             /* eslint-enable camelcase */
             this.configuration.database.connector || {})
         const databaseName:string = this.configuration.name || 'generic'
-        if (!isPlatformServer(this.platformID))
+        if (!(
+            DataService.skipRemoteConnectionOnServer &&
+            isPlatformServer(this.platformID)
+        ))
             this.remoteConnection = new this.database(this.stringFormat(
                 this.configuration.database.url, ''
             ) + `/${databaseName}`, options)
-        if (this.configuration.database.local || isPlatformServer(
-            this.platformID
-        ))
+        if (
+            this.configuration.database.local ||
+            DataService.skipRemoteConnectionOnServer &&
+            isPlatformServer(this.platformID)
+        )
             this.connection = new this.database(databaseName, options)
         else
             this.connection = this.remoteConnection
@@ -2846,10 +2857,10 @@ export class DataService {
                 }
             }
         this.connection.installValidationMethods()
-        if (
-            isPlatformServer(this.platformID) &&
-            this.configuration.database.createGenericFlatIndex
-        ) {
+        if (!(
+            DataService.skipGenericIndexManagementOnServer &&
+            isPlatformServer(this.platformID)
+        ) && this.configuration.database.createGenericFlatIndex) {
             // region create/remove needed/unneeded generic indexes
             for (const modelName in this.configuration.database.model.entities)
                 if (
