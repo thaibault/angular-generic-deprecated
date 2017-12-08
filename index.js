@@ -3608,6 +3608,9 @@ export class DataScopeService {
 /**
  * Helper class to extend from to have some basic methods to deal with database
  * entities.
+ * @property static:skipResolvingOnServer - Indicates whether to skip resolving
+ * data on server contexts.
+ *
  * @property cache - Indicates whether retrieved resources should be cached.
  * @property cacheStore - Saves cached items.
  * @property changesStream - Changes stream to invalidate cache store.
@@ -3645,6 +3648,8 @@ export class DataScopeService {
  * auto completion e.g.
  */
 export class AbstractResolver implements Resolve<PlainObject> {
+    static skipResolvingOnServer:boolean = true
+
     cache:boolean = true
     cacheStore:PlainObject = {}
     changesStream:Stream
@@ -3836,8 +3841,10 @@ export class AbstractResolver implements Resolve<PlainObject> {
      */
     resolve(
         route:ActivatedRouteSnapshot, state:RouterStateSnapshot
-    ):Promise<Array<PlainObject>> {
+    ):Array<PlainObject>|Promise<Array<PlainObject>> {
     /* eslint-enable no-unused-vars */
+        if (AbstractResolver.skipResolvingOnServer)
+            return []
         let searchTerm:string = ''
         if ('searchTerm' in route.params) {
             const term:string = decodeURIComponent(route.params.searchTerm)
