@@ -6700,7 +6700,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 }
                 const types:Array<string> = ['content_type', 'name']
                 for (const filter of this.filter) {
-                    const match:boolean = true
+                    let match:boolean = true
                     for (const type of types)
                         if (
                             filter.hasOwnProperty('source') &&
