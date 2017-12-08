@@ -44,8 +44,13 @@ export function determinePaths(
 ):{links:{[key:string]:string};paths:Set<string>} {
     let links:{[key:string]:string} = {}
     let paths:Set<string> = new Set()
-    routes.reverse()
     let defaultPath:string = ''
+    /*
+        NOTE: We have to reverse the url list to ensure that default paths are
+        already registered before linking to them due to the fact that default
+        paths are listed later to avoid shadowing non-default paths.
+    */
+    routes.reverse()
     for (const route:Object of routes)
         if (route.hasOwnProperty('path')) {
             if (route.hasOwnProperty('redirectTo')) {
@@ -81,6 +86,10 @@ export function determinePaths(
             Tools.extendObject(links, result.links)
             paths = new Set([...paths, ...result.paths])
         }
+    // NOTE: We have to forward links cascades.
+    for (const source:string in links)
+        if (links.hasOwnProperty(`${links[source]}/**`))
+            links[source] = links[`${links[source]}/**`]
     return {links, paths}
 }
 /**
