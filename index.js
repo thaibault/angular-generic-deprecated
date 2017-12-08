@@ -6465,6 +6465,16 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     @Input() editableName:boolean = true
     file:any = null
     @Output() fileChange:EventEmitter<any> = new EventEmitter()
+    @Input() filter:Array<{
+        source?:{
+            contentType?:string;
+            name?:string;
+        };
+        target:{
+            contentType?:string;
+            name?:string;
+        };
+    }> = []
     @Input() headerText:string|null = null
     idName:string
     @ViewChild('input') input:ElementRef
@@ -6687,6 +6697,30 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                     // IgnoreTypeCheck
                     length: this.input.nativeElement.files[0].size,
                     name: this.input.nativeElement.files[0].name
+                }
+                const types:Array<string> = ['content_type', 'name']
+                for (const filter of this.filter) {
+                    const match:boolean = true
+                    for (const type of types)
+                        if (
+                            filter.hasOwnProperty('source') &&
+                            filter.source.hasOwnProperty(type) &&
+                            !new RegExp(filter.source[type], 'g').test(
+                                this.file[type])
+                        ) {
+                            match = false
+                            break
+                        }
+                    if (match)
+                        for (const type of types)
+                            if (filter.target.hasOwnProperty(type))
+                                this.file[type] = (
+                                    filter.hasOwnProperty(type) &&
+                                    filter.source.hasOwnProperty(type)
+                                ) ? this.file[type].replace(new RegExp(
+                                        filter.source[type], 'g'
+                                    ), filter.target[type]) :
+                                    filter.target[type]
                 }
                 this.update(this.file ? this.file.name : null)
             }

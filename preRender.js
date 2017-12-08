@@ -92,8 +92,6 @@ export function determinePaths(
  * @param domNodeReferenceToRetrieveInitialDataFrom - A reference or instance
  * of a dom node to retrieve initial data from.
  * @param htmlFilePath - HTML file path to use as index.
- * @param throwError - Indicates whether thrown errors should be handled as
- * warning.
  * @param globalVariableNamesToInject - Global variable names to inject into
  * the node context evaluated from given index html file.
  * @param targetDirectoryPath - Target directory path to generate pre-rendered
@@ -200,20 +198,19 @@ export function render(
                         ), async (error:?Error):Promise<void> => {
                             if (error)
                                 return reject(error)
-                            let exists:boolean = true
+                            let stats:any = null
                             try {
-                                const stats:Stats = await new Promise((
+                                stats = await new Promise((
                                     resolve:Function, reject:Function
                                 ):void => fileSystem.lstat(realSourcePath, (
-                                    error?:Error, stats:Object
-                                ):void => error ? reject(error) : resolve(stats)))
+                                    error:any, stats:any
+                                ):void => error ? reject(error) : resolve(
+                                    stats)))
                             } catch (error) {
-                                if (error.code === 'ENOENT')
-                                    exists = false
-                                else
+                                if (error.code !== 'ENOENT')
                                     throw error
                             }
-                            if (exists && (
+                            if (stats && (
                                 stats.isSymbolicLink() ||
                                 stats.isFile()
                             ))
