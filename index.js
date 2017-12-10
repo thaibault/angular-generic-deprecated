@@ -2781,6 +2781,7 @@ export class DataService {
             }
         }
         // endregion
+        // region register interceptor
         for (const name in this.connection)
             if (
                 DataService.wrappableMethodNames.includes(name) &&
@@ -2857,6 +2858,7 @@ export class DataService {
                 }
             }
         this.connection.installValidationMethods()
+        // endregion
         if (!(
             DataService.skipGenericIndexManagementOnServer &&
             isPlatformServer(this.platformID)
@@ -3631,6 +3633,7 @@ export class DataScopeService {
  * @property messageConfiguration - Plain message box configuration object.
  * @property modelConfiguration - Saves a mapping from all available model
  * names to their specification.
+ * @property platformID - Platform identification string.
  * @property relevantKeys - Saves a list of relevant key names to take into
  * account during resolving.
  * @property relevantSearchKeys - Saves a list of relevant key names to take
@@ -3665,6 +3668,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
     message:Function
     messageConfiguration:PlainObject = new MatSnackBarConfig()
     modelConfiguration:PlainObject
+    platformID:string
     relevantKeys:Array<string>|null = null
     relevantSearchKeys:Array<string>|null = null
     representObject:Function
@@ -3706,6 +3710,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
         this.modelConfiguration = get(
             InitialDataService
         ).configuration.database.model
+        this.platformID = get(PLATFORM_ID)
         this.representObject = get(RepresentObjectPipe).transform.bind(get(
             RepresentObjectPipe))
         this.specialNames = get(
@@ -3843,7 +3848,9 @@ export class AbstractResolver implements Resolve<PlainObject> {
         route:ActivatedRouteSnapshot, state:RouterStateSnapshot
     ):Array<PlainObject>|Promise<Array<PlainObject>> {
     /* eslint-enable no-unused-vars */
-        if (AbstractResolver.skipResolvingOnServer)
+        if (AbstractResolver.skipResolvingOnServer && isPlatformServer(
+            this.platformID
+        ))
             return []
         let searchTerm:string = ''
         if ('searchTerm' in route.params) {

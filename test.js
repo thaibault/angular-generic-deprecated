@@ -1927,6 +1927,9 @@ registerAngularTest(function(
                             assert:Object
                         ):Promise<void> => {
                             const done:Function = assert.async()
+                            const skipResolvingOnServerBackup =
+                                AbstractResolver.skipResolvingOnServer
+                            AbstractResolver.skipResolvingOnServer = false
                             try {
                                 for (const name:string of [
                                     specialNames.id, 'a'
@@ -2013,6 +2016,8 @@ registerAngularTest(function(
                                 console.warn(error)
                                 assert.ok(false)
                             }
+                            AbstractResolver.skipResolvingOnServer =
+                                skipResolvingOnServerBackup
                             done()
                         })
                         // / endregion
