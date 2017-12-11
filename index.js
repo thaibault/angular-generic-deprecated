@@ -3296,7 +3296,6 @@ export class DataScopeService {
         }
         return this.generate(modelName, propertyNames, data)
     }
-    // TODO test
     /**
      * Determines a nested specification object for given property name and
      * corresponding specification object where given property is bound to.
@@ -4756,7 +4755,14 @@ export class DateDirective {
 // IgnoreTypeCheck
 @Directive({selector: '[genericSlider]'})
 /**
- * TODO
+ * Directive to automatically switch a list of content elements.
+ * @property extendObject - Extend object's pipe transform method.
+ * @property index - Index of currently selected content.
+ * @property options - Sliding options.
+ * @property templateReference - Content element template to slide.
+ * @property timerID - Timer id of next content switch.
+ * @property viewContainerReference - View container reference to inject
+ * instantiated template reference into.
  */
 export class SliderDirective implements OnInit {
     extendObject:Function
