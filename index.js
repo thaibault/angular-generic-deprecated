@@ -2865,7 +2865,7 @@ export class DataService {
             DataService.skipGenericIndexManagementOnServer &&
             isPlatformServer(this.platformID)
         ) && this.configuration.database.createGenericFlatIndex &&
-            this.connection === this.remoteConnection
+            this.connection !== this.remoteConnection
         ) {
             // region create/remove needed/unneeded generic indexes
             for (const modelName in this.configuration.database.model.entities)
