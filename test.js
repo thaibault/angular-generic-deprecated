@@ -16,7 +16,7 @@
 */
 // region imports
 import Tools from 'clientnode'
-import type {DomNode, PlainObject} from 'clientnode'
+import type {DomNode, $DomNode, PlainObject} from 'clientnode'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 // NOTE: Only needed for debugging this file.
 try {
@@ -293,10 +293,15 @@ registerAngularTest(function(
                         ):void => {
                             assert.strictEqual(
                                 initialData.configuration.test, true)
-                            assert.strictEqual(
-                                initialData.set({
-                                    configuration: {test: false}
-                                }).configuration.test, false)
+                            const $domNode:$DomNode = $('#qunit-fixture')
+                            $domNode.attr('a', '{"a": [2, {"a": 3}]}')
+                            assert.deepEqual(initialData.retrieveFromDomNode(
+                                $domNode[0], true, 'a'
+                            ).a, [2, {a: 3}])
+                            assert.strictEqual($domNode.attr('a'), undefined)
+                            assert.strictEqual(initialData.set({
+                                configuration: {test: false}
+                            }).configuration.test, false)
                         })
                         // endregion
                         // region pipes

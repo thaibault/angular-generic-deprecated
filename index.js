@@ -412,7 +412,7 @@ export class InitialDataService {
         domNodeReference:DomNode|string = applicationDomNodeSelector,
         removeFoundData:boolean = InitialDataService.removeFoundData,
         attributeName:string = 'initialData'
-    ):void {
+    ):PlainObject {
         let domNode:DomNode|null = null
         if (typeof domNodeReference === 'string') {
             if (
@@ -423,13 +423,15 @@ export class InitialDataService {
                     domNodeReference)
         } else
             domNode = domNodeReference
+        let result:PlainObject = {}
         if (domNode && 'getAttribute' in domNode && domNode.getAttribute(
             attributeName
         )) {
-            this.set(JSON.parse(domNode.getAttribute(attributeName)))
+            result = this.set(JSON.parse(domNode.getAttribute(attributeName)))
             if (removeFoundData)
                 domNode.removeAttribute(attributeName)
         }
+        return result
     }
     /**
      * Sets initial data.

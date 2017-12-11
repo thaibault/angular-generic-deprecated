@@ -45,7 +45,7 @@
     "build:pre-renderer": "webOptimizer build '{exportFormat: {external: \"commonjs2\", self: \"commonjs2\"}, injection: {internal: {animation: [], developmentHelper: [], index: [], mockup: [], moduleHelper: [], preRender: \"./preRender\", vendor: []}}, targetTechnology: \"node\"}'",
     "build:test": "babel --plugins angular2-annotations,transform-decorators-legacy,transform-flow-strip-types --presets env,stage-0 --source-maps inline --out-file testRunner.compiled.js testRunner.js",
     "build:typescript": "tsc --project aheadOfTimeLibraryCompilation.json",
-    "clear": "webOptimizer clear",
+    "clear": "rm source &>/dev/null; webOptimizer clear",
     "document": "webOptimizer document",
     "export": "npm run build:config && npm run build:aot && webOptimizer build '{development:{tool:false},module:{preprocessor:{javaScript:{options:{plugins:{__remove__:\"transform-runtime\"}}}}}}' && npm run build:pre-renderer && npm run build:test",
     "install": "ln --symbolic ../../source ./ &>/dev/null || echo No symbolic link from could be set for generic ahead of time pre-rendering. || true",
@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "blob-util": "^1.3.0",
-    "clientnode": "^1.0.302",
+    "clientnode": "^1.0.303",
     "filereader": "^0.10.3",
     "hammerjs": "^2.0.8",
     "jsdom": "^11.5.1",
