@@ -231,7 +231,7 @@ export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
 }
 export let currentInstanceToSearchInjectorFor:Object|null = null
 export const globalVariableNameToRetrieveDataFrom:string = 'genericInitialData'
-export const applicationDomNodeSelector:string = 'application'
+export const applicationDomNodeSelector:string = 'application, [application]'
 export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
 // region configuration
 const animations:Array<AnimationTriggerMetadata> = [defaultAnimation]
