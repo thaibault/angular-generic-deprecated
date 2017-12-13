@@ -20,7 +20,7 @@ import {
 } from '@angular/platform-server'
 import {Routes} from '@angular/router'
 import fileSystem from 'fs'
-import {minifyHTML} from 'html-minifier'
+// TODO import {minifyHTML} from 'html-minifier'
 import {JSDOM as DOM, VirtualConsole} from 'jsdom'
 import makeDirectoryPath from 'mkdirp'
 import path from 'path'
@@ -106,13 +106,13 @@ export function render(module:Object, options:{
     globalVariableNamesToInject?:string|Array<string>;
     htmlFilePath?:string;
     minify?:PlainObject|null;
-    reinjectInnerHTMLFromInitialDomNode?:boolean;
+    reInjectInnerHTMLFromInitialDomNode?:boolean;
     routes?:string|Array<string>|Routes;
     scope?:Object;
     targetDirectoryPath?:string;
 } = {}):Promise<Array<string>> {
-    console.log(module, options)
-    Tools.extendObject(true, options, {
+    // region determine options
+    options = Tools.extendObject(true, {
         component: null,
         domNodeReferenceToRetrieveInitialDataFrom: applicationDomNodeSelector,
         encoding: 'utf-8',
@@ -120,7 +120,7 @@ export function render(module:Object, options:{
         htmlFilePath: path.resolve(
             path.dirname(process.argv[1]), 'index.html'),
         minify: null,
-        reinjectInnerHTMLFromInitialDomNode: true,
+        reInjectInnerHTMLFromInitialDomNode: true,
         routes: [],
         scope: {[globalVariableNameToRetrieveDataFrom]: {configuration: {
             database: {
@@ -130,10 +130,11 @@ export function render(module:Object, options:{
         }}},
         targetDirectoryPath: path.resolve(
             path.dirname(process.argv[1]), 'preRendered')
-    })
+    }, options)
     options.globalVariableNamesToInject = [].concat(
         options.globalVariableNamesToInject)
     options.routes = [].concat(options.routes)
+    // endregion
     return new Promise((
         resolve:Function, reject:Function
     // IgnoreTypeCheck
@@ -159,9 +160,9 @@ export function render(module:Object, options:{
         ) ? renderScope.window.document.querySelector(
                 options.domNodeReferenceToRetrieveInitialDataFrom
             ) : options.domNodeReferenceToRetrieveInitialDataFrom
-        renderScope.innerHTMLToReinject = ''
+        renderScope.innerHTMLToReInject = ''
         if (renderScope.domNodeToRetrieveInitialDataFrom)
-            renderScope.innerHTMLToReinject =
+            renderScope.innerHTMLToReInject =
                 renderScope.domNodeToRetrieveInitialDataFrom.innerHTML
         renderScope.basePath =
             renderScope.window.document.getElementsByTagName('base')[0].href
@@ -270,6 +271,7 @@ export function render(module:Object, options:{
                         return reject(error)
                     console.info(`Pre-render url "${url}".`)
                     let result:string = ''
+                    // region pre-render
                     if (options.component) {
                         // region create server pre-renderable module
                         /**
@@ -307,7 +309,9 @@ export function render(module:Object, options:{
                                 Tools.representObject(error))
                             return reject(error)
                         }
-                    if (options.reinjectInnerHTMLFromInitialDomNode) {
+                    // endregion
+                    // region re-inject needed initial markup
+                    if (options.reInjectInnerHTMLFromInitialDomNode) {
                         const window:Window = (new DOM(result, {
                             runScripts: 'dangerously',
                             virtualConsole: renderScope.virtualConsole
@@ -321,22 +325,26 @@ export function render(module:Object, options:{
                                 .domNodeReferenceToRetrieveInitialDataFrom
                             ) : options
                                 .domNodeReferenceToRetrieveInitialDataFrom
-                        if (renderScope.innerHTMLToReinject.includes(
+                        if (renderScope.innerHTMLToReInject.includes(
                             '<!--generic-inject-application-->'
                         ))
                             domNodeToRetrieveInitialDataFrom.innerHTML =
-                                renderScope.innerHTMLToReinject.replace(
+                                renderScope.innerHTMLToReInject.replace(
                                     new RegExp(
                                         '<!--generic-inject-application-->' +
                                         '(?:[\\s\\S]*?<!---->)?'
-                                    ), renderScope.innerHTMLToReinject)
+                                    ),
+                                    domNodeToRetrieveInitialDataFrom.innerHTML)
                         else
                             domNodeToRetrieveInitialDataFrom.innerHTML +=
-                                renderScope.innerHTMLToReinject
+                                renderScope.innerHTMLToReInject
                         result = window.document.documentElement.outerHTML
                     }
+                    // endregion
+                    /* TODO
                     if (options.minify)
                         result = minifyHTML(result, options.minify)
+                    */
                     results.push(result)
                     console.info(`Write file "${filePath}".`)
                     fileSystem.writeFile(filePath, result, ((
@@ -370,10 +378,10 @@ export default render
 export const renderScope:{
     basePath?:string;
     domNodeToRetrieveInitialDataFrom?:DomNode|null;
-    innerHTMLToReinject:string;
+    innerHTMLToReInject:string;
     virtualConsole?:Object;
     window?:Window;
-} = {innerHTMLToReinject: ''}
+} = {innerHTMLToReInject: ''}
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:
