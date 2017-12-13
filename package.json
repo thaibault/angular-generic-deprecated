@@ -65,6 +65,7 @@
     "clientnode": "^1.0.303",
     "filereader": "^0.10.3",
     "hammerjs": "^2.0.8",
+    "html-minifier": "^3.5.7",
     "jsdom": "^11.5.1",
     "mkdirp": "^0.5.1",
     "pouchdb": "^6.3.4",
