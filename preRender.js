@@ -20,7 +20,7 @@ import {
 } from '@angular/platform-server'
 import {Routes} from '@angular/router'
 import fileSystem from 'fs'
-import {JSDOM, VirtualConsole} from 'jsdom'
+import {JSDOM as DOM, VirtualConsole} from 'jsdom'
 import makeDirectoryPath from 'mkdirp'
 import path from 'path'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
@@ -108,6 +108,8 @@ export function determinePaths(
  * @param scope - Object to inject into the global scope before running
  * pre-rendering.
  * @param encoding - Encoding to use for reading given html file reference.
+ * @param reinjectInnerHTMLFromInitialDomNode - Indicates whether to reinsert
+ * found inner html after pre-rendering.
  * @returns A promise which resolves to a list of pre-rendered html strings.
  */
 export function render(
@@ -130,6 +132,7 @@ export function render(
         }
     }}},
     encoding:string = 'utf-8',
+    reinjectInnerHTMLFromInitialDomNode:boolean = true
 ):Promise<Array<string>> {
     globalVariableNamesToInject = [].concat(globalVariableNamesToInject)
     routes = [].concat(routes)
@@ -148,7 +151,7 @@ export function render(
             'trace', 'warn'
         ])
             renderScope.virtualConsole.on(name, console[name].bind(console))
-        renderScope.window = (new JSDOM(data, {
+        renderScope.window = (new DOM(data, {
             runScripts: 'dangerously',
             virtualConsole: renderScope.virtualConsole
         })).window
@@ -157,6 +160,10 @@ export function render(
         ) ? renderScope.window.document.querySelector(
                 domNodeReferenceToRetrieveInitialDataFrom
             ) : domNodeReferenceToRetrieveInitialDataFrom
+        renderScope.innerHTMLToReinject = ''
+        if (renderScope.domNodeToRetrieveInitialDataFrom)
+            renderScope.innerHTMLToReinject =
+                renderScope.domNodeToRetrieveInitialDataFrom.innerHTML
         renderScope.basePath =
             renderScope.window.document.getElementsByTagName('base')[0].href
         for (const name:string in renderScope.window)
@@ -301,6 +308,29 @@ export function render(
                                 Tools.representObject(error))
                             return reject(error)
                         }
+                    // TODO minify result
+                    if (reinjectInnerHTMLFromInitialDomNode)
+                        if (result.includes(
+                            '<!--generic-inject-application-->'
+                        ))
+                            result.replace(
+                                '<!--generic-inject-application-->',
+                                renderScope.innerHTMLToReinject)
+                        else {
+                            const window:Window = (new DOM(result, {
+                                runScripts: 'dangerously',
+                                virtualConsole: renderScope.virtualConsole
+                            })).window
+                            const domNodeToRetrieveInitialDataFrom = (
+                                typeof domNodeReferenceToRetrieveInitialDataFrom
+                                === 'string'
+                            ) ? window.document.querySelector(
+                                    domNodeReferenceToRetrieveInitialDataFrom
+                                ) : domNodeReferenceToRetrieveInitialDataFrom
+                            domNodeToRetrieveInitialDataFrom.innerHTML +=
+                                renderScope.innerHTMLToReinject
+                            result = window.document.documentElement.outerHTML
+                        }
                     results.push(result)
                     console.info(`Write file "${filePath}".`)
                     fileSystem.writeFile(filePath, result, ((
@@ -334,9 +364,10 @@ export default render
 export const renderScope:{
     basePath?:string;
     domNodeToRetrieveInitialDataFrom?:DomNode|null;
+    innerHTMLToReinject:string;
     virtualConsole?:Object;
     window?:Window;
-} = {}
+} = {innerHTMLToReinject: ''}
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:
