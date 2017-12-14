@@ -100,8 +100,8 @@ export function determinePaths(
  * @returns A promise which resolves to a list of pre-rendered html strings.
  */
 export function render(module:Object, options:{
+    applicationDomNodeSelector?:string;
     component?:Object|null;
-    domNodeReferenceToRetrieveInitialDataFrom?:DomNode|string;
     encoding?:string;
     globalVariableNamesToInject?:string|Array<string>;
     htmlFilePath?:string;
@@ -113,8 +113,8 @@ export function render(module:Object, options:{
 } = {}):Promise<Array<string>> {
     // region determine options
     options = Tools.extendObject(true, {
+        applicationDomNodeSelector,
         component: null,
-        domNodeReferenceToRetrieveInitialDataFrom: applicationDomNodeSelector,
         encoding: 'utf-8',
         globalVariableNamesToInject: globalVariableNameToRetrieveDataFrom,
         htmlFilePath: path.resolve(
@@ -154,16 +154,13 @@ export function render(module:Object, options:{
             runScripts: 'dangerously',
             virtualConsole: renderScope.virtualConsole
         })).window
-        renderScope.domNodeToRetrieveInitialDataFrom = (
-            typeof options.domNodeReferenceToRetrieveInitialDataFrom ===
-                'string'
-        ) ? renderScope.window.document.querySelector(
-                options.domNodeReferenceToRetrieveInitialDataFrom
-            ) : options.domNodeReferenceToRetrieveInitialDataFrom
+        renderScope.applicationDomNode =
+            renderScope.window.document.querySelector(
+                options.applicationDomNodeSelector)
         renderScope.innerHTMLToReInject = ''
-        if (renderScope.domNodeToRetrieveInitialDataFrom)
+        if (renderScope.applicationDomNode)
             renderScope.innerHTMLToReInject =
-                renderScope.domNodeToRetrieveInitialDataFrom.innerHTML
+                renderScope.applicationDomNode.innerHTML
         renderScope.basePath =
             renderScope.window.document.getElementsByTagName('base')[0].href
         for (const name:string in renderScope.window)
@@ -270,7 +267,7 @@ export function render(module:Object, options:{
                     if (error)
                         return reject(error)
                     console.info(`Pre-render url "${url}".`)
-                    let result:string = ''
+                   let result:string = ''
                     // region pre-render
                     if (options.component) {
                         // region create server pre-renderable module
@@ -312,31 +309,26 @@ export function render(module:Object, options:{
                     // endregion
                     // region re-inject needed initial markup
                     if (options.reInjectInnerHTMLFromInitialDomNode) {
-                        const window:Window = (new DOM(result, {
-                            runScripts: 'dangerously',
-                            virtualConsole: renderScope.virtualConsole
-                        })).window
-                        const domNodeToRetrieveInitialDataFrom = (
-                            typeof
-                            options.domNodeReferenceToRetrieveInitialDataFrom
-                            === 'string'
-                        ) ? window.document.querySelector(
-                                options
-                                .domNodeReferenceToRetrieveInitialDataFrom
-                            ) : options
-                                .domNodeReferenceToRetrieveInitialDataFrom
+                        const window:Window = (new DOM(result)).window
+                        /*
+                            NOTE: We have to re-select the application node
+                            here, because it's embedded in another document
+                            context.
+                        */
+                        const applicationDomNode:DomNode =
+                            window.document.querySelector(
+                                applicationDomNodeSelector)
                         if (renderScope.innerHTMLToReInject.includes(
                             '<!--generic-inject-application-->'
                         ))
-                            domNodeToRetrieveInitialDataFrom.innerHTML =
+                            applicationDomNode.innerHTML =
                                 renderScope.innerHTMLToReInject.replace(
                                     new RegExp(
                                         '<!--generic-inject-application-->' +
                                         '(?:[\\s\\S]*?<!---->)?'
-                                    ),
-                                    domNodeToRetrieveInitialDataFrom.innerHTML)
+                                    ), applicationDomNode.innerHTML)
                         else
-                            domNodeToRetrieveInitialDataFrom.innerHTML +=
+                            applicationDomNode.innerHTML +=
                                 renderScope.innerHTMLToReInject
                         result = window.document.documentElement.outerHTML
                     }
@@ -377,7 +369,7 @@ export function render(module:Object, options:{
 export default render
 export const renderScope:{
     basePath?:string;
-    domNodeToRetrieveInitialDataFrom?:DomNode|null;
+    applicationDomNodeSelector:string;
     innerHTMLToReInject:string;
     virtualConsole?:Object;
     window?:Window;
