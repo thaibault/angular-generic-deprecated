@@ -318,15 +318,17 @@ export function render(module:Object, options:{
                         const applicationDomNode:DomNode =
                             window.document.querySelector(
                                 options.applicationDomNodeSelector)
-                        if (renderScope.innerHTMLToReInject.includes(
-                            '<!--generic-inject-application-->'
+                        const regularExpression:RegExp = new RegExp(
+                            '<!--generic-inject-application-->' +
+                            '(?:[\\s\\S]*?<!---->)?',
+                            'i')
+                        if (regularExpression.test(
+                            renderScope.innerHTMLToReInject
                         ))
                             applicationDomNode.innerHTML =
                                 renderScope.innerHTMLToReInject.replace(
-                                    new RegExp(
-                                        '<!--generic-inject-application-->' +
-                                        '(?:[\\s\\S]*?<!---->)?'
-                                    ), applicationDomNode.innerHTML)
+                                    regularExpression,
+                                    applicationDomNode.innerHTML)
                         else
                             applicationDomNode.innerHTML +=
                                 renderScope.innerHTMLToReInject
