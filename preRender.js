@@ -327,7 +327,9 @@ export function render(module:Object, options:{
                         else
                             applicationDomNode.innerHTML +=
                                 renderScope.innerHTMLToReInject
-                        result = window.document.documentElement.outerHTML
+                        result =
+                            result.replace(/([\s\S]*)<html>[\s\S]*/, '$1') +
+                            window.document.documentElement.outerHTML
                     }
                     // endregion
                     /* TODO
