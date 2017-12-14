@@ -317,7 +317,7 @@ export function render(module:Object, options:{
                         */
                         const applicationDomNode:DomNode =
                             window.document.querySelector(
-                                applicationDomNodeSelector)
+                                options.applicationDomNodeSelector)
                         if (renderScope.innerHTMLToReInject.includes(
                             '<!--generic-inject-application-->'
                         ))
