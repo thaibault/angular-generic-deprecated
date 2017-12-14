@@ -11,7 +11,7 @@
     endregion
 */
 // region imports
-import type {DomNode, File, Window} from 'clientnode'
+import type {DomNode, File, PlainObject, Window} from 'clientnode'
 import Tools, {globalContext} from 'clientnode'
 import {enableProdMode, NgModule} from '@angular/core'
 import {APP_BASE_HREF} from '@angular/common'
@@ -101,16 +101,16 @@ export function determinePaths(
  */
 export function render(module:Object, options:{
     applicationDomNodeSelector?:string;
-    component?:Object|null;
-    encoding?:string;
-    globalVariableNamesToInject?:string|Array<string>;
-    htmlFilePath?:string;
-    minify?:PlainObject|null;
-    reInjectInnerHTMLFromInitialDomNode?:boolean;
-    routes?:string|Array<string>|Routes;
-    scope?:Object;
-    targetDirectoryPath?:string;
-} = {}):Promise<Array<string>> {
+    component:Object|null;
+    encoding:string;
+    globalVariableNamesToInject:string|Array<string>;
+    htmlFilePath:string;
+    minify:PlainObject|null;
+    reInjectInnerHTMLFromInitialDomNode:boolean;
+    routes:Array<string>|Routes;
+    scope:Object;
+    targetDirectoryPath:string;
+}):Promise<Array<string>> {
     // region determine options
     options = Tools.extendObject(true, {
         applicationDomNodeSelector,
@@ -130,7 +130,7 @@ export function render(module:Object, options:{
         }}},
         targetDirectoryPath: path.resolve(
             path.dirname(process.argv[1]), 'preRendered')
-    }, options)
+    }, options || {})
     options.globalVariableNamesToInject = [].concat(
         options.globalVariableNamesToInject)
     options.routes = [].concat(options.routes)
@@ -162,6 +162,7 @@ export function render(module:Object, options:{
             renderScope.innerHTMLToReInject =
                 renderScope.applicationDomNode.innerHTML
         renderScope.basePath =
+            // IgnoreTypeCheck
             renderScope.window.document.getElementsByTagName('base')[0].href
         for (const name:string in renderScope.window)
             if (
@@ -185,7 +186,6 @@ export function render(module:Object, options:{
         let urls:Array<string>
         if (options.routes.length)
             if (typeof options.routes[0] === 'string')
-                // IgnoreTypeCheck
                 urls = options.routes
             else {
                 const result:{
@@ -196,14 +196,12 @@ export function render(module:Object, options:{
                     if (result.links.hasOwnProperty(sourcePath)) {
                         const realSourcePath:string = path.join(
                             options.targetDirectoryPath, sourcePath.substring(
-                                // IgnoreTypeCheck
                                 renderScope.basePath.length
                             ).replace(/^\/+(.+)/, '$1'))
                         links.push(realSourcePath)
                         const targetPath:string = path.join(
                             options.targetDirectoryPath,
                             result.links[sourcePath].substring(
-                                // IgnoreTypeCheck
                                 renderScope.basePath.length
                             ).replace(/^\/+(.+)/, '$1')) + '.html'
                         await makeDirectoryPath(path.dirname(
@@ -241,7 +239,6 @@ export function render(module:Object, options:{
                 urls = Array.from(result.paths).sort()
             }
         else
-            // IgnoreTypeCheck
             urls = [renderScope.basePath]
         // endregion
         console.info(`Found ${urls.length} pre-renderable urls.`)
@@ -249,11 +246,9 @@ export function render(module:Object, options:{
         // region generate pre-rendered html files
         const results:Array<string> = []
         const filePaths:Array<string> = []
-        // IgnoreTypeCheck
         for (const url:string of urls) {
             const filePath:string = path.join(options.targetDirectoryPath, (
                 url === renderScope.basePath
-            // IgnoreTypeCheck
             ) ? '/' : url.substring(renderScope.basePath.length).replace(
                     /^\/+(.+)/, '$1'
                 )) + '.html'
@@ -267,7 +262,7 @@ export function render(module:Object, options:{
                     if (error)
                         return reject(error)
                     console.info(`Pre-render url "${url}".`)
-                   let result:string = ''
+                    let result:string = ''
                     // region pre-render
                     if (options.component) {
                         // region create server pre-renderable module
@@ -370,12 +365,15 @@ export function render(module:Object, options:{
 }
 export default render
 export const renderScope:{
-    basePath?:string;
-    applicationDomNodeSelector:string;
+    basePath:string;
+    applicationDomNode?:DomNode;
     innerHTMLToReInject:string;
     virtualConsole?:Object;
     window?:Window;
-} = {innerHTMLToReInject: ''}
+} = {
+    basePath: '',
+    innerHTMLToReInject: ''
+}
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:
