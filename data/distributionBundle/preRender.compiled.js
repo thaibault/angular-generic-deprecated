@@ -1,642 +1,572 @@
-
-// #!/usr/bin/env node
-// -*- coding: utf-8 -*-
-/** @module preRender */
 'use strict';
-/* !
-    region header
-    [Project page](https://bitbucket.org/posic/bpvwebapp)
-
-    Copyright Torben Sickert (info["~at~"]torben.website) 16.12.2012
-    endregion
-*/
-// region imports
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _typeof2 = require('babel-runtime/helpers/typeof');
-
-var _typeof3 = _interopRequireDefault(_typeof2);
-
-var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
-
-var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
-
-var _from = require('babel-runtime/core-js/array/from');
-
-var _from2 = _interopRequireDefault(_from);
-
-var _regenerator = require('babel-runtime/regenerator');
-
-var _regenerator2 = _interopRequireDefault(_regenerator);
-
-var _asyncToGenerator2 = require('babel-runtime/helpers/asyncToGenerator');
-
-var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
-
-var _promise = require('babel-runtime/core-js/promise');
-
-var _promise2 = _interopRequireDefault(_promise);
-
-var _toConsumableArray2 = require('babel-runtime/helpers/toConsumableArray');
-
-var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
-
-var _getIterator2 = require('babel-runtime/core-js/get-iterator');
-
-var _getIterator3 = _interopRequireDefault(_getIterator2);
-
-var _set = require('babel-runtime/core-js/set');
-
-var _set2 = _interopRequireDefault(_set);
-
-exports.determinePaths = determinePaths;
-exports.render = render;
-
-var _clientnode = require('clientnode');
-
-var _clientnode2 = _interopRequireDefault(_clientnode);
-
-var _core = require('@angular/core');
-
-var _common = require('@angular/common');
-
-var _platformServer = require('@angular/platform-server');
-
-var _router = require('@angular/router');
-
-var _fs = require('fs');
-
-var _fs2 = _interopRequireDefault(_fs);
-
-var _jsdom = require('jsdom');
-
-var _mkdirp = require('mkdirp');
-
-var _mkdirp2 = _interopRequireDefault(_mkdirp);
-
-var _path = require('path');
-
-var _path2 = _interopRequireDefault(_path);
-
-var _pouchdbAdapterMemory = require('pouchdb-adapter-memory');
-
-var _pouchdbAdapterMemory2 = _interopRequireDefault(_pouchdbAdapterMemory);
-
-var _rimraf = require('rimraf');
-
-var _rimraf2 = _interopRequireDefault(_rimraf);
-
-require('zone.js/dist/zone-node');
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// endregion
-/**
- * Determines pre-renderable paths from given angular routes configuration
- * object.
- * @param basePath - Applications base path.
- * @param routes - Routes configuration object to analyze.
- * @param root - Current components root path (usually only needed for
- * recursive function calls).
- * @returns Set of distinct paths and linkes representing redirects.
- */
-function determinePaths() {
-    var basePath = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '/';
-    var routes = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-    var root = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
-
-    var links = {};
-    var paths = new _set2.default();
-    routes.reverse();
-    var defaultPath = '';
-    var _iteratorNormalCompletion = true;
-    var _didIteratorError = false;
-    var _iteratorError = undefined;
-
-    try {
-        for (var _iterator = (0, _getIterator3.default)(routes), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-            var route = _step.value;
-
-            if (route.hasOwnProperty('path')) {
-                if (route.hasOwnProperty('redirectTo')) {
-                    if (route.path === '**') if (route.redirectTo.startsWith('/')) defaultPath = _path2.default.join(basePath, route.redirectTo);else defaultPath = _path2.default.join(basePath, root, route.redirectTo);
-                    links[_path2.default.join(basePath, root, route.path)] = defaultPath;
-                } else if (route.path.includes(':')) {
-                    if (defaultPath) paths.add(defaultPath);
-                    continue;
-                } else if (route.path !== '**' && !(route.hasOwnProperty('children') && route.children[route.children.length - 1].path === '**')) paths.add(_path2.default.join(basePath, root, route.path));
-                if (route.hasOwnProperty('children')) {
-                    var result = determinePaths(basePath, route.children, _path2.default.join(root, route.path));
-                    _clientnode2.default.extendObject(links, result.links);
-                    paths = new _set2.default([].concat((0, _toConsumableArray3.default)(paths), (0, _toConsumableArray3.default)(result.paths)));
-                }
-            } else if (route.hasOwnProperty('children')) {
-                var _result = determinePaths(basePath, route.children, root);
-                _clientnode2.default.extendObject(links, _result.links);
-                paths = new _set2.default([].concat((0, _toConsumableArray3.default)(paths), (0, _toConsumableArray3.default)(_result.paths)));
-            }
-        }
-    } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-    } finally {
-        try {
-            if (!_iteratorNormalCompletion && _iterator.return) {
-                _iterator.return();
-            }
-        } finally {
-            if (_didIteratorError) {
-                throw _iteratorError;
-            }
-        }
-    }
-
-    return { links: links, paths: paths };
-}
-/**
- * Pre-renders given application routes to given target directory structure.
- * @param ApplicationComponent - Application component to pre-render.
- * @param ApplicationModule - Application module to pre-render.
- * @param routes - Route or routes configuration object or array of paths to
- * pre-render.
- * @param globalVariableNamesToInject - Global variable names to inject into
- * the node context evaluated from given index html file.
- * @param htmlFilePath - HTML file path to use as index.
- * @param targetDirectoryPath - Target directory path to generate pre-rendered
- * html files in.
- * @param scope - Object to inject into the global scope before running
- * pre-rendering.
- * @param encoding - Encoding to use for reading given html file reference.
- * @returns A promise which resolves to a list of pre-rendered html strings.
- */
-function render(ApplicationComponent, ApplicationModule) {
-    var routes = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
-    var globalVariableNamesToInject = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'genericInitialData';
-    var htmlFilePath = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : _path2.default.resolve(_path2.default.dirname(process.argv[1]), 'index.html');
-    var targetDirectoryPath = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : _path2.default.resolve(_path2.default.dirname(process.argv[1]), 'preRendered');
-
-    var _this = this;
-
-    var scope = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : { genericInitialData: { configuration: { database: {
-                    connector: { adapter: 'memory' },
-                    plugins: [_pouchdbAdapterMemory2.default]
-                } } } };
-    var encoding = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : 'utf-8';
-
-    globalVariableNamesToInject = [].concat(globalVariableNamesToInject);
-    routes = [].concat(routes);
-    return new _promise2.default(function (resolve, reject) {
-        return _fs2.default.readFile(htmlFilePath, { encoding: encoding }, function () {
-            var _ref = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(error, data) {
-                var _dec, _class;
-
-                var virtualConsole, _arr, _i, name, window, basePath, _name, _name2, links, urls, result, sourcePath, ApplicationServerModule, results, filePaths, _loop, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, url, _ret2, files, currentFile, _loop2, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, file;
-
-                return _regenerator2.default.wrap(function _callee4$(_context6) {
-                    while (1) {
-                        switch (_context6.prev = _context6.next) {
-                            case 0:
-                                if (!error) {
-                                    _context6.next = 2;
-                                    break;
-                                }
-
-                                return _context6.abrupt('return', reject(error));
-
-                            case 2:
-                                // region prepare environment
-                                virtualConsole = new _jsdom.VirtualConsole();
-                                _arr = ['assert', 'dir', 'error', 'info', 'log', 'time', 'timeEnd', 'trace', 'warn'];
-
-                                for (_i = 0; _i < _arr.length; _i++) {
-                                    name = _arr[_i];
-
-                                    virtualConsole.on(name, console[name].bind(console));
-                                }window = new _jsdom.JSDOM(data, {
-                                    runScripts: 'dangerously', virtualConsole: virtualConsole
-                                }).window;
-                                basePath = window.document.getElementsByTagName('base')[0].href;
-
-                                for (_name in window) {
-                                    if (window.hasOwnProperty(_name) && !_clientnode.globalContext.hasOwnProperty(_name) && (globalVariableNamesToInject.length === 0 || globalVariableNamesToInject.includes(_name))) {
-                                        console.info('Inject variable "' + _name + '".');
-                                        _clientnode.globalContext[_name] = window[_name];
-                                    }
-                                }_clientnode2.default.plainObjectPrototypes = _clientnode2.default.plainObjectPrototypes.concat(
-                                // IgnoreTypeCheck
-                                window.Object.prototype);
-                                for (_name2 in scope) {
-                                    if (scope.hasOwnProperty(_name2)) _clientnode2.default.extendObject(true, _clientnode.globalContext[_name2], scope[_name2]);
-                                } // endregion
-                                // region determine pre-renderable paths
-                                links = [];
-                                urls = void 0;
-
-                                if (!routes.length) {
-                                    _context6.next = 28;
-                                    break;
-                                }
-
-                                if (!(typeof routes[0] === 'string')) {
-                                    _context6.next = 17;
-                                    break;
-                                }
-
-                                // IgnoreTypeCheck
-                                urls = routes;
-                                _context6.next = 26;
-                                break;
-
-                            case 17:
-                                result = determinePaths(basePath, routes);
-                                _context6.t0 = _regenerator2.default.keys(result.links);
-
-                            case 19:
-                                if ((_context6.t1 = _context6.t0()).done) {
-                                    _context6.next = 25;
-                                    break;
-                                }
-
-                                sourcePath = _context6.t1.value;
-
-                                if (!result.links.hasOwnProperty(sourcePath)) {
-                                    _context6.next = 23;
-                                    break;
-                                }
-
-                                return _context6.delegateYield( /*#__PURE__*/_regenerator2.default.mark(function _callee2() {
-                                    var realSourcePath, targetPath;
-                                    return _regenerator2.default.wrap(function _callee2$(_context2) {
-                                        while (1) {
-                                            switch (_context2.prev = _context2.next) {
-                                                case 0:
-                                                    realSourcePath = _path2.default.join(targetDirectoryPath, sourcePath.substring(basePath.length).replace(/^\/+(.+)/, '$1'));
-
-                                                    links.push(realSourcePath);
-                                                    targetPath = _path2.default.join(targetDirectoryPath, result.links[sourcePath].substring(basePath.length).replace(/^\/+(.+)/, '$1')) + '.html';
-                                                    _context2.next = 5;
-                                                    return (0, _mkdirp2.default)(_path2.default.dirname(realSourcePath), function () {
-                                                        var _ref2 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(error) {
-                                                            return _regenerator2.default.wrap(function _callee$(_context) {
-                                                                while (1) {
-                                                                    switch (_context.prev = _context.next) {
-                                                                        case 0:
-                                                                            if (!error) {
-                                                                                _context.next = 2;
-                                                                                break;
-                                                                            }
-
-                                                                            return _context.abrupt('return', reject(error));
-
-                                                                        case 2:
-                                                                            _context.next = 4;
-                                                                            return _clientnode2.default.isFile(realSourcePath);
-
-                                                                        case 4:
-                                                                            if (!_context.sent) {
-                                                                                _context.next = 7;
-                                                                                break;
-                                                                            }
-
-                                                                            _context.next = 7;
-                                                                            return new _promise2.default(function (resolve, reject) {
-                                                                                return (0, _rimraf2.default)(realSourcePath, function (error) {
-                                                                                    return error ? reject(error) : resolve();
-                                                                                });
-                                                                            });
-
-                                                                        case 7:
-                                                                            // IgnoreTypeCheck
-                                                                            _fs2.default.symlink(targetPath, realSourcePath, function (error) {
-                                                                                return error ? reject(error) : resolve();
-                                                                            });
-
-                                                                        case 8:
-                                                                        case 'end':
-                                                                            return _context.stop();
-                                                                    }
-                                                                }
-                                                            }, _callee, _this);
-                                                        }));
-
-                                                        return function (_x12) {
-                                                            return _ref2.apply(this, arguments);
-                                                        };
-                                                    }());
-
-                                                case 5:
-                                                case 'end':
-                                                    return _context2.stop();
-                                            }
-                                        }
-                                    }, _callee2, _this);
-                                })(), 't2', 23);
-
-                            case 23:
-                                _context6.next = 19;
-                                break;
-
-                            case 25:
-                                urls = (0, _from2.default)(result.paths).sort();
-
-                            case 26:
-                                _context6.next = 29;
-                                break;
-
-                            case 28:
-                                urls = [basePath];
-
-                            case 29:
-                                // endregion
-                                console.info('Found ' + urls.length + ' pre-renderable urls.');
-                                // region create server pre-renderable module
-                                /**
-                                 * Dummy server compatible root application module to pre-render.
-                                 */
-                                ApplicationServerModule = (_dec = (0, _core.NgModule)({
-                                    bootstrap: [ApplicationComponent],
-                                    imports: [ApplicationModule, _platformServer.ServerModule],
-                                    providers: [{ provide: _common.APP_BASE_HREF, useValue: basePath }]
-                                }), _dec(_class = function ApplicationServerModule() {
-                                    (0, _classCallCheck3.default)(this, ApplicationServerModule);
-                                }) || _class);
-                                // endregion
-
-                                (0, _core.enableProdMode)();
-                                // region generate pre-rendered html files
-                                results = [];
-                                filePaths = [];
-                                _loop = /*#__PURE__*/_regenerator2.default.mark(function _loop(url) {
-                                    var filePath;
-                                    return _regenerator2.default.wrap(function _loop$(_context4) {
-                                        while (1) {
-                                            switch (_context4.prev = _context4.next) {
-                                                case 0:
-                                                    filePath = _path2.default.join(targetDirectoryPath, url === basePath ? '/' : url.substring(basePath.length).replace(/^\/+(.+)/, '$1')) + '.html';
-
-                                                    filePaths.push(filePath);
-                                                    _context4.prev = 2;
-                                                    _context4.next = 5;
-                                                    return new _promise2.default(function (resolve, reject) {
-                                                        return (0, _mkdirp2.default)(_path2.default.dirname(filePath), function () {
-                                                            var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(error) {
-                                                                var result;
-                                                                return _regenerator2.default.wrap(function _callee3$(_context3) {
-                                                                    while (1) {
-                                                                        switch (_context3.prev = _context3.next) {
-                                                                            case 0:
-                                                                                if (!error) {
-                                                                                    _context3.next = 2;
-                                                                                    break;
-                                                                                }
-
-                                                                                return _context3.abrupt('return', reject(error));
-
-                                                                            case 2:
-                                                                                console.info('Pre-render url "' + url + '".');
-                                                                                result = '';
-                                                                                _context3.prev = 4;
-                                                                                _context3.next = 7;
-                                                                                return (0, _platformServer.renderModule)(ApplicationServerModule, { document: data, url: url });
-
-                                                                            case 7:
-                                                                                result = _context3.sent;
-                                                                                _context3.next = 13;
-                                                                                break;
-
-                                                                            case 10:
-                                                                                _context3.prev = 10;
-                                                                                _context3.t0 = _context3['catch'](4);
-
-                                                                                console.warn('Error occurred during pre-rendering path "' + (url + '": ' + _clientnode2.default.representObject(_context3.t0)));
-
-                                                                            case 13:
-                                                                                results.push(result);
-                                                                                console.info('Write file "' + filePath + '".');
-                                                                                _fs2.default.writeFile(filePath, result, function (error) {
-                                                                                    return error ? reject(error) : resolve(result);
-                                                                                });
-
-                                                                            case 16:
-                                                                            case 'end':
-                                                                                return _context3.stop();
-                                                                        }
-                                                                    }
-                                                                }, _callee3, _this, [[4, 10]]);
-                                                            }));
-
-                                                            return function (_x13) {
-                                                                return _ref3.apply(this, arguments);
-                                                            };
-                                                        }());
-                                                    });
-
-                                                case 5:
-                                                    _context4.next = 11;
-                                                    break;
-
-                                                case 7:
-                                                    _context4.prev = 7;
-                                                    _context4.t0 = _context4['catch'](2);
-
-                                                    reject(_context4.t0);
-                                                    return _context4.abrupt('return', {
-                                                        v: void 0
-                                                    });
-
-                                                case 11:
-                                                case 'end':
-                                                    return _context4.stop();
-                                            }
-                                        }
-                                    }, _loop, _this, [[2, 7]]);
-                                });
-                                _iteratorNormalCompletion2 = true;
-                                _didIteratorError2 = false;
-                                _iteratorError2 = undefined;
-                                _context6.prev = 38;
-                                _iterator2 = (0, _getIterator3.default)(urls);
-
-                            case 40:
-                                if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
-                                    _context6.next = 49;
-                                    break;
-                                }
-
-                                url = _step2.value;
-                                return _context6.delegateYield(_loop(url), 't3', 43);
-
-                            case 43:
-                                _ret2 = _context6.t3;
-
-                                if (!((typeof _ret2 === 'undefined' ? 'undefined' : (0, _typeof3.default)(_ret2)) === "object")) {
-                                    _context6.next = 46;
-                                    break;
-                                }
-
-                                return _context6.abrupt('return', _ret2.v);
-
-                            case 46:
-                                _iteratorNormalCompletion2 = true;
-                                _context6.next = 40;
-                                break;
-
-                            case 49:
-                                _context6.next = 55;
-                                break;
-
-                            case 51:
-                                _context6.prev = 51;
-                                _context6.t4 = _context6['catch'](38);
-                                _didIteratorError2 = true;
-                                _iteratorError2 = _context6.t4;
-
-                            case 55:
-                                _context6.prev = 55;
-                                _context6.prev = 56;
-
-                                if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                                    _iterator2.return();
-                                }
-
-                            case 58:
-                                _context6.prev = 58;
-
-                                if (!_didIteratorError2) {
-                                    _context6.next = 61;
-                                    break;
-                                }
-
-                                throw _iteratorError2;
-
-                            case 61:
-                                return _context6.finish(58);
-
-                            case 62:
-                                return _context6.finish(55);
-
-                            case 63:
-                                _context6.next = 65;
-                                return _clientnode2.default.walkDirectoryRecursively(targetDirectoryPath);
-
-                            case 65:
-                                files = _context6.sent;
-
-                                files.reverse();
-                                currentFile = null;
-                                _loop2 = /*#__PURE__*/_regenerator2.default.mark(function _loop2(file) {
-                                    return _regenerator2.default.wrap(function _loop2$(_context5) {
-                                        while (1) {
-                                            switch (_context5.prev = _context5.next) {
-                                                case 0:
-                                                    if (!(filePaths.includes(file.path) || links.includes(file.path))) {
-                                                        _context5.next = 4;
-                                                        break;
-                                                    }
-
-                                                    currentFile = file;
-                                                    _context5.next = 7;
-                                                    break;
-
-                                                case 4:
-                                                    if (currentFile && currentFile.path.startsWith(file.path)) {
-                                                        _context5.next = 7;
-                                                        break;
-                                                    }
-
-                                                    _context5.next = 7;
-                                                    return new _promise2.default(function (resolve, reject) {
-                                                        return (0, _rimraf2.default)(file.path, function (error) {
-                                                            return error ? reject(error) : resolve();
-                                                        });
-                                                    });
-
-                                                case 7:
-                                                case 'end':
-                                                    return _context5.stop();
-                                            }
-                                        }
-                                    }, _loop2, _this);
-                                });
-                                _iteratorNormalCompletion3 = true;
-                                _didIteratorError3 = false;
-                                _iteratorError3 = undefined;
-                                _context6.prev = 72;
-                                _iterator3 = (0, _getIterator3.default)(files);
-
-                            case 74:
-                                if (_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done) {
-                                    _context6.next = 80;
-                                    break;
-                                }
-
-                                file = _step3.value;
-                                return _context6.delegateYield(_loop2(file), 't5', 77);
-
-                            case 77:
-                                _iteratorNormalCompletion3 = true;
-                                _context6.next = 74;
-                                break;
-
-                            case 80:
-                                _context6.next = 86;
-                                break;
-
-                            case 82:
-                                _context6.prev = 82;
-                                _context6.t6 = _context6['catch'](72);
-                                _didIteratorError3 = true;
-                                _iteratorError3 = _context6.t6;
-
-                            case 86:
-                                _context6.prev = 86;
-                                _context6.prev = 87;
-
-                                if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                                    _iterator3.return();
-                                }
-
-                            case 89:
-                                _context6.prev = 89;
-
-                                if (!_didIteratorError3) {
-                                    _context6.next = 92;
-                                    break;
-                                }
-
-                                throw _iteratorError3;
-
-                            case 92:
-                                return _context6.finish(89);
-
-                            case 93:
-                                return _context6.finish(86);
-
-                            case 94:
-                                // endregion
-                                resolve(results);
-
-                            case 95:
-                            case 'end':
-                                return _context6.stop();
-                        }
-                    }
-                }, _callee4, _this, [[38, 51, 55, 63], [56,, 58, 62], [72, 82, 86, 94], [87,, 89, 93]]);
-            }));
-
-            return function (_x10, _x11) {
-                return _ref.apply(this, arguments);
-            };
-        }());
-    });
-}
-exports.default = render;
-// region vim modline
-// vim: set tabstop=4 shiftwidth=4 expandtab:
-// vim: foldmethod=marker foldmarker=region,endregion:
-// endregion
-
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,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O0FBQUE7QUFBQTtBQUFBO0FBQUE7O0FBNEl6QyxvQ0E1SXlDO0FBQUEsc0VBNEl6QyxJQTVJeUM7O0FBQUE7QUFBQTtBQUFBO0FBQUE7O0FBQUE7QUFBQTtBQUFBOztBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUE7O0FBQUE7QUFBQTtBQUFBOztBQUFBO0FBQUE7QUFBQTs7QUFBQTtBQUFBOztBQUFBO0FBQUE7QUFBQTtBQUFBOztBQUFBOztBQUFBO0FBQUE7O0FBQUE7QUFBQTs7QUFBQTtBQW9KcEQ7QUFDQSx3Q0FBUSxPQUFSOztBQXJKb0Q7QUFBQTtBQUFBO0FBQUE7QUFBQTtBQUFBO0FBQUEsYUFBOUM7O0FBQUE7QUFBQTtBQUFBO0FBQUEsWUFIUztBQUFBLEtBQVosQ0FBUDtBQTBKSDtrQkFDYyxNO0FBQ2Y7QUFDQTtBQUNBO0FBQ0EiLCJmaWxlIjoicHJlUmVuZGVyLmNvbXBpbGVkLmpzIiwic291cmNlc0NvbnRlbnQiOlsiLy8gQGZsb3dcbi8vICMhL3Vzci9iaW4vZW52IG5vZGVcbi8vIC0qLSBjb2Rpbmc6IHV0Zi04IC0qLVxuLyoqIEBtb2R1bGUgcHJlUmVuZGVyICovXG4ndXNlIHN0cmljdCdcbi8qICFcbiAgICByZWdpb24gaGVhZGVyXG4gICAgW1Byb2plY3QgcGFnZV0oaHR0cHM6Ly9iaXRidWNrZXQub3JnL3Bvc2ljL2JwdndlYmFwcClcblxuICAgIENvcHlyaWdodCBUb3JiZW4gU2lja2VydCAoaW5mb1tcIn5hdH5cIl10b3JiZW4ud2Vic2l0ZSkgMTYuMTIuMjAxMlxuICAgIGVuZHJlZ2lvblxuKi9cbi8vIHJlZ2lvbiBpbXBvcnRzXG5pbXBvcnQgdHlwZSB7RmlsZSwgV2luZG93fSBmcm9tICdjbGllbnRub2RlJ1xuaW1wb3J0IFRvb2xzLCB7Z2xvYmFsQ29udGV4dH0gZnJvbSAnY2xpZW50bm9kZSdcbmltcG9ydCB7ZW5hYmxlUHJvZE1vZGUsIE5nTW9kdWxlfSBmcm9tICdAYW5ndWxhci9jb3JlJ1xuaW1wb3J0IHtBUFBfQkFTRV9IUkVGfSBmcm9tICdAYW5ndWxhci9jb21tb24nXG5pbXBvcnQge3JlbmRlck1vZHVsZSwgU2VydmVyTW9kdWxlfSBmcm9tICdAYW5ndWxhci9wbGF0Zm9ybS1zZXJ2ZXInXG5pbXBvcnQge1JvdXRlc30gZnJvbSAnQGFuZ3VsYXIvcm91dGVyJ1xuaW1wb3J0IGZpbGVTeXN0ZW0gZnJvbSAnZnMnXG5pbXBvcnQge0pTRE9NLCBWaXJ0dWFsQ29uc29sZX0gZnJvbSAnanNkb20nXG5pbXBvcnQgbWFrZURpcmVjdG9yeVBhdGggZnJvbSAnbWtkaXJwJ1xuaW1wb3J0IHBhdGggZnJvbSAncGF0aCdcbmltcG9ydCBQb3VjaERCQWRhcHRlck1lbW9yeSBmcm9tICdwb3VjaGRiLWFkYXB0ZXItbWVtb3J5J1xuaW1wb3J0IHJlbW92ZURpcmVjdG9yeVJlY3Vyc2l2ZWx5IGZyb20gJ3JpbXJhZidcbmltcG9ydCAnem9uZS5qcy9kaXN0L3pvbmUtbm9kZSdcbi8vIGVuZHJlZ2lvblxuLyoqXG4gKiBEZXRlcm1pbmVzIHByZS1yZW5kZXJhYmxlIHBhdGhzIGZyb20gZ2l2ZW4gYW5ndWxhciByb3V0ZXMgY29uZmlndXJhdGlvblxuICogb2JqZWN0LlxuICogQHBhcmFtIGJhc2VQYXRoIC0gQXBwbGljYXRpb25zIGJhc2UgcGF0aC5cbiAqIEBwYXJhbSByb3V0ZXMgLSBSb3V0ZXMgY29uZmlndXJhdGlvbiBvYmplY3QgdG8gYW5hbHl6ZS5cbiAqIEBwYXJhbSByb290IC0gQ3VycmVudCBjb21wb25lbnRzIHJvb3QgcGF0aCAodXN1YWxseSBvbmx5IG5lZWRlZCBmb3JcbiAqIHJlY3Vyc2l2ZSBmdW5jdGlvbiBjYWxscykuXG4gKiBAcmV0dXJucyBTZXQgb2YgZGlzdGluY3QgcGF0aHMgYW5kIGxpbmtlcyByZXByZXNlbnRpbmcgcmVkaXJlY3RzLlxuICovXG5leHBvcnQgZnVuY3Rpb24gZGV0ZXJtaW5lUGF0aHMoXG4gICAgYmFzZVBhdGg6c3RyaW5nID0gJy8nLCByb3V0ZXM6Um91dGVzID0gW10sIHJvb3Q6c3RyaW5nID0gJydcbik6e2xpbmtzOntba2V5OnN0cmluZ106c3RyaW5nfTtwYXRoczpTZXQ8c3RyaW5nPn0ge1xuICAgIGxldCBsaW5rczp7W2tleTpzdHJpbmddOnN0cmluZ30gPSB7fVxuICAgIGxldCBwYXRoczpTZXQ8c3RyaW5nPiA9IG5ldyBTZXQoKVxuICAgIHJvdXRlcy5yZXZlcnNlKClcbiAgICBsZXQgZGVmYXVsdFBhdGg6c3RyaW5nID0gJydcbiAgICBmb3IgKGNvbnN0IHJvdXRlOk9iamVjdCBvZiByb3V0ZXMpXG4gICAgICAgIGlmIChyb3V0ZS5oYXNPd25Qcm9wZXJ0eSgncGF0aCcpKSB7XG4gICAgICAgICAgICBpZiAocm91dGUuaGFzT3duUHJvcGVydHkoJ3JlZGlyZWN0VG8nKSkge1xuICAgICAgICAgICAgICAgIGlmIChyb3V0ZS5wYXRoID09PSAnKionKVxuICAgICAgICAgICAgICAgICAgICBpZiAocm91dGUucmVkaXJlY3RUby5zdGFydHNXaXRoKCcvJykpXG4gICAgICAgICAgICAgICAgICAgICAgICBkZWZhdWx0UGF0aCA9IHBhdGguam9pbihiYXNlUGF0aCwgcm91dGUucmVkaXJlY3RUbylcbiAgICAgICAgICAgICAgICAgICAgZWxzZVxuICAgICAgICAgICAgICAgICAgICAgICAgZGVmYXVsdFBhdGggPSBwYXRoLmpvaW4oXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgYmFzZVBhdGgsIHJvb3QsIHJvdXRlLnJlZGlyZWN0VG8pXG4gICAgICAgICAgICAgICAgbGlua3NbcGF0aC5qb2luKGJhc2VQYXRoLCByb290LCByb3V0ZS5wYXRoKV0gPSBkZWZhdWx0UGF0aFxuICAgICAgICAgICAgfSBlbHNlIGlmIChyb3V0ZS5wYXRoLmluY2x1ZGVzKCc6JykpIHtcbiAgICAgICAgICAgICAgICBpZiAoZGVmYXVsdFBhdGgpXG4gICAgICAgICAgICAgICAgICAgIHBhdGhzLmFkZChkZWZhdWx0UGF0aClcbiAgICAgICAgICAgICAgICBjb250aW51ZVxuICAgICAgICAgICAgfSBlbHNlIGlmIChyb3V0ZS5wYXRoICE9PSAnKionICYmICEocm91dGUuaGFzT3duUHJvcGVydHkoXG4gICAgICAgICAgICAgICAgJ2NoaWxkcmVuJ1xuICAgICAgICAgICAgKSAmJiByb3V0ZS5jaGlsZHJlbltyb3V0ZS5jaGlsZHJlbi5sZW5ndGggLSAxXS5wYXRoID09PSAnKionKSlcbiAgICAgICAgICAgICAgICBwYXRocy5hZGQocGF0aC5qb2luKGJhc2VQYXRoLCByb290LCByb3V0ZS5wYXRoKSlcbiAgICAgICAgICAgIGlmIChyb3V0ZS5oYXNPd25Qcm9wZXJ0eSgnY2hpbGRyZW4nKSkge1xuICAgICAgICAgICAgICAgIGNvbnN0IHJlc3VsdDp7XG4gICAgICAgICAgICAgICAgICAgIGxpbmtzOntba2V5OnN0cmluZ106c3RyaW5nfTtcbiAgICAgICAgICAgICAgICAgICAgcGF0aHM6U2V0PHN0cmluZz47XG4gICAgICAgICAgICAgICAgfSA9IGRldGVybWluZVBhdGhzKGJhc2VQYXRoLCByb3V0ZS5jaGlsZHJlbiwgcGF0aC5qb2luKFxuICAgICAgICAgICAgICAgICAgICByb290LCByb3V0ZS5wYXRoKSlcbiAgICAgICAgICAgICAgICBUb29scy5leHRlbmRPYmplY3QobGlua3MsIHJlc3VsdC5saW5rcylcbiAgICAgICAgICAgICAgICBwYXRocyA9IG5ldyBTZXQoWy4uLnBhdGhzLCAuLi5yZXN1bHQucGF0aHNdKVxuICAgICAgICAgICAgfVxuICAgICAgICB9IGVsc2UgaWYgKHJvdXRlLmhhc093blByb3BlcnR5KCdjaGlsZHJlbicpKSB7XG4gICAgICAgICAgICBjb25zdCByZXN1bHQ6e1xuICAgICAgICAgICAgICAgIGxpbmtzOntba2V5OnN0cmluZ106c3RyaW5nfTtcbiAgICAgICAgICAgICAgICBwYXRoczpTZXQ8c3RyaW5nPjtcbiAgICAgICAgICAgIH0gPSBkZXRlcm1pbmVQYXRocyhiYXNlUGF0aCwgcm91dGUuY2hpbGRyZW4sIHJvb3QpXG4gICAgICAgICAgICBUb29scy5leHRlbmRPYmplY3QobGlua3MsIHJlc3VsdC5saW5rcylcbiAgICAgICAgICAgIHBhdGhzID0gbmV3IFNldChbLi4ucGF0aHMsIC4uLnJlc3VsdC5wYXRoc10pXG4gICAgICAgIH1cbiAgICByZXR1cm4ge2xpbmtzLCBwYXRoc31cbn1cbi8qKlxuICogUHJlLXJlbmRlcnMgZ2l2ZW4gYXBwbGljYXRpb24gcm91dGVzIHRvIGdpdmVuIHRhcmdldCBkaXJlY3Rvcnkgc3RydWN0dXJlLlxuICogQHBhcmFtIEFwcGxpY2F0aW9uQ29tcG9uZW50IC0gQXBwbGljYXRpb24gY29tcG9uZW50IHRvIHByZS1yZW5kZXIuXG4gKiBAcGFyYW0gQXBwbGljYXRpb25Nb2R1bGUgLSBBcHBsaWNhdGlvbiBtb2R1bGUgdG8gcHJlLXJlbmRlci5cbiAqIEBwYXJhbSByb3V0ZXMgLSBSb3V0ZSBvciByb3V0ZXMgY29uZmlndXJhdGlvbiBvYmplY3Qgb3IgYXJyYXkgb2YgcGF0aHMgdG9cbiAqIHByZS1yZW5kZXIuXG4gKiBAcGFyYW0gZ2xvYmFsVmFyaWFibGVOYW1lc1RvSW5qZWN0IC0gR2xvYmFsIHZhcmlhYmxlIG5hbWVzIHRvIGluamVjdCBpbnRvXG4gKiB0aGUgbm9kZSBjb250ZXh0IGV2YWx1YXRlZCBmcm9tIGdpdmVuIGluZGV4IGh0bWwgZmlsZS5cbiAqIEBwYXJhbSBodG1sRmlsZVBhdGggLSBIVE1MIGZpbGUgcGF0aCB0byB1c2UgYXMgaW5kZXguXG4gKiBAcGFyYW0gdGFyZ2V0RGlyZWN0b3J5UGF0aCAtIFRhcmdldCBkaXJlY3RvcnkgcGF0aCB0byBnZW5lcmF0ZSBwcmUtcmVuZGVyZWRcbiAqIGh0bWwgZmlsZXMgaW4uXG4gKiBAcGFyYW0gc2NvcGUgLSBPYmplY3QgdG8gaW5qZWN0IGludG8gdGhlIGdsb2JhbCBzY29wZSBiZWZvcmUgcnVubmluZ1xuICogcHJlLXJlbmRlcmluZy5cbiAqIEBwYXJhbSBlbmNvZGluZyAtIEVuY29kaW5nIHRvIHVzZSBmb3IgcmVhZGluZyBnaXZlbiBodG1sIGZpbGUgcmVmZXJlbmNlLlxuICogQHJldHVybnMgQSBwcm9taXNlIHdoaWNoIHJlc29sdmVzIHRvIGEgbGlzdCBvZiBwcmUtcmVuZGVyZWQgaHRtbCBzdHJpbmdzLlxuICovXG5leHBvcnQgZnVuY3Rpb24gcmVuZGVyKFxuICAgIEFwcGxpY2F0aW9uQ29tcG9uZW50Ok9iamVjdCxcbiAgICBBcHBsaWNhdGlvbk1vZHVsZTpPYmplY3QsXG4gICAgLy8gSWdub3JlVHlwZUNoZWNrXG4gICAgcm91dGVzOnN0cmluZ3xBcnJheTxzdHJpbmc+fFJvdXRlcyA9IFtdLFxuICAgIGdsb2JhbFZhcmlhYmxlTmFtZXNUb0luamVjdDpzdHJpbmd8QXJyYXk8c3RyaW5nPiA9ICdnZW5lcmljSW5pdGlhbERhdGEnLFxuICAgIGh0bWxGaWxlUGF0aDpzdHJpbmcgPSBwYXRoLnJlc29sdmUoXG4gICAgICAgIHBhdGguZGlybmFtZShwcm9jZXNzLmFyZ3ZbMV0pLCAnaW5kZXguaHRtbCcpLFxuICAgIHRhcmdldERpcmVjdG9yeVBhdGg6c3RyaW5nID0gcGF0aC5yZXNvbHZlKFxuICAgICAgICBwYXRoLmRpcm5hbWUocHJvY2Vzcy5hcmd2WzFdKSwgJ3ByZVJlbmRlcmVkJyksXG4gICAgc2NvcGU6T2JqZWN0ID0ge2dlbmVyaWNJbml0aWFsRGF0YToge2NvbmZpZ3VyYXRpb246IHtkYXRhYmFzZToge1xuICAgICAgICBjb25uZWN0b3I6IHthZGFwdGVyOiAnbWVtb3J5J30sXG4gICAgICAgIHBsdWdpbnM6IFtQb3VjaERCQWRhcHRlck1lbW9yeV1cbiAgICB9fX19LFxuICAgIGVuY29kaW5nOnN0cmluZyA9ICd1dGYtOCdcbik6UHJvbWlzZTxBcnJheTxzdHJpbmc+PiB7XG4gICAgZ2xvYmFsVmFyaWFibGVOYW1lc1RvSW5qZWN0ID0gW10uY29uY2F0KGdsb2JhbFZhcmlhYmxlTmFtZXNUb0luamVjdClcbiAgICByb3V0ZXMgPSBbXS5jb25jYXQocm91dGVzKVxuICAgIHJldHVybiBuZXcgUHJvbWlzZSgoXG4gICAgICAgIHJlc29sdmU6RnVuY3Rpb24sIHJlamVjdDpGdW5jdGlvblxuICAgIC8vIElnbm9yZVR5cGVDaGVja1xuICAgICk6dm9pZCA9PiBmaWxlU3lzdGVtLnJlYWRGaWxlKGh0bWxGaWxlUGF0aCwge2VuY29kaW5nfSwgYXN5bmMgKFxuICAgICAgICBlcnJvcjo/RXJyb3IsIGRhdGE6c3RyaW5nXG4gICAgKTpQcm9taXNlPHZvaWQ+ID0+IHtcbiAgICAgICAgaWYgKGVycm9yKVxuICAgICAgICAgICAgcmV0dXJuIHJlamVjdChlcnJvcilcbiAgICAgICAgLy8gcmVnaW9uIHByZXBhcmUgZW52aXJvbm1lbnRcbiAgICAgICAgY29uc3QgdmlydHVhbENvbnNvbGU6T2JqZWN0ID0gbmV3IFZpcnR1YWxDb25zb2xlKClcbiAgICAgICAgZm9yIChjb25zdCBuYW1lOnN0cmluZyBvZiBbXG4gICAgICAgICAgICAnYXNzZXJ0JywgJ2RpcicsICdlcnJvcicsICdpbmZvJywgJ2xvZycsICd0aW1lJywgJ3RpbWVFbmQnLFxuICAgICAgICAgICAgJ3RyYWNlJywgJ3dhcm4nXG4gICAgICAgIF0pXG4gICAgICAgICAgICB2aXJ0dWFsQ29uc29sZS5vbihuYW1lLCBjb25zb2xlW25hbWVdLmJpbmQoY29uc29sZSkpXG4gICAgICAgIGNvbnN0IHdpbmRvdzpXaW5kb3cgPSAobmV3IEpTRE9NKGRhdGEsIHtcbiAgICAgICAgICAgIHJ1blNjcmlwdHM6ICdkYW5nZXJvdXNseScsIHZpcnR1YWxDb25zb2xlXG4gICAgICAgIH0pKS53aW5kb3dcbiAgICAgICAgY29uc3QgYmFzZVBhdGg6c3RyaW5nID0gd2luZG93LmRvY3VtZW50LmdldEVsZW1lbnRzQnlUYWdOYW1lKFxuICAgICAgICAgICAgJ2Jhc2UnXG4gICAgICAgIClbMF0uaHJlZlxuICAgICAgICBmb3IgKGNvbnN0IG5hbWU6c3RyaW5nIGluIHdpbmRvdylcbiAgICAgICAgICAgIGlmIChcbiAgICAgICAgICAgICAgICB3aW5kb3cuaGFzT3duUHJvcGVydHkobmFtZSkgJiZcbiAgICAgICAgICAgICAgICAhZ2xvYmFsQ29udGV4dC5oYXNPd25Qcm9wZXJ0eShuYW1lKSAmJiAoXG4gICAgICAgICAgICAgICAgICAgIGdsb2JhbFZhcmlhYmxlTmFtZXNUb0luamVjdC5sZW5ndGggPT09IDAgfHxcbiAgICAgICAgICAgICAgICAgICAgZ2xvYmFsVmFyaWFibGVOYW1lc1RvSW5qZWN0LmluY2x1ZGVzKG5hbWUpXG4gICAgICAgICAgICAgICAgKVxuICAgICAgICAgICAgKSB7XG4gICAgICAgICAgICAgICAgY29uc29sZS5pbmZvKGBJbmplY3QgdmFyaWFibGUgXCIke25hbWV9XCIuYClcbiAgICAgICAgICAgICAgICBnbG9iYWxDb250ZXh0W25hbWVdID0gd2luZG93W25hbWVdXG4gICAgICAgICAgICB9XG4gICAgICAgIFRvb2xzLnBsYWluT2JqZWN0UHJvdG90eXBlcyA9IFRvb2xzLnBsYWluT2JqZWN0UHJvdG90eXBlcy5jb25jYXQoXG4gICAgICAgICAgICAvLyBJZ25vcmVUeXBlQ2hlY2tcbiAgICAgICAgICAgIHdpbmRvdy5PYmplY3QucHJvdG90eXBlKVxuICAgICAgICBmb3IgKGNvbnN0IG5hbWU6c3RyaW5nIGluIHNjb3BlKVxuICAgICAgICAgICAgaWYgKHNjb3BlLmhhc093blByb3BlcnR5KG5hbWUpKVxuICAgICAgICAgICAgICAgIFRvb2xzLmV4dGVuZE9iamVjdCh0cnVlLCBnbG9iYWxDb250ZXh0W25hbWVdLCBzY29wZVtuYW1lXSlcbiAgICAgICAgLy8gZW5kcmVnaW9uXG4gICAgICAgIC8vIHJlZ2lvbiBkZXRlcm1pbmUgcHJlLXJlbmRlcmFibGUgcGF0aHNcbiAgICAgICAgY29uc3QgbGlua3M6QXJyYXk8c3RyaW5nPiA9IFtdXG4gICAgICAgIGxldCB1cmxzOkFycmF5PHN0cmluZz5cbiAgICAgICAgaWYgKHJvdXRlcy5sZW5ndGgpXG4gICAgICAgICAgICBpZiAodHlwZW9mIHJvdXRlc1swXSA9PT0gJ3N0cmluZycpXG4gICAgICAgICAgICAgICAgLy8gSWdub3JlVHlwZUNoZWNrXG4gICAgICAgICAgICAgICAgdXJscyA9IHJvdXRlc1xuICAgICAgICAgICAgZWxzZSB7XG4gICAgICAgICAgICAgICAgY29uc3QgcmVzdWx0OntcbiAgICAgICAgICAgICAgICAgICAgbGlua3M6e1trZXk6c3RyaW5nXTpzdHJpbmd9O1xuICAgICAgICAgICAgICAgICAgICBwYXRoczpTZXQ8c3RyaW5nPjtcbiAgICAgICAgICAgICAgICB9ID0gZGV0ZXJtaW5lUGF0aHMoYmFzZVBhdGgsIHJvdXRlcylcbiAgICAgICAgICAgICAgICBmb3IgKGNvbnN0IHNvdXJjZVBhdGg6c3RyaW5nIGluIHJlc3VsdC5saW5rcylcbiAgICAgICAgICAgICAgICAgICAgaWYgKHJlc3VsdC5saW5rcy5oYXNPd25Qcm9wZXJ0eShzb3VyY2VQYXRoKSkge1xuICAgICAgICAgICAgICAgICAgICAgICAgY29uc3QgcmVhbFNvdXJjZVBhdGg6c3RyaW5nID0gcGF0aC5qb2luKFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgIHRhcmdldERpcmVjdG9yeVBhdGgsIHNvdXJjZVBhdGguc3Vic3RyaW5nKFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBiYXNlUGF0aC5sZW5ndGhcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICApLnJlcGxhY2UoL15cXC8rKC4rKS8sICckMScpKVxuICAgICAgICAgICAgICAgICAgICAgICAgbGlua3MucHVzaChyZWFsU291cmNlUGF0aClcbiAgICAgICAgICAgICAgICAgICAgICAgIGNvbnN0IHRhcmdldFBhdGg6c3RyaW5nID0gcGF0aC5qb2luKFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgIHRhcmdldERpcmVjdG9yeVBhdGgsXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgcmVzdWx0LmxpbmtzW3NvdXJjZVBhdGhdLnN1YnN0cmluZyhcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYmFzZVBhdGgubGVuZ3RoXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgKS5yZXBsYWNlKC9eXFwvKyguKykvLCAnJDEnKSkgKyAnLmh0bWwnXG4gICAgICAgICAgICAgICAgICAgICAgICBhd2FpdCBtYWtlRGlyZWN0b3J5UGF0aChwYXRoLmRpcm5hbWUoXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgcmVhbFNvdXJjZVBhdGhcbiAgICAgICAgICAgICAgICAgICAgICAgICksIGFzeW5jIChlcnJvcjo/RXJyb3IpOlByb21pc2U8dm9pZD4gPT4ge1xuICAgICAgICAgICAgICAgICAgICAgICAgICAgIGlmIChlcnJvcilcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcmV0dXJuIHJlamVjdChlcnJvcilcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICBpZiAoYXdhaXQgVG9vbHMuaXNGaWxlKHJlYWxTb3VyY2VQYXRoKSlcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYXdhaXQgbmV3IFByb21pc2UoKFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcmVzb2x2ZTpGdW5jdGlvbiwgcmVqZWN0OkZ1bmN0aW9uXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICk6dm9pZCA9PiByZW1vdmVEaXJlY3RvcnlSZWN1cnNpdmVseShcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHJlYWxTb3VyY2VQYXRoLCAoZXJyb3I6P0Vycm9yKTp2b2lkID0+XG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgZXJyb3IgPyByZWplY3QoZXJyb3IpIDogcmVzb2x2ZSgpKSlcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAvLyBJZ25vcmVUeXBlQ2hlY2tcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICBmaWxlU3lzdGVtLnN5bWxpbmsodGFyZ2V0UGF0aCwgcmVhbFNvdXJjZVBhdGgsIChcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgZXJyb3I6P0Vycm9yXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgKTp2b2lkID0+IGVycm9yID8gcmVqZWN0KGVycm9yKSA6IHJlc29sdmUoKSlcbiAgICAgICAgICAgICAgICAgICAgICAgIH0pXG4gICAgICAgICAgICAgICAgICAgIH1cbiAgICAgICAgICAgICAgICB1cmxzID0gQXJyYXkuZnJvbShyZXN1bHQucGF0aHMpLnNvcnQoKVxuICAgICAgICAgICAgfVxuICAgICAgICBlbHNlXG4gICAgICAgICAgICB1cmxzID0gW2Jhc2VQYXRoXVxuICAgICAgICAvLyBlbmRyZWdpb25cbiAgICAgICAgY29uc29sZS5pbmZvKGBGb3VuZCAke3VybHMubGVuZ3RofSBwcmUtcmVuZGVyYWJsZSB1cmxzLmApXG4gICAgICAgIC8vIHJlZ2lvbiBjcmVhdGUgc2VydmVyIHByZS1yZW5kZXJhYmxlIG1vZHVsZVxuICAgICAgICAvKipcbiAgICAgICAgICogRHVtbXkgc2VydmVyIGNvbXBhdGlibGUgcm9vdCBhcHBsaWNhdGlvbiBtb2R1bGUgdG8gcHJlLXJlbmRlci5cbiAgICAgICAgICovXG4gICAgICAgIEBOZ01vZHVsZSh7XG4gICAgICAgICAgICBib290c3RyYXA6IFtBcHBsaWNhdGlvbkNvbXBvbmVudF0sXG4gICAgICAgICAgICBpbXBvcnRzOiBbQXBwbGljYXRpb25Nb2R1bGUsIFNlcnZlck1vZHVsZV0sXG4gICAgICAgICAgICBwcm92aWRlcnM6IFt7cHJvdmlkZTogQVBQX0JBU0VfSFJFRiwgdXNlVmFsdWU6IGJhc2VQYXRofV1cbiAgICAgICAgfSlcbiAgICAgICAgY2xhc3MgQXBwbGljYXRpb25TZXJ2ZXJNb2R1bGUge31cbiAgICAgICAgLy8gZW5kcmVnaW9uXG4gICAgICAgIGVuYWJsZVByb2RNb2RlKClcbiAgICAgICAgLy8gcmVnaW9uIGdlbmVyYXRlIHByZS1yZW5kZXJlZCBodG1sIGZpbGVzXG4gICAgICAgIGNvbnN0IHJlc3VsdHM6QXJyYXk8c3RyaW5nPiA9IFtdXG4gICAgICAgIGNvbnN0IGZpbGVQYXRoczpBcnJheTxzdHJpbmc+ID0gW11cbiAgICAgICAgZm9yIChjb25zdCB1cmw6c3RyaW5nIG9mIHVybHMpIHtcbiAgICAgICAgICAgIGNvbnN0IGZpbGVQYXRoOnN0cmluZyA9IHBhdGguam9pbih0YXJnZXREaXJlY3RvcnlQYXRoLCAoXG4gICAgICAgICAgICAgICAgdXJsID09PSBiYXNlUGF0aFxuICAgICAgICAgICAgKSA/ICcvJyA6XG4gICAgICAgICAgICAgICAgdXJsLnN1YnN0cmluZyhiYXNlUGF0aC5sZW5ndGgpLnJlcGxhY2UoL15cXC8rKC4rKS8sICckMScpKSArXG4gICAgICAgICAgICAgICAgJy5odG1sJ1xuICAgICAgICAgICAgZmlsZVBhdGhzLnB1c2goZmlsZVBhdGgpXG4gICAgICAgICAgICB0cnkge1xuICAgICAgICAgICAgICAgIGF3YWl0IG5ldyBQcm9taXNlKChcbiAgICAgICAgICAgICAgICAgICAgcmVzb2x2ZTpGdW5jdGlvbiwgcmVqZWN0OkZ1bmN0aW9uXG4gICAgICAgICAgICAgICAgKTp2b2lkID0+IG1ha2VEaXJlY3RvcnlQYXRoKHBhdGguZGlybmFtZShmaWxlUGF0aCksIGFzeW5jIChcbiAgICAgICAgICAgICAgICAgICAgZXJyb3I6P0Vycm9yXG4gICAgICAgICAgICAgICAgKTpQcm9taXNlPHZvaWQ+ID0+IHtcbiAgICAgICAgICAgICAgICAgICAgaWYgKGVycm9yKVxuICAgICAgICAgICAgICAgICAgICAgICAgcmV0dXJuIHJlamVjdChlcnJvcilcbiAgICAgICAgICAgICAgICAgICAgY29uc29sZS5pbmZvKGBQcmUtcmVuZGVyIHVybCBcIiR7dXJsfVwiLmApXG4gICAgICAgICAgICAgICAgICAgIGxldCByZXN1bHQ6c3RyaW5nID0gJydcbiAgICAgICAgICAgICAgICAgICAgdHJ5IHtcbiAgICAgICAgICAgICAgICAgICAgICAgIHJlc3VsdCA9IGF3YWl0IHJlbmRlck1vZHVsZShcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICBBcHBsaWNhdGlvblNlcnZlck1vZHVsZSwge2RvY3VtZW50OiBkYXRhLCB1cmx9KVxuICAgICAgICAgICAgICAgICAgICB9IGNhdGNoIChlcnJvcikge1xuICAgICAgICAgICAgICAgICAgICAgICAgY29uc29sZS53YXJuKFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICdFcnJvciBvY2N1cnJlZCBkdXJpbmcgcHJlLXJlbmRlcmluZyBwYXRoIFwiJyArXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgYCR7dXJsfVwiOiAke1Rvb2xzLnJlcHJlc2VudE9iamVjdChlcnJvcil9YClcbiAgICAgICAgICAgICAgICAgICAgfVxuICAgICAgICAgICAgICAgICAgICByZXN1bHRzLnB1c2gocmVzdWx0KVxuICAgICAgICAgICAgICAgICAgICBjb25zb2xlLmluZm8oYFdyaXRlIGZpbGUgXCIke2ZpbGVQYXRofVwiLmApXG4gICAgICAgICAgICAgICAgICAgIGZpbGVTeXN0ZW0ud3JpdGVGaWxlKGZpbGVQYXRoLCByZXN1bHQsICgoXG4gICAgICAgICAgICAgICAgICAgICAgICBlcnJvcjo/RXJyb3JcbiAgICAgICAgICAgICAgICAgICAgKTp2b2lkID0+IGVycm9yID8gcmVqZWN0KGVycm9yKSA6IHJlc29sdmUocmVzdWx0KSkpXG4gICAgICAgICAgICAgICAgfSkpXG4gICAgICAgICAgICB9IGNhdGNoIChlcnJvcikge1xuICAgICAgICAgICAgICAgIHJlamVjdChlcnJvcilcbiAgICAgICAgICAgICAgICByZXR1cm5cbiAgICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgICAvLyBlbmRyZWdpb25cbiAgICAgICAgLy8gcmVnaW9uIHRpZHkgdXBcbiAgICAgICAgY29uc3QgZmlsZXM6QXJyYXk8RmlsZT4gPSBhd2FpdCBUb29scy53YWxrRGlyZWN0b3J5UmVjdXJzaXZlbHkoXG4gICAgICAgICAgICB0YXJnZXREaXJlY3RvcnlQYXRoKVxuICAgICAgICBmaWxlcy5yZXZlcnNlKClcbiAgICAgICAgbGV0IGN1cnJlbnRGaWxlOj9GaWxlID0gbnVsbFxuICAgICAgICBmb3IgKGNvbnN0IGZpbGU6RmlsZSBvZiBmaWxlcylcbiAgICAgICAgICAgIGlmIChmaWxlUGF0aHMuaW5jbHVkZXMoZmlsZS5wYXRoKSB8fCBsaW5rcy5pbmNsdWRlcyhmaWxlLnBhdGgpKVxuICAgICAgICAgICAgICAgIGN1cnJlbnRGaWxlID0gZmlsZVxuICAgICAgICAgICAgZWxzZSBpZiAoIShjdXJyZW50RmlsZSAmJiBjdXJyZW50RmlsZS5wYXRoLnN0YXJ0c1dpdGgoZmlsZS5wYXRoKSkpXG4gICAgICAgICAgICAgICAgYXdhaXQgbmV3IFByb21pc2UoKHJlc29sdmU6RnVuY3Rpb24sIHJlamVjdDpGdW5jdGlvbik6dm9pZCA9PlxuICAgICAgICAgICAgICAgICAgICByZW1vdmVEaXJlY3RvcnlSZWN1cnNpdmVseShmaWxlLnBhdGgsIChcbiAgICAgICAgICAgICAgICAgICAgICAgIGVycm9yOj9FcnJvclxuICAgICAgICAgICAgICAgICAgICApOnZvaWQgPT4gZXJyb3IgPyByZWplY3QoZXJyb3IpIDogcmVzb2x2ZSgpKSlcbiAgICAgICAgLy8gZW5kcmVnaW9uXG4gICAgICAgIHJlc29sdmUocmVzdWx0cylcbiAgICB9KSlcbn1cbmV4cG9ydCBkZWZhdWx0IHJlbmRlclxuLy8gcmVnaW9uIHZpbSBtb2RsaW5lXG4vLyB2aW06IHNldCB0YWJzdG9wPTQgc2hpZnR3aWR0aD00IGV4cGFuZHRhYjpcbi8vIHZpbTogZm9sZG1ldGhvZD1tYXJrZXIgZm9sZG1hcmtlcj1yZWdpb24sZW5kcmVnaW9uOlxuLy8gZW5kcmVnaW9uXG4iXX0=
+module.exports=function(e){function t(n){if(a[n])return a[n].exports;var i=a[n]={i:n,l:!1,exports:{}};return e[n].call(i.exports,i,i.exports,t),i.l=!0,i.exports}var a={};return t.m=e,t.c=a,t.d=function(e,a,n){t.o(e,a)||Object.defineProperty(e,a,{configurable:!1,enumerable:!0,get:n})},t.n=function(e){var a=e&&e.__esModule?function(){return e['default']}:function(){return e};return t.d(a,'a',a),a},t.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},t.p='',t(t.s=6)}([function(e){e.exports=require('clientnode')},function(e){e.exports=require('@angular/core')},function(e){e.exports=require('@angular/common')},function(e){e.exports=require('@angular/router')},function(e){e.exports=function(e){return e.webpackPolyfill||(e.deprecate=function(){},e.paths=[],!e.children&&(e.children=[]),Object.defineProperty(e,'loaded',{enumerable:!0,get:function(){return e.l}}),Object.defineProperty(e,'id',{enumerable:!0,get:function(){return e.i}}),e.webpackPolyfill=1),e}},function(e){e.exports=require('@angular/animations')},function(e,t,a){e.exports=a(7)},function(e,t,a){'use strict';function n(e){return e&&e.__esModule?e:{default:e}}function i(e){return function(){var t=e.apply(this,arguments);return new Promise(function(e,a){function n(i,r){try{var o=t[i](r),m=o.value}catch(e){return void a(e)}return o.done?void e(m):Promise.resolve(m).then(function(e){n('next',e)},function(e){n('throw',e)})}return n('next')})}}function r(e='/',t=[],a=''){let n={},i=new Set,o='';t.reverse();for(const m of t)if('string'==typeof m)i.add(P.default.join(e,a,m));else if(m.hasOwnProperty('path')){if(m.hasOwnProperty('redirectTo'))'**'===m.path&&(m.redirectTo.startsWith('/')?o=P.default.join(e,m.redirectTo):o=P.default.join(e,a,m.redirectTo)),n[P.default.join(e,a,m.path)]=o;else if(m.path.includes(':')){o&&i.add(o);continue}else'**'===m.path||m.hasOwnProperty('children')&&'**'===m.children[m.children.length-1].path||i.add(P.default.join(e,a,m.path));if(m.hasOwnProperty('children')){const t=r(e,m.children,P.default.join(a,m.path));s.default.extendObject(n,t.links),i=new Set([...i,...t.paths])}}else if(m.hasOwnProperty('children')){const t=r(e,m.children,a);s.default.extendObject(n,t.links),i=new Set([...i,...t.paths])}for(const i in n)n.hasOwnProperty(`${n[i]}/**`)&&(n[i]=n[`${n[i]}/**`]);return{links:n,paths:i}}function o(e,t){return t=s.default.extendObject(!0,{applicationDomNodeSelector:S.applicationDomNodeSelector,component:null,encoding:'utf-8',globalVariableNamesToInject:S.globalVariableNameToRetrieveDataFrom,htmlFilePath:P.default.resolve(P.default.dirname(process.argv[1]),'index.html'),minify:null,reInjectInnerHTMLFromInitialDomNode:!0,routes:[],scope:{[S.globalVariableNameToRetrieveDataFrom]:{configuration:{database:{connector:{adapter:'memory'},plugins:[x.default]}}}},targetDirectoryPath:P.default.resolve(P.default.dirname(process.argv[1]),'preRendered')},t||{}),t.globalVariableNamesToInject=[].concat(t.globalVariableNamesToInject),t.routes=[].concat(t.routes),new Promise((a,n)=>f.default.readFile(t.htmlFilePath,{encoding:t.encoding},(()=>{var o=i(function*(o,c){if(o)return n(o);O.virtualConsole=new y.VirtualConsole;for(const e of['assert','dir','error','info','log','time','timeEnd','trace','warn'])O.virtualConsole.on(e,console[e].bind(console));for(const e in O.window=new y.JSDOM(c,{runScripts:'dangerously',virtualConsole:O.virtualConsole}).window,O.applicationDomNode=O.window.document.querySelector(t.applicationDomNodeSelector),O.innerHTMLToReInject='',O.applicationDomNode&&(O.innerHTMLToReInject=O.applicationDomNode.innerHTML),O.basePath=O.window.document.getElementsByTagName('base')[0].href,O.window)O.window.hasOwnProperty(e)&&!m.globalContext.hasOwnProperty(e)&&(0===t.globalVariableNamesToInject.length||t.globalVariableNamesToInject.includes(e))&&(console.info(`Inject variable "${e}".`),m.globalContext[e]=O.window[e]);s.default.plainObjectPrototypes=s.default.plainObjectPrototypes.concat(O.window.Object.prototype),s.default.extendObject(!0,m.globalContext,t.scope);const u=[];let g;if(t.routes.length){const e=r(O.basePath,t.routes);for(const r in e.links)if(e.links.hasOwnProperty(r)){const o=P.default.join(t.targetDirectoryPath,r.substring(O.basePath.length).replace(/^\/+(.+)/,'$1'));u.push(o);const m=P.default.join(t.targetDirectoryPath,e.links[r].substring(O.basePath.length).replace(/^\/+(.+?)\/?$/,'$1'))+'.html';yield(0,h.default)(P.default.dirname(o),(()=>{var e=i(function*(e){if(e)return n(e);let t=null;try{t=yield new Promise(function(e,t){return f.default.lstat(o,function(a,n){return a?t(a):e(n)})})}catch(e){if('ENOENT'!==e.code)throw e}t&&(t.isSymbolicLink()||t.isFile())&&(yield new Promise(function(e,t){return(0,T.default)(o,function(a){return a?t(a):e()})})),f.default.symlink(m,o,function(e){return e?n(e):a()})});return function(){return e.apply(this,arguments)}})())}g=Array.from(e.paths).sort()}else g=[O.basePath];console.info(`Found ${g.length} pre-renderable url`+`${1<g.length?'s':''}.`),(0,l.enableProdMode)();const b=[],N=[];for(const a of g){const r=P.default.join(t.targetDirectoryPath,a===O.basePath?'/':a.substring(O.basePath.length).replace(/^\/+(.+?)\/?$/,'$1'))+'.html';N.push(r);try{yield new Promise(function(n,o){return(0,h.default)(P.default.dirname(r),(()=>{var m=i(function*(i){if(i)return o(i);console.info(`Pre-render url "${a}".`);let m='';if(t.component){var u,g;let n=(u=(0,l.NgModule)({bootstrap:[t.component],imports:[e,p.ServerModule],providers:[{provide:d.APP_BASE_HREF,useValue:O.basePath}]}),u(g=class{})||g);try{m=yield(0,p.renderModule)(n,{document:c,url:a})}catch(e){return console.warn('Error occurred during dynamic pre-rendering'+` path "${a}": `+s.default.representObject(e)),o(e)}}else try{m=yield(0,p.renderModuleFactory)(e,{document:c,url:a})}catch(e){return console.warn('Error occurred during ahead of time '+`compiled pre-rendering path "${a}": `+s.default.representObject(e)),o(e)}if(t.reInjectInnerHTMLFromInitialDomNode){const e=new y.JSDOM(m).window,a=e.document.querySelector(t.applicationDomNodeSelector),n=/<!--generic-inject-application-->(?:[\s\S]*?<!---->)?/i;n.test(O.innerHTMLToReInject)?a.innerHTML=O.innerHTMLToReInject.replace(n,a.innerHTML):a.innerHTML+=O.innerHTMLToReInject,m=m.replace(/([\s\S]*)<html>[\s\S]*/,'$1')+e.document.documentElement.outerHTML}b.push(m),console.info(`Write file "${r}".`),f.default.writeFile(r,m,function(e){return e?o(e):n(m)})});return function(){return m.apply(this,arguments)}})())})}catch(e){return void n(e)}}const x=yield s.default.walkDirectoryRecursively(t.targetDirectoryPath);x.reverse();let v=null;for(const e of x)N.includes(e.path)||u.includes(e.path)?v=e:v&&v.path.startsWith(e.path)||(yield new Promise(function(t,a){return(0,T.default)(e.path,function(e){return e?a(e):t()})}));a(b)});return function(){return o.apply(this,arguments)}})()))}t.__esModule=!0,t.renderScope=void 0,t.determinePaths=r,t.render=o;var m=a(0),s=n(m),l=a(1),d=a(2),p=a(8),c=a(3),u=a(9),f=n(u),y=a(10),g=a(11),h=n(g),b=a(12),P=n(b),N=a(13),x=n(N),v=a(14),T=n(v),S=a(15);t.default=o;const O=t.renderScope={basePath:'',innerHTMLToReInject:''}},function(e){e.exports=require('@angular/platform-server')},function(e){e.exports=require('fs')},function(e){e.exports=require('jsdom')},function(e){e.exports=require('mkdirp')},function(e){e.exports=require('path')},function(e){e.exports=require('pouchdb-adapter-memory')},function(e){e.exports=require('rimraf')},function(e,t,a){'use strict';(function(e){function n(e){return e&&e.__esModule?e:{default:e}}function i(e,t,a,n){a&&Object.defineProperty(e,t,{enumerable:a.enumerable,configurable:a.configurable,writable:a.writable,value:a.initializer?a.initializer.call(n):void 0})}function r(e,t,a,n,i){var r={};return Object.keys(n).forEach(function(e){r[e]=n[e]}),r.enumerable=!!r.enumerable,r.configurable=!!r.configurable,('value'in r||r.initializer)&&(r.writable=!0),r=a.slice().reverse().reduce(function(a,n){return n(e,t,a)||a},r),i&&void 0!==r.initializer&&(r.value=r.initializer?r.initializer.call(i):void 0,r.initializer=void 0),void 0===r.initializer&&(Object.defineProperty(e,t,r),r=null),r}function o(e){return function(){var t=e.apply(this,arguments);return new Promise(function(e,a){function n(i,r){try{var o=t[i](r),m=o.value}catch(e){return void a(e)}return o.done?void e(m):Promise.resolve(m).then(function(e){n('next',e)},function(e){n('throw',e)})}return n('next')})}}function m(e,t,a){return 2,()=>(md.injectors.add(a),e.initialize())}var s=Math.min,l=Math.ceil,d=Math.max;t.__esModule=!0,t.Module=t.PaginationComponent=t.FileInputComponent=t.TextareaComponent=t.SimpleInputComponent=t.InputComponent=t.TextEditorComponent=t.CodeEditorComponent=t.AbstractEditorComponent=t.IntervalsInputComponent=t.IntervalInputComponent=t.DateTimeValueAccessor=t.SliderDirective=t.DateDirective=void 0,t.AbstractValueAccessor=t.AbstractItemsComponent=t.AbstractLiveDataComponent=t.AbstractNativeInputComponent=t.AbstractInputComponent=t.AbstractResolver=t.DataScopeService=t.DataService=t.AlertService=t.ConfirmComponent=t.CanDeactivateRouteLeaveGuard=t.NumberPercentPipe=t.StringTemplatePipe=t.StringStartsWithPipe=t.StringSliceMatchPipe=t.StringShowIfPatternMatchesPipe=t.StringSafeURLPipe=t.StringSafeStylePipe=t.StringSafeScriptPipe=t.StringSafeResourceURLPipe=t.StringSafeHTMLPipe=t.StringReplacePipe=t.StringMaximumLengthPipe=t.StringMatchPipe=t.StringHasTimeSuffixPipe=t.StringEndsWithPipe=t.ArrayDependentConcatPipe=t.TypePipe=t.ReversePipe=t.ObjectKeysPipe=t.MapPipe=t.LimitToPipe=t.IsDefinedPipe=t.ExtractRawDataPipe=t.ExtractDataPipe=t.AttachmentWithPrefixExistsPipe=t.GetFilenameByPrefixPipe=t.AttachmentsAreEqualPipe=t.NumberRoundPipe=t.NumberIsNotANumberPipe=t.NumberGetUTCTimestampPipe=t.StringNormalizeDomNodeSelectorPipe=t.StringDecodeHTMLEntitiesPipe=t.StringRepresentPhoneNumberPipe=t.StringParseEncodedObjectPipe=t.StringNormalizePhoneNumberPipe=t.StringMD5Pipe=t.StringMarkPipe=t.StringFindNormalizedMatchRangePipe=t.StringLowerCasePipe=t.StringGetRegularExpressionValidatedPipe=t.StringFormatPipe=t.StringDelimitedToCamelCasePipe=t.StringCapitalizePipe=t.StringCamelCaseToDelimitedPipe=t.StringCompressStyleValuePipe=t.StringRepresentURLPipe=t.StringNormalizeURLPipe=t.StringIsInternalURLPipe=t.StringGetURLVariablePipe=t.StringGetProtocolNamePipe=t.StringGetPortNumberPipe=t.StringGetDomainNamePipe=t.StringHasPathPrefixPipe=t.StringAddSeparatorToPathPipe=t.StringEncodeURIComponentPipe=t.StringConvertToValidVariableNamePipe=t.StringEscapeRegularExpressionsPipe=t.ArraySortTopologicalPipe=t.ArrayRemovePipe=t.ArrayAppendAddPipe=t.ArraySumUpPropertyPipe=t.ArrayMakeRangePipe=t.ArrayIntersectPipe=t.ArrayExtractIfPropertyMatchesPipe=t.ArrayExtractIfPropertyExistsPipe=t.ArrayExtractIfMatchesPipe=t.ArrayExtractPipe=t.ArrayDeleteEmptyItemsPipe=t.ArrayAggregatePropertyIfEqualPipe=t.ArrayUniquePipe=t.ArrayMakePipe=t.ArrayMergePipe=t.SortPipe=t.RepresentObjectPipe=t.ExtendObjectPipe=t.EqualsPipe=t.ConvertCircularObjectToJSONPipe=t.AbstractInvertedToolsPipe=t.AbstractToolsPipe=t.determineInjector=t.InitialDataService=t.UtilityService=t.TINYMCE_DEFAULT_OPTIONS=t.CODE_MIRROR_DEFAULT_OPTIONS=t.SYMBOL=t.applicationDomNodeSelector=t.globalVariableNameToRetrieveDataFrom=t.currentInstanceToSearchInjectorFor=t.LAST_KNOWN_DATA=void 0;var p,c,u,f,y,g,h,b,P,N,x,v,T,S,O,I,C,E,_,D,w,R,z,M,j,A,k,L,U,F,q,G,V,W,B,H,$,K,Y,J,Z,X,Q,ee,te,ae,ne,ie,re,oe,me,se,le,de,pe,ce,ue,fe,ye,ge,he,be,Pe,Ne,xe,ve,Te,Se,Oe,Ie,Ce,Ee,_e,De,we,Re,ze,Me,je,Ae,ke,Le,Ue,Fe,qe,Ge,Ve,We,Be,He,$e,Ke,Ye,Je,Ze,Xe,Qe,et,tt,at,nt,it,rt,ot,mt,st,lt,dt,pt,ct,ut,ft,yt,gt,ht,bt,Pt,Nt,xt,vt,Tt,St,Ot,It,Ct,Et,_t,Dt,wt,Rt,zt,Mt,jt,At,kt,Lt,Ut,Ft,qt,Gt,Vt,Wt,Bt,Ht,$t,Kt,Yt,Jt,Zt,Xt,Qt,ea,ta,aa,na,ia,ra,oa,ma,sa,la,da,pa,ca,ua,fa,ya,ga,ha,ba,Pa,Na,xa,va,Ta,Sa,Oa,Ia,Ca,Ea,_a,Da,wa,Ra,za,Ma,ja,Aa,ka,La,Ua,Fa,qa,Ga,Va,Wa,Ba,Ha,$a,Ka,Ya,Ja,Za,Xa,Qa,en,tn,an,nn,rn,on,mn,sn,ln,dn,pn,cn,un,fn,yn,gn,hn,bn,Pn,Nn,xn,vn,Tn,Sn,On,In,Cn,En,_n,Dn,wn,Rn,zn,Mn,jn,An,kn,Ln,Un,Fn,qn,Gn,Vn,Wn,Bn,Hn,$n,Kn,Yn,Jn,Zn,Xn,Qn,ei,ti,ai,ni,ii,ri,oi,mi,si,li,di,pi,ci,ui,fi,yi,gi,hi,bi,Pi,Ni,xi,vi,Ti,Si,Oi,Ii,Ci,Ei,_i,Di,wi,Ri,zi,Mi,ji,Ai,ki,Li,Ui,Fi,qi,Gi,Vi,Wi,Bi,Hi,$i,Ki,Yi,Ji,Zi,Xi,Qi,er,tr,ar,nr,ir,rr,or,mr,sr,lr,dr,pr,cr,ur,fr,yr,gr,hr,br,Pr,Nr,xr,vr,Tr,Sr,Or,Ir,Cr,Er,_r,Dr,wr,Rr,zr,Mr,jr,Ar,kr,Lr,Ur,Fr,qr,Gr,Vr,Wr,Br,Hr,$r,Kr,Yr,Jr,Zr,Xr,Qr,eo,to,ao,no,io,ro,oo,mo,so,lo,po,co,uo,fo,yo,go,ho,bo,Po,No,xo,vo,To,So,Oo,Io,Co,Eo,_o,Do,wo,Ro,zo,Mo,jo,Ao,ko,Lo,Uo,Fo,qo,Go,Vo,Wo,Bo,Ho,$o,Ko,Yo,Jo,Zo,Xo,Qo,em,tm,am,nm,im,rm,om,mm,sm,lm,dm,pm,cm,um,fm,ym,gm,hm,bm,Pm,Nm,xm,vm,Tm,Sm,Om,Im,Cm,Em,_m,Dm,wm,Rm,zm,Mm,jm,Am,km,Lm,Um,Fm,qm,Gm,Vm,Wm,Bm,Hm,$m,Km,Ym,Jm,Zm,Xm,Qm,es,ts,as,ns,is,rs,os,ms,ss,ls,ds,ps,cs,us,fs,ys,gs,hs,bs,Ps,Ns,xs,vs,Ts,Ss,Os,Is,Cs,Es,_s,Ds,ws,Rs,zs,Ms,js,As,ks,Ls,Us,Fs,qs,Gs,Vs,Ws,Bs,Hs,$s,Ks,Ys,Js,Zs,Xs,Qs,el,tl,al,nl,il,rl,ol,ml,sl,ll,dl,pl,cl,ul,fl,yl,gl,hl,bl,Pl,Nl,xl,vl,Tl,Sl,Ol,Il,Cl,El,_l;t.dataServiceInitializerFactory=m;var Dl=a(0),wl=n(Dl),Rl=a(5),zl=a(1),Ml=a(2),jl=a(16),Al=a(17),kl=a(18),Ll=a(3),Ul=a(19),Fl=n(Ul),ql=a(20),Gl=n(ql),Vl=a(21),Wl=n(Vl),Bl=a(22),Hl=a(23),$l=a(24),Kl=a(25);try{e.require('source-map-support/register')}catch(e){}if('undefined'==typeof Yl)var Yl='default';if('undefined'==typeof Jl)var Jl=1;let Zl=t.LAST_KNOWN_DATA={data:{},sequence:'now'},Xl=t.currentInstanceToSearchInjectorFor=null;const Ql=t.globalVariableNameToRetrieveDataFrom='genericInitialData',ed=t.applicationDomNodeSelector='application, [application]',td=t.SYMBOL=`${new Date().getTime()}/${Math.random()}`,ad=[Kl.defaultAnimation],nd=t.CODE_MIRROR_DEFAULT_OPTIONS={path:{cascadingStyleSheet:'lib/codemirror.css',base:'/codemirror/',mode:'mode/{mode}/{mode}.js',script:'lib/codemirror.js'},indentUnit:4,tabSize:4,indentWithTabs:!1,lineWrapping:!1,lineNumbers:!0,scrollbarStyle:'native'},id='/tinymce/',rd=t.TINYMCE_DEFAULT_OPTIONS={baseURL:id,scriptPath:`${id}tinymce.min.js`,skin_url:`${id}skins/lightgray`,theme_url:`${id}themes/modern/theme.min.js`,allow_conditional_comments:!1,allow_script_urls:!1,cache_suffix:`?version=${Jl}`,convert_fonts_to_spans:!0,document_base_url:'/',element_format:'xhtml',entity_encoding:'raw',fix_list_elements:!0,forced_root_block:null,hidden_input:!1,invalid_elements:'em',invalid_styles:'color font-size line-height',keep_styles:!1,menubar:!1,plugins:'fullscreen link code hr nonbreaking searchreplace visualblocks',relative_urls:!1,remove_script_host:!1,remove_trailing_brs:!0,schema:'html5',toolbar1:'cut copy paste | undo redo removeformat | styleselect formatselect fontselect fontsizeselect | searchreplace visualblocks fullscreen code',toolbar2:'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',trim:!0};let od=t.UtilityService=(p=(0,zl.Injectable)(),p(c=(f=u=class e{constructor(){this.fixed=e,this.tools=new wl.default}},u.$=Dl.$,u.globalContext=Dl.globalContext,u.tools=wl.default,f))||c),md=t.InitialDataService=(y=(0,zl.Injectable)(),y(g=(b=h=class e{constructor(t){this.configuration=this.configuration,this.globalContext=this.globalContext,this.tools=this.tools,t||(t=new od),this.globalContext=t.fixed.globalContext,this.tools=t.fixed.tools,this.set(e.defaultScope,Ql in t.fixed.globalContext?t.fixed.globalContext[Ql]:{}),e.removeFoundData&&delete t.fixed.globalContext[Ql]}retrieveFromDomNode(t=ed,a=e.removeFoundData,n='initialData'){let i=null;'string'==typeof t?'document'in this.globalContext&&'querySelector'in this.globalContext.document&&(i=this.globalContext.document.querySelector(t)):i=t;let r={};return i&&'getAttribute'in i&&i.getAttribute(n)&&(r=this.set(JSON.parse(i.getAttribute(n))),a&&i.removeAttribute(n)),r}set(...e){return this.tools.extendObject(!0,this,...e)}},h.defaultScope={configuration:{database:{connector:{auto_compaction:!0,revs_limit:10},model:{entities:{},property:{defaultSpecification:{minimum:0,minimumLength:0,minimumNumber:0},name:{reserved:[],special:{allowedRole:'_allowedRoles',attachment:'_attachments',conflict:'_conflicts',constraint:{execution:'_constraintExecutions',expression:'_constraintExpressions'},deleted:'_deleted',deletedConflict:'_deleted_conflicts',extend:'_extends',id:'_id',localSequence:'_local_seq',maximumAggregatedSize:'_maximumAggregatedSize',minimumAggregatedSize:'_minimumAggregatedSize',revision:'_rev',revisions:'_revisions',revisionsInformation:'_revs_info',strategy:'_updateStrategy',type:'-type'},validatedDocumentsCache:'_validatedDocuments'}}},plugins:[],url:'generic'}}},h.injectors=new Set,h.removeFoundData=!0,b))||g);Reflect.defineMetadata('design:paramtypes',[od],md);const sd=t.determineInjector=(e,a,n)=>{if(e)return e.get.bind(e);if(void 0===Xl)throw td;t.currentInstanceToSearchInjectorFor=Xl=void 0;for(const i of Array.from(md.injectors))try{if(i.get(n,NaN)===a)return i.get.bind(i)}catch(e){if(t.currentInstanceToSearchInjectorFor=Xl=null,e===td)return i.get.bind(i);throw e}if(t.currentInstanceToSearchInjectorFor=Xl=null,1===md.injectors.size){console.warn('Could not determine injector, but using the only registered one. This will fail an multiple application instances.');const e=Array.from(md.injectors)[0];return e.get.bind(e)}throw new Error('No unambiguously injector could be determined automatically.')};let ld=t.AbstractToolsPipe=class{constructor(){this.methodName=this.methodName}transform(...e){return od.tools[this.methodName](...e)}},dd=t.AbstractInvertedToolsPipe=class extends ld{transform(...e){const t=od.tools;return t.invertArrayFilter(t[this.methodName])(...e)}},pd=t.ConvertCircularObjectToJSONPipe=(P=(0,zl.Pipe)({name:`genericConvertCircularObjectToJSON`}),P(N=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='convertCircularObjectToJSON',t}})||N),cd=t.EqualsPipe=(x=(0,zl.Pipe)({name:`genericEquals`}),x(v=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='equals',t}})||v),ud=t.ExtendObjectPipe=(T=(0,zl.Pipe)({name:`genericExtendObject`}),T(S=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='extendObject',t}})||S),fd=t.RepresentObjectPipe=(O=(0,zl.Pipe)({name:`genericRepresentObject`}),O(I=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='representObject',t}})||I),yd=t.SortPipe=(C=(0,zl.Pipe)({name:`genericSort`}),C(E=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='sort',t}})||E),gd=t.ArrayMergePipe=(_=(0,zl.Pipe)({name:`genericArrayMerge`}),_(D=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayMerge',t}})||D),hd=t.ArrayMakePipe=(w=(0,zl.Pipe)({name:`genericArrayMake`}),w(R=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayMake',t}})||R),bd=t.ArrayUniquePipe=(z=(0,zl.Pipe)({name:`genericArrayUnique`}),z(M=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayUnique',t}})||M),Pd=t.ArrayAggregatePropertyIfEqualPipe=(j=(0,zl.Pipe)({name:`genericArrayAggregatePropertyIfEqual`}),j(A=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayAggregatePropertyIfEqual',t}})||A),Nd=t.ArrayDeleteEmptyItemsPipe=(k=(0,zl.Pipe)({name:`genericArrayDeleteEmptyItems`}),k(L=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayDeleteEmptyItems',t}})||L),xd=t.ArrayExtractPipe=(U=(0,zl.Pipe)({name:`genericArrayExtract`}),U(F=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayExtract',t}})||F),vd=t.ArrayExtractIfMatchesPipe=(q=(0,zl.Pipe)({name:`genericArrayExtractIfMatches`}),q(G=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayExtractIfMatches',t}})||G),Td=t.ArrayExtractIfPropertyExistsPipe=(V=(0,zl.Pipe)({name:`genericArrayExtractIfPropertyExists`}),V(W=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayExtractIfPropertyExists',t}})||W),Sd=t.ArrayExtractIfPropertyMatchesPipe=(B=(0,zl.Pipe)({name:`genericArrayExtractIfPropertyMatches`}),B(H=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayExtractIfPropertyMatches',t}})||H),Od=t.ArrayIntersectPipe=($=(0,zl.Pipe)({name:`genericArrayIntersect`}),$(K=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayIntersect',t}})||K),Id=t.ArrayMakeRangePipe=(Y=(0,zl.Pipe)({name:`genericArrayMakeRange`}),Y(J=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayMakeRange',t}})||J),Cd=t.ArraySumUpPropertyPipe=(Z=(0,zl.Pipe)({name:`genericArraySumUpProperty`}),Z(X=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arraySumUpProperty',t}})||X),Ed=t.ArrayAppendAddPipe=(Q=(0,zl.Pipe)({name:`genericArrayAppendAdd`}),Q(ee=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayAppendAdd',t}})||ee),_d=t.ArrayRemovePipe=(te=(0,zl.Pipe)({name:`genericArrayRemove`}),te(ae=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arrayRemove',t}})||ae),Dd=t.ArraySortTopologicalPipe=(ne=(0,zl.Pipe)({name:`genericArraySortTopological`}),ne(ie=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='arraySortTopological',t}})||ie),wd=t.StringEscapeRegularExpressionsPipe=(re=(0,zl.Pipe)({name:`genericStringEscapeRegularExpressions`}),re(oe=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringEscapeRegularExpressions',t}})||oe),Rd=t.StringConvertToValidVariableNamePipe=(me=(0,zl.Pipe)({name:`genericStringConvertToValidVariableName`}),me(se=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringConvertToValidVariableName',t}})||se),zd=t.StringEncodeURIComponentPipe=(le=(0,zl.Pipe)({name:`genericStringEncodeURIComponent`}),le(de=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringEncodeURIComponent',t}})||de),Md=t.StringAddSeparatorToPathPipe=(pe=(0,zl.Pipe)({name:`genericStringAddSeparatorToPath`}),pe(ce=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringAddSeparatorToPath',t}})||ce),jd=t.StringHasPathPrefixPipe=(ue=(0,zl.Pipe)({name:`genericStringHasPathPrefix`}),ue(fe=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringHasPathPrefix',t}})||fe),Ad=t.StringGetDomainNamePipe=(ye=(0,zl.Pipe)({name:`genericStringGetDomainName`}),ye(ge=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringGetDomainName',t}})||ge),kd=t.StringGetPortNumberPipe=(he=(0,zl.Pipe)({name:`genericStringGetPortNumber`}),he(be=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringGetPortNumber',t}})||be),Ld=t.StringGetProtocolNamePipe=(Pe=(0,zl.Pipe)({name:`genericStringGetProtocolName`}),Pe(Ne=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringGetProtocolName',t}})||Ne),Ud=t.StringGetURLVariablePipe=(xe=(0,zl.Pipe)({name:`genericStringGetURLVariable`}),xe(ve=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringGetURLVariable',t}})||ve),Fd=t.StringIsInternalURLPipe=(Te=(0,zl.Pipe)({name:`genericStringIsInternalURL`}),Te(Se=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringIsInternalURL',t}})||Se),qd=t.StringNormalizeURLPipe=(Oe=(0,zl.Pipe)({name:`genericStringNormalizeURL`}),Oe(Ie=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringNormalizeURL',t}})||Ie),Gd=t.StringRepresentURLPipe=(Ce=(0,zl.Pipe)({name:`genericStringRepresentURL`}),Ce(Ee=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringRepresentURL',t}})||Ee),Vd=t.StringCompressStyleValuePipe=(_e=(0,zl.Pipe)({name:`genericStringCompressStyleValue`}),_e(De=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringCompressStyleValue',t}})||De),Wd=t.StringCamelCaseToDelimitedPipe=(we=(0,zl.Pipe)({name:`genericStringCamelCaseToDelimited`}),we(Re=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringCamelCaseToDelimited',t}})||Re),Bd=t.StringCapitalizePipe=(ze=(0,zl.Pipe)({name:`genericStringCapitalize`}),ze(Me=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringCapitalize',t}})||Me),Hd=t.StringDelimitedToCamelCasePipe=(je=(0,zl.Pipe)({name:`genericStringDelimitedToCamelCase`}),je(Ae=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringDelimitedToCamelCase',t}})||Ae),$d=t.StringFormatPipe=(ke=(0,zl.Pipe)({name:`genericStringFormat`}),ke(Le=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringFormat',t}})||Le),Kd=t.StringGetRegularExpressionValidatedPipe=(Ue=(0,zl.Pipe)({name:`genericStringGetRegularExpressionValidated`}),Ue(Fe=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringGetRegularExpressionValidated',t}})||Fe),Yd=t.StringLowerCasePipe=(qe=(0,zl.Pipe)({name:`genericStringLowerCase`}),qe(Ge=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringLowerCase',t}})||Ge),Jd=t.StringFindNormalizedMatchRangePipe=(Ve=(0,zl.Pipe)({name:`genericStringFindNormalizedMatchRange`}),Ve(We=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringFindNormalizedMatchRange',t}})||We),Zd=t.StringMarkPipe=(Be=(0,zl.Pipe)({name:`genericStringMark`}),Be(He=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringMark',t}})||He),Xd=t.StringMD5Pipe=($e=(0,zl.Pipe)({name:`genericStringMD5`}),$e(Ke=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringMD5',t}})||Ke),Qd=t.StringNormalizePhoneNumberPipe=(Ye=(0,zl.Pipe)({name:`genericStringNormalizePhoneNumber`}),Ye(Je=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringNormalizePhoneNumber',t}})||Je),ep=t.StringParseEncodedObjectPipe=(Ze=(0,zl.Pipe)({name:`genericStringParseEncodedObject`}),Ze(Xe=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringParseEncodedObject',t}})||Xe),tp=t.StringRepresentPhoneNumberPipe=(Qe=(0,zl.Pipe)({name:`genericStringRepresentPhoneNumber`}),Qe(et=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringRepresentPhoneNumber',t}})||et),ap=t.StringDecodeHTMLEntitiesPipe=(tt=(0,zl.Pipe)({name:`genericStringDecodeHTMLEntities`}),tt(at=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringDecodeHTMLEntities',t}})||at),np=t.StringNormalizeDomNodeSelectorPipe=(nt=(0,zl.Pipe)({name:`genericStringNormalizeDomNodeSelector`}),nt(it=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='stringNormalizeDomNodeSelector',t}})||it),ip=t.NumberGetUTCTimestampPipe=(rt=(0,zl.Pipe)({name:`genericNumberGetUTCTimestamp`}),rt(ot=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='numberGetUTCTimestamp',t}})||ot),rp=t.NumberIsNotANumberPipe=(mt=(0,zl.Pipe)({name:`genericNumberIsNotANumber`}),mt(st=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='numberIsNotANumber',t}})||st),op=t.NumberRoundPipe=(lt=(0,zl.Pipe)({name:`genericNumberRound`}),lt(dt=class extends ld{constructor(...e){var t;return t=super(...e),this.methodName='numberRound',t}})||dt),mp=t.AttachmentsAreEqualPipe=(pt=(0,zl.Pipe)({name:'genericAttachmentsAreEqual'}),pt(ct=class{constructor(e,t,a,n){this.data=this.data,this.representObject=this.representObject,this.specialNames=this.specialNames,this.stringMD5=this.stringMD5,this.data=t.get(kp),this.representObject=a.transform.bind(a),this.specialNames=e.configuration.database.model.property.name.special,this.stringMD5=n.transform.bind(n)}transform(e,t){var a=this;return o(function*(){if(e===t)return!0;const n={first:{given:e},second:{given:t}};for(const e of['first','second']){if('object'!=typeof n[e].given||null===n[e].given)return!1;n[e].content_type=n[e].given.type||n[e].given.content_type,n[e].data=('data'in n[e].given?n[e].given.data:n[e].given)||NaN,n[e].hash=n[e].given.digest||n[e].given.hash||NaN,n[e].size=n[e].given.size||n[e].given.length}for(const e of['content_type','size'])if(![n.first[e],n.second[e]].includes(void 0)&&n.first[e]!==n.second[e])return!1;if(n.first.data===n.second.data)return!0;for(const e of['first','second'])if(!n[e].hash){if(null===n[e].data||!['object','string'].includes(typeof n[e].data))return!1;const t='genericTemp',i=new a.data.database(t);try{yield i.put({[a.specialNames.id]:t,[a.specialNames.attachment]:{[t]:{data:n[e].data,content_type:'application/octet-stream'}}}),n[e].hash=(yield i.get(t))[a.specialNames.attachment][t].digest}catch(e){let t='unknown';try{t=a.representObject(e)}catch(e){}return console.warn('Given attachments for equality check are not '+`valid: ${t}`),!1}finally{yield i.destroy()}}return n.first.hash===n.second.hash})()}})||ct);Reflect.defineMetadata('design:paramtypes',[md,zl.Injector,fd,Xd],mp);let sp=t.GetFilenameByPrefixPipe=(ut=(0,zl.Pipe)({name:'genericGetFilenameByPrefix'}),ut(ft=class{transform(e,t){if(t){for(const a in e)if(e.hasOwnProperty(a)&&a.startsWith(t))return a;}else{const t=Object.keys(e);if(t.length)return t[0]}return null}})||ft),lp=t.AttachmentWithPrefixExistsPipe=(yt=(0,zl.Pipe)({name:'genericAttachmentWithPrefixExists'}),yt(gt=class{constructor(e,t){this.attachmentName=this.attachmentName,this.getFilenameByPrefix=this.getFilenameByPrefix,this.attachmentName=t.configuration.database.model.property.name.special.attachment,this.getFilenameByPrefix=e.transform.bind(e)}transform(e,t){if(e.hasOwnProperty(this.attachmentName)){const a=this.getFilenameByPrefix(e[this.attachmentName],t);if(a)return e[this.attachmentName][a].hasOwnProperty('data')&&![void 0,null].includes(e[this.attachmentName][a].data)}return!1}})||gt);Reflect.defineMetadata('design:paramtypes',[sp,md],lp);let dp=t.ExtractDataPipe=(ht=(0,zl.Pipe)({name:'genericExtractData'}),ht(bt=class{constructor(e){this.modelConfiguration=this.modelConfiguration,this.modelConfiguration=e.configuration.database.model}transform(e){if(Array.isArray(e)){const t=[];for(const a of e)t.push(this.transform(a));return t}if('object'==typeof e&&null!==e){const t=this.modelConfiguration.property.name.special;return e.hasOwnProperty('value')?'object'==typeof e.value&&null!==e.value&&t.type in e.value&&this.modelConfiguration.entities.hasOwnProperty(e.value[t.type])?this._extractFromObject(e.value):this.transform(e.value):t.type in e&&this.modelConfiguration.entities.hasOwnProperty(e[t.type])?this._extractFromObject(e):e}return e}_extractFromObject(e){const t=this.modelConfiguration.property.name.special,a={};for(const n in e)e.hasOwnProperty(n)&&(!e.hasOwnProperty(t.type)||this.modelConfiguration.entities[e[t.type]].hasOwnProperty(n)||this.modelConfiguration.entities[e[t.type]].hasOwnProperty(t.additional))&&!['_metaData',t.additional,t.allowedRole,t.attachment,t.conflict,t.constraint.execution,t.constraint.expression,t.deletedConflict,t.extend,t.localSequence,t.maximumAggregatedSize,t.minimumAggregatedSize,t.revisions,t.revisionsInformation].includes(n)&&(a[n]=this.transform(e[n]));if(e.hasOwnProperty(t.attachment)&&e[t.attachment])for(const n in e[t.attachment])e[t.attachment].hasOwnProperty(n)&&'object'==typeof e[t.attachment][n]&&null!==e[t.attachment][n]&&'hasOwnProperty'in e[t.attachment]&&e[t.attachment][n].hasOwnProperty('value')&&e[t.attachment][n].value&&(a[t.attachment]||(a[t.attachment]={}),a[t.attachment][e[t.attachment][n].value.name]=e[t.attachment][n].value);return a}})||bt);Reflect.defineMetadata('design:paramtypes',[md],dp);let pp=t.ExtractRawDataPipe=(Pt=(0,zl.Pipe)({name:'genericExtractRawData'}),Pt(Nt=class{constructor(e,t,a,n,i,r){this.attachmentsAreEqual=this.attachmentsAreEqual,this.dataScope=this.dataScope,this.equals=this.equals,this.modelConfiguration=this.modelConfiguration,this.numberGetUTCTimestamp=this.numberGetUTCTimestamp,this.specialNames=this.specialNames,this.tools=this.tools,this.attachmentsAreEqual=e.transform.bind(e),this.dataScope=n.get(Lp),this.equals=t.transform.bind(t),this.modelConfiguration=a.configuration.database.model,this.numberGetUTCTimestamp=i.transform.bind(i),this.specialNames=this.modelConfiguration.property.name.special,this.tools=r.fixed.tools}convertDateToTimestampRecursively(e){if('object'==typeof e&&null!==e){if(e instanceof Date)return this.numberGetUTCTimestamp(e);if(Array.isArray(e)){const t=[];for(const a of e)t.push(this.convertDateToTimestampRecursively(a));return t}if(Object.getPrototypeOf(e)===Object.prototype){const t={};for(const a in e)e.hasOwnProperty(a)&&(t[a]=this.convertDateToTimestampRecursively(e[a]));return t}}return e}getNotAlreadyExistingAttachmentData(e,t,a){var n=this;return o(function*(){const i={};if(a&&a.hasOwnProperty(n.specialNames.attachment))for(const r in a[n.specialNames.attachment])if(a[n.specialNames.attachment].hasOwnProperty(r)){const o={};if(t.hasOwnProperty(n.specialNames.attachment)&&t[n.specialNames.attachment])for(const e in t[n.specialNames.attachment])t[n.specialNames.attachment].hasOwnProperty(e)&&new RegExp(r).test(e)&&(o[e]=t[n.specialNames.attachment][e]);if(e.hasOwnProperty(n.specialNames.attachment))for(const t in e[n.specialNames.attachment])if(e[n.specialNames.attachment].hasOwnProperty(t)&&new RegExp(r).test(t))if(e[n.specialNames.attachment][t].hasOwnProperty('data')||e[n.specialNames.attachment][t].hasOwnProperty('stub')){if(i[t]=e[n.specialNames.attachment][t],o.hasOwnProperty(t))(yield n.attachmentsAreEqual(e[n.specialNames.attachment][t],o[t]))&&delete i[t],delete o[t];else if(Object.keys(o).length&&1===a[n.specialNames.attachment][r].maximumNumber){const a=Object.keys(o)[0];(yield n.attachmentsAreEqual(e[n.specialNames.attachment][t],o[a]))&&(i[t]=n.tools.copyLimitedRecursively(o[a]),i[t].name=t)}}else if(o.hasOwnProperty(t))delete o[t];else if(Object.keys(o).length&&1===a[n.specialNames.attachment][r].maximumNumber){const e=Object.keys(o)[0];i[t]=n.tools.copyLimitedRecursively(o[e]),i[t].name=t,delete o[e]}for(const e in o)o.hasOwnProperty(e)&&(i[e]={data:null})}return{payloadExists:0!==Object.keys(i).length,result:i}})()}removeAlreadyExistingData(e,t,a){let n=!1;if(Array.isArray(e))this.equals(e,t)||(n=!0);else if(a&&'object'==typeof e&&null!==e&&'object'==typeof t&&null!==t){const i=Object.keys(e);for(const r in t)if(t.hasOwnProperty(r)){const o=i.indexOf(r);if(-1!==o&&i.splice(o,1),!this.modelConfiguration.property.name.reserved.concat(this.specialNames.deleted,this.specialNames.id,this.specialNames.revision,this.specialNames.type).includes(r))if(e.hasOwnProperty(r)){const i=this.removeAlreadyExistingData(e[r],t[r],this.dataScope.determineNestedSpecifcation(r,a));i.payloadExists?(n=!0,e[r]=i.newData):a.hasOwnProperty(r)&&delete e[r]}else n=!0,e[r]=null}i.length&&(n=!0)}else this.equals(e,this.convertDateToTimestampRecursively(t))||(n=!0);return{newData:e,payloadExists:n}}removeMetaData(e,t){if(e instanceof Date)return this.numberGetUTCTimestamp(e);if(Array.isArray(e)){let a=0;for(const n of e)e[a]=this.removeMetaData(n,t),a+=1;return e}if('object'==typeof e&&null!==e){const a={};for(const n in e)if(e.hasOwnProperty(n)){const i=!!(t&&(t.hasOwnProperty(n)&&t[n]||t.hasOwnProperty(this.specialNames.additional)&&t[this.specialNames.additional])||{}).emptyEqualsToNull;if(![void 0,null].includes(e[n])&&!(i&&(''===e[n]||Array.isArray(e[n])&&0===e[n].length||'object'==typeof e[n]&&!(e[n]instanceof Date)&&0===Object.keys(e[n]).length)))if(this.modelConfiguration.property.name.reserved.concat(this.specialNames.deleted,this.specialNames.id,this.specialNames.revision,this.specialNames.type).includes(n))a[n]=e[n];else if(n!==this.specialNames.attachment)![this.specialNames.additional,this.specialNames.allowedRole,this.specialNames.conflict,this.specialNames.constraint.execution,this.specialNames.constraint.expression,this.specialNames.deletedConflict,this.specialNames.extend,this.specialNames.localSequence,this.specialNames.maximumAggregatedSize,this.specialNames.minimumAggregatedSize,this.specialNames.revisions,this.specialNames.revisionsInformation].includes(n)&&(!t||t.hasOwnProperty(n)||t.hasOwnProperty(this.specialNames.additional))&&(a[n]=this.removeMetaData(e[n],this.dataScope.determineNestedSpecifcation(n,t)));else if('object'==typeof e[n]&&null!==e[n])for(const t in a[n]={},e[n])if(e[n].hasOwnProperty(t)&&(a[n][t]={content_type:e[n][t].content_type||'application/octet-stream'}),e[n][t].hasOwnProperty('data'))a[n][t].data=e[n][t].data;else for(const i of['digest','stub'])e[n][t].hasOwnProperty(i)&&(a[n][t][i]=e[n][t][i])}return a}return e}transform(e,t){var a=this;return o(function*(){let n=null;a.specialNames.type in e&&a.modelConfiguration.entities.hasOwnProperty(e[a.specialNames.type])&&(n=a.modelConfiguration.entities[e[a.specialNames.type]]);let i=a.removeMetaData(e,n),r=!1;if(t){const e=yield a.getNotAlreadyExistingAttachmentData(i,t,n);e.payloadExists&&(i[a.specialNames.attachment]=e.result,r=e.payloadExists),a.removeAlreadyExistingData(i,a.removeMetaData(t,n),n).payloadExists&&(r=!0)}if(!r)for(const e in i)if(i.hasOwnProperty(e)&&!a.modelConfiguration.property.name.reserved.concat(a.specialNames.deleted,a.specialNames.id,a.specialNames.revision,a.specialNames.type).includes(e)){r=!0;break}return r?i:null})()}})||Nt);Reflect.defineMetadata('design:paramtypes',[mp,cd,md,zl.Injector,ip,od],pp);let cp=t.IsDefinedPipe=(xt=(0,zl.Pipe)({name:'genericIsDefined'}),xt(vt=class{transform(e,t=!1){return!(e===void 0||t&&null===e)}})||vt),up=t.LimitToPipe=(Tt=(0,zl.Pipe)({name:'genericLimitTo'}),Tt(St=class{transform(e,t,a){return(t=Math.abs(+t)===Infinity?+t:parseInt(t),isNaN(t))?e:('number'==typeof e?e=e.toString():'object'==typeof e&&null!==e&&!Array.isArray(e)&&(e=Object.keys(e).sort()),!(Array.isArray(e)||'string'==typeof e))?e:(a=!a||isNaN(a)?0:parseInt(a),0>a&&(a=d(0,e.length+a)),0<=t)?e.slice(a,a+t):0===a?e.slice(t,e.length):e.slice(d(0,a+t),a)}})||St),fp=t.MapPipe=(Ot=(0,zl.Pipe)({name:'genericMap'}),Ot(It=class{constructor(e){this.injector=this.injector,this.injector=e}transform(e,t,...a){const n=this.injector.get(t);if(Array.isArray(e)){const t=[];for(const i of e)t.push(n.transform(i,...a));return t}const i={};for(const r in e)e.hasOwnProperty(r)&&(i[r]=n.transform(e[r],r,...a));return i}})||It);Reflect.defineMetadata('design:paramtypes',[zl.Injector],fp);let yp=t.ObjectKeysPipe=(Ct=(0,zl.Pipe)({name:'genericObjectKeys'}),Ct(Et=class{transform(e,t=!1,a=!1,n=!1){if('object'==typeof e&&null!==e){const i=Object.keys(e);return t?(Array.isArray(t)||(t=n?[(e,t)=>(e=parseInt(e),t=parseInt(t),isNaN(e))?isNaN(t)?0:1:isNaN(t)?-1:e-t]:[]),i.sort(...t),a&&i.reverse(),i):i}return[]}})||Et),gp=t.ReversePipe=(_t=(0,zl.Pipe)({name:'genericReverse'}),_t(Dt=class{transform(e,t=!1){return e?t&&(e=e.slice()):e=[],'reverse'in e&&e.reverse(),e}})||Dt),hp=t.TypePipe=(wt=(0,zl.Pipe)({name:'genericType'}),wt(Rt=class{transform(e){return typeof e}})||Rt),bp=t.ArrayDependentConcatPipe=(zt=(0,zl.Pipe)({name:'genericArrayDependentConcat'}),zt(Mt=class{transform(e,t,a){return t?e.concat(a):e}})||Mt),Pp=t.StringEndsWithPipe=(jt=(0,zl.Pipe)({name:'genericStringEndsWith'}),jt(At=class{transform(e,t){return'string'==typeof e&&'string'==typeof t&&e.endsWith(t)}})||At),Np=t.StringHasTimeSuffixPipe=(kt=(0,zl.Pipe)({name:'genericStringHasTimeSuffix'}),kt(Lt=class{transform(e){return!('string'!=typeof e)&&(e.endsWith('Date')||e.endsWith('Time')||'timestamp'===e)}})||Lt),xp=t.StringMatchPipe=(Ut=(0,zl.Pipe)({name:'genericStringMatch'}),Ut(Ft=class{transform(e,t,a=''){return new RegExp(e,a).test(t)}})||Ft),vp=t.StringMaximumLengthPipe=(qt=(0,zl.Pipe)({name:'genericStringMaximumLength'}),qt(Gt=class{transform(e,t=100,a='...'){return e?(e.length>t&&e.length-1>a.length&&(e=e.substring(0,d(1,t-a.length))+a),e):''}})||Gt),Tp=t.StringReplacePipe=(Vt=(0,zl.Pipe)({name:'genericStringReplace'}),Vt(Wt=class{transform(e,t,a='',n='g'){return e.replace('string'==typeof t?new RegExp(t,n):t,a)}})||Wt),Sp=t.StringSafeHTMLPipe=(Bt=(0,zl.Pipe)({name:'genericStringSafeHTML'}),Bt(Ht=class{constructor(e){this.transform=this.transform,this.transform=e.bypassSecurityTrustHtml.bind(e)}})||Ht);Reflect.defineMetadata('design:paramtypes',[kl.DomSanitizer],Sp);let Op=t.StringSafeResourceURLPipe=($t=(0,zl.Pipe)({name:'genericStringSafeResourceURL'}),$t(Kt=class{constructor(e){this.transform=this.transform,this.transform=e.bypassSecurityTrustResourceUrl.bind(e)}})||Kt);Reflect.defineMetadata('design:paramtypes',[kl.DomSanitizer],Op);let Ip=t.StringSafeScriptPipe=(Yt=(0,zl.Pipe)({name:'genericStringSafeScript'}),Yt(Jt=class{constructor(e){this.transform=this.transform,this.transform=e.bypassSecurityTrustScript.bind(e)}})||Jt);Reflect.defineMetadata('design:paramtypes',[kl.DomSanitizer],Ip);let Cp=t.StringSafeStylePipe=(Zt=(0,zl.Pipe)({name:'genericStringSafeStyle'}),Zt(Xt=class{constructor(e){this.transform=this.transform,this.transform=e.bypassSecurityTrustStyle.bind(e)}})||Xt);Reflect.defineMetadata('design:paramtypes',[kl.DomSanitizer],Cp);let Ep=t.StringSafeURLPipe=(Qt=(0,zl.Pipe)({name:'genericStringSafeURL'}),Qt(ea=class{constructor(e){this.transform=this.transform,this.transform=e.bypassSecurityTrustUrl.bind(e)}})||ea);Reflect.defineMetadata('design:paramtypes',[kl.DomSanitizer],Ep);let _p=t.StringShowIfPatternMatchesPipe=(ta=(0,zl.Pipe)({name:'genericStringShowIfPatternMatches'}),ta(aa=class{transform(e,t,a=!1,n=''){let i=('string'==typeof t?new RegExp(t,n):t).test(e);return a&&(i=!i),i?e:''}})||aa),Dp=t.StringSliceMatchPipe=(na=(0,zl.Pipe)({name:'genericStringSliceMatch'}),na(ia=class{transform(e,t,a=0,n=''){if('string'==typeof e){const i=e.match(new RegExp(t,n));if(i&&'string'==typeof i[a])return i[a]}return''}})||ia),wp=t.StringStartsWithPipe=(ra=(0,zl.Pipe)({name:'genericStringStartsWith'}),ra(oa=class{transform(e,t){return'string'==typeof e&&'string'==typeof t&&e.startsWith(t)}})||oa),Rp=t.StringTemplatePipe=(ma=(0,zl.Pipe)({name:'genericStringTemplate'}),ma(sa=class{constructor(e){this.extendObject=this.extendObject,this.extendObject=e.transform.bind(e)}transform(e='',...t){const a=this.extendObject(!0,{},...t),n=Object.keys(a).filter((e)=>{try{new Function(`var ${e}`)()}catch(e){return!1}return!0});return new Function('scope',...n,`return \`${e}\``)(a,...n.map((e)=>a[e]))}})||sa);Reflect.defineMetadata('design:paramtypes',[ud],Rp);let zp=t.NumberPercentPipe=(la=(0,zl.Pipe)({name:'genericNumberPercent'}),la(da=class{transform(e,t){return 100*(e/t)}})||da),Mp=t.CanDeactivateRouteLeaveGuard=(pa=(0,zl.Injectable)(),pa(ca=class{canDeactivate(e,...t){return!('canDeactivate'in e)||e.canDeactivate(...t)}})||ca),jp=t.ConfirmComponent=(ua=(0,zl.Component)({animations:ad,changeDetection:zl.ChangeDetectionStrategy.OnPush,selector:'generic-confirm',template:`
+        <h2 @defaultAnimation mat-dialog-title *ngIf="title">{{title}}</h2>
+        <mat-dialog-content @defaultAnimation *ngIf="message">
+            {{message}}
+        </mat-dialog-content>
+        <mat-dialog-actions>
+            <button (click)="dialogReference.close(true)" mat-raised-button>
+                {{okText}}
+            </button>
+            <button (click)="dialogReference.close(false)" mat-raised-button>
+                {{cancelText}}
+            </button>
+        </mat-dialog-actions>
+    `}),fa=(0,zl.Input)(),ya=(0,zl.Input)(),ua(ga=(ha=class{constructor(e,t){if(i(this,'cancelText',ba,this),this.dialogReference=null,i(this,'okText',Pa,this),this.title='',this.message='',this.dialogReference=t,'object'==typeof e&&null!==e)for(const t in e)e.hasOwnProperty(t)&&(this[t]=e[t])}},ba=r(ha.prototype,'cancelText',[fa],{enumerable:!0,initializer:function(){return'Cancel'}}),Pa=r(ha.prototype,'okText',[ya],{enumerable:!0,initializer:function(){return'OK'}}),ha))||ga);(0,zl.Optional)()(jp,null,0),(0,zl.Inject)(Al.MAT_DIALOG_DATA)(jp,null,0),(0,zl.Optional)()(jp,null,1),Reflect.defineMetadata('design:paramtypes',[,Al.MatDialogRef],jp);let Ap=t.AlertService=(Na=(0,zl.Injectable)(),Na(xa=class{constructor(e){this.dialog=this.dialog,this.dialogReference=this.dialogReference,this.dialog=e}confirm(e){return'string'==typeof e?e={data:{message:e}}:('object'!=typeof e||null===e||!e.hasOwnProperty('data'))&&(e={data:e}),this.dialogReference=this.dialog.open(jp,e),this.dialogReference.afterClosed().toPromise()}})||xa);Reflect.defineMetadata('design:paramtypes',[Al.MatDialog],Ap);let kp=t.DataService=(va=(0,zl.Injectable)(),va(Ta=(Oa=Sa=class e{constructor(e,t,a,n,i,r){this.connection=this.connection,this.configuration=this.configuration,this.database=this.database,this.equals=this.equals,this.extendObject=this.extendObject,this.middlewares={post:{},pre:{}},this.platformID=this.platformID,this.remoteConnection=null,this.runningRequests=[],this.runningRequestsStream=new Bl.Subject,this.stringFormat=this.stringFormat,this.synchronisation=null,this.tools=this.tools,this.configuration=a.configuration,this.database=Fl.default,this.equals=e.transform.bind(e),this.extendObject=t.transform.bind(t),this.platformID=n,this.stringFormat=i.transform.bind(i),this.tools=r.fixed.tools;const m=this.database.prototype.bulkDocs,s=this;this.database.plugin({bulkDocs:(()=>{var e=o(function*(e,...t){const a=s.configuration.database.model.property.name.special.id,n=s.configuration.database.model.property.name.special.revision;!Array.isArray(e)&&'object'==typeof e&&null!==e&&e.hasOwnProperty(a)&&(e=[e]);let i=[];try{i=yield m.call(this,e,...t)}catch(r){if('bad_request'===r.name){for(const t of e)if(['latest','upsert'].includes(t[n]))try{t[n]=(yield this.get(t[a]))[n]}catch(e){if('not_found'===e.name)delete t[n];else throw e}try{i=yield m.call(this,e,...t)}catch(e){throw e}}else throw r}const r=[],o=[];let l=0;for(const m of i){if('object'==typeof e[l]&&null!==e)if(n in e[l]&&'conflict'===m.name&&['latest','upsert'].includes(e[l][n]))o.push(m),r.push(l);else if(a in e[l]&&s.configuration.database.ignoreNoChangeError&&'name'in m&&'forbidden'===m.name&&'message'in m&&m.message.startsWith('NoChange:')){i[l]={id:e[l][a],ok:!0};try{i[l].rev=n in e[l]&&!['latest','upsert'].includes(e[l][n])?e[l][n]:(yield this.get(i[l].id))[n]}catch(e){throw e}}l+=1}if(o.length){e=o;const a=yield this.bulkDocs(e,...t);for(const e of a)i[r.shift()]=e}return i});return function(){return e.apply(this,arguments)}})()}),this.database.plugin(Gl.default).plugin(Wl.default)}static determineGenericIndexablePropertyNames(e,t){const a=e.property.name.special;return Object.keys(t).filter((n)=>t[n].index||!(e.property.name.reserved.concat(a.additional,a.allowedRole,a.attachment,a.conflict,a.constraint.execution,a.constraint.expression,a.deleted,a.deleted_conflict,a.extend,a.id,a.maximumAggregatedSize,a.minimumAggregatedSize,a.revision,a.revisions,a.revisionsInformation,a.type).includes(n)||t[n].type&&('string'==typeof t[n].type&&t[n].type.endsWith('[]')||Array.isArray(t[n].type)&&t[n].type.length&&Array.isArray(t[n].type[0])||e.entities.hasOwnProperty(t[n].type)))).concat(a.id,a.revision)}initialize(){var t=this;return o(function*(){yield t.tools.timeout(),t.configuration.database.hasOwnProperty('publicURL')&&(t.configuration.database.url=t.configuration.database.publicURL);for(const e of t.configuration.database.plugins)t.database.plugin(e);const a=t.extendObject(!0,{skip_setup:!0},t.configuration.database.connector||{}),n=t.configuration.name||'generic';e.skipRemoteConnectionOnServer&&(0,Ml.isPlatformServer)(t.platformID)||(t.remoteConnection=new t.database(t.stringFormat(t.configuration.database.url,'')+`/${n}`,a)),t.connection=t.configuration.database.local||e.skipRemoteConnectionOnServer&&(0,Ml.isPlatformServer)(t.platformID)?new t.database(n,a):t.remoteConnection;const i=t.configuration,r=t.configuration.database.model.property.name.special.id,m=t.configuration.database.model.property.name.special.revision;for(const e of['post','put']){const a=t.connection[e].bind(t.connection);t.connection[e]=(()=>{var e=o(function*(e,t,...n){try{return yield a(e,t,...n)}catch(a){const n='object'==typeof e&&r in e?e[r]:e;if(n&&i.database.ignoreNoChangeError&&'name'in a&&'forbidden'===a.name&&'message'in a&&a.message.startsWith('NoChange:')){const a={id:n,ok:!0},i='object'==typeof t&&m in t?t[m]:t;try{a.rev=m in e&&!['latest','upsert'].includes(i)?i:(yield this.get(a.id))[m]}catch(e){throw e}return a}throw a}});return function(){return e.apply(this,arguments)}})()}for(const a in t.connection)if(e.wrappableMethodNames.includes(a)&&'function'==typeof t.connection[a]){const e=t.connection[a];t.connection[a]=(()=>{var n=o(function*(...n){const i={name:a,parameter:n};t.runningRequests.push(i),t.runningRequestsStream.next(t.runningRequests);const r=function(){const e=t.runningRequests.indexOf(i);-1!==e&&t.runningRequests.splice(e,1),t.runningRequestsStream.next(t.runningRequests)};for(const e of[a,'_all'])if(t.middlewares.pre.hasOwnProperty(e))for(const i of t.middlewares.pre[e])if(n=i.apply(t.connection,n.concat('_all'===e?a:[])),'then'in n)try{n=yield n}catch(e){throw r(),e}i.wrappedParameter=n;const o=function(a=t.connection,i=n){return e.apply(a,i)};let m=o();for(const e of[a,'_all'])if(t.middlewares.post.hasOwnProperty(e))for(const i of t.middlewares.post[e])if(m=i.call(t.connection,m,o,...n.concat('_all'===e?a:[])),'then'in m)try{m=yield m}catch(e){throw r(),e}if('then'in m)try{m=yield m}catch(e){throw r(),e}return r(),m});return function(){return n.apply(this,arguments)}})()}if(t.connection.installValidationMethods(),!(e.skipGenericIndexManagementOnServer&&(0,Ml.isPlatformServer)(t.platformID))&&t.configuration.database.createGenericFlatIndex&&t.connection!==t.remoteConnection){for(const a in t.configuration.database.model.entities)if(t.configuration.database.model.entities.hasOwnProperty(a)&&new RegExp(t.configuration.database.model.property.name.typeRegularExpressionPattern.public).test(a))for(const n of e.determineGenericIndexablePropertyNames(t.configuration.database.model,t.configuration.database.model.entities[a]))try{yield t.connection.createIndex({index:{ddoc:`${a}-${n}-GenericIndex`,fields:[t.configuration.database.model.property.name.special.type,n],name:`${a}-${n}-GenericIndex`}})}catch(e){throw e}let a;try{a=(yield t.connection.getIndexes()).indexes}catch(e){throw e}for(const n of a)if(n.name.endsWith('-GenericIndex')){let a=!1;for(const i in t.configuration.database.model.entities)if(n.name.startsWith(`${i}-`)){for(const r of e.determineGenericIndexablePropertyNames(t.configuration.database.model,t.configuration.database.model.entities[i]))`${i}-${r}-GenericIndex`===n.name&&(a=!0);break}if(!a)try{yield t.connection.deleteIndex(n)}catch(e){throw e}}}})()}createIndex(...e){return this.connection.createIndex(...e)}bulkDocs(...e){return this.connection.bulkDocs(...e)}destroy(...e){this.synchronisation&&this.synchronisation.cancel();const t=this.connection.destroy(...e);return this.middlewares={post:{},pre:{}},t}find(e,t={}){var a=this;return o(function*(){return(yield a.connection.find(a.extendObject(!0,{selector:e},t))).docs})()}get(...t){var a=this;return o(function*(){const n=a.configuration.database.model.property.name.special.id,i=a.configuration.database.model.property.name.special.revision,r=yield a.connection.get(...t);return Zl.data.hasOwnProperty(r[n])&&1<t.length&&(a.equals(t[1],{rev:'latest'})||a.equals(t[1],{latest:!0})||a.equals(t[1],{latest:!0,rev:'latest'}))&&parseInt(r[i].match(e.revisionNumberRegularExpression)[1])<parseInt(Zl.data[r[n]][i].match(e.revisionNumberRegularExpression)[1])?Zl.data[r[n]]:r})()}getAttachment(...e){return this.connection.getAttachment(...e)}put(...e){return this.connection.put(...e)}putAttachment(...e){return this.connection.putAttachment(...e)}register(e,t,a='post'){Array.isArray(e)||(e=[e]);for(const n of e)this.middlewares[a].hasOwnProperty(n)||(this.middlewares[a][n]=[]),this.middlewares[a][n].push(t);return()=>{for(const n of e){const e=this.middlewares[a][n].indexOf(t);-1!==e&&this.middlewares[a][n].splice(e,1),0===this.middlewares[a][n].length&&delete this.middlewares[a][n]}}}remove(...e){return this.connection.remove(...e)}removeAttachment(...e){return this.connection.removeAttachment(...e)}startSynchronisation(){var e=this;return o(function*(){if(e.configuration.database.local&&e.remoteConnection&&null===e.synchronisation){let t=!1;return yield new Promise(function(a,n){e.synchronisation=e.connection.sync(e.remoteConnection,{live:!0,retry:!0}).on('change',function(e){return console.info('change',e)}).on('paused',function(){t||(t=!0,a(e.synchronisation)),console.info('paused')}).on('active',function(){return console.info('active')}).on('denied',function(e){t||(t=!0,n({name:'denied',error:e})),console.warn('denied',e)}).on('complete',function(e){return console.info('complete',e)}).on('error',function(e){t||(t=!0,n({name:'error',error:e})),console.error('error',e)})})}return null})()}stopSynchronisation(){var e=this;return o(function*(){if(e.synchronisation){const t=new Promise(function(t,a){e.synchronisation.on('complete',t),e.synchronisation.on('error',a)});return e.synchronisation.cancel(),yield t,e.synchronisation=null,!0}return!1})()}},Sa.revisionNumberRegularExpression=/^([0-9]+)-/,Sa.skipGenericIndexManagementOnServer=!0,Sa.skipRemoteConnectionOnServer=!0,Sa.wrappableMethodNames=['allDocs','bulkDocs','bulkGet','close','compact','compactDocument','createIndex','deleteIndexs','destroy','find','get','getAttachment','getIndexes','info','post','put','putAttachment','query','remove','removeAttachment'],Oa))||Ta);(0,zl.Inject)(zl.PLATFORM_ID)(kp,null,3),Reflect.defineMetadata('design:paramtypes',[cd,ud,md,String,$d,od],kp);let Lp=t.DataScopeService=(Ia=(0,zl.Injectable)(),Ia(Ca=class{constructor(e,t,a,n,i,r,o,m,s){this.attachmentWithPrefixExists=this.attachmentWithPrefixExists,this.configuration=this.configuration,this.data=this.data,this.extendObject=this.extendObject,this.extractData=this.extractData,this.getFilenameByPrefix=this.getFilenameByPrefix,this.numberGetUTCTimestamp=this.numberGetUTCTimestamp,this.representObject=this.representObject,this.tools=this.tools,this.attachmentWithPrefixExists=e.transform.bind(e),this.configuration=r.configuration,this.data=t,this.extendObject=a.transform.bind(a),this.extractData=n.transform.bind(n),this.getFilenameByPrefix=i.transform.bind(i),this.numberGetUTCTimestamp=o.transform.bind(o),this.representObject=m.transform.bind(m),this.tools=s.fixed.tools}determine(e,t=null,a=null,n='latest',i=!1){var r=this;return o(function*(){let o={};if(t){const m={};'latest'===n?(m.latest=!0,i&&(m.revs_info=!0)):m.rev=n;try{o=yield r.data.get(t,m)}catch(e){throw new Error(`Document with given id "${t}" and revision "`+`${n}" isn't available: `+('message'in e?e.message:r.representObject(e)))}if(i){const i=r.configuration.database.model.property.name.special.revisionsInformation;let s,l=null;if('latest'!==n){delete m.rev,m.revs_info=!0;try{l=yield r.data.get(t,m)}catch(e){throw new Error(`Document with given id "${t}" and revision "`+`${n}" isn't available: `+('message'in e?e.message:r.representObject(e)))}s=l[i],delete l[i]}else s=o[i];o[i]={};let d=!0;for(const e of s)'available'===e.status&&(o[i][d?'latest':e.rev]={revision:e.rev},d=!1);l&&(o[i].latest.scope=r.generate(e,a,l))}}return r.generate(e,a,o)})()}determineNestedSpecifcation(e,t){const a=this.configuration.database.model.entities,n=this.configuration.database.model.property.name.special.additional;if(t)if(t.hasOwnProperty(e)){if(a.hasOwnProperty(t[e].type))return a[t[e].type];}else if(t.hasOwnProperty(n)&&a.hasOwnProperty(t[n].type))return a[t[n].type];return null}determineSpecificationObject(e,t,a=[]){t||(t=Object.keys(e));const n={};for(const i of t)if(e.hasOwnProperty(i)&&!a.includes(i))if(i===this.configuration.database.model.property.name.special.attachment)for(const t in n[i]={},e[i])e[i].hasOwnProperty(t)&&(n[i][t]=this.extendObject(!0,this.tools.copyLimitedRecursively(this.configuration.database.model.property.defaultSpecification),e[i][t]));else n[i]=this.extendObject(!0,this.tools.copyLimitedRecursively(this.configuration.database.model.property.defaultSpecification),e[i]),this.configuration.database.model.entities.hasOwnProperty(n[i].type)&&(n[i].value=this.determineSpecificationObject(this.configuration.database.model.entities[n[i].type]));return n}generate(e,t,a={},n){const i=this.configuration.database.model.entities,r=i[e],o=this.configuration.database.model.property.name.special;n||(n=e.startsWith('_')?[o.id,o.attachment]:[]);const m=this.configuration.database.model.property.name.reserved.concat(o.conflict,o.deleted,o.deletedConflict,o.localSequence,o.revision,o.revisions,o.revisionsInformation,o.type),s=this.determineSpecificationObject(r,t,n.concat(m));t||(t=Object.keys(s).filter((e)=>'object'==typeof s[e]&&null!==typeof s[e]&&!Array.isArray(s[e])),t=t.concat(Object.keys(a).filter((e)=>!t.concat(m).includes(e))));const l={};for(const m of t){if(n.includes(m))continue;l[m]=s.hasOwnProperty(m)?this.tools.copyLimitedRecursively(s[m]):this.tools.copyLimitedRecursively('additional'in o&&o.additional?s[o.additional]:{});const t=new Date,d=this.numberGetUTCTimestamp(t);if(m===o.attachment){for(const n in s[m])if(s[m].hasOwnProperty(n)){if(l[m][n].name=n,l[m][n].value=null,0===Object.keys(a).length){const o={newDocument:a,oldDocument:null,userConteyt:{},securitySettings:{},name:n,models:i,modelConfiguration:this.configuration.database.model,serialize:(e)=>JSON.stringify(e,null,4),modelName:e,model:r,propertySpecification:l[m][n],now:t,nowUTCTimestamp:d,getFilenameByPrefix:this.getFilenameByPrefix,attachmentWithPrefixExists:this.attachmentWithPrefixExists.bind(a,a)};for(const e of['onCreateExecution','onCreateExpression'])l[m][n].hasOwnProperty(e)&&l[m][n][e]&&(l[m][n].value=new Function(...Object.keys(o),(e.endsWith('Expression')?'return ':'')+l[m][n][e])(...Object.values(o)),l[m][n].hasOwnProperty('value')&&void 0===l[m][n].value&&delete l[m][n].value)}let o=!1;if(a.hasOwnProperty(m)&&![void 0,null].includes(a[m]))for(const e in a[m])if(l[m].hasOwnProperty(n)&&new RegExp(n).test(e)){o=!0,l[m][n].value=a[m][e],l[m][n].value.name=e;break}o||!l[m][n].hasOwnProperty('default')||[void 0,null].includes(l[m][n].default)||(l[m][n].value=this.tools.copyLimitedRecursively({},l[m][n].default))}}else{if(l[m].name=m,l[m].value=null,0===Object.keys(a).length){const n={newDocument:a,oldDocument:null,userContext:{},securitySettings:{},name:m,models:i,modelConfiguration:this.configuration.database.model,serialize:(e)=>JSON.stringify(e,null,4),modelName:e,model:r,propertySpecification:l[m],now:t,nowUTCTimestamp:d,getFilenameByPrefix:this.getFilenameByPrefix,attachmentWithPrefixExists:this.attachmentWithPrefixExists.bind(a,a)};for(const e of['onCreateExpression','onCreateExecution'])l[m].hasOwnProperty(e)&&l[m][e]&&(l[m].value=new Function(...Object.keys(n),(e.endsWith('Expression')?'return ':'')+l[m][e])(...Object.values(n)),void 0===l[m].value&&(l[m].value=null))}if(a.hasOwnProperty(m)&&![void 0,null].includes(a[m])?l[m].value=a[m]:l[m].hasOwnProperty('default')&&![void 0,null].includes(l[m].default)?l[m].value=this.tools.copyLimitedRecursively(l[m].default):l[m].hasOwnProperty('selection')&&Array.isArray(l[m].selection)&&l[m].selection.length&&(l[m].value=l[m].selection[0]),'number'==typeof l[m].value&&l[m].hasOwnProperty('type')&&(l[m].type.endsWith('Date')||l[m].type.endsWith('Time')))l[m].value=new Date(1e3*l[m].value);else if(l[m].hasOwnProperty('type'))if(i.hasOwnProperty(l[m].type))l[m].value=this.generate(l[m].type,null,l[m].value||{},[o.attachment,o.id]);else if(l[m].type.endsWith('[]')){const e=l[m].type.substring(0,l[m].type.length-2);if(Array.isArray(l[m].value)&&i.hasOwnProperty(e)){let t=0;for(const a of l[m].value)l[m].value[t]=this.generate(e,null,a||{},[o.attachment,o.id]),t+=1}}}}for(const i of m)a.hasOwnProperty(i)?l[i]=a[i]:i===o.type&&(l[i]=e);return l._metaData={submitted:!1},l}})||Ca);Reflect.defineMetadata('design:paramtypes',[lp,kp,ud,dp,sp,md,ip,fd,od],Lp);let Up=t.AbstractResolver=(Ea=(0,zl.Injectable)(),Ea(_a=(wa=Da=class e{constructor(e){this.cache=!0,this.cacheStore={},this.changesStream=this.changesStream,this.convertCircularObjectToJSON=this.convertCircularObjectToJSON,this.data=this.data,this.databaseBaseURL=this.databaseBaseURL,this.databaseURL=this.databaseURL,this.databaseURLCache={},this.deepCopyItems=!0,this.domSanitizer=this.domSanitizer,this.escapeRegularExpressions=this.escapeRegularExpressions,this.extendObject=this.extendObject,this.message=this.message,this.messageConfiguration=new Al.MatSnackBarConfig,this.modelConfiguration=this.modelConfiguration,this.platformID=this.platformID,this.relevantKeys=null,this.relevantSearchKeys=null,this.representObject=this.representObject,this.specialNames=this.specialNames,this.tools=this.tools,this.type='Item',this.useLimit=!1,this.useSkip=!1;const t=sd(e,this,this.constructor);this.convertCircularObjectToJSON=t(pd).transform.bind(t(pd)),this.data=t(kp),this.domSanitizer=t(kl.DomSanitizer);const a=t($d).transform(t(md).configuration.database.url,'')+'/';if(this.databaseBaseURL=`${a}_utils/#/database/`+`${t(md).configuration.name}/`,this.databaseURL=a+t(md).configuration.name,this.escapeRegularExpressions=t(wd).transform.bind(t(wd)),this.extendObject=t(ud).transform.bind(t(ud)),this.messageConfiguration.duration=5000,this.message=(e)=>t(Al.MatSnackBar).open(e,!1,this.messageConfiguration),this.modelConfiguration=t(md).configuration.database.model,this.platformID=t(zl.PLATFORM_ID),this.representObject=t(fd).transform.bind(t(fd)),this.specialNames=t(md).configuration.database.model.property.name.special,this.tools=t(od).fixed.tools,this.cache){const e=()=>{this.changesStream=this.data.connection.changes(this.extendObject(!0,{},{since:'now'},Gp.defaultLiveUpdateOptions,{include_docs:!1})),this.changesStream.on('change',()=>{this.cacheStore={}}),this.changesStream.on('error',e)};this.tools.timeout(e)}}getDatabaseURL(e){const t=this.databaseBaseURL+('object'==typeof e[this.specialNames.id]?e[this.specialNames.id].value:e[this.specialNames.id]);return this.databaseURLCache.hasOwnProperty(t)||(this.databaseURLCache[t]=this.domSanitizer.bypassSecurityTrustResourceUrl(t)),this.databaseURLCache[t]}list(e=[{[md.defaultScope.configuration.database.model.property.name.special.id]:'asc'}],t=1,a=10,n='',i={}){var r=this;return o(function*(){r.relevantSearchKeys||(r.relevantSearchKeys=kp.determineGenericIndexablePropertyNames(r.modelConfiguration,r.modelConfiguration.entities[r.type]),r.relevantSearchKeys.splice(r.relevantSearchKeys.indexOf(r.specialNames.revision),1));const o={[r.specialNames.type]:r.type};if(n||Object.keys(i).length){e.length&&(o[Object.keys(e[0])[0]]={$gt:null}),o.$or=[];for(const e of r.relevantSearchKeys)o.$or.push({[e]:{$regex:n}});if(i.hasOwnProperty('$or')&&i.$or.length){for(const e of o.$or)e.$or=i.$or;delete i.$or}}const m={};if(r.useLimit&&(m.limit=a),r.useSkip&&(m.skip=d(t-1,0)*a),r.relevantKeys&&(m.fields=r.relevantKeys),0===m.skip&&delete m.skip,e.length&&(m.sort=[r.specialNames.type].concat(e).map(function(e){return'asc'===Object.values(e)[0]?Object.keys(e)[0]:e})),r.extendObject(!0,o,i),r.cache){const e=r.convertCircularObjectToJSON({selector:o,options:m});return r.cacheStore.hasOwnProperty(e)||(r.cacheStore[e]=yield r.data.find(o,m)),r.deepCopyItems?r.tools.copyLimitedRecursively(r.cacheStore[e]):r.cacheStore[e].slice()}return yield r.data.find(o,m)})()}remove(e,t=''){return this.update(e,{[this.specialNames.deleted]:!0},t)}resolve(t){if(e.skipResolvingOnServer&&(0,Ml.isPlatformServer)(this.platformID))return[];let a='';if('searchTerm'in t.params){const e=decodeURIComponent(t.params.searchTerm);if(e.startsWith('exact-'))a=this.escapeRegularExpressions(e.substring(6));else if(e.startsWith('regex-')){a=e.substring(6);try{new RegExp(a)}catch(e){a=''}}}let n=[];return'sort'in t.params&&(n=t.params.sort.split(',').map((e)=>{const t=e.lastIndexOf('-');let a='asc';return-1!==t&&(a=e.substring(t+1)||a,e=e.substring(0,t)),{[e]:a}})),this.list(n,parseInt(t.params.page||1),parseInt(t.params.limit||10),a)}update(e,t,a=''){var n=this;return o(function*(){const i=t?n.extendObject({[n.specialNames.id]:'object'==typeof e[n.specialNames.id]?e[n.specialNames.id].value:e[n.specialNames.id],[n.specialNames.revision]:'latest',[n.specialNames.type]:e[n.specialNames.type]},t):e;try{e[n.specialNames.revision]=(yield n.data.put(i)).rev}catch(e){return n.message('message'in e?e.message:n.representObject(e)),!1}return a&&n.message(a),!0})()}},Da.skipResolvingOnServer=!0,wa))||_a);(0,zl.Optional)()(Up,null,0),Reflect.defineMetadata('design:paramtypes',[zl.Injector],Up);let Fp=t.AbstractInputComponent=(Ra=(0,zl.Input)(),za=(0,zl.Input)(),Ma=(0,zl.Input)(),ja=(0,zl.Input)(),Aa=(0,zl.Input)(),ka=(0,zl.Input)(),La=(0,zl.Input)(),Ua=(0,zl.Input)(),Fa=(0,zl.Input)(),qa=(0,zl.Input)(),Ga=(0,zl.Input)(),Va=(0,zl.Input)(),Wa=(0,zl.Output)(),Ba=(0,zl.Input)(),Ha=(0,zl.Input)(),$a=(0,zl.Input)(),Ka=(0,zl.Input)(),Ya=(0,zl.Input)(),Ja=(0,zl.Input)(),Za=(0,zl.Input)(),Xa=class{constructor(){i(this,'declaration',Qa,this),i(this,'description',en,this),i(this,'disabled',tn,this),i(this,'maximum',an,this),i(this,'maximumLength',nn,this),i(this,'maximumLengthText',rn,this),i(this,'maximumText',on,this),i(this,'minimum',mn,this),i(this,'minimumLength',sn,this),i(this,'minimumLengthText',ln,this),i(this,'minimumText',dn,this),i(this,'model',pn,this),i(this,'modelChange',cn,this),i(this,'pattern',un,this),i(this,'patternText',fn,this),i(this,'required',yn,this),i(this,'requiredText',gn,this),i(this,'showDeclarationText',hn,this),i(this,'showValidationErrorMessages',bn,this),i(this,'type',Pn,this)}},Qa=r(Xa.prototype,'declaration',[Ra],{enumerable:!0,initializer:function(){return null}}),en=r(Xa.prototype,'description',[za],{enumerable:!0,initializer:function(){return null}}),tn=r(Xa.prototype,'disabled',[Ma],{enumerable:!0,initializer:function(){return null}}),an=r(Xa.prototype,'maximum',[ja],{enumerable:!0,initializer:function(){return null}}),nn=r(Xa.prototype,'maximumLength',[Aa],{enumerable:!0,initializer:function(){return null}}),rn=r(Xa.prototype,'maximumLengthText',[ka],{enumerable:!0,initializer:function(){return'Please type less or equal than ${model.maximumLength} symbols.'}}),on=r(Xa.prototype,'maximumText',[La],{enumerable:!0,initializer:function(){return'Please give a number less or equal than ${model.maximum}.'}}),mn=r(Xa.prototype,'minimum',[Ua],{enumerable:!0,initializer:function(){return null}}),sn=r(Xa.prototype,'minimumLength',[Fa],{enumerable:!0,initializer:function(){return null}}),ln=r(Xa.prototype,'minimumLengthText',[qa],{enumerable:!0,initializer:function(){return'Please type at least or equal ${model.minimumLength} symbols.'}}),dn=r(Xa.prototype,'minimumText',[Ga],{enumerable:!0,initializer:function(){return'Please given a number at least or equal to {{model.minimum}}.'}}),pn=r(Xa.prototype,'model',[Va],{enumerable:!0,initializer:function(){return{}}}),cn=r(Xa.prototype,'modelChange',[Wa],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),un=r(Xa.prototype,'pattern',[Ba],{enumerable:!0,initializer:function(){return this.pattern}}),fn=r(Xa.prototype,'patternText',[Ha],{enumerable:!0,initializer:function(){return'Your string have to match the regular expression: "${model.regularExpressionPattern}".'}}),yn=r(Xa.prototype,'required',[$a],{enumerable:!0,initializer:function(){return null}}),gn=r(Xa.prototype,'requiredText',[Ka],{enumerable:!0,initializer:function(){return'Please fill this field.'}}),hn=r(Xa.prototype,'showDeclarationText',[Ya],{enumerable:!0,initializer:function(){return'\u2139'}}),bn=r(Xa.prototype,'showValidationErrorMessages',[Ja],{enumerable:!0,initializer:function(){return!1}}),Pn=r(Xa.prototype,'type',[Za],{enumerable:!0,initializer:function(){return this.type}}),Xa),qp=t.AbstractNativeInputComponent=class extends Fp{constructor(e){super(),this._attachmentWithPrefixExists=this._attachmentWithPrefixExists,this._extendObject=this._extendObject,this._getFilenameByPrefix=this._getFilenameByPrefix,this._modelConfiguration=this._modelConfiguration,this._numberGetUTCTimestamp=this._numberGetUTCTimestamp;const t=sd(e,this,this.constructor);this._attachmentWithPrefixExists=t(lp).transform.bind(t(lp)),this._extendObject=t(ud).transform.bind(t(ud)),this._getFilenameByPrefix=t(sp).transform.bind(t(sp)),this._modelConfiguration=t(md).configuration.database.model,this._numberGetUTCTimestamp=t(ip).transform.bind(t(ip))}ngOnInit(){this._extendObject(this.model,this._extendObject({disabled:!1,emptyEqualsToNull:!0,maximum:Infinity,minimum:0,maximumLength:Infinity,minimumLength:0,nullable:!0,regularExpressionPattern:'.*',state:{},trim:!0,type:'string'},this.model)),'string'==typeof this.model.value&&this.model.trim&&this.model.value===this.model.value.trim();for(const e of['onUpdateExpression','onUpdateExecution'])this.model.hasOwnProperty(e)&&this.model[e]&&'function'!=typeof this.model[e]&&(this.model[e]=new Function('newDocument','oldDocument','userContext','securitySettings','name','models','modelConfiguration','serialize','modelName','model','propertySpecification','now','nowUTCTimestamp','getFilenameByPrefix','attachmentWithPrefixExists',(e.endsWith('Expression')?'return ':'')+this.model[e]))}onChange(e,t){'integer'===this.model.type?e=parseInt(e):'number'===this.model.type?e=parseFloat(e):e&&'string'===this.model.type&&this.model.trim&&(e=e.trim());const a=new Date,n=this._numberGetUTCTimestamp(a),i={[this.model.name]:e};for(const r of['onUpdateExpression','onUpdateExecution'])this.model.hasOwnProperty(r)&&this.model[r]&&'function'==typeof this.model[r]&&(e=this.model[r](i,null,{},{},this.model.name,this._modelConfiguration.entities,this._modelConfiguration,(e)=>JSON.stringify(e,null,4),'generic',{generic:{[this.model.name]:this.model}},this.model,a,n,this._getFilenameByPrefix,this._attachmentWithPrefixExists.bind(i,i),e),!(e instanceof Date)&&(this.model.type.endsWith('Date')||this.model.type.endsWith('Time'))&&(e*=1e3));return this.model.state=t,e}};(0,zl.Optional)()(qp,null,0),Reflect.defineMetadata('design:paramtypes',[zl.Injector],qp);let Gp=t.AbstractLiveDataComponent=(xn=Nn=class e{constructor(e){this.actions=[],this.autoRestartOnError=!0,this._canceled=!1,this._changeDetectorReference=this._changeDetectorReference,this._changesStream=this._changesStream,this._data=this._data,this._extendObject=this._extendObject,this._liveUpdateOptions={},this._stringCapitalize=this._stringCapitalize,this._tools=this._tools;const t=sd(e,this,this.constructor);this._changeDetectorReference=t(zl.ChangeDetectorRef),this._data=t(kp),this._extendObject=t(ud).transform.bind(t(ud)),this._stringCapitalize=t(Bd).transform.bind(t(Bd)),this._tools=t(od).fixed.tools}ngOnInit(){var t=this;const a=this._tools.debounce(()=>{this._changesStream=this._data.connection.changes(this._extendObject(!0,{},{since:Zl.sequence},e.defaultLiveUpdateOptions,this._liveUpdateOptions));for(const e of['change','complete','error'])this._changesStream.on(e,(()=>{var n=o(function*(n){if(t._canceled)return;'change'===e&&('seq'in n&&'number'==typeof n.seq&&(Zl.sequence=n.seq),Zl.data[n.id]=n.doc),n.name=e,t.actions.unshift(n);let i=t[`onData${t._stringCapitalize(e)}`](n);null!==i&&'object'==typeof i&&'then'in i&&(i=yield i),i&&t._changeDetectorReference.detectChanges(),'error'===e&&t.autoRestartOnError&&a()});return function(){return n.apply(this,arguments)}})())},3e3);this._tools.timeout(a)}ngOnDestroy(){this._canceled=!0,this._changesStream&&this._changesStream.cancel()}onDataChange(e=null){return!0}onDataComplete(e=null){return!1}onDataError(e=null){return!1}},Nn.defaultLiveUpdateOptions={heartbeat:1e4,include_docs:!0,live:!0,since:'now',timeout:!1},xn);(0,zl.Optional)()(Gp,null,0),Reflect.defineMetadata('design:paramtypes',[zl.Injector],Gp);let Vp=t.AbstractItemsComponent=class extends Gp{constructor(e){super(e),this.allItems=this.allItems,this.allItemsChecked=!1,this.debouncedUpdate=this.debouncedUpdate,this.idName=this.idName,this.items=this.items,this.keyCode=this.keyCode,this.limit=this.limit,this.navigateAway=!1,this.page=this.page,this.preventedDataUpdate=null,this.regularExpression=!1,this.revisionName=this.revisionName,this.searchTerm='',this.searchTermStream=new Bl.Subject,this.selectedItems=new Set,this.sort={[md.defaultScope.configuration.database.model.property.name.special.id]:'asc'},this._currentParameter=this._currentParameter,this._itemPath='item',this._itemsPath='items',this._route=this._route,this._router=this._router,this._subscriptions=[],this._toolsInstance=this._toolsInstance;const t=sd(e);this.idName=t(md).configuration.database.model.property.name.special.id,this.revisionName=t(md).configuration.database.model.property.name.special.revision,this.keyCode=this._tools.keyCode,this._route=t(Ll.ActivatedRoute),this._router=t(Ll.Router),this._toolsInstance=t(od).tools,this._subscriptions.push(this._route.params.subscribe((e)=>{this._currentParameter=e,this.limit=parseInt(this._currentParameter.limit),this.page=parseInt(this._currentParameter.page);const t=/(regex|exact)-(.*)/.exec(this._currentParameter.searchTerm);t&&(this.regularExpression='regex'===t[1],this.searchTerm=decodeURIComponent(t[2]))})),this._subscriptions.push(this._route.data.subscribe((e)=>{this.limit=d(1,this.limit||1),this.allItems=e.items.slice(),e.items.splice(0,(this.page-1)*this.limit),e.items.length>this.limit&&e.items.splice(this.limit,e.items.length-this.limit),this.items=e.items,this.applyPageConstraints()&&this.update()})),this._subscriptions.push(this.searchTermStream.debounceTime(200).distinctUntilChanged().subscribe(()=>(this.page=1,this.update()))),this.debouncedUpdate=this._tools.debounce(this.update.bind(this))}applyPageConstraints(){const e=this.page,t=this.limit;return this.limit=d(1,this.limit||1),this.page=d(1,s(this.page,l(this.allItems.length/this.limit))),this.page!==e||this.limit!==t}changeItemWrapperFactory(e){var t=this;return(()=>{var a=o(function*(...a){let n=!0;const i=t._router.events.subscribe(function(e){e instanceof Ll.NavigationEnd&&(n=!1,i.unsubscribe())});t._subscriptions.push(i);const r=e(...a);return'object'==typeof r&&null!==r&&'then'in r&&(yield r),n&&(yield t.update(!0)),r});return function(){return a.apply(this,arguments)}})()}clearSelectedItems(){for(const e of this.items)this.selectedItems.delete(e),e.selected=!1}goToItem(e,t='latest'){return this.navigateAway=!0,this._router.navigate([this._itemPath,e,t])}ngAfterContentChecked(){this.preventedDataUpdate&&this.onDataChange(...this.preventedDataUpdate)}onDataChange(...e){return this.selectedItems.size||![0,1].includes(parseInt(this._currentParameter.page))?this.preventedDataUpdate=e:(this.preventedDataUpdate=null,this.debouncedUpdate(!0)),!1}ngOnDestroy(...e){const t=super.ngOnDestroy(...e);for(const t of this._subscriptions)t.unsubscribe();return t}selectAllItems(){for(const e of this.items)this.selectedItems.add(e),e.selected=!0}trackByIDAndRevision(e){return`${e[this.idName]}/${e[this.revisionName]}`}update(e=!1){var t=this;return o(function*(){let a=!1;if(yield t._toolsInstance.acquireLock(`${t.constructor.name}Update`),!t.navigateAway){t.applyPageConstraints(),e&&0!==parseInt(t._currentParameter.page)&&(t.page=0);let n='';for(const e in t.sort)t.sort.hasOwnProperty(e)&&(n+=`${n?',':''}${e}`,'asc'!==t.sort[e]&&(n+=`-${t.sort[e]}`));a=yield t._router.navigate([t._itemsPath,n,t.page,t.limit,`${t.regularExpression?'regex':'exact'}-`+encodeURIComponent(t.searchTerm)],{preserveFragment:!0,replaceUrl:0===parseInt(t._currentParameter.page),skipLocationChange:0===t.page}),a&&(t.allItemsChecked=!1)}return t._toolsInstance.releaseLock(`${t.constructor.name}Update`),a})()}updateSearch(){this.searchTermStream.next(this.searchTerm)}};(0,zl.Optional)()(Vp,null,0),Reflect.defineMetadata('design:paramtypes',[zl.Injector],Vp);let Wp=t.AbstractValueAccessor=(vn=(0,zl.Input)(),Tn=class extends jl.DefaultValueAccessor{constructor(e){super(e.get(zl.Renderer2),e.get(zl.ElementRef),null),this.onChangeCallback=od.tools.noop,this.onTouchedCallback=od.tools.noop,i(this,'type',Sn,this)}export(e){return e}import(e){return e}registerOnChange(e,...t){return this.onChangeCallback=(t,...a)=>e(this.import(t),...a),super.registerOnChange(this.onChangeCallback,...t)}registerOnTouched(e,...t){return this.onTouchedCallback=e,super.registerOnTouched(this.onTouchedCallback,...t)}writeValue(e,...t){return super.writeValue(this.export(e,...t),...t)}},Sn=r(Tn.prototype,'type',[vn],{enumerable:!0,initializer:function(){return null}}),Tn);Reflect.defineMetadata('design:paramtypes',[zl.Injector],Wp);let Bp=t.DateDirective=(On=(0,zl.Directive)({selector:'[genericDate]'}),In=(0,zl.Input)('genericDate'),On(Cn=(En=class{constructor(e,t,a,n){this.dateFormatter=this.dateFormatter,this.extendObject=this.extendObject,this.options={dateTime:'now',format:'HH:mm:ss',freeze:!1,updateIntervalInMilliseconds:1e3},this.templateReference=this.templateReference,this.timerID=this.timerID,this.viewContainerReference=this.viewContainerReference,this.dateFormatter=e.transform.bind(e),this.extendObject=t.transform.bind(t),this.templateReference=a,this.viewContainerReference=n}set insertOptions(e){(['string','number'].includes(typeof e)||[null,void 0].includes(e)||'object'==typeof e&&e instanceof Date)&&(e={dateTime:e}),this.extendObject(!0,this.options,e)}insert(){let e=this.options.dateTime;'string'==typeof e&&['now',''].includes(e)||'number'==typeof e&&isNaN(e)||[null,void 0].includes(e)?e=Date.now():'string'==typeof e&&`${parseFloat(e)}`===e&&(e=1e3*parseFloat(e)),this.viewContainerReference.createEmbeddedView(this.templateReference,{dateTime:this.dateFormatter(e,this.options.format)})}ngOnDestroy(){this.timerID&&clearInterval(this.timerID)}ngOnInit(){this.timerID=setInterval(()=>{this.options.freeze||(this.viewContainerReference.remove(),this.insert())},this.options.updateIntervalInMilliseconds),this.insert()}},r(En.prototype,'insertOptions',[In],Object.getOwnPropertyDescriptor(En.prototype,'insertOptions'),En.prototype),En))||Cn);Reflect.defineMetadata('design:paramtypes',[Ml.DatePipe,ud,zl.TemplateRef,zl.ViewContainerRef],Bp);let Hp=t.SliderDirective=(_n=(0,zl.Directive)({selector:'[genericSlider]'}),Dn=(0,zl.Input)('genericSlider'),_n(wn=(Rn=class{constructor(e,t,a){this.extendObject=this.extendObject,this.index=0,this.options={freeze:!1,startIndex:0,step:1,slides:[],updateIntervalInMilliseconds:6e3},this.templateReference=this.templateReference,this.timerID=this.timerID,this.viewContainerReference=this.viewContainerReference,this.extendObject=e.transform.bind(e),this.templateReference=t,this.viewContainerReference=a}getNextIndex(e=-1){return-1===e&&(e=this.index),(e+this.options.step)%this.options.slides.length}set insertOptions(e){Array.isArray(e)&&(e={slides:e}),this.extendObject(!0,this.options,e)}update(){this.options.slides.length&&this.viewContainerReference.createEmbeddedView(this.templateReference,{getNextIndex:this.getNextIndex.bind(this),index:this.index,options:this.options,slide:this.options.slides[this.index],slides:this.options.slides})}ngOnDestroy(){this.timerID&&clearInterval(this.timerID)}ngOnInit(){this.timerID=setInterval(()=>{const e=(this.index+this.options.step)%this.options.slides.length;!0===this.options.freeze||e===this.index||'number'==typeof this.options.freeze&&this.options.freeze>=this.options.slides.length||(this.viewContainerReference.remove(),this.index=this.getNextIndex(),this.update())},this.options.updateIntervalInMilliseconds),this.index=this.options.startIndex,this.update()}},r(Rn.prototype,'insertOptions',[Dn],Object.getOwnPropertyDescriptor(Rn.prototype,'insertOptions'),Rn.prototype),Rn))||wn);Reflect.defineMetadata('design:paramtypes',[ud,zl.TemplateRef,zl.ViewContainerRef],Hp);const $p=[{provide:jl.NG_VALUE_ACCESSOR,useExisting:(0,zl.forwardRef)(()=>Kp),multi:!0}];let Kp=t.DateTimeValueAccessor=(zn=(0,zl.Directive)({selector:`
+        input:not([type=checkbox])[formControlName],
+        textarea[formControlName],
+        input:not([type=checkbox])[formControl],
+        textarea[formControl],
+        input:not([type=checkbox])[ngModel],
+        textarea[ngModel],[ngDefaultControl]'
+    `,host:{"(input)":'_handleInput($event.target.value)',"(blur)":'onTouched()',"(compositionstart)":'_compositionStart()',"(compositionend)":'_compositionEnd($event.target.value)'},providers:$p}),zn(Mn=class extends Wp{constructor(e){super(e)}export(e){if(![void 0,null].includes(e)&&['date','time'].includes(this.type)){const t=new Date(e);if(isNaN(t.getDate()))return;if('time'===this.type){let e=`${t.getHours()}`;1===e.length&&(e=`0${e}`);let a=`${t.getMinutes()}`;return 1===a.length&&(a=`0${a}`),`${e}:${a}`}if('date'===this.type){let e=`${t.getMonth()+1}`;1===e.length&&(e=`0${e}`);let a=`${t.getDate()}`;return 1===a.length&&(a=`0${a}`),`${t.getFullYear()}-${e}-${a}`}}return e}import(e){if('string'==typeof e)if('time'===this.type){const t=/^([0-9]{2}):([0-9]{2})$/.exec(e);if(t)return new Date(1970,0,1,parseInt(t[1]),parseInt(t[2]))}else if('date'===this.type){const t=/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(e);if(t)return new Date(parseInt(t[1]),parseInt(t[2])-1,parseInt(t[3]))}return e}})||Mn);Reflect.defineMetadata('design:paramtypes',[zl.Injector],Kp);let Yp=t.IntervalInputComponent=(jn=(0,zl.Component)({animations:ad,changeDetection:zl.ChangeDetectionStrategy[Yl],selector:'generic-interval-input',template:`
+        <generic-input
+            [declaration]="startDeclaration"
+            [description]="startDescription"
+            [disabled]="startDisabled"
+            [showDeclarationText]="startShowDeclarationText"
+            [maximum]="startMaximum"
+            [maximumText]="startMaximumText"
+            [minimum]="startMinimum"
+            [required]="startRequired"
+            [requiredText]="startRequiredText"
+            [minimumText]="startMinimumText"
+            [model]="model.start"
+            (model)="change($event, 'start')"
+            [showValidationErrorMessages]="startShowValidationErrorMessages"
+            type="time"
+        ></generic-input>
+        <ng-content></ng-content>
+        <generic-input
+            [declaration]="endDeclaration"
+            [description]="endDescription"
+            [disabled]="endDisabled"
+            [showDeclarationText]="endShowDeclarationText"
+            [maximum]="endMaximum"
+            [maximumText]="endMaximumText"
+            [minimum]="endMinimum"
+            [required]="endRequired"
+            [requiredText]="endRequiredText"
+            [minimumText]="endMinimumText"
+            [model]="model.end"
+            (model)="change($event, 'end')"
+            [showValidationErrorMessages]="endShowValidationErrorMessages"
+            type="time"
+        ></generic-input>
+    `}),An=(0,zl.Input)(),kn=(0,zl.Input)(),Ln=(0,zl.Input)(),Un=(0,zl.Input)(),Fn=(0,zl.Input)(),qn=(0,zl.Input)(),Gn=(0,zl.Input)(),Vn=(0,zl.Input)(),Wn=(0,zl.Input)(),Bn=(0,zl.Input)(),Hn=(0,zl.Input)(),$n=(0,zl.Input)(),Kn=(0,zl.Input)(),Yn=(0,zl.Input)(),Jn=(0,zl.Input)(),Zn=(0,zl.Input)(),Xn=(0,zl.Input)(),Qn=(0,zl.Input)(),ei=(0,zl.Input)(),ti=(0,zl.Input)(),ai=(0,zl.Input)(),ni=(0,zl.Input)(),ii=(0,zl.Input)(),ri=(0,zl.Output)(),jn(oi=(mi=class{constructor(){i(this,'endDeclaration',si,this),i(this,'startDeclaration',li,this),i(this,'endDescription',di,this),i(this,'startDescription',pi,this),i(this,'endDisabled',ci,this),i(this,'startDisabled',ui,this),i(this,'endMaximum',fi,this),i(this,'startMaximum',yi,this),i(this,'endMaximumText',gi,this),i(this,'startMaximumText',hi,this),i(this,'endMinimum',bi,this),i(this,'startMinimum',Pi,this),i(this,'endMinimumText',Ni,this),i(this,'startMinimumText',xi,this),i(this,'endRequired',vi,this),i(this,'startRequired',Ti,this),i(this,'endRequiredText',Si,this),i(this,'startRequiredText',Oi,this),i(this,'endShowDeclarationText',Ii,this),i(this,'startShowDeclarationText',Ci,this),i(this,'endShowValidationErrorMessages',Ei,this),i(this,'startShowValidationErrorMessages',_i,this),i(this,'model',Di,this),i(this,'modelChange',wi,this)}change(e,t){this.modelChange.emit({value:e,type:t})}},si=r(mi.prototype,'endDeclaration',[An],{enumerable:!0,initializer:function(){return null}}),li=r(mi.prototype,'startDeclaration',[kn],{enumerable:!0,initializer:function(){return null}}),di=r(mi.prototype,'endDescription',[Ln],{enumerable:!0,initializer:function(){return null}}),pi=r(mi.prototype,'startDescription',[Un],{enumerable:!0,initializer:function(){return null}}),ci=r(mi.prototype,'endDisabled',[Fn],{enumerable:!0,initializer:function(){return null}}),ui=r(mi.prototype,'startDisabled',[qn],{enumerable:!0,initializer:function(){return null}}),fi=r(mi.prototype,'endMaximum',[Gn],{enumerable:!0,initializer:function(){return null}}),yi=r(mi.prototype,'startMaximum',[Vn],{enumerable:!0,initializer:function(){return null}}),gi=r(mi.prototype,'endMaximumText',[Wn],{enumerable:!0,initializer:function(){return'Please give a number less or equal than ${model.maximum}.'}}),hi=r(mi.prototype,'startMaximumText',[Bn],{enumerable:!0,initializer:function(){return'Please give a number less or equal than ${model.maximum}.'}}),bi=r(mi.prototype,'endMinimum',[Hn],{enumerable:!0,initializer:function(){return null}}),Pi=r(mi.prototype,'startMinimum',[$n],{enumerable:!0,initializer:function(){return null}}),Ni=r(mi.prototype,'endMinimumText',[Kn],{enumerable:!0,initializer:function(){return'Please given a number at least or equal to {{model.minimum}}.'}}),xi=r(mi.prototype,'startMinimumText',[Yn],{enumerable:!0,initializer:function(){return'Please given a number at least or equal to {{model.minimum}}.'}}),vi=r(mi.prototype,'endRequired',[Jn],{enumerable:!0,initializer:function(){return null}}),Ti=r(mi.prototype,'startRequired',[Zn],{enumerable:!0,initializer:function(){return null}}),Si=r(mi.prototype,'endRequiredText',[Xn],{enumerable:!0,initializer:function(){return'Please fill this field.'}}),Oi=r(mi.prototype,'startRequiredText',[Qn],{enumerable:!0,initializer:function(){return'Please fill this field.'}}),Ii=r(mi.prototype,'endShowDeclarationText',[ei],{enumerable:!0,initializer:function(){return'\u2139'}}),Ci=r(mi.prototype,'startShowDeclarationText',[ti],{enumerable:!0,initializer:function(){return'\u2139'}}),Ei=r(mi.prototype,'endShowValidationErrorMessages',[ai],{enumerable:!0,initializer:function(){return!1}}),_i=r(mi.prototype,'startShowValidationErrorMessages',[ni],{enumerable:!0,initializer:function(){return!1}}),Di=r(mi.prototype,'model',[ii],{enumerable:!0,initializer:function(){return{end:{value:new Date(1970,0,1)},start:{value:new Date(1970,0,1)}}}}),wi=r(mi.prototype,'modelChange',[ri],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),mi))||oi),Jp=t.IntervalsInputComponent=(Ri=(0,zl.Component)({animations:ad,changeDetection:zl.ChangeDetectionStrategy[Yl],selector:'generic-intervals-input',template:`
+        <div
+            *ngIf="description !== '' && (description || model.description || model.name)"
+        >{{description || model.description || model.name}}</div>
+        <div
+            @defaultAnimation
+            *ngFor="let interval of (model.value || []); let first = first; let index = index"
+        >
+            <generic-interval-input
+                [endDisabled]="endDisabled"
+                [startDisabled]="startDisabled"
+
+                [endShowDeclarationText]="endShowDeclarationText"
+                [startShowDeclarationText]="startShowDeclarationText"
+
+                [endMaximum]="endMaximum"
+                [startMaximum]="startMaximum"
+
+                [endMaximumText]="endMaximumText"
+                [startMaximumText]="startMaximumText"
+
+                [endMinimum]="endMinimum"
+                [startMinimum]="startMinimum"
+
+                [endRequired]="endRequired"
+                [startRequired]="startRequired"
+
+                [endRequiredText]="endRequiredText"
+                [startRequiredText]="startRequiredText"
+
+                [endMinimumText]="endMinimumText"
+                [startMinimumText]="startMinimumText"
+
+                [endDescription]="first ? endDescription : ''"
+                [startDescription]="first ? startDescription : ''"
+
+                [model]="interval"
+                (model)="change($event, index)"
+
+                [endDeclaration]="endDeclaration"
+                [startDeclaration]="startDeclaration"
+
+                [endShowValidationErrorMessages]="endShowValidationErrorMessages"
+                [startShowValidationErrorMessages]="startShowValidationErrorMessages"
+            >
+                <ng-container *ngIf="contentTemplate; else fallback">
+                    <ng-container
+                        *ngTemplateOutlet="contentTemplate; context: {\$implicit:interval}"
+                    ></ng-container>
+                </ng-container>
+            </generic-interval-input>
+            <a
+                class="remove"
+                (click)="$event.preventDefault(); $event.stopPropagation(); remove(interval)"
+                href=""
+                *ngIf="model.minimumNumber === null || model.value.length > model.minimumNumber"
+            >-</a>
+        </div>
+        <a
+            class="add"
+            (click)="$event.preventDefault(); $event.stopPropagation(); add()"
+            href=""
+            *ngIf="model.maximumNumber === null || (model.value?.length || 0) < model.maximumNumber"
+        >+</a>
+        <ng-template #fallback>--</ng-template>
+    `}),zi=(0,zl.Input)(),Mi=(0,zl.ContentChild)(zl.TemplateRef),ji=(0,zl.Input)(),Ai=(0,zl.Input)(),ki=(0,zl.Input)(),Li=(0,zl.Input)(),Ui=(0,zl.Input)(),Fi=(0,zl.Input)(),qi=(0,zl.Input)(),Gi=(0,zl.Input)(),Vi=(0,zl.Input)(),Wi=(0,zl.Input)(),Bi=(0,zl.Input)(),Hi=(0,zl.Input)(),$i=(0,zl.Input)(),Ki=(0,zl.Input)(),Yi=(0,zl.Input)(),Ji=(0,zl.Input)(),Zi=(0,zl.Input)(),Xi=(0,zl.Input)(),Qi=(0,zl.Input)(),er=(0,zl.Input)(),tr=(0,zl.Input)(),ar=(0,zl.Input)(),nr=(0,zl.Input)(),ir=(0,zl.Input)(),rr=(0,zl.Output)(),Ri(or=(mr=class{constructor(e,t){i(this,'additionalObjectData',sr,this),i(this,'contentTemplate',lr,this),i(this,'description',dr,this),i(this,'endDeclaration',pr,this),i(this,'startDeclaration',cr,this),i(this,'endDescription',ur,this),i(this,'startDescription',fr,this),i(this,'endDisabled',yr,this),i(this,'startDisabled',gr,this),i(this,'endMaximum',hr,this),i(this,'startMaximum',br,this),i(this,'endMaximumText',Pr,this),i(this,'startMaximumText',Nr,this),i(this,'endMinimum',xr,this),i(this,'startMinimum',vr,this),i(this,'endMinimumText',Tr,this),i(this,'startMinimumText',Sr,this),i(this,'endRequired',Or,this),i(this,'startRequired',Ir,this),i(this,'endRequiredText',Cr,this),i(this,'startRequiredText',Er,this),i(this,'endShowDeclarationText',_r,this),i(this,'startShowDeclarationText',Dr,this),i(this,'endShowValidationErrorMessages',wr,this),i(this,'startShowValidationErrorMessages',Rr,this),i(this,'model',zr,this),i(this,'modelChange',Mr,this),this._dataScope=this._dataScope,this._extendObject=this._extendObject,this._dataScope=e,this._extendObject=t.transform.bind(t)}change(e,t){this.modelChange.emit({value:e,index:t})}ngOnInit(){this.additionalObjectData||(this.additionalObjectData=this._dataScope.generate('_interval')),this.model.value?this.model.value.sort((e,t)=>e.start.value-t.start.value):this.model.value=[]}add(e={}){this.model.value||(this.model.value=[]);const t=this.model.value.length?new Date(this.model.value[this.model.value.length-1].end.value).getTime():0;this.model.value.push(this._extendObject(!0,{},this.additionalObjectData,{end:{value:new Date(t+3600000)},start:{value:new Date(t)}},e)),this.modelChange.emit(this.model)}remove(e){const t=this.model.value.indexOf(e);-1!==t&&(this.model.value.splice(t,1),this.modelChange.emit(this.model))}},sr=r(mr.prototype,'additionalObjectData',[zi],{enumerable:!0,initializer:function(){return this.additionalObjectData}}),lr=r(mr.prototype,'contentTemplate',[Mi],{enumerable:!0,initializer:function(){return this.contentTemplate}}),dr=r(mr.prototype,'description',[ji],{enumerable:!0,initializer:function(){return null}}),pr=r(mr.prototype,'endDeclaration',[Ai],{enumerable:!0,initializer:function(){return null}}),cr=r(mr.prototype,'startDeclaration',[ki],{enumerable:!0,initializer:function(){return null}}),ur=r(mr.prototype,'endDescription',[Li],{enumerable:!0,initializer:function(){return null}}),fr=r(mr.prototype,'startDescription',[Ui],{enumerable:!0,initializer:function(){return null}}),yr=r(mr.prototype,'endDisabled',[Fi],{enumerable:!0,initializer:function(){return null}}),gr=r(mr.prototype,'startDisabled',[qi],{enumerable:!0,initializer:function(){return null}}),hr=r(mr.prototype,'endMaximum',[Gi],{enumerable:!0,initializer:function(){return null}}),br=r(mr.prototype,'startMaximum',[Vi],{enumerable:!0,initializer:function(){return null}}),Pr=r(mr.prototype,'endMaximumText',[Wi],{enumerable:!0,initializer:function(){return'Please give a number less or equal than ${model.maximum}.'}}),Nr=r(mr.prototype,'startMaximumText',[Bi],{enumerable:!0,initializer:function(){return'Please give a number less or equal than ${model.maximum}.'}}),xr=r(mr.prototype,'endMinimum',[Hi],{enumerable:!0,initializer:function(){return null}}),vr=r(mr.prototype,'startMinimum',[$i],{enumerable:!0,initializer:function(){return null}}),Tr=r(mr.prototype,'endMinimumText',[Ki],{enumerable:!0,initializer:function(){return'Please given a number at least or equal to {{model.minimum}}.'}}),Sr=r(mr.prototype,'startMinimumText',[Yi],{enumerable:!0,initializer:function(){return'Please given a number at least or equal to {{model.minimum}}.'}}),Or=r(mr.prototype,'endRequired',[Ji],{enumerable:!0,initializer:function(){return null}}),Ir=r(mr.prototype,'startRequired',[Zi],{enumerable:!0,initializer:function(){return null}}),Cr=r(mr.prototype,'endRequiredText',[Xi],{enumerable:!0,initializer:function(){return'Please fill this field.'}}),Er=r(mr.prototype,'startRequiredText',[Qi],{enumerable:!0,initializer:function(){return'Please fill this field.'}}),_r=r(mr.prototype,'endShowDeclarationText',[er],{enumerable:!0,initializer:function(){return'\u2139'}}),Dr=r(mr.prototype,'startShowDeclarationText',[tr],{enumerable:!0,initializer:function(){return'\u2139'}}),wr=r(mr.prototype,'endShowValidationErrorMessages',[ar],{enumerable:!0,initializer:function(){return!1}}),Rr=r(mr.prototype,'startShowValidationErrorMessages',[nr],{enumerable:!0,initializer:function(){return!1}}),zr=r(mr.prototype,'model',[ir],{enumerable:!0,initializer:function(){return{value:[]}}}),Mr=r(mr.prototype,'modelChange',[rr],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),mr))||or);Reflect.defineMetadata('design:paramtypes',[Lp,ud],Jp);let Zp=t.AbstractEditorComponent=(jr=(0,zl.Input)(),Ar=(0,zl.Input)(),kr=(0,zl.ViewChild)('hostDomNode'),Lr=(0,zl.Output)(),Ur=(0,zl.Input)(),Fr=(0,zl.Output)(),qr=(Yr=Kr=class e extends Wp{constructor(e){super(e),i(this,'configuration',Gr,this),this.contentSetterMethodName='setContent',i(this,'disabled',Vr,this),this.extendObject=this.extendObject,this.factory=this.factory,this.factoryName='',this.fixedUtility=this.fixedUtility,i(this,'hostDomNode',Wr,this),this.instance=null,i(this,'initialized',Br,this),i(this,'model',Hr,this),i(this,'modelChange',$r,this);const t=sd(e,this,this.constructor);this.extendObject=t(ud).transform.bind(t(ud)),this.fixedUtility=t(od).fixed}ngAfterViewInit(){var t=this;return o(function*(){if(t.factory||(t.fixedUtility.globalContext[t.factoryName]?t.factory=t.fixedUtility.globalContext[t.factoryName]:e.factories[t.factoryName]&&(t.factory=e.factories[t.factoryName])),t.factory)e.factories[t.factoryName]=t.factory,yield t.fixedUtility.tools.timeout();else{try{yield e.applicationInterfaceLoad[t.factoryName]}catch(e){throw e}e.factories[t.factoryName]=t.factory}})()}export(e,...t){return this.model=[null,void 0].includes(e)?'':e.toString(),this.instance&&this.instance[this.contentSetterMethodName](this.model),super.export(e,...t)}setDisabledState(e){this.disabled=e}},Kr.applicationInterfaceLoad={},Kr.factories={},Yr),Gr=r(qr.prototype,'configuration',[jr],{enumerable:!0,initializer:function(){return{}}}),Vr=r(qr.prototype,'disabled',[Ar],{enumerable:!0,initializer:function(){return null}}),Wr=r(qr.prototype,'hostDomNode',[kr],{enumerable:!0,initializer:function(){return this.hostDomNode}}),Br=r(qr.prototype,'initialized',[Lr],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),Hr=r(qr.prototype,'model',[Ur],{enumerable:!0,initializer:function(){return''}}),$r=r(qr.prototype,'modelChange',[Fr],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),qr);Reflect.defineMetadata('design:paramtypes',[zl.Injector],Zp);let Xp=t.CodeEditorComponent=(Jr=(0,zl.Component)({animations:ad,changeDetection:zl.ChangeDetectionStrategy[Yl],providers:[{multi:!0,provide:jl.NG_VALUE_ACCESSOR,useExisting:(0,zl.forwardRef)(()=>Xp)}],selector:'code-editor',template:'<textarea #hostDomNode></textarea>'}),Zr=(0,zl.Output)(),Xr=(0,zl.Input)(),Qr=(0,zl.Output)(),Jr(eo=(to=(oo=ro=class e extends Zp{constructor(t){super(t),i(this,'blur',ao,this),i(this,'configuration',no,this),this.contentSetterMethodName='setValue',this.factoryName='CodeMirror',i(this,'focus',io,this),'object'!=typeof e.applicationInterfaceLoad[this.factoryName]&&(e.applicationInterfaceLoad[this.factoryName]=Promise.all([new Promise((e)=>this.fixedUtility.$(`
+                        <link
+                            href="${nd.path.base}`+nd.path.cascadingStyleSheet+`" rel="stylesheet"
+                            type="text/css"
+                        />
+                    `).appendTo('head').on('load',e)),new Promise((e,t)=>this.fixedUtility.$.ajax({cache:!0,dataType:'script',error:t,success:()=>{this.factory=this.fixedUtility.globalContext[this.factoryName],e(this.factory)},url:nd.path.base+nd.path.script}))]))}ngAfterViewInit(){var t=this;return super.ngAfterViewInit().then(o(function*(){if(t.configuration.mode)if(!e.modesLoad.hasOwnProperty(t.configuration.mode)){e.modesLoad[t.configuration.mode]=new Promise(function(e,a){return t.fixedUtility.$.ajax({cache:!0,dataType:'script',error:a,success:e,url:t.configuration.path.base+t.configuration.path.mode.replace(/{mode}/g,t.configuration.mode)})});try{yield e.modesLoad[t.configuration.mode]}catch(e){throw e}}else if(!0!==e.modesLoad[t.configuration.mode])try{yield e.modesLoad[t.configuration.mode]}catch(e){throw e}const a=t.extendObject({},t.configuration,{readOnly:t.disabled});delete a.path,t.instance=t.factory.fromTextArea(t.hostDomNode.nativeElement,a),t.instance[t.contentSetterMethodName](t.model),t.instance.on('blur',function(e,a){return t.blur.emit(a)}),t.instance.on('change',function(){t.onChangeCallback(t.instance.getValue()),t.modelChange.emit(t.model)}),t.instance.on('focus',function(e,a){return t.focus.emit(a)}),t.initialized.emit(t.instance)}))}setDisabledState(e){super.setDisabledState(e),this.instance&&this.instance.setOption('readOnly',this.disabled)}},ro.modesLoad={},oo),ao=r(to.prototype,'blur',[Zr],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),no=r(to.prototype,'configuration',[Xr],{enumerable:!0,initializer:function(){return nd}}),io=r(to.prototype,'focus',[Qr],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),to))||eo);Reflect.defineMetadata('design:paramtypes',[zl.Injector],Xp);let Qp=t.TextEditorComponent=(mo=(0,zl.Component)({animations:ad,changeDetection:zl.ChangeDetectionStrategy[Yl],providers:[{multi:!0,provide:jl.NG_VALUE_ACCESSOR,useExisting:(0,zl.forwardRef)(()=>Qp)}],selector:'text-editor',template:'<textarea #hostDomNode></textarea>'}),so=(0,zl.Input)(),lo=(0,zl.Output)(),po=(0,zl.Output)(),co=(0,zl.Output)(),uo=(0,zl.Output)(),fo=(0,zl.Output)(),yo=(0,zl.Output)(),go=(0,zl.Output)(),ho=(0,zl.Output)(),bo=(0,zl.Output)(),Po=(0,zl.Output)(),No=(0,zl.Output)(),xo=(0,zl.Output)(),vo=(0,zl.Output)(),To=(0,zl.Output)(),So=(0,zl.Output)(),Oo=(0,zl.Output)(),Io=(0,zl.Output)(),Co=(0,zl.Output)(),Eo=(0,zl.Output)(),_o=(0,zl.Output)(),Do=(0,zl.Output)(),wo=(0,zl.Output)(),Ro=(0,zl.Output)(),zo=(0,zl.Output)(),Mo=(0,zl.Output)(),jo=(0,zl.Output)(),Ao=(0,zl.Output)(),ko=(0,zl.Output)(),Lo=(0,zl.Output)(),Uo=(0,zl.Output)(),mo(Fo=(qo=class e extends Zp{constructor(t){super(t),i(this,'configuration',Go,this),this.factoryName='tinymce',i(this,'click',Vo,this),i(this,'dblclick',Wo,this),i(this,'MouseDown',Bo,this),i(this,'MouseUp',Ho,this),i(this,'MouseMove',$o,this),i(this,'MouseOver',Ko,this),i(this,'MouseOut',Yo,this),i(this,'MouseEnter',Jo,this),i(this,'MouseLeave',Zo,this),i(this,'KeyDown',Xo,this),i(this,'KeyPress',Qo,this),i(this,'KeyUp',em,this),i(this,'ContextMenu',tm,this),i(this,'Paste',am,this),i(this,'Focus',nm,this),i(this,'Blur',im,this),i(this,'BeforeSetContent',rm,this),i(this,'SetContent',om,this),i(this,'GetContent',mm,this),i(this,'PreProcess',sm,this),i(this,'PostProcess',lm,this),i(this,'NodeChange',dm,this),i(this,'Undo',pm,this),i(this,'Redo',cm,this),i(this,'Change',um,this),i(this,'Dirty',fm,this),i(this,'Remove',ym,this),i(this,'ExecCommand',gm,this),i(this,'PastePreProcess',hm,this),i(this,'PastePostProcess',bm,this),'object'!=typeof e.applicationInterfaceLoad[this.factoryName]&&(e.applicationInterfaceLoad[this.factoryName]=new Promise((e,t)=>this.fixedUtility.$.ajax({cache:!0,dataType:'script',error:t,success:()=>{this.factory=this.fixedUtility.globalContext.tinymce,e(this.factory)},url:rd.scriptPath})))}ngAfterViewInit(){return super.ngAfterViewInit().then(()=>{const e=this.extendObject({},this.configuration);this.factory.baseURL=e.baseURL,delete e.baseURL,delete e.scriptPath,e.target=this.hostDomNode.nativeElement;const t=e.init_instance_callback;e.init_instance_callback=(e)=>{this.instance=e,this.instance[this.contentSetterMethodName](this.model),this.instance.on('Change',()=>{this.onChangeCallback(this.instance.getContent()),this.modelChange.emit(this.model)}),t&&t(this.instance);for(const t of['click','dblclick','MouseDown','MouseUp','MouseMove','MouseOver','MouseOut','MouseEnter','MouseLeave','KeyDown','KeyPress','ContextMenu','Paste','Focus','Blur','BeforeSetContent','SetContent','GetContent','PreProcess','PostProcess','NodeChange','Undo','Redo','Change','Dirty','Remove','PastePreProcess','PastePostProcess'])this.instance.on(t,this[t].emit.bind(this[t]));this.instance.on('KeyUp',(e)=>{this.KeyUp.emit(e),this.onChangeCallback(this.instance.getContent()),this.onTouchedCallback(),this.modelChange.emit(this.model)}),this.instance.on('ExecCommand',(e)=>{this.ExecCommand.emit(e);const t=this.instance.getContent();'string'==typeof t&&0<t.length&&(this.onChangeCallback(this.instance.getContent()),this.onTouchedCallback(),this.modelChange.emit(this.model))})},e.setup=(e)=>e.on('Init',()=>this.initialized.emit(e)),this.factory.init(e)})}ngOnDestroy(){this.instance&&this.factory.remove(this.instance)}setDisabledState(e){super.setDisabledState(e),this.instance&&this.instance.setMode(this.disabled?'readonly':'design')}},Go=r(qo.prototype,'configuration',[so],{enumerable:!0,initializer:function(){return rd}}),Vo=r(qo.prototype,'click',[lo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),Wo=r(qo.prototype,'dblclick',[po],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),Bo=r(qo.prototype,'MouseDown',[co],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),Ho=r(qo.prototype,'MouseUp',[uo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),$o=r(qo.prototype,'MouseMove',[fo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),Ko=r(qo.prototype,'MouseOver',[yo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),Yo=r(qo.prototype,'MouseOut',[go],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),Jo=r(qo.prototype,'MouseEnter',[ho],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),Zo=r(qo.prototype,'MouseLeave',[bo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),Xo=r(qo.prototype,'KeyDown',[Po],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),Qo=r(qo.prototype,'KeyPress',[No],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),em=r(qo.prototype,'KeyUp',[xo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),tm=r(qo.prototype,'ContextMenu',[vo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),am=r(qo.prototype,'Paste',[To],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),nm=r(qo.prototype,'Focus',[So],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),im=r(qo.prototype,'Blur',[Oo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),rm=r(qo.prototype,'BeforeSetContent',[Io],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),om=r(qo.prototype,'SetContent',[Co],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),mm=r(qo.prototype,'GetContent',[Eo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),sm=r(qo.prototype,'PreProcess',[_o],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),lm=r(qo.prototype,'PostProcess',[Do],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),dm=r(qo.prototype,'NodeChange',[wo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),pm=r(qo.prototype,'Undo',[Ro],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),cm=r(qo.prototype,'Redo',[zo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),um=r(qo.prototype,'Change',[Mo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),fm=r(qo.prototype,'Dirty',[jo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),ym=r(qo.prototype,'Remove',[Ao],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),gm=r(qo.prototype,'ExecCommand',[ko],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),hm=r(qo.prototype,'PastePreProcess',[Lo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),bm=r(qo.prototype,'PastePostProcess',[Uo],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),qo))||Fo);Reflect.defineMetadata('design:paramtypes',[zl.Injector],Qp);const ec={editor:`
+        (blur)="focused = false"
+        @defaultAnimation
+        (focus)="focused = true"
+        [ngModel]="model.value"
+        (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
+        [style.visibilty]="initialized ? 'visible' : 'hidden'"
+        #state="ngModel"
+    `,nativ:`
+        [name]="model.name"
+        [ngModel]="model.value"
+        (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
+        [placeholder]="description === '' ? null : description ? description : (model.description || model.name)"
+        [required]="required === null ? !model.nullable : required"
+        #state="ngModel"
+    `,nativText:`
+        [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
+        [maxlength]="maximumLength === null ? (model.type === 'string' ? model.maximumLength : null) : maximumLength"
+        [minlength]="minimumLength === null ? (model.type === 'string' ? model.minimumLength : null) : minimumLength"
+        [pattern]="pattern === null ? (model.type === 'string' ? model.regularExpressionPattern : null) : pattern"
+    `,wrapper:`
+        [declaration]="declaration"
+        [description]="description"
+        [disabled]="disabled"
+        [showDeclarationText]="showDeclarationText"
+        [maximum]="maximum"
+        [maximumLength]="maximumLength"
+        [maximumLengthText]="maximumLengthText"
+        [maximumText]="maximumText"
+        [minimum]="minimum"
+        [minimumLength]="minimumLength"
+        [minimumLengthText]="minimumLengthText"
+        [minimumText]="minimumText"
+        [model]="model"
+        [pattern]="pattern"
+        [required]="required"
+        [requiredText]="requiredText"
+        [patternText]="patternText"
+        [showValidationErrorMessages]="showValidationErrorMessages"
+        [type]="type"
+    `},tc=`
+    <mat-hint align="start" @defaultAnimation matTooltip="info">
+        <span
+            [class.active]="showDeclaration"
+            (click)="showDeclaration = !showDeclaration"
+            *ngIf="declaration || model.declaration"
+        >
+            <a
+                (click)="$event.preventDefault()"
+                @defaultAnimation
+                href=""
+                *ngIf="showDeclarationText"
+            >{{showDeclarationText}}</a>
+            <span @defaultAnimation *ngIf="showDeclaration">
+                {{declaration || model.declaration}}
+            </span>
+        </span>
+        <span *ngIf="editor && selectableEditor && !model.disabled">
+            <span *ngIf="declaration || model.declaration">|</span>
+            <a
+                [class.active]="activeEditor"
+                (click)="$event.preventDefault(); $event.stopPropagation(); activeEditor = true"
+                href=""
+            >editor</a>
+            <span>|</span>
+            <a
+                [class.active]="!activeEditor"
+                (click)="$event.preventDefault(); $event.stopPropagation(); activeEditor = false"
+                href=""
+            >plain</a>
+        </span>
+    </mat-hint>
+    <span generic-error *ngIf="showValidationErrorMessages">
+        <p @defaultAnimation *ngIf="model.state?.errors?.maxlength">
+            {{maximumLengthText | genericStringTemplate:model}}
+        </p>
+        <p @defaultAnimation *ngIf="model.state?.errors?.max">
+            {{maximumText | genericStringTemplate:model}}
+        </p>
+        <p @defaultAnimation *ngIf="model.state?.errors?.minlength">
+            {{minimumLengthText | genericStringTemplate:model}}
+        </p>
+        <p @defaultAnimation *ngIf="model.state?.errors?.min">
+            {{minimumText | genericStringTemplate:model}}
+        </p>
+        <p @defaultAnimation *ngIf="model.state?.errors?.pattern">
+            {{patternText | genericStringTemplate:model}}
+        </p>
+        <p @defaultAnimation *ngIf="model.state?.errors?.required">
+            {{requiredText | genericStringTemplate:model}}
+        </p>
+    </span>
+    <mat-hint
+        align="end"
+        @defaultAnimation
+        *ngIf="!model.selection && model.type === 'string' && model.maximumLength !== null && model.maximumLength < 100"
+    >{{model.value?.length}} / {{model.maximumLength}}</mat-hint>
+`;let ac=t.InputComponent=(Pm=(0,zl.Component)({animations:ad,changeDetection:zl.ChangeDetectionStrategy[Yl],selector:'generic-input',template:`
+        <generic-textarea
+            ${ec.wrapper}
+            [activeEditor]="activeEditor"
+            [editor]="editor"
+            [maximumNumberOfRows]="maximumNumberOfRows"
+            [minimumNumberOfRows]="minimumNumberOfRows"
+            *ngIf="editor || model.editor; else simpleInput"
+            [rows]="rows"
+            [selectableEditor]="selectableEditor"
+        ><ng-content></ng-content></generic-textarea>
+        <ng-template #simpleInput><generic-simple-input
+            ${ec.wrapper}
+            [labels]="labels"
+        ><ng-content></ng-content></generic-simple-input></ng-template>
+    `}),Nm=(0,zl.Input)(),xm=(0,zl.Input)(),vm=(0,zl.Input)(),Tm=(0,zl.Input)(),Sm=(0,zl.Input)(),Om=(0,zl.Input)(),Im=(0,zl.Input)(),Cm=(0,zl.Input)(),Pm(Em=(_m=class extends Fp{constructor(...e){var t;return t=super(...e),i(this,'activeEditor',Dm,this),i(this,'editor',wm,this),i(this,'labels',Rm,this),i(this,'maximumNumberOfRows',zm,this),i(this,'minimumNumberOfRows',Mm,this),i(this,'rows',jm,this),i(this,'selectableEditor',Am,this),i(this,'type',km,this),t}},Dm=r(_m.prototype,'activeEditor',[Nm],{enumerable:!0,initializer:function(){return null}}),wm=r(_m.prototype,'editor',[xm],{enumerable:!0,initializer:function(){return null}}),Rm=r(_m.prototype,'labels',[vm],{enumerable:!0,initializer:function(){return{}}}),zm=r(_m.prototype,'maximumNumberOfRows',[Tm],{enumerable:!0,initializer:function(){return this.maximumNumberOfRows}}),Mm=r(_m.prototype,'minimumNumberOfRows',[Sm],{enumerable:!0,initializer:function(){return this.minimumNumberOfRows}}),jm=r(_m.prototype,'rows',[Om],{enumerable:!0,initializer:function(){return this.rows}}),Am=r(_m.prototype,'selectableEditor',[Im],{enumerable:!0,initializer:function(){return null}}),km=r(_m.prototype,'type',[Cm],{enumerable:!0,initializer:function(){return this.type}}),_m))||Em),nc=t.SimpleInputComponent=(Lm=(0,zl.Component)({animations:ad,changeDetection:zl.ChangeDetectionStrategy[Yl],selector:'generic-simple-input',template:`
+        <ng-container
+            @defaultAnimation *ngIf="model.selection; else textInput"
+        >
+            <mat-form-field>
+                <mat-select [(ngModel)]="model.value" ${ec.nativ}>
+                    <mat-option
+                        *ngFor="let value of model.selection" [value]="value"
+                    >
+                        {{labels.hasOwnProperty(value) ? labels[value] : value}}
+                    </mat-option>
+                </mat-select>
+                ${tc}
+                <ng-content></ng-content>
+            </mat-form-field>
+        </ng-container>
+        <ng-template #textInput><mat-form-field>
+            <input
+                ${ec.nativ}
+                ${ec.nativText}
+                [max]="maximum === null ? (model.type === 'number' ? model.maximum : null) : maximum"
+                matInput
+                [min]="minimum === null ? (model.type === 'number' ? model.minimum : null) : minimum"
+                [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+            />
+            ${tc}
+            <ng-content></ng-content>
+        </mat-form-field></ng-template>
+    `}),Um=(0,zl.Input)(),Fm=(0,zl.Input)(),Lm(qm=(Gm=class extends qp{constructor(e){super(e),i(this,'labels',Vm,this),i(this,'type',Wm,this)}},Vm=r(Gm.prototype,'labels',[Um],{enumerable:!0,initializer:function(){return{}}}),Wm=r(Gm.prototype,'type',[Fm],{enumerable:!0,initializer:function(){return this.type}}),Gm))||qm);Reflect.defineMetadata('design:paramtypes',[zl.Injector],nc);let ic=t.TextareaComponent=(Bm=(0,zl.Component)({animations:ad,changeDetection:zl.ChangeDetectionStrategy[Yl],selector:'generic-textarea',template:`
+        <ng-container *ngIf="activeEditor; else plain">
+            <span [class.focused]="focused" class="editor-label">
+                {{
+                    description === '' ? null : description ? description : (
+                        model.description || model.name
+                    )
+                }}
+            </span>
+            <code-editor
+                ${ec.editor}
+                [configuration]="editor"
+                [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
+                (initialized)="initialized = true"
+                *ngIf="editorType === 'code' || editor.indentUnit; else tinymce"
+            ></code-editor>
+            <ng-template #tinymce><text-editor
+                ${ec.editor}
+                [configuration]="editor"
+                [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
+                (initialized)="initialized = true"
+            ></text-editor></ng-template>
+            ${tc}
+            <ng-content></ng-content>
+        </ng-container>
+        <ng-template #plain><mat-form-field @defaultAnimation>
+            <textarea
+                ${ec.nativ}
+                ${ec.nativText}
+                [matAutosizeMaxRows]="maximumNumberOfRows"
+                [matAutosizeMinRows]="minimumNumberOfRows"
+                matInput
+                matTextareaAutosize
+                [rows]="rows"
+            ></textarea>
+            ${tc}
+            <ng-content></ng-content>
+        </mat-form-field></ng-template>
+    `}),Hm=(0,zl.Input)(),$m=(0,zl.Input)(),Km=(0,zl.Input)(),Ym=(0,zl.Input)(),Jm=(0,zl.Input)(),Zm=(0,zl.Input)(),Bm(Xm=(Qm=(ms=os=class e extends qp{constructor(t,a){super(a),i(this,'activeEditor',es,this),i(this,'editor',ts,this),this.editorType='custom',i(this,'maximumNumberOfRows',as,this),i(this,'minimumNumberOfRows',ns,this),i(this,'rows',is,this),i(this,'selectableEditor',rs,this),t.configuration.hasOwnProperty('defaultEditorOptions')&&'object'==typeof t.configuration.defaultEditorOptions&&null!==t.configuration.defaultEditorOptions&&(e.defaultEditorOptions=t.configuration.defaultEditorOptions)}ngOnInit(...t){super.ngOnInit(...t),null===this.editor&&this.model.editor&&(this.editor=this.model.editor),'string'==typeof this.editor?(this.editor.startsWith('!')&&(this.editor=this.editor.substring(1),null===this.selectableEditor&&(this.selectableEditor=!1)),this.editor.startsWith('(')&&this.editor.endsWith(')')?this.editor=this.editor.substring(1,this.editor.length-1):null===this.activeEditor&&(this.activeEditor=!0),this.editorType=this.editor,this.editor=this.editor.startsWith('code')?this.editor.startsWith('code:')?{mode:this.editor.substring(5)}:{}:'raw'===this.editor?{toolbar1:'cut copy paste | undo redo removeformat | code | fullscreen',toolbar2:!1}:'simple'===this.editor?{toolbar1:'cut copy paste | undo redo removeformat | bold italic underline strikethrough subscript superscript | fullscreen',toolbar2:!1}:'normal'===this.editor?{toolbar1:'cut copy paste | undo redo removeformat | styleselect formatselect | searchreplace visualblocks fullscreen code'}:{}):null===this.editor&&this.activeEditor&&(this.editor={}),null===this.activeEditor&&(this.activeEditor=!1),null===this.selectableEditor&&('boolean'==typeof this.model.selectableEditor?this.selectableEditor=this.model.selectableEditor:this.selectableEditor=!0),'object'==typeof this.editor&&null!==this.editor?this.editorType.startsWith('code')||this.editor.indentUnit?this.editor=this._extendObject(!0,{},nd,e.defaultEditorOptions.code,this.editor):this.editor=this._extendObject(!0,{},rd,e.defaultEditorOptions.markup,this.editor):this.selectableEditor=!1}},os.defaultEditorOptions={code:{},markup:{}},ms),es=r(Qm.prototype,'activeEditor',[Hm],{enumerable:!0,initializer:function(){return null}}),ts=r(Qm.prototype,'editor',[$m],{enumerable:!0,initializer:function(){return null}}),as=r(Qm.prototype,'maximumNumberOfRows',[Km],{enumerable:!0,initializer:function(){return this.maximumNumberOfRows}}),ns=r(Qm.prototype,'minimumNumberOfRows',[Ym],{enumerable:!0,initializer:function(){return this.minimumNumberOfRows}}),is=r(Qm.prototype,'rows',[Jm],{enumerable:!0,initializer:function(){return this.rows}}),rs=r(Qm.prototype,'selectableEditor',[Zm],{enumerable:!0,initializer:function(){return null}}),Qm))||Xm);Reflect.defineMetadata('design:paramtypes',[md,zl.Injector],ic);let rc=t.FileInputComponent=(ss=(0,zl.Component)({animations:ad,changeDetection:zl.ChangeDetectionStrategy[Yl],selector:'generic-file-input',template:`
+        <mat-card>
+            <mat-card-header
+                @defaultAnimation
+                *ngIf="headerText !== '' && (headerText || file?.name || model[attachmentTypeName][internalName]?.declaration || headerText || file?.name || name || model[attachmentTypeName][internalName]?.description || name)"
+            >
+                <mat-card-title>
+                    <span
+                        @defaultAnimation
+                        *ngIf="!editableName || revision || headerText || !file?.name; else editable"
+                    >
+                        {{
+                            headerText ||
+                            file?.name ||
+                            model[attachmentTypeName][
+                                internalName
+                            ]?.description ||
+                            name
+                        }}
+                    </span>
+                    <ng-template #editable>
+                        <ng-container *ngIf="synchronizeImmediately; else parent">
+                            <mat-form-field
+                                [class.dirty]="editedName && editedName !== file.name"
+                                matTooltip="Focus to edit."
+                            >
+                                <input
+                                    matInput
+                                    [ngModel]="editedName || file.name"
+                                    (ngModelChange)="editedName = $event"
+                                />
+                                <mat-hint
+                                    [class.active]="showDeclaration"
+                                    (click)="showDeclaration = !showDeclaration"
+                                    @defaultAnimation
+                                    matTooltip="info"
+                                    *ngIf="model[attachmentTypeName][internalName]?.declaration"
+                                >
+                                    <a
+                                        (click)="$event.preventDefault()"
+                                        @defaultAnimation
+                                        href=""
+                                        *ngIf="showDeclarationText"
+                                    >{{showDeclarationText}}</a>
+                                    <span
+                                        @defaultAnimation
+                                        *ngIf="showDeclaration"
+                                    >
+                                        {{
+                                            model[attachmentTypeName][
+                                                internalName
+                                            ].declaration
+                                        }}
+                                    </span>
+                                </mat-hint>
+                            </mat-form-field>
+                            <ng-container
+                                *ngIf="editedName && editedName !== file.name"
+                            >
+                                <a
+                                    (click)="$event.preventDefault();rename(editedName)"
+                                    @defaultAnimation
+                                    href=""
+                                >{{saveNameText}}</a>
+                                <a
+                                    (click)="$event.preventDefault();editedName = file.name"
+                                    @defaultAnimation
+                                    href=""
+                                >{{resetNameText}}</a>
+                            </ng-container>
+                        </ng-container>
+                        <ng-template #parent><mat-form-field
+                            [class.dirty]="file.initialName !== file.name"
+                            @defaultAnimation
+                            matTooltip="Focus to edit."
+                            *ngIf="!synchronizeImmediately"
+                        >
+                            <input
+                                matInput [ngModel]="file.name"
+                                (ngModelChange)="file.name = $event;modelChange.emit(this.model); fileChange.emit(file)"
+                            />
+                            <mat-hint
+                                [class.active]="showDeclaration"
+                                (click)="showDeclaration = !showDeclaration"
+                                @defaultAnimation
+                                matTooltip="info"
+                                *ngIf="model[attachmentTypeName][internalName]?.declaration"
+                            >
+                                <a
+                                    (click)="$event.preventDefault()"
+                                    @defaultAnimation
+                                    href=""
+                                    *ngIf="showDeclarationText"
+                                >{{showDeclarationText}}</a>
+                                <span
+                                    @defaultAnimation
+                                    *ngIf="showDeclaration"
+                                >
+                                    {{
+                                        model[attachmentTypeName][
+                                            internalName
+                                        ].declaration
+                                    }}
+                                </span>
+                            </mat-hint>
+                        </mat-form-field></ng-template>
+                    </ng-template>
+                </mat-card-title>
+            </mat-card-header>
+            <img mat-card-image
+                [attr.alt]="name"
+                [attr.src]="file.source"
+                @defaultAnimation
+                *ngIf="file?.type === 'image' && file?.source"
+            >
+            <video
+                autoplay
+                @defaultAnimation
+                mat-card-image
+                muted
+                *ngIf="file?.type === 'video' && file?.source"
+                loop
+            >
+                <source [attr.src]="file.source" [type]="file.content_type">
+                No preview possible.
+            </video>
+            <iframe
+                @defaultAnimation
+                *ngIf="file?.type === 'text' && file?.source"
+                [src]="file.source"
+                style="border: none; width: 100%; max-height: 150px"
+            ></iframe>
+            <div
+                @defaultAnimation
+                mat-card-image
+                *ngIf="(!file?.type && (file?.source || (file?.source | genericType) === 'string') ? noPreviewText : noFileText) as text"
+            ><p>{{text}}</p></div>
+            <mat-card-content>
+                <ng-content></ng-content>
+                <div
+                    @defaultAnimation
+                    generic-error
+                    *ngIf="showValidationErrorMessages && model[attachmentTypeName][internalName]?.state?.errors"
+                >
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.contentType"
+                    >
+                        {{
+                            typePatternText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.database"
+                    >
+                        {{
+                            model[attachmentTypeName][
+                                internalName
+                            ].state.errors.database
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.maximumSize"
+                    >
+                        {{
+                            maximumSizeText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.minimumSize"
+                    >
+                        {{
+                            minimumSizeText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.name"
+                    >
+                        {{
+                            namePatternText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                    <p
+                        @defaultAnimation
+                        *ngIf="model[attachmentTypeName][internalName].state.errors.required"
+                    >
+                        {{
+                            requiredText | genericStringTemplate:{
+                                attachmentTypeName: attachmentTypeName,
+                                file: file,
+                                internalName: internalName,
+                                model: model[attachmentTypeName][internalName]
+                            }
+                        }}
+                    </p>
+                </div>
+            </mat-card-content>
+            <mat-card-actions>
+                <input #input style="display: none" type="file" />
+                <button
+                    @defaultAnimation
+                    (click)="input.click()"
+                    mat-raised-button
+                    *ngIf="newButtonText"
+                >{{newButtonText}}</button>
+                <button
+                    (click)="remove()"
+                    @defaultAnimation
+                    mat-raised-button
+                    *ngIf="deleteButtonText && file"
+                >{{deleteButtonText}}</button>
+                <button mat-raised-button
+                    @defaultAnimation
+                    *ngIf="downloadButtonText && file"
+                ><a [download]="file.name" [href]="file.source">
+                    {{downloadButtonText}}
+                </a></button>
+            </mat-card-actions>
+        </mat-card>
+    `}),ls=(0,zl.Input)(),ds=(0,zl.Output)(),ps=(0,zl.Input)(),cs=(0,zl.Input)(),us=(0,zl.Input)(),fs=(0,zl.Output)(),ys=(0,zl.Input)(),gs=(0,zl.Input)(),hs=(0,zl.ViewChild)('input'),bs=(0,zl.Input)(),Ps=(0,zl.Input)(),Ns=(0,zl.Input)(),xs=(0,zl.Input)(),vs=(0,zl.Input)(),Ts=(0,zl.Input)(),Ss=(0,zl.Input)(),Os=(0,zl.Output)(),Is=(0,zl.Input)(),Cs=(0,zl.Input)(),Es=(0,zl.Input)(),_s=(0,zl.Input)(),Ds=(0,zl.Input)(),ws=(0,zl.Input)(),Rs=(0,zl.Input)(),zs=(0,zl.Input)(),Ms=(0,zl.Input)(),js=(0,zl.Input)(),As=(0,zl.Input)(),ss(ks=(Ls=(fl=ul=class e{constructor(e,t,a,n,r,o,m,s,l,d){this.abstractResolver=this.abstractResolver,this.attachmentTypeName=this.attachmentTypeName,i(this,'autoMessages',Us,this),this.configuration=this.configuration,i(this,'delete',Fs,this),i(this,'deleteButtonText',qs,this),this.deletedName=this.deletedName,i(this,'downloadButtonText',Gs,this),i(this,'editableName',Vs,this),this.file=null,i(this,'fileChange',Ws,this),i(this,'filter',Bs,this),i(this,'headerText',Hs,this),this.idName=this.idName,i(this,'input',$s,this),i(this,'resetNameText',Ks,this),i(this,'saveNameText',Ys,this),i(this,'showDeclarationText',Js,this),this.typeName=this.typeName,this.internalName=this.internalName,this.keyCode=this.keyCode,i(this,'mapNameToField',Zs,this),i(this,'maximumSizeText',Xs,this),i(this,'minimumSizeText',Qs,this),i(this,'model',el,this),i(this,'modelChange',tl,this),i(this,'name',al,this),i(this,'namePatternText',nl,this),i(this,'newButtonText',il,this),i(this,'noFileText',rl,this),i(this,'noPreviewText',ol,this),i(this,'oneDocumentPerFileMode',ml,this),i(this,'requiredText',sl,this),i(this,'revision',ll,this),this.revisionName=this.revisionName,i(this,'showValidationErrorMessages',dl,this),i(this,'synchronizeImmediately',pl,this),this.template=this.template,i(this,'typePatternText',cl,this),this._data=this._data,this._domSanitizer=this._domSanitizer,this._extendObject=this._extendObject,this._getFilenameByPrefix=this._getFilenameByPrefix,this._idIsObject=!1,this._representObject=this._representObject,this._stringFormat=this._stringFormat,this._prefixMatch=!1,this.abstractResolver=e,this.configuration=o.configuration,this.attachmentTypeName=this.configuration.database.model.property.name.special.attachment,this.keyCode=d.fixed.tools.keyCode,this.deletedName=this.configuration.database.model.property.name.special.deleted,this.idName=this.configuration.database.model.property.name.special.id,this.model={[this.attachmentTypeName]:{},id:null},this.revisionName=this.configuration.database.model.property.name.special.revision,this.template=l.transform.bind(l),this.typeName=this.configuration.database.model.property.name.special.type,this._data=t,this._domSanitizer=a,this._extendObject=n.transform.bind(n),this._getFilenameByPrefix=r.transform.bind(r),this._representObject=m.transform.bind(m),this._stringFormat=s.transform.bind(s)}determinePresentationType(){this.file&&this.file.content_type&&(e.textMimeTypeRegularExpression.test(this.file.content_type)?this.file.type='text':e.imageMimeTypeRegularExpression.test(this.file.content_type)?this.file.type='image':e.videoMimeTypeRegularExpression.test(this.file.content_type)?this.file.type='video':this.file.type='binary')}ngOnChanges(e){var t=this;return o(function*(){if('object'==typeof t.model[t.idName]&&(t._idIsObject=!0),e.hasOwnProperty('mapNameToField')&&t.mapNameToField&&!Array.isArray(t.mapNameToField)&&(t.mapNameToField=[t.mapNameToField]),(e.hasOwnProperty('model')||e.hasOwnProperty('name'))&&(t.internalName=t._getFilenameByPrefix(t.model[t.attachmentTypeName],t.name),t.name&&t.internalName&&t.internalName!==t.name&&(t._prefixMatch=!0),t.model[t.attachmentTypeName][t.internalName].state={},t.file=t.model[t.attachmentTypeName][t.internalName].value,t.file?t.file.initialName=t.file.name:!t.model[t.attachmentTypeName][t.internalName].nullable&&(t.model[t.attachmentTypeName][t.internalName].state.errors={required:!0})),e.hasOwnProperty('model')||e.hasOwnProperty('name')||e.hasOwnProperty('revision')){if(t.file&&(t.file.query=`?version=${t.file.digest}`,!t.file.source)){const a=t._idIsObject?t.model[t.idName].value:t.model[t.idName];if(t.revision&&e.revision.currentValue!==e.revision.previousValue)try{yield t.retrieveAttachment(a,{rev:t.revision})}catch(e){return void(t.model[t.attachmentTypeName][t.internalName].state.errors.database='message'in e?e.message:t._representObject(e))}else t.file.source=t._domSanitizer.bypassSecurityTrustResourceUrl(t._stringFormat(t.configuration.database.url,'')+'/'+(t.configuration.name||'generic')+`/${a}/${t.file.name}`+t.file.query)}t.determinePresentationType(),t.modelChange.emit(t.model),t.fileChange.emit(t.file)}})()}ngAfterViewInit(){this.input.nativeElement.addEventListener('change',()=>{if(0<this.input.nativeElement.files.length){this.file={content_type:this.input.nativeElement.files[0].type||'text/plain',data:this.input.nativeElement.files[0],initialName:this.input.nativeElement.files[0].name,length:this.input.nativeElement.files[0].size,name:this.input.nativeElement.files[0].name};const e=['content_type','name'];for(const t of this.filter){let a=!0;for(const n of e)if(t.hasOwnProperty('source')&&t.source.hasOwnProperty(n)&&!new RegExp(t.source[n],'g').test(this.file[n])){a=!1;break}if(a)for(const a of e)t.target.hasOwnProperty(a)&&(this.file[a]=t.hasOwnProperty(a)&&t.source.hasOwnProperty(a)?this.file[a].replace(new RegExp(t.source[a],'g'),t.target[a]):t.target[a])}this.update(this.file?this.file.name:null)}})}remove(){var e=this;return o(function*(){if(e.synchronizeImmediately&&e.file){let t;const a={[e.typeName]:e.model[e.typeName],[e.idName]:e._idIsObject?e.model[e.idName].value:e.model[e.idName],[e.revisionName]:e.model[e.revisionName]};e.oneDocumentPerFileMode?a[e.deletedName]=!0:a[e.attachmentTypeName]={[e.file.name]:{content_type:'text/plain',data:null}};try{t=yield e._data.put(a)}catch(t){return void(e.model[e.attachmentTypeName][e.internalName].state.errors={database:'message'in t?t.message:e._representObject(t)})}e.mapNameToField&&e.mapNameToField.includes(e.idName)?e.delete.emit(t):e.model[e.revisionName]=t.rev}e.model[e.attachmentTypeName][e.internalName].state.errors=e.model[e.attachmentTypeName][e.internalName].value=e.file=null,e.model[e.attachmentTypeName][e.internalName].nullable||(e.model[e.attachmentTypeName][e.internalName].state.errors={required:!0}),e.modelChange.emit(e.model),e.fileChange.emit(e.file)})()}rename(e){var t=this;return o(function*(){const a=t._idIsObject?t.model[t.idName].value:t.model[t.idName],n=t.file.name;if(t.file.stub&&t.mapNameToField&&a&&t.mapNameToField.includes(t.idName))try{yield t.retrieveAttachment(a)}catch(e){return void(t.model[t.attachmentTypeName][t.internalName].state.errors={database:'message'in e?e.message:t._representObject(e)})}return t.file.name=e,t.update(n)})()}retrieveAttachment(e,t={}){var n=this;return o(function*(){const i=yield n._data.getAttachment(e,n.file.name,t);n.file={content_type:i.type||'text/plain',data:'undefined'==typeof Blob?i.toString('base64'):yield a(26).blobToBase64String(i),length:i.size,name:n.file.name},n.file.source=n._domSanitizer.bypassSecurityTrustResourceUrl(`data:${n.file.content_type};base64,${n.file.data}`)})()}update(e){var t=this;return o(function*(){if(t.model[t.attachmentTypeName][t.internalName].state={},t._prefixMatch){const e=t.file.name.lastIndexOf('.');t.file.name=[0,-1].includes(e)?t.name:t.name+t.file.name.substring(e)}if(t.model[t.attachmentTypeName][t.internalName].value=t.file,t.model[t.attachmentTypeName][t.internalName].state.errors||(t.model[t.attachmentTypeName][t.internalName].state.errors={}),new RegExp(t.internalName).test(t.file.name)||(t.model[t.attachmentTypeName][t.internalName].state.errors={name:!0}),[void 0,null].includes(t.model[t.attachmentTypeName][t.internalName].contentTypeRegularExpressionPattern)||new RegExp(t.model[t.attachmentTypeName][t.internalName].contentTypeRegularExpressionPattern).test(t.file.content_type)||(t.model[t.attachmentTypeName][t.internalName].state.errors.contentType=!0),[void 0,null].includes(t.model[t.attachmentTypeName][t.internalName].minimumSize)||t.model[t.attachmentTypeName][t.internalName].minimumSize<=t.file.length||(t.model[t.attachmentTypeName][t.internalName].state.errors.minimuSize=!0),[void 0,null].includes(t.model[t.attachmentTypeName][t.internalName].maximumSize)||t.model[t.attachmentTypeName][t.internalName].maximumSize>=t.file.length||(t.model[t.attachmentTypeName][t.internalName].state.errors.maximumSize=!0),0===Object.keys(t.model[t.attachmentTypeName][t.internalName].state.errors).length)delete t.model[t.attachmentTypeName][t.internalName].state.errors;else{let e='There was encountered an error during uploading file "'+`${t.file.name}": `;for(const a in t.model[t.attachmentTypeName][t.internalName].state.errors)t.model[t.attachmentTypeName][t.internalName].state.errors.hasOwnProperty(a)&&(e+=`\n${a} - `+t.template(t[{contentType:'typePatternText',maximumSize:'maximumSizeText',minimumSize:'minimumSizeText',name:'namePatternText',required:'requiredText'}[a]],{attachmentTypeName:t.attachmentTypeName,file:t.file,internalName:t.internalName,model:t.model[t.attachmentTypeName][t.internalName]}));t.abstractResolver.message(e)}if(t.synchronizeImmediately&&!t.model[t.attachmentTypeName][t.internalName].state.errors){let a={[t.typeName]:t.model[t.typeName],[t.idName]:t._idIsObject?t.model[t.idName].value:t.model[t.idName]};if(null!==t.synchronizeImmediately&&'object'==typeof t.synchronizeImmediately){const e={};for(const a in t.synchronizeImmediately)t.synchronizeImmediately.hasOwnProperty(a)&&(e[a]=t.template(t.synchronizeImmediately[a],t.file));t._extendObject(!0,a,e)}let n=t._idIsObject?t.model[t.idName].value:t.model[t.idName];e&&e!==t.file.name&&!(t.mapNameToField&&n&&t.mapNameToField.includes(t.idName))&&(a[t.attachmentTypeName]={[e]:{data:null}}),[void 0,null].includes(t.model[t.revisionName])||(a[t.revisionName]=t.model[t.revisionName]);const i=[];if(t.mapNameToField){n&&n!==t.file.name&&t.mapNameToField.includes(t.idName)&&(a[t.deletedName]=!0,i.unshift(a),a=t._extendObject(!0,{},a,{[t.deletedName]:!1}));for(const e of t.mapNameToField)a[e]=t.file.name,e===t.idName&&t._idIsObject?t.model[e].value=t.file.name:t.model[e]=t.file.name}a[t.revisionName]='upsert',a[t.attachmentTypeName]={[t.file.name]:{content_type:t.file.content_type,data:t.file.data}},i.unshift(a);let r;try{r=yield t._data.bulkDocs(i)}catch(e){return t.model[t.attachmentTypeName][t.internalName].state.errors={database:'message'in e?e.message:t._representObject(e)},void(t.autoMessages&&t.abstractResolver.message('Database has encountered an error during uploading '+`file "${t.file.name}": `+t.model[t.attachmentTypeName][t.internalName].state.errors.database))}n=a[t.idName];let o;for(const e of r){if(e.error)return t.model[t.attachmentTypeName][t.internalName].state.errors={database:e.message},void(t.autoMessages&&t.abstractResolver.message('Database has encountered an error during '+`uploading file "${t.file.name}": `+e.message));e.id===n&&(o=e.rev)}t.file&&(t.file.revision=t.model[t.revisionName]=o,t.file.query=`?rev=${o}`,t.file.source=t._domSanitizer.bypassSecurityTrustResourceUrl(t._stringFormat(t.configuration.database.url,'')+`/${t.configuration.name}/${n}/`+`${t.file.name}${t.file.query}`),t.determinePresentationType()),t.autoMessages&&t.abstractResolver.message(`Uploading file ${t.file.name} was succesful.`),t.modelChange.emit(t.model),t.fileChange.emit(t.file)}else if(t.file.data){t.determinePresentationType();const e=new FileReader;e.onload=function(e){if(t.file.digest=new Date().getTime(),t.file.source=t._domSanitizer.bypassSecurityTrustResourceUrl(e.target.result),t.mapNameToField)for(const e of t.mapNameToField)t.model[e]=t.file.name;t.modelChange.emit(t.model),t.fileChange.emit(t.file)},e.readAsDataURL(t.file.data)}})()}},ul.imageMimeTypeRegularExpression=/^image\/(?:p?jpe?g|png|svg(?:\+xml)?|vnd\.microsoft\.icon|gif|tiff|webp|vnd\.wap\.wbmp|x-(?:icon|jng|ms-bmp))$/,ul.textMimeTypeRegularExpression=/^(?:application\/xml)|(?:text\/(?:plain|x-ndpb[wy]html|(?:x-)?csv))$/,ul.videoMimeTypeRegularExpression=/^video\/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|(?:application\/(?:x-)?shockwave-flash)$/,fl),Us=r(Ls.prototype,'autoMessages',[ls],{enumerable:!0,initializer:function(){return!0}}),Fs=r(Ls.prototype,'delete',[ds],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),qs=r(Ls.prototype,'deleteButtonText',[ps],{enumerable:!0,initializer:function(){return'delete'}}),Gs=r(Ls.prototype,'downloadButtonText',[cs],{enumerable:!0,initializer:function(){return'download'}}),Vs=r(Ls.prototype,'editableName',[us],{enumerable:!0,initializer:function(){return!0}}),Ws=r(Ls.prototype,'fileChange',[fs],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),Bs=r(Ls.prototype,'filter',[ys],{enumerable:!0,initializer:function(){return[]}}),Hs=r(Ls.prototype,'headerText',[gs],{enumerable:!0,initializer:function(){return null}}),$s=r(Ls.prototype,'input',[hs],{enumerable:!0,initializer:function(){return this.input}}),Ks=r(Ls.prototype,'resetNameText',[bs],{enumerable:!0,initializer:function(){return'\xD7'}}),Ys=r(Ls.prototype,'saveNameText',[Ps],{enumerable:!0,initializer:function(){return'\u2713'}}),Js=r(Ls.prototype,'showDeclarationText',[Ns],{enumerable:!0,initializer:function(){return'\u2139'}}),Zs=r(Ls.prototype,'mapNameToField',[xs],{enumerable:!0,initializer:function(){return null}}),Xs=r(Ls.prototype,'maximumSizeText',[vs],{enumerable:!0,initializer:function(){return'Filesize (${file.length} byte) is more than specified maximum of ${model.maximumSize} byte.'}}),Qs=r(Ls.prototype,'minimumSizeText',[Ts],{enumerable:!0,initializer:function(){return'Filesize (${file.length} byte) is less than specified minimum of ${model.minimumSize} byte.'}}),el=r(Ls.prototype,'model',[Ss],{enumerable:!0,initializer:function(){return this.model}}),tl=r(Ls.prototype,'modelChange',[Os],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),al=r(Ls.prototype,'name',[Is],{enumerable:!0,initializer:function(){return null}}),nl=r(Ls.prototype,'namePatternText',[Cs],{enumerable:!0,initializer:function(){return'Given filename "${file.name}" doesn\'t match specified pattern "${internalName}".'}}),il=r(Ls.prototype,'newButtonText',[Es],{enumerable:!0,initializer:function(){return'new'}}),rl=r(Ls.prototype,'noFileText',[_s],{enumerable:!0,initializer:function(){return''}}),ol=r(Ls.prototype,'noPreviewText',[Ds],{enumerable:!0,initializer:function(){return''}}),ml=r(Ls.prototype,'oneDocumentPerFileMode',[ws],{enumerable:!0,initializer:function(){return!0}}),sl=r(Ls.prototype,'requiredText',[Rs],{enumerable:!0,initializer:function(){return'Please select a file.'}}),ll=r(Ls.prototype,'revision',[zs],{enumerable:!0,initializer:function(){return null}}),dl=r(Ls.prototype,'showValidationErrorMessages',[Ms],{enumerable:!0,initializer:function(){return!1}}),pl=r(Ls.prototype,'synchronizeImmediately',[js],{enumerable:!0,initializer:function(){return!1}}),cl=r(Ls.prototype,'typePatternText',[As],{enumerable:!0,initializer:function(){return'Filetype "${file.content_type}" doesn\'t match specified pattern "${model.contentTypeRegularExpressionPattern}".'}}),Ls))||ks);Reflect.defineMetadata('design:paramtypes',[Up,kp,kl.DomSanitizer,ud,sp,md,fd,$d,Rp,od],rc);let oc=t.PaginationComponent=(yl=(0,zl.Component)({animations:ad,changeDetection:zl.ChangeDetectionStrategy.OnPush,selector:'generic-pagination',template:`
+        <ul class="hans" @defaultAnimation *ngIf="lastPage > 1">
+            <li @defaultAnimation *ngIf="page > 2">
+                <a href="" (click)="change($event, 1)">--</a>
+            </li>
+            <li @defaultAnimation *ngIf="page > 1">
+                <a href="" (click)="change($event, previousPage)">-</a>
+            </li>
+            <li
+                class="page-{{currentPage}}"
+                @defaultAnimation
+                [ngClass]="{current: currentPage === page, previous: currentPage === previousPage, next: currentPage === nextPage, even: even, 'even-page': currentPage % 2 === 0, first: currentPage === firstPage, last: currentPage === lastPage}"
+                *ngFor="let currentPage of pagesRange;let even = even"
+            >
+                <a (click)="change($event, currentPage)" href="">
+                    {{currentPage}}
+                </a>
+            </li>
+            <li @defaultAnimation *ngIf="lastPage > page">
+                <a href="" (click)="change($event, nextPage)">+</a>
+            </li>
+            <li @defaultAnimation *ngIf="lastPage > page + 1">
+                <a href="" (click)="change($event, lastPage)">++</a>
+            </li>
+        </ul>
+    `}),gl=(0,zl.Input)(),hl=(0,zl.Input)(),bl=(0,zl.Output)(),Pl=(0,zl.Input)(),Nl=(0,zl.Input)(),yl(xl=(vl=class{constructor(e,t){i(this,'itemsPerPage',Tl,this),i(this,'page',Sl,this),i(this,'pageChange',Ol,this),i(this,'pageRangeLimit',Il,this),i(this,'total',Cl,this),this._changeDetectorReference=this._changeDetectorReference,this._makeRange=this._makeRange,this._changeDetectorReference=e,this._makeRange=t.transform.bind(t)}change(e,t){e.preventDefault(),this._changeDetectorReference.markForCheck(),this.page=t,this.pageChange.emit(this.page)}get lastPage(){return l(this.total/this.itemsPerPage)}get nextPage(){return s(this.page+1,this.lastPage)}get pagesRange(){if(1>this.page-this.pageRangeLimit){const e=1,t=this.pageRangeLimit-(this.page-e),a=s(this.lastPage,this.page+this.pageRangeLimit+t);return this._makeRange([e,a])}const e=s(this.lastPage,this.page+this.pageRangeLimit),t=this.pageRangeLimit-(e-this.page),a=d(1,this.page-this.pageRangeLimit-t);return this._makeRange([a,e])}get previousPage(){return d(1,this.page-1)}},Tl=r(vl.prototype,'itemsPerPage',[gl],{enumerable:!0,initializer:function(){return 10}}),Sl=r(vl.prototype,'page',[hl],{enumerable:!0,initializer:function(){return 1}}),Ol=r(vl.prototype,'pageChange',[bl],{enumerable:!0,initializer:function(){return new zl.EventEmitter}}),Il=r(vl.prototype,'pageRangeLimit',[Pl],{enumerable:!0,initializer:function(){return 4}}),Cl=r(vl.prototype,'total',[Nl],{enumerable:!0,initializer:function(){return 0}}),vl))||xl);Reflect.defineMetadata('design:paramtypes',[zl.ChangeDetectorRef,Id],oc);let mc=t.Module=(El=(0,zl.NgModule)({declarations:[pd,cd,ud,fd,yd,gd,hd,bd,Pd,Nd,xd,vd,Td,Sd,Od,Id,Cd,Ed,_d,Dd,wd,Rd,zd,Md,jd,Ad,kd,Ld,Ud,Fd,qd,Gd,Vd,Wd,Bd,Hd,$d,Kd,Yd,Jd,Zd,Xd,Qd,ep,tp,ap,np,ip,rp,op,mp,sp,lp,dp,pp,cp,up,fp,yp,gp,hp,bp,Pp,Np,xp,vp,Tp,Sp,Op,Ip,Cp,Ep,_p,Dp,wp,Rp,zp,Wp,Kp,Bp,Hp,Zp,jp,Yp,Jp,Xp,ac,nc,Qp,ic,rc,oc],entryComponents:[jp],exports:[pd,cd,ud,fd,yd,gd,hd,bd,Pd,Nd,xd,vd,Td,Sd,Od,Id,Cd,Ed,_d,Dd,wd,Rd,zd,Md,jd,Ad,kd,Ld,Ud,Fd,qd,Gd,Vd,Wd,Bd,Hd,$d,Kd,Yd,Jd,Zd,Xd,Qd,ep,tp,ap,np,ip,rp,op,mp,sp,lp,dp,pp,cp,up,fp,yp,gp,hp,bp,Pp,Np,xp,vp,Tp,Sp,Op,Ip,Cp,Ep,_p,Dp,wp,Rp,zp,Bp,Hp,jp,Yp,Jp,Xp,ac,nc,Qp,ic,rc,oc],imports:[kl.BrowserModule.withServerTransition({appId:'generic-universal'}),jl.FormsModule,Al.MatButtonModule,Al.MatCardModule,Al.MatDialogModule,Al.MatInputModule,Al.MatSelectModule,Al.MatTooltipModule],providers:[od,md,Ap,kp,Lp,Mp,Up,pd,cd,ud,fd,yd,gd,hd,bd,Pd,Nd,xd,vd,Td,Sd,Od,Id,Cd,Ed,_d,Dd,wd,Rd,zd,Md,jd,Ad,kd,Ld,Ud,Fd,qd,Gd,Vd,Wd,Bd,Hd,$d,Kd,Yd,Jd,Zd,Xd,Qd,ep,tp,ap,np,ip,rp,op,mp,sp,lp,dp,pp,cp,up,fp,yp,gp,hp,bp,Pp,Np,xp,vp,Tp,Sp,Op,Ip,Cp,Ep,_p,Dp,wp,Rp,zp,Ml.DatePipe,{deps:[kp,md,zl.Injector],multi:!0,provide:zl.APP_INITIALIZER,useFactory:m}]}),El(_l=class{})||_l);t.default=mc}).call(t,a(4)(e))},function(e){e.exports=require('@angular/forms')},function(e){e.exports=require('@angular/material')},function(e){e.exports=require('@angular/platform-browser')},function(e){e.exports=require('pouchdb/dist/pouchdb.min.js')},function(e){e.exports=require('pouchdb-find')},function(e){e.exports=require('pouchdb-validation')},function(e){e.exports=require('rxjs')},function(e){e.exports=require('rxjs/Observable')},function(e){e.exports=require('rxjs/Subscription')},function(e,t,a){'use strict';(function(e){function n(e={}){return'string'==typeof e&&(e={name:e}),e=r.default.extendObject(!0,{},m,e),(0,o.trigger)(e.name,[(0,o.transition)(e.enterState,[(0,o.style)(e.style.enter.initial),(0,o.animate)(e.enterDuration||e.duration,(0,o.style)(e.style.enter.final))]),(0,o.transition)(e.leaveState,[(0,o.style)(e.style.leave&&e.style.leave.initial||e.style.enter.final),(0,o.animate)(e.leaveDuration||e.duration,(0,o.style)(e.style.leave&&e.style.leave.final||e.style.enter.initial))])])}t.__esModule=!0,t.defaultAnimation=t.createDefaultAnimation=t.defaultOptions=void 0,t.createFadeAnimation=n;var i=a(0),r=function(e){return e&&e.__esModule?e:{default:e}}(i),o=a(5);try{e.require('source-map-support/register')}catch(e){}const m=t.defaultOptions={duration:'.3s',enterState:':enter',leaveState:':leave',name:'fadeAnimation',style:{enter:{final:{opacity:1},initial:{opacity:0}}}},s=t.createDefaultAnimation=n.bind({},'defaultAnimation'),l=t.defaultAnimation=(0,o.trigger)('defaultAnimation',[(0,o.transition)(m.enterState,[(0,o.style)(m.style.enter.initial),(0,o.animate)(m.enterDuration||m.duration,(0,o.style)(m.style.enter.final))]),(0,o.transition)(m.leaveState,[(0,o.style)(m.style.leave&&m.style.leave.initial||m.style.enter.final),(0,o.animate)(m.leaveDuration||m.duration,(0,o.style)(m.style.leave&&m.style.leave.final||m.style.enter.initial))])]);t.default=l}).call(t,a(4)(e))},function(e){e.exports=require('blob-util/dist/blob-util.min.js')}]);

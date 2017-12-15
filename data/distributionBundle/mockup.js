@@ -42,6 +42,7 @@ export function getNativeEvent(
     return event
 }
 export const dummyEvent = {preventDefault: ():void => {}}
+export default dummyEvent
 // endregion
 // region services
 // IgnoreTypeCheck

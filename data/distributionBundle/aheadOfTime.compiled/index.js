@@ -61,6 +61,8 @@ export let LAST_KNOWN_DATA = {
     data: {}, sequence: 'now'
 };
 export let currentInstanceToSearchInjectorFor = null;
+export const globalVariableNameToRetrieveDataFrom = 'genericInitialData';
+export const applicationDomNodeSelector = 'application, [application]';
 export const SYMBOL = `${new Date().getTime()}/${Math.random()}`;
 // region configuration
 const animations = [defaultAnimation];
@@ -167,22 +169,39 @@ export class InitialDataService {
     constructor(utility) {
         if (!utility)
             utility = new UtilityService();
+        this.globalContext = utility.fixed.globalContext;
         this.tools = utility.fixed.tools;
-        this.set(InitialDataService.defaultScope, 'genericInitialData' in utility.fixed.globalContext ?
-            utility.fixed.globalContext.genericInitialData :
-            {});
+        this.set(InitialDataService.defaultScope, globalVariableNameToRetrieveDataFrom in utility.fixed.globalContext
+            ?
+                utility.fixed.globalContext[globalVariableNameToRetrieveDataFrom]
+            :
+                {});
         if (InitialDataService.removeFoundData)
-            delete utility.fixed.globalContext.genericInitialData;
-        if ('document' in utility.fixed.globalContext &&
-            'querySelector' in utility.fixed.globalContext.document) {
-            // TODO how to get right dom node?
-            const domNode = utility.fixed.globalContext.document.querySelector('application');
-            if (domNode && 'getAttribute' in domNode && domNode.getAttribute('initialData')) {
-                this.set(JSON.parse(domNode.getAttribute('initialData')));
-                if (InitialDataService.removeFoundData)
-                    domNode.removeAttribute('initialData');
-            }
+            delete utility.fixed.globalContext[globalVariableNameToRetrieveDataFrom];
+    }
+    /**
+         * Retrieve initial data from given dom node or dom node identifier.
+         * @param domNodeReference - Dom node or a selector to retrieve a dom node.
+         * @param removeFoundData - Removes found attribute value from dom node.
+         * @param attributeName - An attribute name to retrieve data from.
+         * @returns Nothing.
+         */
+    retrieveFromDomNode(domNodeReference = applicationDomNodeSelector, removeFoundData = InitialDataService.removeFoundData, attributeName = 'initialData') {
+        let domNode = null;
+        if (typeof domNodeReference === 'string') {
+            if ('document' in this.globalContext &&
+                'querySelector' in this.globalContext.document)
+                domNode = this.globalContext.document.querySelector(domNodeReference);
         }
+        else
+            domNode = domNodeReference;
+        let result = {};
+        if (domNode && 'getAttribute' in domNode && domNode.getAttribute(attributeName)) {
+            result = this.set(JSON.parse(domNode.getAttribute(attributeName)));
+            if (removeFoundData)
+                domNode.removeAttribute(attributeName);
+        }
+        return result;
     }
     /**
          * Sets initial data.
@@ -264,7 +283,8 @@ export const determineInjector = (injector, instance, constructor) => {
     if (currentInstanceToSearchInjectorFor === this)
         throw SYMBOL;
     currentInstanceToSearchInjectorFor = this;
-    for (const injector of InitialDataService.injectors)
+    // NOTE: Converting set to array is necessary to avoid transpiling issues.
+    for (const injector of Array.from(InitialDataService.injectors))
         try {
             if (injector.get(constructor, NaN) === instance)
                 return injector.get.bind(injector);
@@ -2463,6 +2483,10 @@ AlertService.ctorParameters = () => [
  * A generic database connector.
  * @property static:revisionNumberRegularExpression - Compiled regular
  * expression to retrieve revision number from revision hash.
+ * @property static:skipGenericIndexManagementOnServer - Indicates whether
+ * generic index creation deletion should be done on server context.
+ * @property static:skipRemoteConnectionOnServer - Indicates whether remote
+ * connections should be avoided on server contexts.
  * @property static:wrappableMethodNames - Saves a list of method names which
  * can be intercepted.
  *
@@ -2504,17 +2528,12 @@ export class DataService {
         this.runningRequestsStream = new Subject();
         this.synchronisation = null;
         this.configuration = initialData.configuration;
-        if (this.configuration.database.hasOwnProperty('publicURL'))
-            this.configuration.database.url =
-                this.configuration.database.publicURL;
         this.database = PouchDB;
         this.equals = equalsPipe.transform.bind(equalsPipe);
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe);
         this.platformID = platformID;
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe);
         this.tools = utility.fixed.tools;
-        const idName = this.configuration.database.model.property.name.special.id;
-        const revisionName = this.configuration.database.model.property.name.special.revision;
         const nativeBulkDocs = this.database.prototype.bulkDocs;
         const self = this;
         this.database.plugin({ bulkDocs: async function (firstParameter, ...parameter) {
@@ -2522,6 +2541,9 @@ export class DataService {
                                 Implements a generic retry mechanism for "upsert" and "latest"
                                 updates and optionally supports to ignore "NoChange" errors.
                             */
+                const idName = self.configuration.database.model.property.name.special.id;
+                const revisionName = self.configuration.database.model.property.name.special
+                    .revision;
                 if (!Array.isArray(firstParameter) &&
                     typeof firstParameter === 'object' &&
                     firstParameter !== null &&
@@ -2599,11 +2621,7 @@ export class DataService {
                 }
                 return result;
             } });
-        this.database
-            .plugin(PouchDBFindPlugin)
-            .plugin(PouchDBValidationPlugin);
-        for (const plugin of this.configuration.database.plugins)
-            this.database.plugin(plugin);
+        this.database.plugin(PouchDBFindPlugin).plugin(PouchDBValidationPlugin);
     }
     /**
          * Determines all property names which are indexable in a generic manner.
@@ -2627,16 +2645,24 @@ export class DataService {
     async initialize() {
         /*
                     NOTE: We want to allow other services to manipulate the database
-                    constructor before initializing them.
+                    constructor and configurations before initializing them.
                 */
         await this.tools.timeout();
+        if (this.configuration.database.hasOwnProperty('publicURL'))
+            this.configuration.database.url =
+                this.configuration.database.publicURL;
+        for (const plugin of this.configuration.database.plugins)
+            this.database.plugin(plugin);
         const options = this.extendObject(/* eslint-disable camelcase */
         true, { skip_setup: true }, /* eslint-enable camelcase */
         this.configuration.database.connector || {});
         const databaseName = this.configuration.name || 'generic';
-        if (!isPlatformServer(this.platformID))
+        if (!(DataService.skipRemoteConnectionOnServer &&
+            isPlatformServer(this.platformID)))
             this.remoteConnection = new this.database(this.stringFormat(this.configuration.database.url, '') + `/${databaseName}`, options);
-        if (this.configuration.database.local || isPlatformServer(this.platformID))
+        if (this.configuration.database.local ||
+            DataService.skipRemoteConnectionOnServer &&
+                isPlatformServer(this.platformID))
             this.connection = new this.database(databaseName, options);
         else
             this.connection = this.remoteConnection;
@@ -2681,6 +2707,7 @@ export class DataService {
             };
         }
         // endregion
+        // region register interceptor
         for (const name in this.connection)
             if (DataService.wrappableMethodNames.includes(name) &&
                 typeof this.connection[name] === 'function') {
@@ -2737,8 +2764,10 @@ export class DataService {
                 };
             }
         this.connection.installValidationMethods();
-        if (isPlatformServer(this.platformID) &&
-            this.configuration.database.createGenericFlatIndex) {
+        // endregion
+        if (!(DataService.skipGenericIndexManagementOnServer &&
+            isPlatformServer(this.platformID)) && this.configuration.database.createGenericFlatIndex &&
+            this.connection !== this.remoteConnection) {
             // region create/remove needed/unneeded generic indexes
             for (const modelName in this.configuration.database.model.entities)
                 if (this.configuration.database.model.entities.hasOwnProperty(modelName) && (new RegExp(this.configuration.database.model.property.name
@@ -2982,6 +3011,8 @@ export class DataService {
 }
 // NOTE: Native regular expression definition is not allowed here.
 DataService.revisionNumberRegularExpression = new RegExp('^([0-9]+)-');
+DataService.skipGenericIndexManagementOnServer = true;
+DataService.skipRemoteConnectionOnServer = true;
 DataService.wrappableMethodNames = [
     'allDocs', 'bulkDocs', 'bulkGet',
     'close',
@@ -3122,7 +3153,6 @@ export class DataScopeService {
         }
         return this.generate(modelName, propertyNames, data);
     }
-    // TODO test
     /**
          * Determines a nested specification object for given property name and
          * corresponding specification object where given property is bound to.
@@ -3357,6 +3387,9 @@ DataScopeService.ctorParameters = () => [
 /**
  * Helper class to extend from to have some basic methods to deal with database
  * entities.
+ * @property static:skipResolvingOnServer - Indicates whether to skip resolving
+ * data on server contexts.
+ *
  * @property cache - Indicates whether retrieved resources should be cached.
  * @property cacheStore - Saves cached items.
  * @property changesStream - Changes stream to invalidate cache store.
@@ -3366,6 +3399,9 @@ DataScopeService.ctorParameters = () => [
  * @property databaseBaseURL - Determined database base url.
  * @property databaseURL - Determined database url.
  * @property domSanitizer - Dom sanitizer service instance.
+ * @property deepCopyItems - Indicates whether each item should be copied from
+ * cache. Defaults to "true" to avoid errors but could have avoidable impact
+ * on performance for large data sets.
  * @property escapeRegularExpressions - Holds the escape regular expressions's
  * pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
@@ -3374,6 +3410,7 @@ DataScopeService.ctorParameters = () => [
  * @property messageConfiguration - Plain message box configuration object.
  * @property modelConfiguration - Saves a mapping from all available model
  * names to their specification.
+ * @property platformID - Platform identification string.
  * @property relevantKeys - Saves a list of relevant key names to take into
  * account during resolving.
  * @property relevantSearchKeys - Saves a list of relevant key names to take
@@ -3401,6 +3438,7 @@ export class AbstractResolver {
         this.cache = true;
         this.cacheStore = {};
         this.databaseURLCache = {};
+        this.deepCopyItems = true;
         this.messageConfiguration = new MatSnackBarConfig();
         this.relevantKeys = null;
         this.relevantSearchKeys = null;
@@ -3423,6 +3461,7 @@ export class AbstractResolver {
         this.messageConfiguration.duration = 5 * 1000;
         this.message = (message) => get(MatSnackBar).open(message, false, this.messageConfiguration);
         this.modelConfiguration = get(InitialDataService).configuration.database.model;
+        this.platformID = get(PLATFORM_ID);
         this.representObject = get(RepresentObjectPipe).transform.bind(get(RepresentObjectPipe));
         this.specialNames = get(InitialDataService).configuration.database.model.property.name.special;
         this.tools = get(UtilityService).fixed.tools;
@@ -3511,7 +3550,9 @@ export class AbstractResolver {
             });
             if (!this.cacheStore.hasOwnProperty(key))
                 this.cacheStore[key] = await this.data.find(selector, options);
-            return this.tools.copyLimitedRecursively(this.cacheStore[key]);
+            if (this.deepCopyItems)
+                return this.tools.copyLimitedRecursively(this.cacheStore[key]);
+            return this.cacheStore[key].slice();
         }
         return await this.data.find(selector, options);
     }
@@ -3535,6 +3576,8 @@ export class AbstractResolver {
          */
     resolve(route, state) {
         /* eslint-enable no-unused-vars */
+        if (AbstractResolver.skipResolvingOnServer && isPlatformServer(this.platformID))
+            return [];
         let searchTerm = '';
         if ('searchTerm' in route.params) {
             const term = decodeURIComponent(route.params.searchTerm);
@@ -3590,6 +3633,7 @@ export class AbstractResolver {
         return true;
     }
 }
+AbstractResolver.skipResolvingOnServer = true;
 AbstractResolver.decorators = [
     { type: Injectable },
 ];
@@ -3604,14 +3648,16 @@ AbstractResolver.ctorParameters = () => [
  * Creates a database connection and/or synchronisation stream plus missing
  * local indexes.
  * @param data - Injected data service instance.
+ * @param initialData - Injected initial data service instance.
  * @param injector - Injected injector service instance.
  * @returns Initializer function.
  */
-export function dataServiceInitializerFactory(data, injector) {
+export function dataServiceInitializerFactory(data, initialData, injector) {
     /*
             NOTE: We need this statement here to avoid having an ugly typescript
             error.
         */
+    // TODO remove if corresponding aot bug is fixed.
     2;
     return () => {
         InitialDataService.injectors.add(injector);
@@ -4356,7 +4402,14 @@ DateDirective.propDecorators = {
 };
 // IgnoreTypeCheck
 /**
- * TODO
+ * Directive to automatically switch a list of content elements.
+ * @property extendObject - Extend object's pipe transform method.
+ * @property index - Index of currently selected content.
+ * @property options - Sliding options.
+ * @property templateReference - Content element template to slide.
+ * @property timerID - Timer id of next content switch.
+ * @property viewContainerReference - View container reference to inject
+ * instantiated template reference into.
  */
 export class SliderDirective {
     /**
@@ -5910,6 +5963,7 @@ export class FileInputComponent {
         this.editableName = true;
         this.file = null;
         this.fileChange = new EventEmitter();
+        this.filter = [];
         this.headerText = null;
         this.resetNameText = '×';
         this.saveNameText = '✓';
@@ -6047,6 +6101,23 @@ export class FileInputComponent {
                     length: this.input.nativeElement.files[0].size,
                     name: this.input.nativeElement.files[0].name
                 };
+                const types = ['content_type', 'name'];
+                for (const filter of this.filter) {
+                    let match = true;
+                    for (const type of types)
+                        if (filter.hasOwnProperty('source') &&
+                            filter.source.hasOwnProperty(type) &&
+                            !new RegExp(filter.source[type], 'g').test(this.file[type])) {
+                            match = false;
+                            break;
+                        }
+                    if (match)
+                        for (const type of types)
+                            if (filter.target.hasOwnProperty(type))
+                                this.file[type] = (filter.hasOwnProperty(type) &&
+                                    filter.source.hasOwnProperty(type)) ? this.file[type].replace(new RegExp(filter.source[type], 'g'), filter.target[type]) :
+                                    filter.target[type];
+                }
                 this.update(this.file ? this.file.name : null);
             }
         });
@@ -6564,6 +6635,7 @@ FileInputComponent.propDecorators = {
     "downloadButtonText": [{ type: Input },],
     "editableName": [{ type: Input },],
     "fileChange": [{ type: Output },],
+    "filter": [{ type: Input },],
     "headerText": [{ type: Input },],
     "input": [{ type: ViewChild, args: ['input',] },],
     "resetNameText": [{ type: Input },],
@@ -7023,7 +7095,7 @@ Module.decorators = [
                     NumberPercentPipe,
                     DatePipe,
                     {
-                        deps: [DataService, Injector],
+                        deps: [DataService, InitialDataService, Injector],
                         multi: true,
                         provide: APP_INITIALIZER,
                         useFactory: dataServiceInitializerFactory

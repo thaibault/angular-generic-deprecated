@@ -230,6 +230,8 @@ export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
 export let currentInstanceToSearchInjectorFor:Object|null = null
+export const globalVariableNameToRetrieveDataFrom:string = 'genericInitialData'
+export const applicationDomNodeSelector:string = 'application, [application]'
 export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
 // region configuration
 const animations:Array<AnimationTriggerMetadata> = [defaultAnimation]
@@ -374,6 +376,7 @@ export class InitialDataService {
     static removeFoundData:boolean = true
 
     configuration:PlainObject
+    globalContext:any
     tools:Tools
     /**
      * Sets all properties of given initial data as properties to this
@@ -384,30 +387,51 @@ export class InitialDataService {
     constructor(utility:UtilityService) {
         if (!utility)
             utility = new UtilityService()
+        this.globalContext = utility.fixed.globalContext
         this.tools = utility.fixed.tools
         this.set(
             InitialDataService.defaultScope,
-            'genericInitialData' in utility.fixed.globalContext ?
-                utility.fixed.globalContext.genericInitialData :
+            globalVariableNameToRetrieveDataFrom in utility.fixed.globalContext
+                ?
+                utility.fixed.globalContext[
+                    globalVariableNameToRetrieveDataFrom]
+                :
                 {})
         if (InitialDataService.removeFoundData)
-            delete utility.fixed.globalContext.genericInitialData
-        if (
-            'document' in utility.fixed.globalContext &&
-            'querySelector' in utility.fixed.globalContext.document
-        ) {
-            // TODO how to get right dom node?
-            const domNode:DomNode =
-                utility.fixed.globalContext.document.querySelector(
-                    'application')
-            if (domNode && 'getAttribute' in domNode && domNode.getAttribute(
-                'initialData'
-            )) {
-                this.set(JSON.parse(domNode.getAttribute('initialData')))
-                if (InitialDataService.removeFoundData)
-                    domNode.removeAttribute('initialData')
-            }
+            delete utility.fixed.globalContext[
+                globalVariableNameToRetrieveDataFrom]
+    }
+    /**
+     * Retrieve initial data from given dom node or dom node identifier.
+     * @param domNodeReference - Dom node or a selector to retrieve a dom node.
+     * @param removeFoundData - Removes found attribute value from dom node.
+     * @param attributeName - An attribute name to retrieve data from.
+     * @returns Nothing.
+     */
+    retrieveFromDomNode(
+        domNodeReference:DomNode|string = applicationDomNodeSelector,
+        removeFoundData:boolean = InitialDataService.removeFoundData,
+        attributeName:string = 'initialData'
+    ):PlainObject {
+        let domNode:DomNode|null = null
+        if (typeof domNodeReference === 'string') {
+            if (
+                'document' in this.globalContext &&
+                'querySelector' in this.globalContext.document
+            )
+                domNode = this.globalContext.document.querySelector(
+                    domNodeReference)
+        } else
+            domNode = domNodeReference
+        let result:PlainObject = {}
+        if (domNode && 'getAttribute' in domNode && domNode.getAttribute(
+            attributeName
+        )) {
+            result = this.set(JSON.parse(domNode.getAttribute(attributeName)))
+            if (removeFoundData)
+                domNode.removeAttribute(attributeName)
         }
+        return result
     }
     /**
      * Sets initial data.
@@ -437,7 +461,8 @@ export const determineInjector:Function = (
     if (currentInstanceToSearchInjectorFor === this)
         throw SYMBOL
     currentInstanceToSearchInjectorFor = this
-    for (const injector of InitialDataService.injectors)
+    // NOTE: Converting set to array is necessary to avoid transpiling issues.
+    for (const injector of Array.from(InitialDataService.injectors))
         try {
             if (injector.get(constructor, NaN) === instance)
                 return injector.get.bind(injector)
@@ -2435,6 +2460,10 @@ export class AlertService {
  * A generic database connector.
  * @property static:revisionNumberRegularExpression - Compiled regular
  * expression to retrieve revision number from revision hash.
+ * @property static:skipGenericIndexManagementOnServer - Indicates whether
+ * generic index creation deletion should be done on server context.
+ * @property static:skipRemoteConnectionOnServer - Indicates whether remote
+ * connections should be avoided on server contexts.
  * @property static:wrappableMethodNames - Saves a list of method names which
  * can be intercepted.
  *
@@ -2457,6 +2486,8 @@ export class AlertService {
 export class DataService {
     // NOTE: Native regular expression definition is not allowed here.
     static revisionNumberRegularExpression:RegExp = new RegExp('^([0-9]+)-')
+    static skipGenericIndexManagementOnServer:boolean = true
+    static skipRemoteConnectionOnServer:boolean = true
     static wrappableMethodNames:Array<string> = [
         'allDocs', 'bulkDocs', 'bulkGet',
         'close',
@@ -2510,19 +2541,12 @@ export class DataService {
         utility:UtilityService
     ) {
         this.configuration = initialData.configuration
-        if (this.configuration.database.hasOwnProperty('publicURL'))
-            this.configuration.database.url =
-                this.configuration.database.publicURL
         this.database = PouchDB
         this.equals = equalsPipe.transform.bind(equalsPipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
         this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.tools = utility.fixed.tools
-        const idName:string =
-            this.configuration.database.model.property.name.special.id
-        const revisionName:string =
-            this.configuration.database.model.property.name.special.revision
         const nativeBulkDocs:Function = this.database.prototype.bulkDocs
         const self:DataService = this
         this.database.plugin({bulkDocs: async function(
@@ -2532,6 +2556,11 @@ export class DataService {
                 Implements a generic retry mechanism for "upsert" and "latest"
                 updates and optionally supports to ignore "NoChange" errors.
             */
+            const idName:string =
+                self.configuration.database.model.property.name.special.id
+            const revisionName:string =
+                self.configuration.database.model.property.name.special
+                    .revision
             if (
                 !Array.isArray(firstParameter) &&
                 typeof firstParameter === 'object' &&
@@ -2621,11 +2650,7 @@ export class DataService {
             }
             return result
         }})
-        this.database
-            .plugin(PouchDBFindPlugin)
-            .plugin(PouchDBValidationPlugin)
-        for (const plugin of this.configuration.database.plugins)
-            this.database.plugin(plugin)
+        this.database.plugin(PouchDBFindPlugin).plugin(PouchDBValidationPlugin)
     }
     /**
      * Determines all property names which are indexable in a generic manner.
@@ -2674,22 +2699,32 @@ export class DataService {
     async initialize():Promise<void> {
         /*
             NOTE: We want to allow other services to manipulate the database
-            constructor before initializing them.
+            constructor and configurations before initializing them.
         */
         await this.tools.timeout()
+        if (this.configuration.database.hasOwnProperty('publicURL'))
+            this.configuration.database.url =
+                this.configuration.database.publicURL
+        for (const plugin of this.configuration.database.plugins)
+            this.database.plugin(plugin)
         const options:PlainObject = this.extendObject(
             /* eslint-disable camelcase */
             true, {skip_setup: true},
             /* eslint-enable camelcase */
             this.configuration.database.connector || {})
         const databaseName:string = this.configuration.name || 'generic'
-        if (!isPlatformServer(this.platformID))
+        if (!(
+            DataService.skipRemoteConnectionOnServer &&
+            isPlatformServer(this.platformID)
+        ))
             this.remoteConnection = new this.database(this.stringFormat(
                 this.configuration.database.url, ''
             ) + `/${databaseName}`, options)
-        if (this.configuration.database.local || isPlatformServer(
-            this.platformID
-        ))
+        if (
+            this.configuration.database.local ||
+            DataService.skipRemoteConnectionOnServer &&
+            isPlatformServer(this.platformID)
+        )
             this.connection = new this.database(databaseName, options)
         else
             this.connection = this.remoteConnection
@@ -2748,6 +2783,7 @@ export class DataService {
             }
         }
         // endregion
+        // region register interceptor
         for (const name in this.connection)
             if (
                 DataService.wrappableMethodNames.includes(name) &&
@@ -2824,9 +2860,12 @@ export class DataService {
                 }
             }
         this.connection.installValidationMethods()
-        if (
-            isPlatformServer(this.platformID) &&
-            this.configuration.database.createGenericFlatIndex
+        // endregion
+        if (!(
+            DataService.skipGenericIndexManagementOnServer &&
+            isPlatformServer(this.platformID)
+        ) && this.configuration.database.createGenericFlatIndex &&
+            this.connection !== this.remoteConnection
         ) {
             // region create/remove needed/unneeded generic indexes
             for (const modelName in this.configuration.database.model.entities)
@@ -3261,7 +3300,6 @@ export class DataScopeService {
         }
         return this.generate(modelName, propertyNames, data)
     }
-    // TODO test
     /**
      * Determines a nested specification object for given property name and
      * corresponding specification object where given property is bound to.
@@ -3575,6 +3613,9 @@ export class DataScopeService {
 /**
  * Helper class to extend from to have some basic methods to deal with database
  * entities.
+ * @property static:skipResolvingOnServer - Indicates whether to skip resolving
+ * data on server contexts.
+ *
  * @property cache - Indicates whether retrieved resources should be cached.
  * @property cacheStore - Saves cached items.
  * @property changesStream - Changes stream to invalidate cache store.
@@ -3584,6 +3625,9 @@ export class DataScopeService {
  * @property databaseBaseURL - Determined database base url.
  * @property databaseURL - Determined database url.
  * @property domSanitizer - Dom sanitizer service instance.
+ * @property deepCopyItems - Indicates whether each item should be copied from
+ * cache. Defaults to "true" to avoid errors but could have avoidable impact
+ * on performance for large data sets.
  * @property escapeRegularExpressions - Holds the escape regular expressions's
  * pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
@@ -3592,6 +3636,7 @@ export class DataScopeService {
  * @property messageConfiguration - Plain message box configuration object.
  * @property modelConfiguration - Saves a mapping from all available model
  * names to their specification.
+ * @property platformID - Platform identification string.
  * @property relevantKeys - Saves a list of relevant key names to take into
  * account during resolving.
  * @property relevantSearchKeys - Saves a list of relevant key names to take
@@ -3609,6 +3654,8 @@ export class DataScopeService {
  * auto completion e.g.
  */
 export class AbstractResolver implements Resolve<PlainObject> {
+    static skipResolvingOnServer:boolean = true
+
     cache:boolean = true
     cacheStore:PlainObject = {}
     changesStream:Stream
@@ -3617,12 +3664,14 @@ export class AbstractResolver implements Resolve<PlainObject> {
     databaseBaseURL:string
     databaseURL:string
     databaseURLCache:{[key:string]:SafeResourceUrl} = {}
+    deepCopyItems:boolean = true
     domSanitizer:DomSanitizer
     escapeRegularExpressions:Function
     extendObject:Function
     message:Function
     messageConfiguration:PlainObject = new MatSnackBarConfig()
     modelConfiguration:PlainObject
+    platformID:string
     relevantKeys:Array<string>|null = null
     relevantSearchKeys:Array<string>|null = null
     representObject:Function
@@ -3664,6 +3713,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
         this.modelConfiguration = get(
             InitialDataService
         ).configuration.database.model
+        this.platformID = get(PLATFORM_ID)
         this.representObject = get(RepresentObjectPipe).transform.bind(get(
             RepresentObjectPipe))
         this.specialNames = get(
@@ -3773,7 +3823,9 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 selector, options})
             if (!this.cacheStore.hasOwnProperty(key))
                 this.cacheStore[key] = await this.data.find(selector, options)
-            return this.tools.copyLimitedRecursively(this.cacheStore[key])
+            if (this.deepCopyItems)
+                return this.tools.copyLimitedRecursively(this.cacheStore[key])
+            return this.cacheStore[key].slice()
         }
         return await this.data.find(selector, options)
     }
@@ -3797,8 +3849,12 @@ export class AbstractResolver implements Resolve<PlainObject> {
      */
     resolve(
         route:ActivatedRouteSnapshot, state:RouterStateSnapshot
-    ):Promise<Array<PlainObject>> {
+    ):Array<PlainObject>|Promise<Array<PlainObject>> {
     /* eslint-enable no-unused-vars */
+        if (AbstractResolver.skipResolvingOnServer && isPlatformServer(
+            this.platformID
+        ))
+            return []
         let searchTerm:string = ''
         if ('searchTerm' in route.params) {
             const term:string = decodeURIComponent(route.params.searchTerm)
@@ -3870,16 +3926,18 @@ export class AbstractResolver implements Resolve<PlainObject> {
  * Creates a database connection and/or synchronisation stream plus missing
  * local indexes.
  * @param data - Injected data service instance.
+ * @param initialData - Injected initial data service instance.
  * @param injector - Injected injector service instance.
  * @returns Initializer function.
  */
 export function dataServiceInitializerFactory(
-    data:DataService, injector:Injector
+    data:DataService, initialData:InitialDataService, injector:Injector
 ):Function {
     /*
         NOTE: We need this statement here to avoid having an ugly typescript
         error.
     */
+    // TODO remove if corresponding aot bug is fixed.
     2
     return ():Promise<void> => {
         InitialDataService.injectors.add(injector)
@@ -4701,7 +4759,14 @@ export class DateDirective {
 // IgnoreTypeCheck
 @Directive({selector: '[genericSlider]'})
 /**
- * TODO
+ * Directive to automatically switch a list of content elements.
+ * @property extendObject - Extend object's pipe transform method.
+ * @property index - Index of currently selected content.
+ * @property options - Sliding options.
+ * @property templateReference - Content element template to slide.
+ * @property timerID - Timer id of next content switch.
+ * @property viewContainerReference - View container reference to inject
+ * instantiated template reference into.
  */
 export class SliderDirective implements OnInit {
     extendObject:Function
@@ -6435,6 +6500,16 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     @Input() editableName:boolean = true
     file:any = null
     @Output() fileChange:EventEmitter<any> = new EventEmitter()
+    @Input() filter:Array<{
+        source?:{
+            contentType?:string;
+            name?:string;
+        };
+        target:{
+            contentType?:string;
+            name?:string;
+        };
+    }> = []
     @Input() headerText:string|null = null
     idName:string
     @ViewChild('input') input:ElementRef
@@ -6657,6 +6732,30 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                     // IgnoreTypeCheck
                     length: this.input.nativeElement.files[0].size,
                     name: this.input.nativeElement.files[0].name
+                }
+                const types:Array<string> = ['content_type', 'name']
+                for (const filter of this.filter) {
+                    let match:boolean = true
+                    for (const type of types)
+                        if (
+                            filter.hasOwnProperty('source') &&
+                            filter.source.hasOwnProperty(type) &&
+                            !new RegExp(filter.source[type], 'g').test(
+                                this.file[type])
+                        ) {
+                            match = false
+                            break
+                        }
+                    if (match)
+                        for (const type of types)
+                            if (filter.target.hasOwnProperty(type))
+                                this.file[type] = (
+                                    filter.hasOwnProperty(type) &&
+                                    filter.source.hasOwnProperty(type)
+                                ) ? this.file[type].replace(new RegExp(
+                                        filter.source[type], 'g'
+                                    ), filter.target[type]) :
+                                    filter.target[type]
                 }
                 this.update(this.file ? this.file.name : null)
             }
@@ -7488,7 +7587,7 @@ export class PaginationComponent {
         // endregion
         DatePipe,
         {
-            deps: [DataService, Injector],
+            deps: [DataService, InitialDataService, Injector],
             multi: true,
             provide: APP_INITIALIZER,
             useFactory: dataServiceInitializerFactory

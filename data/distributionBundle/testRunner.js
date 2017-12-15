@@ -23,6 +23,8 @@ import registerTest from 'clientnode/test'
 try {
     module.require('source-map-support/register')
 } catch (error) {}
+
+import dummyEvent from './mockup'
 // endregion
 // region declaration
 declare var DEBUG:boolean
@@ -86,6 +88,7 @@ export function registerAngularTest(
             }
             if (TARGET_TECHNOLOGY === 'node') {
                 global.window.Reflect = global.Reflect
+                global.Event = dummyEvent
                 if (!('CSS' in global))
                     global.CSS = true
                 if (!('matchMedia' in global.window))

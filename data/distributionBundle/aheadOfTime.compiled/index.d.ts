@@ -1,4 +1,4 @@
-import Tools, { PlainObject } from 'clientnode';
+import Tools, { DomNode, PlainObject } from 'clientnode';
 import { AfterContentChecked, AfterViewInit, ChangeDetectorRef, ElementRef, EventEmitter, Injector, OnChanges, OnDestroy, OnInit, PipeTransform, SimpleChanges, TemplateRef, ViewContainerRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { DefaultValueAccessor } from '@angular/forms';
@@ -117,6 +117,8 @@ export declare let LAST_KNOWN_DATA: {
     sequence: number | string;
 };
 export declare let currentInstanceToSearchInjectorFor: Object | null;
+export declare const globalVariableNameToRetrieveDataFrom: string;
+export declare const applicationDomNodeSelector: string;
 export declare const SYMBOL: string;
 export declare const CODE_MIRROR_DEFAULT_OPTIONS: PlainObject;
 export declare const TINYMCE_DEFAULT_OPTIONS: PlainObject;
@@ -132,6 +134,7 @@ export declare class InitialDataService {
     static injectors: Set<Injector>;
     static removeFoundData: boolean;
     configuration: PlainObject;
+    globalContext: any;
     tools: Tools;
     /**
      * Sets all properties of given initial data as properties to this
@@ -140,6 +143,14 @@ export declare class InitialDataService {
      * @returns Nothing.
      */
     constructor(utility: UtilityService);
+    /**
+     * Retrieve initial data from given dom node or dom node identifier.
+     * @param domNodeReference - Dom node or a selector to retrieve a dom node.
+     * @param removeFoundData - Removes found attribute value from dom node.
+     * @param attributeName - An attribute name to retrieve data from.
+     * @returns Nothing.
+     */
+    retrieveFromDomNode(domNodeReference?: DomNode | string, removeFoundData?: boolean, attributeName?: string): PlainObject;
     /**
      * Sets initial data.
      * @param parameter - All given data objects will be merged into current
@@ -764,6 +775,8 @@ export declare class AlertService {
 }
 export declare class DataService {
     static revisionNumberRegularExpression: RegExp;
+    static skipGenericIndexManagementOnServer: boolean;
+    static skipRemoteConnectionOnServer: boolean;
     static wrappableMethodNames: Array<string>;
     connection: PouchDB;
     configuration: PlainObject;
@@ -973,6 +986,7 @@ export declare class DataScopeService {
     generate(modelName: string, propertyNames?: Array<string>, data?: PlainObject, propertyNamesToIgnore?: Array<string>): PlainObject;
 }
 export declare class AbstractResolver implements Resolve<PlainObject> {
+    static skipResolvingOnServer: boolean;
     cache: boolean;
     cacheStore: PlainObject;
     changesStream: Stream;
@@ -983,12 +997,14 @@ export declare class AbstractResolver implements Resolve<PlainObject> {
     databaseURLCache: {
         [key: string]: SafeResourceUrl;
     };
+    deepCopyItems: boolean;
     domSanitizer: DomSanitizer;
     escapeRegularExpressions: Function;
     extendObject: Function;
     message: Function;
     messageConfiguration: PlainObject;
     modelConfiguration: PlainObject;
+    platformID: string;
     relevantKeys: Array<string> | null;
     relevantSearchKeys: Array<string> | null;
     representObject: Function;
@@ -1037,7 +1053,7 @@ export declare class AbstractResolver implements Resolve<PlainObject> {
      * @param state - Current state informations.
      * @returns Promise with data filtered by current route informations.
      */
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<Array<PlainObject>>;
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Array<PlainObject> | Promise<Array<PlainObject>>;
     /**
      * Updates given item.
      * @param item - Item to update.
@@ -1051,10 +1067,11 @@ export declare class AbstractResolver implements Resolve<PlainObject> {
  * Creates a database connection and/or synchronisation stream plus missing
  * local indexes.
  * @param data - Injected data service instance.
+ * @param initialData - Injected initial data service instance.
  * @param injector - Injected injector service instance.
  * @returns Initializer function.
  */
-export declare function dataServiceInitializerFactory(data: DataService, injector: Injector): Function;
+export declare function dataServiceInitializerFactory(data: DataService, initialData: InitialDataService, injector: Injector): Function;
 /**
  * Generic input component.
  * @property declaration - Declaration info text.
@@ -1838,6 +1855,16 @@ export declare class FileInputComponent implements AfterViewInit, OnChanges {
     editableName: boolean;
     file: any;
     fileChange: EventEmitter<any>;
+    filter: Array<{
+        source?: {
+            contentType?: string;
+            name?: string;
+        };
+        target: {
+            contentType?: string;
+            name?: string;
+        };
+    }>;
     headerText: string | null;
     idName: string;
     input: ElementRef;

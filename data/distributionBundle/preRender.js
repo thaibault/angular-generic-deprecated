@@ -11,19 +11,25 @@
     endregion
 */
 // region imports
-import type {File, Window} from 'clientnode'
+import type {DomNode, File, PlainObject, Window} from 'clientnode'
 import Tools, {globalContext} from 'clientnode'
 import {enableProdMode, NgModule} from '@angular/core'
 import {APP_BASE_HREF} from '@angular/common'
-import {renderModule, ServerModule} from '@angular/platform-server'
+import {
+    renderModule, renderModuleFactory, ServerModule
+} from '@angular/platform-server'
 import {Routes} from '@angular/router'
 import fileSystem from 'fs'
-import {JSDOM, VirtualConsole} from 'jsdom'
+// TODO import {minifyHTML} from 'html-minifier'
+import {JSDOM as DOM, VirtualConsole} from 'jsdom'
 import makeDirectoryPath from 'mkdirp'
 import path from 'path'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 import removeDirectoryRecursively from 'rimraf'
-import 'zone.js/dist/zone-node'
+
+import {
+    applicationDomNodeSelector, globalVariableNameToRetrieveDataFrom
+} from './index'
 // endregion
 /**
  * Determines pre-renderable paths from given angular routes configuration
@@ -39,10 +45,18 @@ export function determinePaths(
 ):{links:{[key:string]:string};paths:Set<string>} {
     let links:{[key:string]:string} = {}
     let paths:Set<string> = new Set()
-    routes.reverse()
     let defaultPath:string = ''
-    for (const route:Object of routes)
-        if (route.hasOwnProperty('path')) {
+    /*
+        NOTE: We have to reverse the url list to ensure that default paths are
+        already registered before linking to them internally due to the fact
+        that default paths are listed later to avoid shadowing non-default
+        paths.
+    */
+    routes.reverse()
+    for (const route:any of routes)
+        if (typeof route === 'string')
+            paths.add(path.join(basePath, root, route))
+        else if (route.hasOwnProperty('path')) {
             if (route.hasOwnProperty('redirectTo')) {
                 if (route.path === '**')
                     if (route.redirectTo.startsWith('/'))
@@ -76,149 +90,168 @@ export function determinePaths(
             Tools.extendObject(links, result.links)
             paths = new Set([...paths, ...result.paths])
         }
+    // NOTE: We have to forward links cascades.
+    for (const source:string in links)
+        if (links.hasOwnProperty(`${links[source]}/**`))
+            links[source] = links[`${links[source]}/**`]
     return {links, paths}
 }
 /**
  * Pre-renders given application routes to given target directory structure.
- * @param ApplicationComponent - Application component to pre-render.
- * @param ApplicationModule - Application module to pre-render.
- * @param routes - Route or routes configuration object or array of paths to
- * pre-render.
- * @param globalVariableNamesToInject - Global variable names to inject into
- * the node context evaluated from given index html file.
- * @param htmlFilePath - HTML file path to use as index.
- * @param targetDirectoryPath - Target directory path to generate pre-rendered
- * html files in.
- * @param scope - Object to inject into the global scope before running
- * pre-rendering.
- * @param encoding - Encoding to use for reading given html file reference.
+ * @param module - Application module to pre-render.
+ * @param options - Additional options to configure pre-rendering in detail.
  * @returns A promise which resolves to a list of pre-rendered html strings.
  */
-export function render(
-    ApplicationComponent:Object,
-    ApplicationModule:Object,
-    // IgnoreTypeCheck
-    routes:string|Array<string>|Routes = [],
-    globalVariableNamesToInject:string|Array<string> = 'genericInitialData',
-    htmlFilePath:string = path.resolve(
-        path.dirname(process.argv[1]), 'index.html'),
-    targetDirectoryPath:string = path.resolve(
-        path.dirname(process.argv[1]), 'preRendered'),
-    scope:Object = {genericInitialData: {configuration: {database: {
-        connector: {adapter: 'memory'},
-        plugins: [PouchDBAdapterMemory]
-    }}}},
-    encoding:string = 'utf-8'
-):Promise<Array<string>> {
-    globalVariableNamesToInject = [].concat(globalVariableNamesToInject)
-    routes = [].concat(routes)
+export function render(module:Object, options:{
+    applicationDomNodeSelector?:string;
+    component:Object|null;
+    encoding:string;
+    globalVariableNamesToInject:string|Array<string>;
+    htmlFilePath:string;
+    minify:PlainObject|null;
+    reInjectInnerHTMLFromInitialDomNode:boolean;
+    routes:Array<string>|Routes;
+    scope:Object;
+    targetDirectoryPath:string;
+}):Promise<Array<string>> {
+    // region determine options
+    options = Tools.extendObject(true, {
+        applicationDomNodeSelector,
+        component: null,
+        encoding: 'utf-8',
+        globalVariableNamesToInject: globalVariableNameToRetrieveDataFrom,
+        htmlFilePath: path.resolve(
+            path.dirname(process.argv[1]), 'index.html'),
+        minify: null,
+        reInjectInnerHTMLFromInitialDomNode: true,
+        routes: [],
+        scope: {[globalVariableNameToRetrieveDataFrom]: {configuration: {
+            database: {
+                connector: {adapter: 'memory'},
+                plugins: [PouchDBAdapterMemory]
+            }
+        }}},
+        targetDirectoryPath: path.resolve(
+            path.dirname(process.argv[1]), 'preRendered')
+    }, options || {})
+    options.globalVariableNamesToInject = [].concat(
+        options.globalVariableNamesToInject)
+    options.routes = [].concat(options.routes)
+    // endregion
     return new Promise((
         resolve:Function, reject:Function
     // IgnoreTypeCheck
-    ):void => fileSystem.readFile(htmlFilePath, {encoding}, async (
-        error:?Error, data:string
-    ):Promise<void> => {
+    ):void => fileSystem.readFile(options.htmlFilePath, {
+        encoding: options.encoding
+    }, async (error:?Error, data:string):Promise<void> => {
         if (error)
             return reject(error)
         // region prepare environment
-        const virtualConsole:Object = new VirtualConsole()
+        renderScope.virtualConsole = new VirtualConsole()
         for (const name:string of [
             'assert', 'dir', 'error', 'info', 'log', 'time', 'timeEnd',
             'trace', 'warn'
         ])
-            virtualConsole.on(name, console[name].bind(console))
-        const window:Window = (new JSDOM(data, {
-            runScripts: 'dangerously', virtualConsole
+            renderScope.virtualConsole.on(name, console[name].bind(console))
+        renderScope.window = (new DOM(data, {
+            runScripts: 'dangerously',
+            virtualConsole: renderScope.virtualConsole
         })).window
-        const basePath:string = window.document.getElementsByTagName(
-            'base'
-        )[0].href
-        for (const name:string in window)
+        renderScope.applicationDomNode =
+            renderScope.window.document.querySelector(
+                options.applicationDomNodeSelector)
+        renderScope.innerHTMLToReInject = ''
+        if (renderScope.applicationDomNode)
+            renderScope.innerHTMLToReInject =
+                renderScope.applicationDomNode.innerHTML
+        renderScope.basePath =
+            // IgnoreTypeCheck
+            renderScope.window.document.getElementsByTagName('base')[0].href
+        for (const name:string in renderScope.window)
             if (
-                window.hasOwnProperty(name) &&
+                renderScope.window.hasOwnProperty(name) &&
                 !globalContext.hasOwnProperty(name) && (
-                    globalVariableNamesToInject.length === 0 ||
-                    globalVariableNamesToInject.includes(name)
+                    options.globalVariableNamesToInject.length === 0 ||
+                    options.globalVariableNamesToInject.includes(name)
                 )
             ) {
                 console.info(`Inject variable "${name}".`)
-                globalContext[name] = window[name]
+                // IgnoreTypeCheck
+                globalContext[name] = renderScope.window[name]
             }
         Tools.plainObjectPrototypes = Tools.plainObjectPrototypes.concat(
             // IgnoreTypeCheck
-            window.Object.prototype)
-        for (const name:string in scope)
-            if (scope.hasOwnProperty(name))
-                Tools.extendObject(true, globalContext[name], scope[name])
+            renderScope.window.Object.prototype)
+        Tools.extendObject(true, globalContext, options.scope)
         // endregion
         // region determine pre-renderable paths
         const links:Array<string> = []
         let urls:Array<string>
-        if (routes.length)
-            if (typeof routes[0] === 'string')
-                // IgnoreTypeCheck
-                urls = routes
-            else {
-                const result:{
-                    links:{[key:string]:string};
-                    paths:Set<string>;
-                } = determinePaths(basePath, routes)
-                for (const sourcePath:string in result.links)
-                    if (result.links.hasOwnProperty(sourcePath)) {
-                        const realSourcePath:string = path.join(
-                            targetDirectoryPath, sourcePath.substring(
-                                basePath.length
-                            ).replace(/^\/+(.+)/, '$1'))
-                        links.push(realSourcePath)
-                        const targetPath:string = path.join(
-                            targetDirectoryPath,
-                            result.links[sourcePath].substring(
-                                basePath.length
-                            ).replace(/^\/+(.+)/, '$1')) + '.html'
-                        await makeDirectoryPath(path.dirname(
-                            realSourcePath
-                        ), async (error:?Error):Promise<void> => {
-                            if (error)
-                                return reject(error)
-                            if (await Tools.isFile(realSourcePath))
-                                await new Promise((
-                                    resolve:Function, reject:Function
-                                ):void => removeDirectoryRecursively(
-                                    realSourcePath, (error:?Error):void =>
-                                        error ? reject(error) : resolve()))
-                            // IgnoreTypeCheck
-                            fileSystem.symlink(targetPath, realSourcePath, (
-                                error:?Error
-                            ):void => error ? reject(error) : resolve())
-                        })
-                    }
-                urls = Array.from(result.paths).sort()
-            }
-        else
-            urls = [basePath]
+        if (options.routes.length) {
+            const result:{
+                links:{[key:string]:string};
+                paths:Set<string>;
+            } = determinePaths(renderScope.basePath, options.routes)
+            for (const sourcePath:string in result.links)
+                if (result.links.hasOwnProperty(sourcePath)) {
+                    const realSourcePath:string = path.join(
+                        options.targetDirectoryPath, sourcePath.substring(
+                            renderScope.basePath.length
+                        ).replace(/^\/+(.+)/, '$1'))
+                    links.push(realSourcePath)
+                    const targetPath:string = path.join(
+                        options.targetDirectoryPath,
+                        result.links[sourcePath].substring(
+                            renderScope.basePath.length
+                        ).replace(/^\/+(.+?)\/?$/, '$1')) + '.html'
+                    await makeDirectoryPath(path.dirname(
+                        realSourcePath
+                    ), async (error:?Error):Promise<void> => {
+                        if (error)
+                            return reject(error)
+                        let stats:any = null
+                        try {
+                            stats = await new Promise((
+                                resolve:Function, reject:Function
+                            ):void => fileSystem.lstat(realSourcePath, (
+                                error:any, stats:any
+                            ):void => error ? reject(error) : resolve(
+                                stats)))
+                        } catch (error) {
+                            if (error.code !== 'ENOENT')
+                                throw error
+                        }
+                        if (stats && (
+                            stats.isSymbolicLink() || stats.isFile()
+                        ))
+                            await new Promise((
+                                resolve:Function, reject:Function
+                            ):void => removeDirectoryRecursively(
+                                realSourcePath, (error:?Error):void =>
+                                    error ? reject(error) : resolve()))
+                        // IgnoreTypeCheck
+                        fileSystem.symlink(targetPath, realSourcePath, (
+                            error:?Error
+                        ):void => error ? reject(error) : resolve())
+                    })
+                }
+            urls = Array.from(result.paths).sort()
+        } else
+            urls = [renderScope.basePath]
         // endregion
-        console.info(`Found ${urls.length} pre-renderable urls.`)
-        // region create server pre-renderable module
-        /**
-         * Dummy server compatible root application module to pre-render.
-         */
-        @NgModule({
-            bootstrap: [ApplicationComponent],
-            imports: [ApplicationModule, ServerModule],
-            providers: [{provide: APP_BASE_HREF, useValue: basePath}]
-        })
-        class ApplicationServerModule {}
-        // endregion
+        console.info(
+            `Found ${urls.length} pre-renderable url` +
+            `${urls.length > 1 ? 's' : ''}.`)
         enableProdMode()
         // region generate pre-rendered html files
         const results:Array<string> = []
         const filePaths:Array<string> = []
         for (const url:string of urls) {
-            const filePath:string = path.join(targetDirectoryPath, (
-                url === basePath
-            ) ? '/' :
-                url.substring(basePath.length).replace(/^\/+(.+)/, '$1')) +
-                '.html'
+            const filePath:string = path.join(options.targetDirectoryPath, (
+                url === renderScope.basePath
+            ) ? '/' : url.substring(renderScope.basePath.length).replace(
+                    /^\/+(.+?)\/?$/, '$1'
+                )) + '.html'
             filePaths.push(filePath)
             try {
                 await new Promise((
@@ -230,14 +263,79 @@ export function render(
                         return reject(error)
                     console.info(`Pre-render url "${url}".`)
                     let result:string = ''
-                    try {
-                        result = await renderModule(
-                            ApplicationServerModule, {document: data, url})
-                    } catch (error) {
-                        console.warn(
-                            'Error occurred during pre-rendering path "' +
-                            `${url}": ${Tools.representObject(error)}`)
+                    // region pre-render
+                    if (options.component) {
+                        // region create server pre-renderable module
+                        /**
+                         * Dummy server compatible root application module to
+                         * pre-render.
+                         */
+                        @NgModule({
+                            bootstrap: [options.component],
+                            imports: [module, ServerModule],
+                            providers: [{
+                                provide: APP_BASE_HREF,
+                                useValue: renderScope.basePath
+                            }]
+                        })
+                        class ApplicationServerModule {}
+                        // endregion
+                        try {
+                            result = await renderModule(
+                                ApplicationServerModule, {document: data, url})
+                        } catch (error) {
+                            console.warn(
+                                'Error occurred during dynamic pre-rendering' +
+                                ` path "${url}": ` +
+                                Tools.representObject(error))
+                            return reject(error)
+                        }
+                    } else
+                        try {
+                            result = await renderModuleFactory(
+                                module, {document: data, url})
+                        } catch (error) {
+                            console.warn(
+                                'Error occurred during ahead of time ' +
+                                `compiled pre-rendering path "${url}": ` +
+                                Tools.representObject(error))
+                            return reject(error)
+                        }
+                    // endregion
+                    // region re-inject needed initial markup
+                    if (options.reInjectInnerHTMLFromInitialDomNode) {
+                        const window:Window = (new DOM(result)).window
+                        /*
+                            NOTE: We have to re-select the application node
+                            here, because it's embedded in another document
+                            context.
+                        */
+                        const applicationDomNode:DomNode =
+                            window.document.querySelector(
+                                options.applicationDomNodeSelector)
+                        const regularExpression:RegExp = new RegExp(
+                            '<!--generic-inject-application-->' +
+                            '(?:[\\s\\S]*?<!---->)?',
+                            'i')
+                        if (regularExpression.test(
+                            renderScope.innerHTMLToReInject
+                        ))
+                            applicationDomNode.innerHTML =
+                                renderScope.innerHTMLToReInject.replace(
+                                    regularExpression,
+                                    applicationDomNode.innerHTML)
+                        else
+                            applicationDomNode.innerHTML +=
+                                renderScope.innerHTMLToReInject
+                        result =
+                            result.replace(/([\s\S]*)<html>[\s\S]*/, '$1') +
+                            window.document.documentElement.outerHTML
                     }
+                    // endregion
+                    /* TODO
+                    if (options.minify)
+                        result = minifyHTML(result, options.minify)
+                    */
                     results.push(result)
                     console.info(`Write file "${filePath}".`)
                     fileSystem.writeFile(filePath, result, ((
@@ -252,7 +350,7 @@ export function render(
         // endregion
         // region tidy up
         const files:Array<File> = await Tools.walkDirectoryRecursively(
-            targetDirectoryPath)
+            options.targetDirectoryPath)
         files.reverse()
         let currentFile:?File = null
         for (const file:File of files)
@@ -268,6 +366,16 @@ export function render(
     }))
 }
 export default render
+export const renderScope:{
+    basePath:string;
+    applicationDomNode?:DomNode;
+    innerHTMLToReInject:string;
+    virtualConsole?:Object;
+    window?:Window;
+} = {
+    basePath: '',
+    innerHTMLToReInject: ''
+}
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:
