@@ -55,7 +55,7 @@ export function determinePaths(
     routes.reverse()
     for (const route:any of routes)
         if (typeof route === 'string')
-            paths.add(route)
+            paths.add(path.join(basePath, root, route))
         else if (route.hasOwnProperty('path')) {
             if (route.hasOwnProperty('redirectTo')) {
                 if (route.path === '**')
@@ -203,7 +203,7 @@ export function render(module:Object, options:{
                         options.targetDirectoryPath,
                         result.links[sourcePath].substring(
                             renderScope.basePath.length
-                        ).replace(/^\/+(.+)/, '$1')) + '.html'
+                        ).replace(/^\/+(.+?)\/?$/, '$1')) + '.html'
                     await makeDirectoryPath(path.dirname(
                         realSourcePath
                     ), async (error:?Error):Promise<void> => {
@@ -250,7 +250,7 @@ export function render(module:Object, options:{
             const filePath:string = path.join(options.targetDirectoryPath, (
                 url === renderScope.basePath
             ) ? '/' : url.substring(renderScope.basePath.length).replace(
-                    /^\/+(.+)/, '$1'
+                    /^\/+(.+?)\/?$/, '$1'
                 )) + '.html'
             filePaths.push(filePath)
             try {
