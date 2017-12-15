@@ -48,12 +48,15 @@ export function determinePaths(
     let defaultPath:string = ''
     /*
         NOTE: We have to reverse the url list to ensure that default paths are
-        already registered before linking to them due to the fact that default
-        paths are listed later to avoid shadowing non-default paths.
+        already registered before linking to them internally due to the fact
+        that default paths are listed later to avoid shadowing non-default
+        paths.
     */
     routes.reverse()
-    for (const route:Object of routes)
-        if (route.hasOwnProperty('path')) {
+    for (const route:any of routes)
+        if (typeof route === 'string')
+            paths.add(route)
+        else if (route.hasOwnProperty('path')) {
             if (route.hasOwnProperty('redirectTo')) {
                 if (route.path === '**')
                     if (route.redirectTo.startsWith('/'))
@@ -184,64 +187,61 @@ export function render(module:Object, options:{
         // region determine pre-renderable paths
         const links:Array<string> = []
         let urls:Array<string>
-        if (options.routes.length)
-            if (typeof options.routes[0] === 'string')
-                urls = options.routes
-            else {
-                const result:{
-                    links:{[key:string]:string};
-                    paths:Set<string>;
-                } = determinePaths(renderScope.basePath, options.routes)
-                for (const sourcePath:string in result.links)
-                    if (result.links.hasOwnProperty(sourcePath)) {
-                        const realSourcePath:string = path.join(
-                            options.targetDirectoryPath, sourcePath.substring(
-                                renderScope.basePath.length
-                            ).replace(/^\/+(.+)/, '$1'))
-                        links.push(realSourcePath)
-                        const targetPath:string = path.join(
-                            options.targetDirectoryPath,
-                            result.links[sourcePath].substring(
-                                renderScope.basePath.length
-                            ).replace(/^\/+(.+)/, '$1')) + '.html'
-                        await makeDirectoryPath(path.dirname(
-                            realSourcePath
-                        ), async (error:?Error):Promise<void> => {
-                            if (error)
-                                return reject(error)
-                            let stats:any = null
-                            try {
-                                stats = await new Promise((
-                                    resolve:Function, reject:Function
-                                ):void => fileSystem.lstat(realSourcePath, (
-                                    error:any, stats:any
-                                ):void => error ? reject(error) : resolve(
-                                    stats)))
-                            } catch (error) {
-                                if (error.code !== 'ENOENT')
-                                    throw error
-                            }
-                            if (stats && (
-                                stats.isSymbolicLink() ||
-                                stats.isFile()
-                            ))
-                                await new Promise((
-                                    resolve:Function, reject:Function
-                                ):void => removeDirectoryRecursively(
-                                    realSourcePath, (error:?Error):void =>
-                                        error ? reject(error) : resolve()))
-                            // IgnoreTypeCheck
-                            fileSystem.symlink(targetPath, realSourcePath, (
-                                error:?Error
-                            ):void => error ? reject(error) : resolve())
-                        })
-                    }
-                urls = Array.from(result.paths).sort()
-            }
-        else
+        if (options.routes.length) {
+            const result:{
+                links:{[key:string]:string};
+                paths:Set<string>;
+            } = determinePaths(renderScope.basePath, options.routes)
+            for (const sourcePath:string in result.links)
+                if (result.links.hasOwnProperty(sourcePath)) {
+                    const realSourcePath:string = path.join(
+                        options.targetDirectoryPath, sourcePath.substring(
+                            renderScope.basePath.length
+                        ).replace(/^\/+(.+)/, '$1'))
+                    links.push(realSourcePath)
+                    const targetPath:string = path.join(
+                        options.targetDirectoryPath,
+                        result.links[sourcePath].substring(
+                            renderScope.basePath.length
+                        ).replace(/^\/+(.+)/, '$1')) + '.html'
+                    await makeDirectoryPath(path.dirname(
+                        realSourcePath
+                    ), async (error:?Error):Promise<void> => {
+                        if (error)
+                            return reject(error)
+                        let stats:any = null
+                        try {
+                            stats = await new Promise((
+                                resolve:Function, reject:Function
+                            ):void => fileSystem.lstat(realSourcePath, (
+                                error:any, stats:any
+                            ):void => error ? reject(error) : resolve(
+                                stats)))
+                        } catch (error) {
+                            if (error.code !== 'ENOENT')
+                                throw error
+                        }
+                        if (stats && (
+                            stats.isSymbolicLink() || stats.isFile()
+                        ))
+                            await new Promise((
+                                resolve:Function, reject:Function
+                            ):void => removeDirectoryRecursively(
+                                realSourcePath, (error:?Error):void =>
+                                    error ? reject(error) : resolve()))
+                        // IgnoreTypeCheck
+                        fileSystem.symlink(targetPath, realSourcePath, (
+                            error:?Error
+                        ):void => error ? reject(error) : resolve())
+                    })
+                }
+            urls = Array.from(result.paths).sort()
+        } else
             urls = [renderScope.basePath]
         // endregion
-        console.info(`Found ${urls.length} pre-renderable urls.`)
+        console.info(
+            `Found ${urls.length} pre-renderable url` +
+            `${urls.length > 1 ? 's' : ''}.`)
         enableProdMode()
         // region generate pre-rendered html files
         const results:Array<string> = []
