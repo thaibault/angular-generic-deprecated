@@ -53,7 +53,7 @@ import {
     /* eslint-disable no-unused-vars */
     PLATFORM_ID,
     /* eslint-enable no-unused-vars */
-    Renderer2,
+    Renderer2 as Renderer,
     SimpleChanges,
     TemplateRef,
     ViewChild,
@@ -4581,7 +4581,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
      * @returns Nothing.
      */
     constructor(injector:Injector) {
-        super(injector.get(Renderer2), injector.get(ElementRef), null)
+        super(injector.get(Renderer), injector.get(ElementRef), null)
     }
     /**
      * Manipulates editable value representation.
