@@ -3721,7 +3721,9 @@ export class AbstractResolver implements Resolve<PlainObject> {
         ).configuration.database.model.property.name.special
         this.tools = get(UtilityService).fixed.tools
         if (this.cache) {
-            const initialize:Function = ():void => {
+            const initialize:Function = this.tools.debounce(():void => {
+                if (this.changesStream)
+                    this.changesStream.cancel()
                 this.changesStream = this.data.connection.changes(
                     this.extendObject(
                         true, {}, {since: 'now'},
@@ -3734,7 +3736,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
                     this.cacheStore = {}
                 })
                 this.changesStream.on('error', initialize)
-            }
+            }, 3000)
             /*
                 NOTE: We have to break out of the "zone.js" since long polling
                 seems to confuse its mocked environment.
