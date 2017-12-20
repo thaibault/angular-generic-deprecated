@@ -350,6 +350,10 @@ export class InitialDataService {
                             execution: '_constraintExecutions',
                             expression: '_constraintExpressions'
                         },
+                        create: {
+                            execution: '_createExecution',
+                            expression: '_createExpression'
+                        },
                         deleted: '_deleted',
                         deletedConflict: '_deleted_conflicts',
                         extend: '_extends',
@@ -363,7 +367,11 @@ export class InitialDataService {
                         revisions: '_revisions',
                         revisionsInformation: '_revs_info',
                         strategy: '_updateStrategy',
-                        type: '-type'
+                        type: '-type',
+                        update: {
+                            execution: '_updateExecution',
+                            expression: '_updateExpression'
+                        }
                     },
                     validatedDocumentsCache: '_validatedDocuments'
                 }
