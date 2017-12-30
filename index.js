@@ -2576,6 +2576,12 @@ export class DataService {
                 firstParameter.hasOwnProperty(idName)
             )
                 firstParameter = [firstParameter]
+            /*
+                NOTE: "bulkDocs()" does not get constructor given options
+                if none were provided for a single function call.
+            */
+            if (parameter.length && typeof parameter[0] !== 'object')
+                parameter.unshift(this.configuration.database.connector)
             let result:Array<PlainObject> = []
             try {
                 result = await nativeBulkDocs.call(
