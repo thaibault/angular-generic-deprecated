@@ -24,7 +24,7 @@ Injector, Input, NgModule, /* eslint-disable no-unused-vars */
 Optional, /* eslint-enable no-unused-vars */
 Output, Pipe, /* eslint-disable no-unused-vars */
 PLATFORM_ID, /* eslint-enable no-unused-vars */
-Renderer2, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
+Renderer2 as Renderer, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { DatePipe, isPlatformServer } from '@angular/common';
 import { DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { 
@@ -238,6 +238,10 @@ InitialDataService.defaultScope = { configuration: { database: {
                                 execution: '_constraintExecutions',
                                 expression: '_constraintExpressions'
                             },
+                            create: {
+                                execution: '_createExecution',
+                                expression: '_createExpression'
+                            },
                             deleted: '_deleted',
                             deletedConflict: '_deleted_conflicts',
                             extend: '_extends',
@@ -249,7 +253,11 @@ InitialDataService.defaultScope = { configuration: { database: {
                             revisions: '_revisions',
                             revisionsInformation: '_revs_info',
                             strategy: '_updateStrategy',
-                            type: '-type'
+                            type: '-type',
+                            update: {
+                                execution: '_updateExecution',
+                                expression: '_updateExpression'
+                            }
                         },
                         validatedDocumentsCache: '_validatedDocuments'
                     }
@@ -2549,6 +2557,12 @@ export class DataService {
                     firstParameter !== null &&
                     firstParameter.hasOwnProperty(idName))
                     firstParameter = [firstParameter];
+                /*
+                                NOTE: "bulkDocs()" does not get constructor given options
+                                if none were provided for a single function call.
+                            */
+                if (parameter.length && typeof parameter[0] !== 'object')
+                    parameter.unshift(this.configuration.database.connector);
                 let result = [];
                 try {
                     result = await nativeBulkDocs.call(this, firstParameter, ...parameter);
@@ -3466,7 +3480,9 @@ export class AbstractResolver {
         this.specialNames = get(InitialDataService).configuration.database.model.property.name.special;
         this.tools = get(UtilityService).fixed.tools;
         if (this.cache) {
-            const initialize = () => {
+            const initialize = this.tools.debounce(() => {
+                if (this.changesStream)
+                    this.changesStream.cancel();
                 this.changesStream = this.data.connection.changes(this.extendObject(true, {}, { since: 'now' }, AbstractLiveDataComponent.defaultLiveUpdateOptions, /* eslint-disable camelcase */
                 { include_docs: false }
                 /* eslint-enable camelcase */
@@ -3475,7 +3491,7 @@ export class AbstractResolver {
                     this.cacheStore = {};
                 });
                 this.changesStream.on('error', initialize);
-            };
+            }, 3000);
             /*
                             NOTE: We have to break out of the "zone.js" since long polling
                             seems to confuse its mocked environment.
@@ -4240,7 +4256,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
          * @returns Nothing.
          */
     constructor(injector) {
-        super(injector.get(Renderer2), injector.get(ElementRef), null);
+        super(injector.get(Renderer), injector.get(ElementRef), null);
         this.onChangeCallback = UtilityService.tools.noop;
         this.onTouchedCallback = UtilityService.tools.noop;
         this.type = null;

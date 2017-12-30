@@ -53,7 +53,7 @@ import {
     /* eslint-disable no-unused-vars */
     PLATFORM_ID,
     /* eslint-enable no-unused-vars */
-    Renderer2,
+    Renderer2 as Renderer,
     SimpleChanges,
     TemplateRef,
     ViewChild,
@@ -350,6 +350,10 @@ export class InitialDataService {
                             execution: '_constraintExecutions',
                             expression: '_constraintExpressions'
                         },
+                        create: {
+                            execution: '_createExecution',
+                            expression: '_createExpression'
+                        },
                         deleted: '_deleted',
                         deletedConflict: '_deleted_conflicts',
                         extend: '_extends',
@@ -363,7 +367,11 @@ export class InitialDataService {
                         revisions: '_revisions',
                         revisionsInformation: '_revs_info',
                         strategy: '_updateStrategy',
-                        type: '-type'
+                        type: '-type',
+                        update: {
+                            execution: '_updateExecution',
+                            expression: '_updateExpression'
+                        }
                     },
                     validatedDocumentsCache: '_validatedDocuments'
                 }
@@ -2568,6 +2576,12 @@ export class DataService {
                 firstParameter.hasOwnProperty(idName)
             )
                 firstParameter = [firstParameter]
+            /*
+                NOTE: "bulkDocs()" does not get constructor given options
+                if none were provided for a single function call.
+            */
+            if (parameter.length && typeof parameter[0] !== 'object')
+                parameter.unshift(this.configuration.database.connector)
             let result:Array<PlainObject> = []
             try {
                 result = await nativeBulkDocs.call(
@@ -3721,7 +3735,9 @@ export class AbstractResolver implements Resolve<PlainObject> {
         ).configuration.database.model.property.name.special
         this.tools = get(UtilityService).fixed.tools
         if (this.cache) {
-            const initialize:Function = ():void => {
+            const initialize:Function = this.tools.debounce(():void => {
+                if (this.changesStream)
+                    this.changesStream.cancel()
                 this.changesStream = this.data.connection.changes(
                     this.extendObject(
                         true, {}, {since: 'now'},
@@ -3734,7 +3750,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
                     this.cacheStore = {}
                 })
                 this.changesStream.on('error', initialize)
-            }
+            }, 3000)
             /*
                 NOTE: We have to break out of the "zone.js" since long polling
                 seems to confuse its mocked environment.
@@ -4581,7 +4597,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
      * @returns Nothing.
      */
     constructor(injector:Injector) {
-        super(injector.get(Renderer2), injector.get(ElementRef), null)
+        super(injector.get(Renderer), injector.get(ElementRef), null)
     }
     /**
      * Manipulates editable value representation.
