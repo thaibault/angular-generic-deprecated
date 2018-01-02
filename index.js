@@ -2581,7 +2581,8 @@ export class DataService {
                 if none were provided for a single function call.
             */
             if (parameter.length === 0 || typeof parameter[0] !== 'object')
-                parameter.unshift(this.configuration.database.connector)
+                parameter.unshift(this.tools.copyLimitedRecursively(
+                    this.configuration.database.connector))
             let result:Array<PlainObject> = []
             try {
                 result = await nativeBulkDocs.call(
