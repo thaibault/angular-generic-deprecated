@@ -1535,11 +1535,9 @@ export class ExtractRawDataPipe implements PipeTransform {
                                                 Existing attachment has been
                                                 renamed.
                                             */
-                                            result[fileName] = this.tools
-                                                .copyLimitedRecursively(
-                                                    oldAttachments[
-                                                        firstOldAttachmentName]
-                                                )
+                                            result[fileName] = this.tools.copy(
+                                                oldAttachments[
+                                                    firstOldAttachmentName])
                                             result[fileName].name = fileName
                                         }
                                     }
@@ -1558,10 +1556,8 @@ export class ExtractRawDataPipe implements PipeTransform {
                                     // Existing attachment has been renamed.
                                     const firstOldAttachmentName:string =
                                         Object.keys(oldAttachments)[0]
-                                    result[fileName] =
-                                        this.tools.copyLimitedRecursively(
-                                            oldAttachments[
-                                                firstOldAttachmentName])
+                                    result[fileName] = this.tools.copy(
+                                        oldAttachments[firstOldAttachmentName])
                                     result[fileName].name = fileName
                                     delete oldAttachments[
                                         firstOldAttachmentName]
@@ -2581,7 +2577,7 @@ export class DataService {
                 if none were provided for a single function call.
             */
             if (parameter.length === 0 || typeof parameter[0] !== 'object')
-                parameter.unshift(this.tools.copyLimitedRecursively(
+                parameter.unshift(this.tools.copy(
                     this.configuration.database.connector))
             let result:Array<PlainObject> = []
             try {
@@ -3368,16 +3364,15 @@ export class DataScopeService {
                     for (const fileType in modelSpecification[name])
                         if (modelSpecification[name].hasOwnProperty(fileType))
                             result[name][fileType] = this.extendObject(
-                                true, this.tools.copyLimitedRecursively(
+                                true, this.tools.copy(
                                     this.configuration.database.model
                                         .property.defaultSpecification
                                 ), modelSpecification[name][fileType])
                 } else {
-                    result[name] = this.extendObject(
-                        true, this.tools.copyLimitedRecursively(
-                            this.configuration.database.model.property
-                                .defaultSpecification,
-                        ), modelSpecification[name])
+                    result[name] = this.extendObject(true, this.tools.copy(
+                        this.configuration.database.model.property
+                            .defaultSpecification,
+                    ), modelSpecification[name])
                     if (
                         this.configuration.database.model.entities
                             .hasOwnProperty(result[name].type)
@@ -3440,12 +3435,10 @@ export class DataScopeService {
             if (propertyNamesToIgnore.includes(name))
                 continue
             if (specification.hasOwnProperty(name))
-                result[name] = this.tools.copyLimitedRecursively(
-                    specification[name])
+                result[name] = this.tools.copy(specification[name])
             else
-                result[name] = this.tools.copyLimitedRecursively((
-                    'additional' in specialNames &&
-                    specialNames.additional
+                result[name] = this.tools.copy((
+                    'additional' in specialNames && specialNames.additional
                 ) ? specification[specialNames.additional] : {})
             const now:Date = new Date()
             const nowUTCTimestamp:number = this.numberGetUTCTimestamp(now)
@@ -3518,9 +3511,8 @@ export class DataScopeService {
                                 type
                             ].default)
                         )
-                            result[name][type].value =
-                                this.tools.copyLimitedRecursively(
-                                    {}, result[name][type].default)
+                            result[name][type].value = this.tools.copy(
+                                {}, result[name][type].default)
                     }
             } else {
                 result[name].name = name
@@ -3572,8 +3564,7 @@ export class DataScopeService {
                     result[name].hasOwnProperty('default') &&
                     ![undefined, null].includes(result[name].default)
                 )
-                    result[name].value = this.tools.copyLimitedRecursively(
-                        result[name].default)
+                    result[name].value = this.tools.copy(result[name].default)
                 else if (
                     result[name].hasOwnProperty('selection') &&
                     Array.isArray(result[name].selection) &&
@@ -3841,7 +3832,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
             if (!this.cacheStore.hasOwnProperty(key))
                 this.cacheStore[key] = await this.data.find(selector, options)
             if (this.deepCopyItems)
-                return this.tools.copyLimitedRecursively(this.cacheStore[key])
+                return this.tools.copy(this.cacheStore[key])
             return this.cacheStore[key].slice()
         }
         return await this.data.find(selector, options)
