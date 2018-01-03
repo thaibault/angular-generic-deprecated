@@ -2577,13 +2577,13 @@ export class DataService {
                 if none were provided for a single function call.
             */
             if (
-                this.configuration.database.connector.ajax &&
-                this.configuration.database.connector.ajax.timeout && (
+                self.configuration.database.connector.ajax &&
+                self.configuration.database.connector.ajax.timeout && (
                     parameter.length === 0 ||
                     typeof parameter[0] !== 'object')
             )
                 parameter.unshift({timeout:
-                    this.configuration.database.connector.ajax.timeout})
+                    self.configuration.database.connector.ajax.timeout})
             let result:Array<PlainObject> = []
             try {
                 result = await nativeBulkDocs.call(
