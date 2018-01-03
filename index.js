@@ -2576,9 +2576,14 @@ export class DataService {
                 NOTE: "bulkDocs()" does not get constructor given options
                 if none were provided for a single function call.
             */
-            if (parameter.length === 0 || typeof parameter[0] !== 'object')
-                parameter.unshift(this.tools.copy(
-                    this.configuration.database.connector))
+            if (
+                this.configuration.database.connector.ajax &&
+                this.configuration.database.connector.ajax.timeout && (
+                    parameter.length === 0 ||
+                    typeof parameter[0] !== 'object')
+            )
+                parameter.unshift({timeout:
+                    this.configuration.database.connector.ajax.timeout})
             let result:Array<PlainObject> = []
             try {
                 result = await nativeBulkDocs.call(
