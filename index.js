@@ -3876,7 +3876,12 @@ export class AbstractResolver implements Resolve<PlainObject> {
             const key:string = this.convertCircularObjectToJSON({
                 selector, options})
             if (!this.cacheStore.hasOwnProperty(key))
-                this.cacheStore[key] = await this.data.find(selector, options)
+                try {
+                    this.cacheStore[key] = await this.data.find(
+                        selector, options)
+                } catch (error) {
+                    throw error
+                }
             if (this.deepCopyItems)
                 return this.tools.copy(this.cacheStore[key])
             return this.cacheStore[key].slice()
