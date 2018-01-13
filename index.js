@@ -61,6 +61,9 @@ import {
 } from '@angular/core'
 import {DatePipe, isPlatformServer} from '@angular/common'
 import {
+    HttpInterceptor, HTTP_INTERCEPTORS, HttpRequest, HttpHandler, HttpEvent
+} from '@angular/common/http'
+import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
 import {
@@ -3616,6 +3619,44 @@ export class DataScopeService {
                 result[name] = modelName
         result._metaData = {submitted: false}
         return result
+    }
+}
+// IgnoreTypeCheck
+@Injectable()
+/**
+ * Registers each request in the data requests list to track number of running
+ * transactions.
+ * @property data - Data service instance.
+ */
+class RegisterHTTPRequestInterceptor implements HttpInterceptor {
+    data:DataService
+    /**
+     * Registers needed service instances as instance properties.
+     * @param data - Injected data service instance.
+     * @returns Nothing.
+     */
+    constructor(data:DataService) {
+        this.data = data
+    }
+    /**
+     * Intercepts each request to perform request registration and
+     * un-registration.
+     * @param request - Request to register.
+     * @param next - Interceptor chain.
+     * @returns Result of the interceptor chain.
+     */
+    intercept(
+        request:HttpRequest<any>, next:HttpHandler
+    ):Observable<HttpEvent<any>> {
+        this.data.runningRequests.push(request)
+        this.data.runningRequestsStream.next(this.data.runningRequests)
+        const unregister:Function = ():void => {
+            const index:number = this.data.runningRequests.indexOf(request)
+            if (index !== -1)
+                this.data.runningRequests.splice(index, 1)
+            this.data.runningRequestsStream.next(this.data.runningRequests)
+        }
+        return next.handle(request).do(unregister, unregister)
     }
 }
 // / region abstract
@@ -7599,6 +7640,11 @@ export class PaginationComponent {
         // / endregion
         // endregion
         DatePipe,
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: RegisterHTTPRequestInterceptor,
+            multi: true
+        },
         {
             deps: [DataService, InitialDataService, Injector],
             multi: true,

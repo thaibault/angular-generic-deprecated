@@ -266,10 +266,7 @@ export function render(module:Object, options:{
                     // region pre-render
                     if (options.component) {
                         // region create server pre-renderable module
-                        /**
-                         * Dummy server compatible root application module to
-                         * pre-render.
-                         */
+                        // IgnoreTypeCheck
                         @NgModule({
                             bootstrap: [options.component],
                             imports: [module, ServerModule],
@@ -278,6 +275,10 @@ export function render(module:Object, options:{
                                 useValue: renderScope.basePath
                             }]
                         })
+                        /**
+                         * Dummy server compatible root application module to
+                         * pre-render.
+                         */
                         class ApplicationServerModule {}
                         // endregion
                         try {
