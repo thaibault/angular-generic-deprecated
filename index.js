@@ -3628,7 +3628,7 @@ export class DataScopeService {
  * transactions.
  * @property data - Data service instance.
  */
-class RegisterHTTPRequestInterceptor implements HttpInterceptor {
+export class RegisterHTTPRequestInterceptor implements HttpInterceptor {
     data:DataService
     /**
      * Registers needed service instances as instance properties.
@@ -3650,7 +3650,7 @@ class RegisterHTTPRequestInterceptor implements HttpInterceptor {
     ):Observable<HttpEvent<any>> {
         this.data.runningRequests.push(request)
         this.data.runningRequestsStream.next(this.data.runningRequests)
-        const unregister:Function = ():void => {
+        const unregister = ():void => {
             const index:number = this.data.runningRequests.indexOf(request)
             if (index !== -1)
                 this.data.runningRequests.splice(index, 1)
