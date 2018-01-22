@@ -108,7 +108,7 @@ import {Observable} from 'rxjs/Observable'
 import {ISubscription} from 'rxjs/Subscription'
 // NOTE: Only needed for debugging this file.
 try {
-    module.require('source-map-support/register')
+    eval('require')('source-map-support/register')
 } catch (error) {}
 
 /*
@@ -224,6 +224,10 @@ export type Stream = {
 if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
     /* eslint-disable no-var */
     var CHANGE_DETECTION_STRATEGY_NAME:string = 'default'
+    /* eslint-enable no-var */
+if (typeof require === 'undefined')
+    /* eslint-disable no-var */
+    var require:Function = Tools.noop
     /* eslint-enable no-var */
 if (typeof UTC_BUILD_TIMESTAMP === 'undefined')
     /* eslint-disable no-var */
@@ -1692,29 +1696,33 @@ export class ExtractRawDataPipe implements PipeTransform {
                                 data[name] !== null
                             ) {
                                 result[name] = {}
-                                for (const fileName in data[name]) {
-                                    if (data[name].hasOwnProperty(fileName))
-                                        result[name][fileName] = {
-                                            /* eslint-disable camelcase */
-                                            content_type:
-                                                data[name][fileName]
-                                                    .content_type ||
-                                                'application/octet-stream'
-                                            /* eslint-enable camelcase */
-                                        }
-                                    if (data[name][fileName].hasOwnProperty(
-                                        'data'
-                                    ))
-                                        result[name][fileName].data =
-                                            data[name][fileName].data
-                                    else
-                                        for (const type of ['digest', 'stub'])
-                                            if (data[name][
-                                                fileName
-                                            ].hasOwnProperty(type))
-                                                result[name][fileName][type] =
-                                                    data[name][fileName][type]
-                                }
+                                for (const fileName in data[name])
+                                    if (data[name].hasOwnProperty(fileName)) {
+                                            result[name][fileName] = {
+                                                /* eslint-disable camelcase */
+                                                content_type:
+                                                    data[name][fileName]
+                                                        .content_type ||
+                                                    'application/octet-stream'
+                                                /* eslint-enable camelcase */
+                                            }
+                                        if (data[name][
+                                            fileName
+                                        ].hasOwnProperty('data'))
+                                            result[name][fileName].data =
+                                                data[name][fileName].data
+                                        else
+                                            for (const type of [
+                                                'digest', 'stub'
+                                            ])
+                                                if (data[name][
+                                                    fileName
+                                                ].hasOwnProperty(type))
+                                                    result[name][fileName][
+                                                        type
+                                                    ] = data[name][fileName][
+                                                        type]
+                                    }
                             }
                         } else if (
                             ![
