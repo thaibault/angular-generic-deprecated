@@ -1698,14 +1698,14 @@ export class ExtractRawDataPipe implements PipeTransform {
                                 result[name] = {}
                                 for (const fileName in data[name])
                                     if (data[name].hasOwnProperty(fileName)) {
-                                            result[name][fileName] = {
-                                                /* eslint-disable camelcase */
-                                                content_type:
-                                                    data[name][fileName]
-                                                        .content_type ||
-                                                    'application/octet-stream'
-                                                /* eslint-enable camelcase */
-                                            }
+                                        result[name][fileName] = {
+                                            /* eslint-disable camelcase */
+                                            content_type:
+                                                data[name][fileName]
+                                                    .content_type ||
+                                                'application/octet-stream'
+                                            /* eslint-enable camelcase */
+                                        }
                                         if (data[name][
                                             fileName
                                         ].hasOwnProperty('data'))
