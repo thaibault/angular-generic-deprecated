@@ -2773,7 +2773,8 @@ export class DataService {
             const changesStream:Stream = nativeChangesMethod.apply(
                 this.connection, parameter)
             changesStream.on('error', (...parameter:Array<any>):any =>
-                this.triggerErrorCallbacks(...parameter, changesStream))
+                this.triggerErrorCallbacks.apply(this, parameter.concat(
+                    changesStream)))
             return changesStream
         }
         // endregion
@@ -3229,7 +3230,7 @@ export class DataService {
      */
     triggerErrorCallbacks(error:Error, ...parameter:Array<any>):void {
         let result:boolean = true
-        for (const callback:Function of this.errorCallbacks)
+        for (const callback of this.errorCallbacks)
             if (callback(error, ...parameter) === false)
                 result = false
         if (result)
