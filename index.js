@@ -2883,7 +2883,7 @@ export class DataService {
                     try {
                         result = action()
                     } catch (error) {
-                        await this.triggerErrorCallbacks(error, result)
+                        await this.triggerErrorCallbacks(error, result, action)
                     }
                     for (const methodName of [name, '_all'])
                         if (this.middlewares.post.hasOwnProperty(methodName))
@@ -2901,7 +2901,7 @@ export class DataService {
                                     } catch (error) {
                                         clear()
                                         await this.triggerErrorCallbacks(
-                                            error, result)
+                                            error, result, action)
                                     }
                             }
                     if ('then' in result)
@@ -2909,7 +2909,8 @@ export class DataService {
                             result = await result
                         } catch (error) {
                             clear()
-                            await this.triggerErrorCallbacks(error, result)
+                            await this.triggerErrorCallbacks(
+                                error, result, action)
                         }
                     clear()
                     return result
@@ -3212,15 +3213,15 @@ export class DataService {
     /**
      * Triggers registered error callbacks with given error in given changes
      * stream context.
-     * @param error - Error which has occurred.
+     * @param error - Error which has been occurred.
      * @param parameter - Additional arguments provided with given error.
      * @returns A Promise resolving when all asynchrone error handler have done
      * their work.
      */
     async triggerErrorCallbacks(
-        error:Error, ...parameter:Array<any>
+        error:any, ...parameter:Array<any>
     ):Promise<void> {
-        let result:boolean = true
+        let result:boolean|null = null
         for (const callback of this.errorCallbacks) {
             let localResult:any = callback(error, ...parameter)
             if (
@@ -3229,10 +3230,15 @@ export class DataService {
                 'then' in localResult
             )
                 localResult = await localResult
-            if (localResult === false)
-                result = false
+            if (typeof localResult === 'boolean')
+                result = localResult
         }
-        if (result)
+        if (result === true || result === null && !(
+            error.hasOwnProperty('name') &&
+            error.name === 'unauthorized' ||
+            error.hasOwnProperty('error') &&
+            error.error === 'unauthorized'
+        ))
             throw error
     }
 }
@@ -4297,7 +4303,12 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
                     if (result)
                         this._changeDetectorReference.detectChanges()
                     if (type === 'error')
-                        if (action.name === 'unauthorized') {
+                        if (
+                            action.hasOwnProperty('name') &&
+                            action.name === 'unauthorized' ||
+                            action.hasOwnProperty('error') &&
+                            action.error === 'unauthorized'
+                        ) {
                             if (this._changesStream)
                                 this._changesStream.cancel()
                         } else if (this.autoRestartOnError)
