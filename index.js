@@ -2772,9 +2772,8 @@ export class DataService {
         this.connection.changes = (...parameter:Array<any>):any => {
             const changesStream:Stream = nativeChangesMethod.apply(
                 this.connection, parameter)
-            changesStream.on('error', (...parameter:Array<any>):any =>
-                this.triggerErrorCallbacks.apply(this, parameter.concat(
-                    changesStream)))
+            changesStream.on('error', (...parameter:Array<any>):Promise<any> =>
+                this.triggerErrorCallbacks(...parameter.concat(changesStream)))
             return changesStream
         }
         // endregion
@@ -2883,7 +2882,11 @@ export class DataService {
                     try {
                         result = action()
                     } catch (error) {
-                        this.triggerErrorCallbacks(error, action)
+                        try {
+                            await this.triggerErrorCallbacks(error, result)
+                        } catch (error) {
+                            throw error
+                        }
                     }
                     for (const methodName of [name, '_all'])
                         if (this.middlewares.post.hasOwnProperty(methodName))
@@ -2900,8 +2903,12 @@ export class DataService {
                                         result = await result
                                     } catch (error) {
                                         clear()
-                                        this.triggerErrorCallbacks(
-                                            error, result)
+                                        try {
+                                            await this.triggerErrorCallbacks(
+                                                error, result)
+                                        } catch (error) {
+                                            throw error
+                                        }
                                     }
                             }
                     if ('then' in result)
@@ -2909,7 +2916,11 @@ export class DataService {
                             result = await result
                         } catch (error) {
                             clear()
-                            this.triggerErrorCallbacks(error, result)
+                            try {
+                                await this.triggerErrorCallbacks(error, result)
+                            } catch (error) {
+                                throw error
+                            }
                         }
                     clear()
                     return result
@@ -3226,13 +3237,24 @@ export class DataService {
      * stream context.
      * @param error - Error which has occurred.
      * @param parameter - Additional arguments provided with given error.
-     * @returns Nothing.
+     * @returns A Promise resolving when all asynchrone error handler have done
+     * their work.
      */
-    triggerErrorCallbacks(error:Error, ...parameter:Array<any>):void {
+    async triggerErrorCallbacks(
+        error:Error, ...parameter:Array<any>
+    ):Promise<void> {
         let result:boolean = true
-        for (const callback of this.errorCallbacks)
-            if (callback(error, ...parameter) === false)
+        for (const callback of this.errorCallbacks) {
+            let localResult:any = callback(error, ...parameter)
+            if (
+                typeof localResult === 'object' &&
+                localResult !== null &&
+                'then' in localResult
+            )
+                localResult = await localResult
+            if (localResult === false)
                 result = false
+        }
         if (result)
             throw error
     }
