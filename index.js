@@ -3732,18 +3732,12 @@ export class RegisterHTTPRequestInterceptor implements HttpInterceptor {
  * @property static:skipResolvingOnServer - Indicates whether to skip resolving
  * data on server contexts.
  *
- * @property cache - Indicates whether retrieved resources should be cached.
- * @property cacheStore - Saves cached items.
- * @property changesStream - Changes stream to invalidate cache store.
  * @property convertCircularObjectToJSON - Saves convert circular object to
  * json's pipe transform method.
  * @property data - Holds currently retrieved data.
  * @property databaseBaseURL - Determined database base url.
  * @property databaseURL - Determined database url.
  * @property domSanitizer - Dom sanitizer service instance.
- * @property deepCopyItems - Indicates whether each item should be copied from
- * cache. Defaults to "true" to avoid errors but could have avoidable impact
- * on performance for large data sets.
  * @property escapeRegularExpressions - Holds the escape regular expressions's
  * pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
@@ -3772,15 +3766,11 @@ export class RegisterHTTPRequestInterceptor implements HttpInterceptor {
 export class AbstractResolver implements Resolve<PlainObject> {
     static skipResolvingOnServer:boolean = true
 
-    cache:boolean = true
-    cacheStore:PlainObject = {}
-    changesStream:Stream
     convertCircularObjectToJSON:Function
     data:PlainObject
     databaseBaseURL:string
     databaseURL:string
     databaseURLCache:{[key:string]:SafeResourceUrl} = {}
-    deepCopyItems:boolean = true
     domSanitizer:DomSanitizer
     escapeRegularExpressions:Function
     extendObject:Function
@@ -3836,29 +3826,6 @@ export class AbstractResolver implements Resolve<PlainObject> {
             InitialDataService
         ).configuration.database.model.property.name.special
         this.tools = get(UtilityService).fixed.tools
-        if (this.cache) {
-            const initialize:Function = this.tools.debounce(():void => {
-                if (this.changesStream)
-                    this.changesStream.cancel()
-                this.changesStream = this.data.connection.changes(
-                    this.extendObject(
-                        true, {}, {since: 'now'},
-                        AbstractLiveDataComponent.defaultLiveUpdateOptions,
-                        /* eslint-disable camelcase */
-                        {include_docs: false}
-                        /* eslint-enable camelcase */
-                    ))
-                this.changesStream.on('change', ():void => {
-                    this.cacheStore = {}
-                })
-                this.changesStream.on('error', initialize)
-            }, 3000)
-            /*
-                NOTE: We have to break out of the "zone.js" since long polling
-                seems to confuse its mocked environment.
-            */
-            this.tools.timeout(initialize)
-        }
     }
     /**
      * Determines item specific database url by given item data object.
@@ -3935,22 +3902,8 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 item:PlainObject
             ):PlainObject|string =>
                 Object.values(item)[0] === 'asc' ? Object.keys(item)[0] : item)
-        this.extendObject(true, selector, additionalSelector)
-        if (this.cache) {
-            const key:string = this.convertCircularObjectToJSON({
-                selector, options})
-            if (!this.cacheStore.hasOwnProperty(key))
-                try {
-                    this.cacheStore[key] = await this.data.find(
-                        selector, options)
-                } catch (error) {
-                    throw error
-                }
-            if (this.deepCopyItems)
-                return this.tools.copy(this.cacheStore[key])
-            return this.cacheStore[key].slice()
-        }
-        return await this.data.find(selector, options)
+        return await this.data.find(
+            this.extendObject(true, selector, additionalSelector), options)
     }
     /**
      * Removes given item.
@@ -4311,6 +4264,8 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
      */
     ngOnInit():void {
         const initialize:Function = this._tools.debounce(():void => {
+            if (this._changesStream)
+                this._changesStream.cancel()
             this._changesStream = this._data.connection.changes(
                 this._extendObject(
                     true, {}, {since: LAST_KNOWN_DATA.sequence},
@@ -4341,11 +4296,12 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
                         result = await result
                     if (result)
                         this._changeDetectorReference.detectChanges()
-                    if (type === 'error') {
-                        console.log('A', type, action.status)
-                        if (this.autoRestartOnError)
+                    if (type === 'error')
+                        if (action.name === 'unauthorized') {
+                            if (this._changesStream)
+                                this._changesStream.cancel()
+                        } else if (this.autoRestartOnError)
                             initialize()
-                    }
                 })
         }, 3000)
         /*
