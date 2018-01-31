@@ -2619,12 +2619,8 @@ export class DataService {
                                 else
                                     throw error
                             }
-                    try {
-                        result = await nativeBulkDocs.call(
-                            this, firstParameter, ...parameter)
-                    } catch (error) {
-                        throw error
-                    }
+                    result = await nativeBulkDocs.call(
+                        this, firstParameter, ...parameter)
                 } else
                     throw error
             }
@@ -2887,11 +2883,7 @@ export class DataService {
                     try {
                         result = action()
                     } catch (error) {
-                        try {
-                            await this.triggerErrorCallbacks(error, result)
-                        } catch (error) {
-                            throw error
-                        }
+                        await this.triggerErrorCallbacks(error, result)
                     }
                     for (const methodName of [name, '_all'])
                         if (this.middlewares.post.hasOwnProperty(methodName))
@@ -2908,12 +2900,8 @@ export class DataService {
                                         result = await result
                                     } catch (error) {
                                         clear()
-                                        try {
-                                            await this.triggerErrorCallbacks(
-                                                error, result)
-                                        } catch (error) {
-                                            throw error
-                                        }
+                                        await this.triggerErrorCallbacks(
+                                            error, result)
                                     }
                             }
                     if ('then' in result)
@@ -2921,11 +2909,7 @@ export class DataService {
                             result = await result
                         } catch (error) {
                             clear()
-                            try {
-                                await this.triggerErrorCallbacks(error, result)
-                            } catch (error) {
-                                throw error
-                            }
+                            await this.triggerErrorCallbacks(error, result)
                         }
                     clear()
                     return result
@@ -2957,25 +2941,17 @@ export class DataService {
                             this.configuration.database.model.entities[
                                 modelName])
                     )
-                        try {
-                            await this.connection.createIndex({index: {
-                                ddoc: `${modelName}-${name}-GenericIndex`,
-                                fields: [
-                                    this.configuration.database.model
-                                        .property.name.special.type,
-                                    name
-                                ],
-                                name: `${modelName}-${name}-GenericIndex`
-                            }})
-                        } catch (error) {
-                            throw error
-                        }
+                        await this.connection.createIndex({index: {
+                            ddoc: `${modelName}-${name}-GenericIndex`,
+                            fields: [
+                                this.configuration.database.model
+                                    .property.name.special.type,
+                                name
+                            ],
+                            name: `${modelName}-${name}-GenericIndex`
+                        }})
             let indexes:Array<PlainObject>
-            try {
-                indexes = (await this.connection.getIndexes()).indexes
-            } catch (error) {
-                throw error
-            }
+            indexes = (await this.connection.getIndexes()).indexes
             for (const index of indexes)
                 if (index.name.endsWith('-GenericIndex')) {
                     let exists:boolean = false
@@ -2997,11 +2973,7 @@ export class DataService {
                             break
                         }
                     if (!exists)
-                        try {
-                            await this.connection.deleteIndex(index)
-                        } catch (error) {
-                            throw error
-                        }
+                        await this.connection.deleteIndex(index)
                 }
             // endregion
         }
@@ -5591,12 +5563,8 @@ export class AbstractEditorComponent extends AbstractValueAccessor
             */
             await this.fixedUtility.tools.timeout()
         } else {
-            try {
-                await AbstractEditorComponent.applicationInterfaceLoad[
-                    this.factoryName]
-            } catch (error) {
-                throw error
-            }
+            await AbstractEditorComponent.applicationInterfaceLoad[
+                this.factoryName]
             AbstractEditorComponent.factories[this.factoryName] = this.factory
         }
     }
@@ -5706,12 +5674,8 @@ export class CodeEditorComponent extends AbstractEditorComponent
                     if (CodeEditorComponent.modesLoad[
                         this.configuration.mode
                     ] !== true)
-                        try {
-                            await CodeEditorComponent.modesLoad[
-                                this.configuration.mode]
-                        } catch (error) {
-                            throw error
-                        }
+                        await CodeEditorComponent.modesLoad[
+                            this.configuration.mode]
                 } else {
                     CodeEditorComponent.modesLoad[this.configuration.mode] =
                         new Promise((
@@ -5725,12 +5689,8 @@ export class CodeEditorComponent extends AbstractEditorComponent
                                 this.configuration.path.mode.replace(
                                     /{mode}/g, this.configuration.mode)
                         }))
-                    try {
-                        await CodeEditorComponent.modesLoad[
-                            this.configuration.mode]
-                    } catch (error) {
-                        throw error
-                    }
+                    await CodeEditorComponent.modesLoad[
+                        this.configuration.mode]
                 }
             const configuration:PlainObject = this.extendObject(
                 {}, this.configuration, {readOnly: this.disabled})
