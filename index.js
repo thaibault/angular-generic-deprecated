@@ -2484,6 +2484,7 @@ export class AlertService {
  *
  * @property connection - The current database connection instance.
  * @property database - The entire database constructor.
+ * @property errorCallbacks - Holds all registered error callbacks.
  * @property equals - Hilds the equals pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
@@ -2520,6 +2521,7 @@ export class DataService {
     connection:PouchDB
     configuration:PlainObject
     database:typeof PouchDB
+    errorCallbacks:Array<Function> = []
     equals:Function
     extendObject:Function
     middlewares:{
@@ -2680,6 +2682,16 @@ export class DataService {
         this.database.plugin(PouchDBFindPlugin).plugin(PouchDBValidationPlugin)
     }
     /**
+     * Adds an error callback to be triggered on database errors.
+     * @param callback - Function to call on errors.
+     * @returns A boolean indicating if given callback was already attached.
+     */
+    addErrorCallback(callback:Function):boolean {
+        const result:boolean = this.removeErrorCallback(callback)
+        this.errorCallbacks.push(callback)
+        return result
+    }
+    /**
      * Determines all property names which are indexable in a generic manner.
      * @param modelConfiguration - Model specification object.
      * @param model - Model to determine property names from.
@@ -2755,6 +2767,16 @@ export class DataService {
             this.connection = new this.database(databaseName, options)
         else
             this.connection = this.remoteConnection
+        // region observe database changes stream error
+        const nativeChangesMethod:Function = this.connection.changes
+        this.connection.changes = (...parameter:Array<any>):any => {
+            const changesStream:Stream = nativeChangesMethod.apply(
+                this.connection, parameter)
+            changesStream.on('error', (...parameter:Array<any>):any =>
+                this.triggerErrorCallbacks(...parameter, changesStream))
+            return changesStream
+        }
+        // endregion
         // region apply "latest/upsert" and ignore "NoChange" error feature
         /*
             NOTE: A "bulkDocs" plugin does not get called for every "put" and
@@ -2856,7 +2878,12 @@ export class DataService {
                         context:any=this.connection,
                         givenParameter:Array<any>=parameter
                     ):any => method.apply(context, givenParameter)
-                    let result:any = action()
+                    let result:any
+                    try {
+                        result = action()
+                    } catch (error) {
+                        this.triggerErrorCallbacks(error, action)
+                    }
                     for (const methodName of [name, '_all'])
                         if (this.middlewares.post.hasOwnProperty(methodName))
                             for (
@@ -2872,7 +2899,8 @@ export class DataService {
                                         result = await result
                                     } catch (error) {
                                         clear()
-                                        throw error
+                                        this.triggerErrorCallbacks(
+                                            error, result)
                                     }
                             }
                     if ('then' in result)
@@ -2880,7 +2908,7 @@ export class DataService {
                             result = await result
                         } catch (error) {
                             clear()
-                            throw error
+                            this.triggerErrorCallbacks(error, result)
                         }
                     clear()
                     return result
@@ -3111,6 +3139,19 @@ export class DataService {
         return this.connection.removeAttachment(...parameter)
     }
     /**
+     * Removes given error callback.
+     * @param callback - Function to remove.
+     * @returns A boolean indicating if given callback was registered.
+     */
+    removeErrorCallback(callback:Function):boolean {
+        const index:number = this.errorCallbacks.indexOf(callback)
+        if (index !== -1) {
+            this.errorCallbacks.splice(index, 1)
+            return true
+        }
+        return false
+    }
+    /**
      * Starts synchronisation between a local and remote database.
      * @returns A promise if a synchronisation has been started and is in sync
      * with remote database or null if no stream was initialized due to
@@ -3178,6 +3219,21 @@ export class DataService {
             return true
         }
         return false
+    }
+    /**
+     * Triggers registered error callbacks with given error in given changes
+     * stream context.
+     * @param error - Error which has occurred.
+     * @param parameter - Additional arguments provided with given error.
+     * @returns Nothing.
+     */
+    triggerErrorCallbacks(error:Error, ...parameter:Array<any>):void {
+        let result:boolean = true
+        for (const callback:Function of this.errorCallbacks)
+            if (callback(error, ...parameter) === false)
+                result = false
+        if (result)
+            throw error
     }
 }
 // IgnoreTypeCheck
@@ -4285,8 +4341,11 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
                         result = await result
                     if (result)
                         this._changeDetectorReference.detectChanges()
-                    if (type === 'error' && this.autoRestartOnError)
-                        initialize()
+                    if (type === 'error') {
+                        console.log('A', type, action.status)
+                        if (this.autoRestartOnError)
+                            initialize()
+                    }
                 })
         }, 3000)
         /*
