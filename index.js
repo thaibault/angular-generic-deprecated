@@ -2773,7 +2773,12 @@ export class DataService {
             const changesStream:Stream = nativeChangesMethod.apply(
                 this.connection, parameter)
             changesStream.on('error', (...parameter:Array<any>):Promise<any> =>
-                this.triggerErrorCallbacks(...parameter.concat(changesStream)))
+                // NOTE: Spread parameter does not satisfy typescript.
+                /* eslint-disable prefer-spread */
+                this.triggerErrorCallbacks.apply(this, parameter.concat(
+                    changesStream))
+                /* eslint-disable prefer-spread */
+            )
             return changesStream
         }
         // endregion
