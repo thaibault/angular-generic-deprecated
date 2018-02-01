@@ -200,8 +200,9 @@
           "^hammerjs$": "hammerjs/hammer.min.js",
           "^jquery$": "jquery/dist/jquery.min.js",
           "^pouchdb(?:/.+)?$": "pouchdb/dist/pouchdb.min.js",
+          "^pouchdb-promise(?:/.+)?$": "pouchdb-promise/lib/index.js",
           "^DOESNT WORK: rxjs(?:/.+)?$": "rxjs/bundles/Rx.min.js",
-          "^DOESNT WORK IN NODE: zone\\.js(?:/.+)?$": "zone.js/dist/zone.min.js"
+          "^zone\\.js(?:/.+)?$": "zone.js/dist/zone.min.js"
         }
       },
       "skipParseRegularExpressions": {
