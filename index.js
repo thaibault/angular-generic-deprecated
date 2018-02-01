@@ -2763,6 +2763,7 @@ export class DataService {
             this.connection = new this.database(databaseName, options)
         else
             this.connection = this.remoteConnection
+        this.connection.installValidationMethods()
         // region observe database changes stream error
         const nativeChangesMethod:Function = this.connection.changes
         this.connection.changes = (...parameter:Array<any>):any => {
@@ -2916,7 +2917,6 @@ export class DataService {
                     return result
                 }
             }
-        this.connection.installValidationMethods()
         // endregion
         if (!(
             DataService.skipGenericIndexManagementOnServer &&
