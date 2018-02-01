@@ -6733,7 +6733,8 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 this.internalName !== this.name
             )
                 this._prefixMatch = true
-            this.model[this.attachmentTypeName][this.internalName].state = {}
+            this.model[this.attachmentTypeName][this.internalName].state = {
+                errors: {}}
             this.file = this.model[this.attachmentTypeName][
                 this.internalName
             ].value
@@ -6947,14 +6948,14 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             `data:${this.file.content_type};base64,${this.file.data}`)
     }
     /**
-     * Updates given current file into database (replaces if old name is
-     * given).
+     * Uploads current file into database (replaces if old name is given).
      * @param oldName - Name of saved file to update or replace.
      * @returns A Promise which will be resolved after current file will be
      * synchronized.
      */
     async update(oldName?:string):Promise<void> {
-        this.model[this.attachmentTypeName][this.internalName].state = {}
+        this.model[this.attachmentTypeName][this.internalName].state = {
+            errors: {}}
         if (this._prefixMatch) {
             const lastIndex:number = this.file.name.lastIndexOf('.')
             if ([0, -1].includes(lastIndex))
@@ -6967,12 +6968,6 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             this.internalName
         ].value = this.file
         // region determine errors
-        if (!this.model[this.attachmentTypeName][
-            this.internalName
-        ].state.errors)
-            this.model[this.attachmentTypeName][
-                this.internalName
-            ].state.errors = {}
         if (!(new RegExp(this.internalName)).test(this.file.name))
             this.model[this.attachmentTypeName][
                 this.internalName
