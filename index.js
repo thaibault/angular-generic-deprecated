@@ -6712,6 +6712,32 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 this.file.type = 'binary'
     }
     /**
+     * TODO
+     */
+    updateErrorState(errors:any = null):void {
+        let currentErrors:PlainObject = this.model[this.attachmentTypeName][
+            this.internalName
+        ].state.errors
+        if (errors) {
+            if (!currentErrors)
+                currentErrors = this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors = {}
+            for (const name in errors)
+                if (errors[name])
+                    currentErrors[name] = errors[name]
+                else if (currentErrors.hasOwnProperty(name))
+                    delete currentErrors[name]
+            if (Object.keys(currentErrors).length === 0)
+                delete this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors
+        } else if (currentErrors)
+            delete this.model[this.attachmentTypeName][
+                this.internalName
+            ].state.errors
+    }
+    /**
      * Initializes file upload handler.
      * @param changes - Holds informations about changed bound properties.
      * @returns Nothing.
@@ -6733,19 +6759,19 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 this.internalName !== this.name
             )
                 this._prefixMatch = true
-            this.model[this.attachmentTypeName][this.internalName].state = {
-                errors: {}}
+            this.model[this.attachmentTypeName][this.internalName].state = {}
             this.file = this.model[this.attachmentTypeName][
                 this.internalName
             ].value
-            if (this.file)
+            if (this.file) {
                 this.file.initialName = this.file.name
-            else if (!this.model[this.attachmentTypeName][
+                this.updateErrorState({required: null})
+            } else if (!this.model[this.attachmentTypeName][
                 this.internalName
             ].nullable)
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors = {required: true}
+                this.updateErrorState({required: true})
+            else
+                this.updateErrorState({required: null})
         }
         if (
             changes.hasOwnProperty('model') ||
@@ -6772,11 +6798,10 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                             await this.retrieveAttachment(
                                 id, {rev: this.revision})
                         } catch (error) {
-                            this.model[this.attachmentTypeName][
-                                this.internalName
-                            ].state.errors.database = (
+                            this.updateErrorState({database: (
                                 'message' in error
-                            ) ? error.message : this._representObject(error)
+                            ) ? error.message : this._representObject(error)})
+                            this.modelChange.emit(this.model)
                             return
                         }
                     else
@@ -6788,6 +6813,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                                     this.configuration.name || 'generic'
                                 ) + `/${id}/${this.file.name}` +
                                 this.file.query)
+                    this.updateErrorState({database: null})
                 }
             }
             this.determinePresentationType()
@@ -6870,13 +6896,13 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             try {
                 result = await this._data.put(update)
             } catch (error) {
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors = {database: (
+                this.updateErrorState({database: (
                     'message' in error
-                ) ? error.message : this._representObject(error)}
+                ) ? error.message : this._representObject(error)})
+                this.modelChange.emit(this.model)
                 return
             }
+            this.updateErrorState({database: null})
             if (this.mapNameToField && this.mapNameToField.includes(
                 this.idName
             ))
@@ -6887,9 +6913,10 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         this.model[this.attachmentTypeName][this.internalName].state.errors =
             this.model[this.attachmentTypeName][this.internalName].value =
                 this.file = null
-        if (!this.model[this.attachmentTypeName][this.internalName].nullable)
-            this.model[this.attachmentTypeName][this.internalName].state
-                .errors = {required: true}
+        if (this.model[this.attachmentTypeName][this.internalName].nullable)
+            this.updateErrorState({required: null})
+        else
+            this.updateErrorState({required: true})
         this.modelChange.emit(this.model)
         this.fileChange.emit(this.file)
     }
@@ -6907,17 +6934,18 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         if (
             this.file.stub && this.mapNameToField && id &&
             this.mapNameToField.includes(this.idName)
-        )
+        ) {
             try {
                 await this.retrieveAttachment(id)
             } catch (error) {
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors = {database: (
+                this.updateErrorState({database: (
                     'message' in error
-                ) ? error.message : this._representObject(error)}
+                ) ? error.message : this._representObject(error)})
+                this.modelChange.emit(this.model)
                 return
             }
+            this.updateErrorState({database: null})
+        }
         this.file.name = name
         return this.update(oldName)
     }
@@ -6954,8 +6982,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
      * synchronized.
      */
     async update(oldName?:string):Promise<void> {
-        this.model[this.attachmentTypeName][this.internalName].state = {
-            errors: {}}
+        this.model[this.attachmentTypeName][this.internalName].state = {}
         if (this._prefixMatch) {
             const lastIndex:number = this.file.name.lastIndexOf('.')
             if ([0, -1].includes(lastIndex))
@@ -6968,48 +6995,36 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             this.internalName
         ].value = this.file
         // region determine errors
-        if (!(new RegExp(this.internalName)).test(this.file.name))
-            this.model[this.attachmentTypeName][
-                this.internalName
-            ].state.errors = {name: true}
-        if (!(
-            [undefined, null].includes(this.model[
-                this.attachmentTypeName
-            ][this.internalName].contentTypeRegularExpressionPattern) || (
-                new RegExp(this.model[this.attachmentTypeName][
-                    this.internalName
-                ].contentTypeRegularExpressionPattern)
-            ).test(this.file.content_type)
-        ))
-            this.model[this.attachmentTypeName][
-                this.internalName
-            ].state.errors.contentType = true
-        if (!(
-            [undefined, null].includes(this.model[
-                this.attachmentTypeName
-            ][this.internalName].minimumSize) || this.model[
-                this.attachmentTypeName
-            ][this.internalName].minimumSize <= this.file.length
-        ))
-            this.model[this.attachmentTypeName][
-                this.internalName
-            ].state.errors.minimuSize = true
-        if (!(
-            [undefined, null].includes(this.model[
-                this.attachmentTypeName
-            ][this.internalName].maximumSize) || this.model[
-                this.attachmentTypeName
-            ][this.internalName].maximumSize >= this.file.length
-        ))
-            this.model[this.attachmentTypeName][
-                this.internalName
-            ].state.errors.maximumSize = true
-        if (Object.keys(this.model[this.attachmentTypeName][
-            this.internalName
-        ].state.errors).length === 0)
-            delete this.model[this.attachmentTypeName][this.internalName]
-                .state.errors
-        else {
+        this.updateErrorState({
+            name: !(new RegExp(this.internalName)).test(this.file.name),
+            contentType: !(
+                [undefined, null].includes(this.model[
+                    this.attachmentTypeName
+                ][this.internalName].contentTypeRegularExpressionPattern) || (
+                    new RegExp(this.model[this.attachmentTypeName][
+                        this.internalName
+                    ].contentTypeRegularExpressionPattern)
+                ).test(this.file.content_type)
+            ),
+            minimumSize: !(
+                [undefined, null].includes(this.model[
+                    this.attachmentTypeName
+                ][this.internalName].minimumSize) || this.model[
+                    this.attachmentTypeName
+                ][this.internalName].minimumSize <= this.file.length
+            ),
+            maximumSize: !(
+                [undefined, null].includes(this.model[
+                    this.attachmentTypeName
+                ][this.internalName].maximumSize) || this.model[
+                    this.attachmentTypeName
+                ][this.internalName].maximumSize >= this.file.length
+            )
+        })
+        // endregion
+        if (
+            this.model[this.attachmentTypeName][this.internalName].state.errors
+        ) {
             let message:string =
                 'There was encountered an error during uploading file "' +
                 `${this.file.name}": `
@@ -7033,11 +7048,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                             this.internalName]
                     }))
             this.abstractResolver.message(message)
-        }
-        // endregion
-        if (this.synchronizeImmediately && !this.model[
-            this.attachmentTypeName
-        ][this.internalName].state.errors) {
+        } else if (this.synchronizeImmediately) {
             let newData:PlainObject = {
                 [this.typeName]: this.model[this.typeName],
                 [this.idName]: this._idIsObject ? this.model[
@@ -7097,11 +7108,9 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             try {
                 result = await this._data.bulkDocs(tasks)
             } catch (error) {
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors = {database: (
+                this.updateErrorState({database: (
                     'message' in error
-                ) ? error.message : this._representObject(error)}
+                ) ? error.message : this._representObject(error)})
                 if (this.autoMessages)
                     this.abstractResolver.message(
                         'Database has encountered an error during uploading ' +
@@ -7109,25 +7118,26 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                         this.model[this.attachmentTypeName][
                             this.internalName
                         ].state.errors.database)
+                this.modelChange.emit(this.model)
                 return
             }
             id = newData[this.idName]
             let revision:string
             for (const item of result) {
                 if (item.error) {
-                    this.model[this.attachmentTypeName][
-                        this.internalName
-                    ].state.errors = {database: item.message}
+                    this.updateErrorState({database: item.message})
                     if (this.autoMessages)
                         this.abstractResolver.message(
                             'Database has encountered an error during ' +
                             `uploading file "${this.file.name}": ` +
                             item.message)
+                    this.modelChange.emit(this.model)
                     return
                 }
                 if (item.id === id)
                     revision = item.rev
             }
+            this.updateErrorState({database: null})
             if (this.file) {
                 this.file.revision = this.model[this.revisionName] = revision
                 this.file.query = `?rev=${revision}`
