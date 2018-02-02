@@ -190,8 +190,9 @@
       "replacements": {
         "context": [
           [
-            "/angular(\\\\|\\/)core(\\\\|\\/)(esm(\\\\|\\/)src|src)(\\\\|\\/)linker/",
-            "__dirname"
+            "/@angular\\/+core\\/+esm5/", {
+              "__evaluate__": "`'${self.path.source.base}'`"
+            }
           ]
         ],
         "normal": {
@@ -200,13 +201,11 @@
           "^hammerjs$": "hammerjs/hammer.min.js",
           "^jquery$": "jquery/dist/jquery.min.js",
           "^pouchdb(?:/.+)?$": "pouchdb/dist/pouchdb.min.js",
-          "^pouchdb-promise(?:/.+)?$": "pouchdb-promise/lib/index.js",
-          "^DOESNT WORK: rxjs(?:/.+)?$": "rxjs/bundles/Rx.min.js",
-          "^DOESNT WORK IN NODE: zone\\.js(?:/.+)?$": "zone.js/dist/zone.min.js"
+          "^pouchdb-promise(?:/.+)?$": "pouchdb-promise/lib/index.js"
         }
       },
       "skipParseRegularExpressions": {
-        "__evaluate__": "/(?:^|\\/)(?:(?:babel-polyfill\\/dist\\/polyfill)|(?:hammerjs\\/hammer)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb)|(?:reflect-metadata\\/Reflect)|(?:rxjs\\/bundles\\/Rx)|(?:webpack\\/buildin\\/global)|(?:webpack\\/buildin\\/module)|(?:zone\\.js\\/dist\\/zone))(?:\\.min)?\\.js(?:\\?.+|$)/"
+        "__evaluate__": "/(?:^|\\/)(?:(?:babel-polyfill\\/dist\\/polyfill)|(?:hammerjs\\/hammer)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb)|(?:webpack\\/buildin\\/global)|(?:webpack\\/buildin\\/module))(?:\\.min)?\\.js(?:\\?.+|$)/"
       }
     }
   }

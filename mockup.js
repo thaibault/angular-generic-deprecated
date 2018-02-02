@@ -21,7 +21,7 @@
 import {Component, Directive, Injectable, Input} from '@angular/core'
 import {NavigationExtras} from '@angular/router'
 import type {PlainObject} from 'clientnode'
-import {Subject} from 'rxjs'
+import {Subject} from 'rxjs/Subject'
 import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 // endregion
 // region native

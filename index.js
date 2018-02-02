@@ -103,7 +103,7 @@ import {
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
-import {Subject} from 'rxjs'
+import {Subject} from 'rxjs/Subject'
 import {Observable} from 'rxjs/Observable'
 import {ISubscription} from 'rxjs/Subscription'
 // NOTE: Only needed for debugging this file.
@@ -2685,6 +2685,8 @@ export class DataService {
     addErrorCallback(callback:Function):boolean {
         const result:boolean = this.removeErrorCallback(callback)
         this.errorCallbacks.push(callback)
+        // TODO determine why this code is present twice in resulting bundle!
+        console.log('A', this.errorCallbacks)
         return result
     }
     /**
