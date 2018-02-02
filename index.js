@@ -82,7 +82,9 @@ import {
 } from '@angular/material/dialog'
 import {MatInputModule} from '@angular/material/input'
 import {MatSelectModule} from '@angular/material/select'
-import {MatSnackBar, MatSnackBarConfig} from '@angular/material/snack-bar'
+import {
+    MatSnackBar, MatSnackBarConfig, MatSnackBarModule
+} from '@angular/material/snack-bar'
 import {MatTooltipModule} from '@angular/material/tooltip'
 import {
     BrowserModule,
@@ -7544,6 +7546,7 @@ export class PaginationComponent {
         MatDialogModule,
         MatInputModule,
         MatSelectModule,
+        MatSnackBarModule,
         MatTooltipModule
     ],
     /*
