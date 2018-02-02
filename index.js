@@ -66,22 +66,24 @@ import {
 import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
+/*
+    NOTE: We should not import directly from "@angular/material" to improve
+    tree shaking results.
+*/
+import {MatButtonModule} from '@angular/material/button'
+import {MatCardModule} from '@angular/material/card'
 import {
-    // IgnoreTypeCheck
-    MatButtonModule,
-    MatCardModule,
-    /* eslint-disable no-unused-vars */
-    MAT_DIALOG_DATA,
     /* eslint-enable no-unused-vars */
+    MAT_DIALOG_DATA,
+    /* eslint-disable no-unused-vars */
     MatDialog,
     MatDialogRef,
-    MatDialogModule,
-    MatInputModule,
-    MatSelectModule,
-    MatSnackBar,
-    MatSnackBarConfig,
-    MatTooltipModule
-} from '@angular/material'
+    MatDialogModule
+} from '@angular/material/dialog'
+import {MatInputModule} from '@angular/material/input'
+import {MatSelectModule} from '@angular/material/select'
+import {MatSnackBar, MatSnackBarConfig} from '@angular/material/snack-bar'
+import {MatTooltipModule} from '@angular/material/tooltip'
 import {
     BrowserModule,
     DomSanitizer,
