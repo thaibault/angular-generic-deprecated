@@ -31,7 +31,7 @@
     "testRunner.compiled.js"
   ],
   "main": "index.compiled.js",
-  "jsnext:main": "aheadOfTime.compiled/index.js",
+  "main:aheadOfTimeCompiled": "aheadOfTime.compiled/index.js",
   "types": "aheadOfTime.compiled/index.d.ts",
   "repository": {
     "type": "git",
