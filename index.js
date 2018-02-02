@@ -106,6 +106,9 @@ import PouchDBValidationPlugin from 'pouchdb-validation'
 import {Subject} from 'rxjs/Subject'
 import {Observable} from 'rxjs/Observable'
 import {ISubscription} from 'rxjs/Subscription'
+import 'rxjs/add/operator/do'
+import 'rxjs/add/operator/debounceTime'
+import 'rxjs/add/operator/distinctUntilChanged'
 // NOTE: Only needed for debugging this file.
 try {
     eval('require')('source-map-support/register')
@@ -4584,11 +4587,10 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     }
     /**
      * Unsubscribes all subscriptions when this component should be disposed.
-     * @param parameter - List of all parameter to forward to super method.
      * @returns Returns the super values return value.
      */
-    ngOnDestroy(...parameter:Array<any>):any {
-        const result:any = super.ngOnDestroy(...parameter)
+    ngOnDestroy():any {
+        const result:any = super.ngOnDestroy()
         for (const subscription of this._subscriptions)
             subscription.unsubscribe()
         return result
@@ -4698,44 +4700,31 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
     /**
      * Needed implementation for an angular control value accessor.
      * @param callback - Callback function to register.
-     * @param additionalParameter - Additional parameter will be forwarded to
-     * inherited super method.
      * @returns What inherited method returns.
      */
     registerOnChange(
-        callback:(value:any) => void, ...additionalParameter:Array<any>
+        callback:(...parameter:Array<any>) => void
     ):any {
-        this.onChangeCallback = (
-            value:any, ...additionalParameter:Array<any>
-        ):void => callback(this.import(value), ...additionalParameter)
-        return super.registerOnChange(
-            this.onChangeCallback, ...additionalParameter)
+        this.onChangeCallback = (value:any):void => callback(this.import(
+            value))
+        return super.registerOnChange(this.onChangeCallback)
     }
     /**
      * Needed implementation for an angular control value accessor.
      * @param callback - Callback function to register.
-     * @param additionalParameter - Additional parameter will be forwarded to
-     * inherited super method.
      * @returns What inherited method returns.
      */
-    registerOnTouched(
-        callback:() => void, ...additionalParameter:Array<any>
-    ):any {
+    registerOnTouched(callback:() => void):any {
         this.onTouchedCallback = callback
-        return super.registerOnTouched(
-            this.onTouchedCallback, ...additionalParameter)
+        return super.registerOnTouched(this.onTouchedCallback)
     }
     /**
      * Overridden inherited function for value export.
      * @param value - Value to export.
-     * @param additionalParameter - Additional arguments will be forwarded to
-     * the overridden method invocation.
      * @returns The transformed give value.
      */
-    writeValue(value:any, ...additionalParameter:Array<any>):any {
-        return super.writeValue(this.export(
-            value, ...additionalParameter
-        ), ...additionalParameter)
+    writeValue(value:any):any {
+        return super.writeValue(this.export(value))
     }
 }
 // / endregion
@@ -5541,15 +5530,13 @@ export class AbstractEditorComponent extends AbstractValueAccessor
     /**
      * Synchronizes given value into internal code mirror instance.
      * @param value - Given value to set in code editor.
-     * @param additionalParameter - Additional arguments will be forwarded to
-     * the overridden method invocation.
      * @returns What inherited method returns.
      */
-    export(value:any, ...additionalParameter:Array<any>):any {
+    export(value:any):any {
         this.model = [null, undefined].includes(value) ? '' : value.toString()
         if (this.instance)
             this.instance[this.contentSetterMethodName](this.model)
-        return super.export(value, ...additionalParameter)
+        return super.export(value)
     }
     /**
      * Triggers disabled state changes.
@@ -6168,12 +6155,10 @@ export class TextareaComponent extends AbstractNativeInputComponent
     }
     /**
      * Triggers after input values have been resolved.
-     * @param additionalParameter - Additional arguments will be forwarded to
-     * the overridden method invocation.
      * @returns Nothing.
      */
-    ngOnInit(...additionalParameter:Array<any>):void {
-        super.ngOnInit(...additionalParameter)
+    ngOnInit():void {
+        super.ngOnInit()
         if (this.editor === null && this.model.editor)
             this.editor = this.model.editor
         if (typeof this.editor === 'string') {
