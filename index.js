@@ -73,9 +73,9 @@ import {
 import {MatButtonModule} from '@angular/material/button'
 import {MatCardModule} from '@angular/material/card'
 import {
-    /* eslint-enable no-unused-vars */
-    MAT_DIALOG_DATA,
     /* eslint-disable no-unused-vars */
+    MAT_DIALOG_DATA,
+    /* eslint-enable no-unused-vars */
     MatDialog,
     MatDialogRef,
     MatDialogModule
