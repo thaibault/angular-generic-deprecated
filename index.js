@@ -2692,8 +2692,6 @@ export class DataService {
     addErrorCallback(callback:Function):boolean {
         const result:boolean = this.removeErrorCallback(callback)
         this.errorCallbacks.push(callback)
-        // TODO determine why this code is present twice in resulting bundle!
-        console.log('A', this.errorCallbacks)
         return result
     }
     /**
