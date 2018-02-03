@@ -3245,7 +3245,8 @@ export class DataService {
             error.name === 'unauthorized' ||
             error.hasOwnProperty('error') &&
             error.error === 'unauthorized' ||
-            error.code === 'ETIMEDOUT'
+            error.code === 'ETIMEDOUT' ||
+            error.status === 0
         ))
             throw error
     }
