@@ -2855,7 +2855,7 @@ export class DataService {
                         name:string;
                         parameter:Array<any>;
                         wrappedParameter?:Array<any>;
-                    } = {name, parameter}
+                    } = {name, parameter, wrappedParameter: parameter}
                     this.runningRequests.push(request)
                     this.runningRequestsStream.next(this.runningRequests)
                     const clear:Function = ():void => {
@@ -2871,21 +2871,27 @@ export class DataService {
                                 const interceptor of
                                 this.middlewares.pre[methodName]
                             ) {
-                                parameter = interceptor.apply(
-                                    this.connection, parameter.concat(
+                                let wrappedParameter:any = interceptor.apply(
+                                    this.connection,
+                                    request.wrappedParameter.concat(
                                         methodName === '_all' ? name : []))
-                                if ('then' in parameter)
-                                    try {
-                                        parameter = await parameter
-                                    } catch (error) {
-                                        clear()
-                                        throw error
-                                    }
+                                if (wrappedParameter) {
+                                    if ('then' in wrappedParameter)
+                                        try {
+                                            wrappedParameter =
+                                                await wrappedParameter
+                                        } catch (error) {
+                                            clear()
+                                            throw error
+                                        }
+                                    if (Array.isArray(wrappedParameter))
+                                        request.wrappedParameter =
+                                            wrappedParameter
+                                }
                             }
-                    request.wrappedParameter = parameter
                     const action:Function = (
                         context:any=this.connection,
-                        givenParameter:Array<any>=parameter
+                        givenParameter:Array<any>=request.wrappedParameter
                     ):any => method.apply(context, givenParameter)
                     let result:any
                     try {
@@ -2901,7 +2907,7 @@ export class DataService {
                             ) {
                                 result = interceptor.call(
                                     this.connection, result, action,
-                                    ...parameter.concat(
+                                    ...request.wrappedParameter.concat(
                                         methodName === '_all' ? name : []))
                                 if ('then' in result)
                                     try {
