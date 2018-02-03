@@ -2774,15 +2774,50 @@ export class DataService {
         // region observe database changes stream error
         const nativeChangesMethod:Function = this.connection.changes
         this.connection.changes = (...parameter:Array<any>):any => {
+            /*
+                NOTE: We log a changes stream as running request if its is
+                expected to finish at last after expected data is given.
+            */
+            let track:boolean = false
+            if (
+                parameter.length &&
+                typeof parameter[0] === 'object' &&
+                parameter[0] !== null && (
+                    !parameter[0].live ||
+                    typeof parameter[0].since === 'number' &&
+                    parameter[0].since < 2
+                )
+            )
+                track = true
             const changesStream:Stream = nativeChangesMethod.apply(
                 this.connection, parameter)
-            changesStream.on('error', (...parameter:Array<any>):Promise<any> =>
+            const clear:Function = track ? ():void => {
+                if (!track)
+                    return
+                track = false
+                const index:number = this.runningRequests.indexOf(
+                    changesStream)
+                if (index !== -1) {
+                    this.runningRequests.splice(index, 1)
+                    this.runningRequestsStream.next(this.runningRequests)
+                }
+            } : this.tools.noop
+            if (track) {
+                this.runningRequests.push(changesStream)
+                this.runningRequestsStream.next(this.runningRequests)
+                changesStream.on('change', clear)
+                changesStream.on('complete', clear)
+            }
+            changesStream.on('error', (
+                ...parameter:Array<any>
+            ):Promise<any> => {
+                clear()
                 // NOTE: Spread parameter does not satisfy typescript.
                 /* eslint-disable prefer-spread */
-                this.triggerErrorCallbacks.apply(this, parameter.concat(
+                return this.triggerErrorCallbacks.apply(this, parameter.concat(
                     changesStream))
                 /* eslint-disable prefer-spread */
-            )
+            })
             return changesStream
         }
         // endregion
@@ -2861,9 +2896,11 @@ export class DataService {
                     const clear:Function = ():void => {
                         const index:number = this.runningRequests.indexOf(
                             request)
-                        if (index !== -1)
+                        if (index !== -1) {
                             this.runningRequests.splice(index, 1)
-                        this.runningRequestsStream.next(this.runningRequests)
+                            this.runningRequestsStream.next(
+                                this.runningRequests)
+                        }
                     }
                     for (const methodName of [name, '_all'])
                         if (this.middlewares.pre.hasOwnProperty(methodName))
