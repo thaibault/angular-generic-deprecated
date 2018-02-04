@@ -167,6 +167,9 @@
     },
     "module": {
       "aliases": {
+        "blob-util$": {
+          "__evaluate__": "self.targetTechnology === 'node' ? 'clientnode' : 'blob-util'"
+        },
         "clientnode/test$": "clientnode/test.compiled"
       },
       "optimizer": {

@@ -18,6 +18,7 @@
     endregion
 */
 // region imports
+import {blobToBase64String} from 'blob-util'
 import Tools, {
     $, $DomNode, DomNode, globalContext, PlainObject
 } from 'clientnode'
@@ -7033,8 +7034,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             content_type: file.type || 'text/plain',
             /* eslint-enable camelcase */
             data: typeof Blob === 'undefined' ?
-                file.toString('base64') :
-                await require('blob-util').blobToBase64String(file),
+                file.toString('base64') : await blobToBase64String(file),
             length: file.size,
             name: this.file.name
         }
