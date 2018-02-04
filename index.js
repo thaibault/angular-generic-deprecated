@@ -2519,7 +2519,7 @@ export class AlertService {
  * @property equals - Hilds the equals pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
- * @property initializedEmitter - Event emitter triggering when database
+ * @property initialized - Event emitter triggering when database
  * initialization has finished.
  * @property middlewares - Mapping of post and pre callback arrays to trigger
  * before or after each database transaction.
@@ -2558,7 +2558,7 @@ export class DataService {
     errorCallbacks:Array<Function> = []
     equals:Function
     extendObject:Function
-    initializedEmitter:EventEmitter<PouchDB> = new EventEmitter()
+    initialized:EventEmitter<PouchDB> = new EventEmitter()
     middlewares:{
         pre:{[key:string]:Array<Function>};
         post:{[key:string]:Array<Function>};
@@ -3063,7 +3063,7 @@ export class DataService {
                 }
             }
         // endregion
-        this.initializedEmitter.emit(this.connection)
+        this.initialized.emit(this.connection)
     }
     /**
      * Creates a database index.
