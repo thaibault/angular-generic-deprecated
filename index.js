@@ -2519,6 +2519,8 @@ export class AlertService {
  * @property equals - Hilds the equals pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
+ * @property initializedEmitter - Event emitter triggering when database
+ * initialization has finished.
  * @property middlewares - Mapping of post and pre callback arrays to trigger
  * before or after each database transaction.
  * @property platformID - Platform identification string.
@@ -2556,6 +2558,7 @@ export class DataService {
     errorCallbacks:Array<Function> = []
     equals:Function
     extendObject:Function
+    initializedEmitter:EventEmitter<PouchDB> = new EventEmitter()
     middlewares:{
         pre:{[key:string]:Array<Function>};
         post:{[key:string]:Array<Function>};
@@ -2721,6 +2724,7 @@ export class DataService {
     addErrorCallback(callback:Function):boolean {
         const result:boolean = this.removeErrorCallback(callback)
         this.errorCallbacks.push(callback)
+        console.log('ADD', callback)
         return result
     }
     /**
@@ -3059,6 +3063,7 @@ export class DataService {
                 }
             }
         // endregion
+        this.initializedEmitter.emit(this.connection)
     }
     /**
      * Creates a database index.
@@ -3215,6 +3220,7 @@ export class DataService {
      * @returns A boolean indicating if given callback was registered.
      */
     removeErrorCallback(callback:Function):boolean {
+        console.log('REMOVE', callback)
         const index:number = this.errorCallbacks.indexOf(callback)
         if (index !== -1) {
             this.errorCallbacks.splice(index, 1)
@@ -3302,6 +3308,7 @@ export class DataService {
     async triggerErrorCallbacks(
         error:any, ...parameter:Array<any>
     ):Promise<void> {
+        console.log('TRIGGER', error)
         let result:boolean|null = null
         for (const callback of this.errorCallbacks) {
             let localResult:any = callback(error, ...parameter)
