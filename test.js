@@ -103,11 +103,13 @@ registerAngularTest(function(
     const Module:Object = index.default
     // endregion
     // region extend abstract components
+    /* eslint-disable require-jsdoc */
     // IgnoreTypeCheck
     @Component({
         selector: 'items',
         template: '<div></div>'
     })
+    /* eslint-enable require-jsdoc */
     /**
      * Mockup component to test their abstract ancestor.
      */
@@ -130,6 +132,7 @@ registerAngularTest(function(
     }
     // endregion
     // region host components for simulating on push change detection strategy
+    /* eslint-disable require-jsdoc */
     // IgnoreTypeCheck
     @Component({
         template: `
@@ -141,6 +144,7 @@ registerAngularTest(function(
             ></generic-pagination>
         `
     })
+    /* eslint-enable require-jsdoc */
     /**
      * Mock host component to test pagination on push change detection.
      * @property instance - Reference to hosted component instance.
@@ -200,12 +204,14 @@ registerAngularTest(function(
             const moduleImports:Array<Object> = [Module, NoopAnimationsModule]
             // endregion
             // region test services
+            /* eslint-disable require-jsdoc */
             // IgnoreTypeCheck
             @NgModule({
                 bootstrap: [ApplicationComponent],
                 declarations: [ApplicationComponent, ItemsComponent],
                 imports: moduleImports
             })
+            /* eslint-enable require-jsdoc */
             /**
              * Dummy module to inject services to test and test if
              * bootstrapping works.

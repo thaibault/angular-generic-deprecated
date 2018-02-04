@@ -266,6 +266,7 @@ export function render(module:Object, options:{
                     // region pre-render
                     if (options.component) {
                         // region create server pre-renderable module
+                        /* eslint-disable require-jsdoc */
                         // IgnoreTypeCheck
                         @NgModule({
                             bootstrap: [options.component],
@@ -275,6 +276,7 @@ export function render(module:Object, options:{
                                 useValue: renderScope.basePath
                             }]
                         })
+                        /* eslint-enable require-jsdoc */
                         /**
                          * Dummy server compatible root application module to
                          * pre-render.

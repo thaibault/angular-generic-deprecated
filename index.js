@@ -1057,16 +1057,19 @@ export class NumberRoundPipe extends AbstractToolsPipe
  * @property specialNames - A mapping to database specific special property
  * names.
  * @property stringMD5 - String md5 pipe's instance transform method.
+ * @property zone - Zone service instance.
  */
 export class AttachmentsAreEqualPipe implements PipeTransform {
     data:DataService
     representObject:Function
     specialNames:PlainObject
     stringMD5:Function
+    zone:NgZone
     /**
      * Gets needed services injected.
      * @param initialData - Injected initial data service instance.
      * @param injector - Application specific injector instance.
+     * @param ngZone - Injected zone service instance.
      * @param representObjectPipe - Represent object pipe instance.
      * @param stringMD5Pipe - Injected string md5 pipe instance.
      * @returns Nothing.
@@ -1074,6 +1077,7 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
     constructor(
         initialData:InitialDataService,
         injector:Injector,
+        ngZone:NgZone,
         representObjectPipe:RepresentObjectPipe,
         stringMD5Pipe:StringMD5Pipe
     ) {
@@ -1083,6 +1087,7 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
         this.specialNames =
             initialData.configuration.database.model.property.name.special
         this.stringMD5 = stringMD5Pipe.transform.bind(stringMD5Pipe)
+        this.zone = ngZone
     }
     /**
      * Performs the actual transformations process.
@@ -1146,31 +1151,42 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
                 const name:string = 'genericTemp'
                 const databaseConnection:PouchDB = new this.data.database(name)
                 try {
-                    await databaseConnection.put({
-                        [this.specialNames.id]: name,
-                        [this.specialNames.attachment]: {
-                            [name]: {
-                                data: data[type].data,
-                                /* eslint-disable camelcase */
-                                content_type: 'application/octet-stream'
-                                /* eslint-enable camelcase */
-                            }
+                    await new Promise((
+                        resolve:Function, reject:Function
+                    ):void => this.zone.run(async ():Promise<void> => {
+                        try {
+                            await databaseConnection.put({
+                                [this.specialNames.id]: name,
+                                [this.specialNames.attachment]: {
+                                    [name]: {
+                                        data: data[type].data,
+                                        /* eslint-disable camelcase */
+                                        content_type:
+                                            'application/octet-stream'
+                                        /* eslint-enable camelcase */
+                                    }
+                                }
+                            })
+                            data[type].hash = (await databaseConnection.get(
+                                name
+                            ))[this.specialNames.attachment][name].digest
+                        } catch (error) {
+                            let message:string = 'unknown'
+                            try {
+                                message = this.representObject(error)
+                            } catch (error) {}
+                            console.warn(
+                                'Given attachments for equality check are ' +
+                                `not valid: ${message}`)
+                            reject()
+                            return
+                        } finally {
+                            await databaseConnection.destroy()
                         }
-                    })
-                    data[type].hash = (await databaseConnection.get(
-                        name
-                    ))[this.specialNames.attachment][name].digest
+                        resolve()
+                    }))
                 } catch (error) {
-                    let message:string = 'unknown'
-                    try {
-                        message = this.representObject(error)
-                    } catch (error) {}
-                    console.warn(
-                        'Given attachments for equality check are not ' +
-                        `valid: ${message}`)
                     return false
-                } finally {
-                    await databaseConnection.destroy()
                 }
             }
         return data.first.hash === data.second.hash
@@ -2998,7 +3014,7 @@ export class DataService {
                     ):any => method.apply(context, givenParameter)
                     let result:any
                     try {
-                        this.zone.run(() => {
+                        this.zone.run(():void => {
                             result = action()
                         })
                     } catch (error) {
@@ -6754,7 +6770,9 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 this.file.type = 'binary'
     }
     /**
-     * TODO
+     * Includes given error in current error state object.
+     * @param errors - Errors to apply in state.
+     * @returns Nothing.
      */
     updateErrorState(errors:any = null):void {
         let currentErrors:PlainObject = this.model[this.attachmentTypeName][
