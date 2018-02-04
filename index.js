@@ -1153,37 +1153,43 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
                 try {
                     await new Promise((
                         resolve:Function, reject:Function
-                    ):void => this.zone.run(async ():Promise<void> => {
-                        try {
-                            await databaseConnection.put({
-                                [this.specialNames.id]: name,
-                                [this.specialNames.attachment]: {
-                                    [name]: {
-                                        data: data[type].data,
-                                        /* eslint-disable camelcase */
-                                        content_type:
-                                            'application/octet-stream'
-                                        /* eslint-enable camelcase */
-                                    }
-                                }
-                            })
-                            data[type].hash = (await databaseConnection.get(
-                                name
-                            ))[this.specialNames.attachment][name].digest
-                        } catch (error) {
-                            let message:string = 'unknown'
+                    ):void => this.zone.run(():void => {
+                        /*
+                            NOTE: We need an extra self calling asynchronous
+                            function inside zone to satisfy typescript here.
+                        */
+                        (async ():Promise<void> => {
                             try {
-                                message = this.representObject(error)
-                            } catch (error) {}
-                            console.warn(
-                                'Given attachments for equality check are ' +
-                                `not valid: ${message}`)
-                            reject()
-                            return
-                        } finally {
-                            await databaseConnection.destroy()
-                        }
-                        resolve()
+                                await databaseConnection.put({
+                                    [this.specialNames.id]: name,
+                                    [this.specialNames.attachment]: {
+                                        [name]: {
+                                            data: data[type].data,
+                                            /* eslint-disable camelcase */
+                                            content_type:
+                                                'application/octet-stream'
+                                            /* eslint-enable camelcase */
+                                        }
+                                    }
+                                })
+                                data[type].hash = (
+                                    await databaseConnection.get(name)
+                                )[this.specialNames.attachment][name].digest
+                            } catch (error) {
+                                let message:string = 'unknown'
+                                try {
+                                    message = this.representObject(error)
+                                } catch (error) {}
+                                console.warn(
+                                    'Given attachments for equality check ' +
+                                    `are not valid: ${message}`)
+                                reject()
+                                return
+                            } finally {
+                                await databaseConnection.destroy()
+                            }
+                            resolve()
+                        })()
                     }))
                 } catch (error) {
                     return false
