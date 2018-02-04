@@ -41,6 +41,7 @@ import {
     Injector,
     Input,
     NgModule,
+    NgZone,
     OnChanges,
     OnDestroy,
     OnInit,
@@ -2505,6 +2506,7 @@ export class AlertService {
  * @property synchronisation - This synchronisation instance represents the
  * active synchronisation process if a local offline database is in use.
  * @property tools - Holds the tools class from the tools service.
+ * @property zone - Zone service instance.
  */
 export class DataService {
     // NOTE: Native regular expression definition is not allowed here.
@@ -2545,12 +2547,14 @@ export class DataService {
     stringFormat:Function
     synchronisation:Stream|null = null
     tools:Tools
+    zone:NgZone
     /**
      * Creates the database constructor applies all plugins instantiates
      * the connection instance and registers all middlewares.
      * @param equalsPipe - Equals pipe service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
+     * @param ngZone - Injected zone service instance.
      * @param platformID - Platform identification string.
      * @param stringFormatPipe - Injected string format pipe instance.
      * @param utility - Injected utility service instance.
@@ -2560,6 +2564,7 @@ export class DataService {
         equalsPipe:EqualsPipe,
         extendObjectPipe:ExtendObjectPipe,
         initialData:InitialDataService,
+        ngZone:NgZone,
         @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe,
         utility:UtilityService
@@ -2571,6 +2576,7 @@ export class DataService {
         this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.tools = utility.fixed.tools
+        this.zone = ngZone
         const nativeBulkDocs:Function = this.database.prototype.bulkDocs
         const self:DataService = this
         this.database.plugin({bulkDocs: async function(
@@ -2876,98 +2882,6 @@ export class DataService {
             }
         }
         // endregion
-        // region register interceptor
-        for (const name in this.connection)
-            if (
-                DataService.wrappableMethodNames.includes(name) &&
-                typeof this.connection[name] === 'function'
-            ) {
-                const method:Function = this.connection[name]
-                this.connection[name] = async (
-                    ...parameter:Array<any>
-                ):Promise<any> => {
-                    const request:{
-                        name:string;
-                        parameter:Array<any>;
-                        wrappedParameter?:Array<any>;
-                    } = {name, parameter, wrappedParameter: parameter}
-                    this.runningRequests.push(request)
-                    this.runningRequestsStream.next(this.runningRequests)
-                    const clear:Function = ():void => {
-                        const index:number = this.runningRequests.indexOf(
-                            request)
-                        if (index !== -1) {
-                            this.runningRequests.splice(index, 1)
-                            this.runningRequestsStream.next(
-                                this.runningRequests)
-                        }
-                    }
-                    for (const methodName of [name, '_all'])
-                        if (this.middlewares.pre.hasOwnProperty(methodName))
-                            for (
-                                const interceptor of
-                                this.middlewares.pre[methodName]
-                            ) {
-                                let wrappedParameter:any = interceptor.apply(
-                                    this.connection,
-                                    request.wrappedParameter.concat(
-                                        methodName === '_all' ? name : []))
-                                if (wrappedParameter) {
-                                    if ('then' in wrappedParameter)
-                                        try {
-                                            wrappedParameter =
-                                                await wrappedParameter
-                                        } catch (error) {
-                                            clear()
-                                            throw error
-                                        }
-                                    if (Array.isArray(wrappedParameter))
-                                        request.wrappedParameter =
-                                            wrappedParameter
-                                }
-                            }
-                    const action:Function = (
-                        context:any=this.connection,
-                        givenParameter:Array<any>=request.wrappedParameter
-                    ):any => method.apply(context, givenParameter)
-                    let result:any
-                    try {
-                        result = action()
-                    } catch (error) {
-                        await this.triggerErrorCallbacks(error, result, action)
-                    }
-                    for (const methodName of [name, '_all'])
-                        if (this.middlewares.post.hasOwnProperty(methodName))
-                            for (
-                                const interceptor of
-                                this.middlewares.post[methodName]
-                            ) {
-                                result = interceptor.call(
-                                    this.connection, result, action,
-                                    ...request.wrappedParameter.concat(
-                                        methodName === '_all' ? name : []))
-                                if ('then' in result)
-                                    try {
-                                        result = await result
-                                    } catch (error) {
-                                        clear()
-                                        await this.triggerErrorCallbacks(
-                                            error, result, action)
-                                    }
-                            }
-                    if ('then' in result)
-                        try {
-                            result = await result
-                        } catch (error) {
-                            clear()
-                            await this.triggerErrorCallbacks(
-                                error, result, action)
-                        }
-                    clear()
-                    return result
-                }
-            }
-        // endregion
         if (!(
             DataService.skipGenericIndexManagementOnServer &&
             isPlatformServer(this.platformID)
@@ -3028,6 +2942,100 @@ export class DataService {
                 }
             // endregion
         }
+        // region register interceptor and apply zone to database interactions
+        for (const name in this.connection)
+            if (
+                DataService.wrappableMethodNames.includes(name) &&
+                typeof this.connection[name] === 'function'
+            ) {
+                const method:Function = this.connection[name]
+                this.connection[name] = async (
+                    ...parameter:Array<any>
+                ):Promise<any> => {
+                    const request:{
+                        name:string;
+                        parameter:Array<any>;
+                        wrappedParameter?:Array<any>;
+                    } = {name, parameter, wrappedParameter: parameter}
+                    this.runningRequests.push(request)
+                    this.runningRequestsStream.next(this.runningRequests)
+                    const clear:Function = ():void => {
+                        const index:number = this.runningRequests.indexOf(
+                            request)
+                        if (index !== -1) {
+                            this.runningRequests.splice(index, 1)
+                            this.runningRequestsStream.next(
+                                this.runningRequests)
+                        }
+                    }
+                    for (const methodName of [name, '_all'])
+                        if (this.middlewares.pre.hasOwnProperty(methodName))
+                            for (
+                                const interceptor of
+                                this.middlewares.pre[methodName]
+                            ) {
+                                let wrappedParameter:any = interceptor.apply(
+                                    this.connection,
+                                    request.wrappedParameter.concat(
+                                        methodName === '_all' ? name : []))
+                                if (wrappedParameter) {
+                                    if ('then' in wrappedParameter)
+                                        try {
+                                            wrappedParameter =
+                                                await wrappedParameter
+                                        } catch (error) {
+                                            clear()
+                                            throw error
+                                        }
+                                    if (Array.isArray(wrappedParameter))
+                                        request.wrappedParameter =
+                                            wrappedParameter
+                                }
+                            }
+                    const action:Function = (
+                        context:any=this.connection,
+                        givenParameter:Array<any>=request.wrappedParameter
+                    ):any => method.apply(context, givenParameter)
+                    let result:any
+                    try {
+                        this.zone.run(() => {
+                            result = action()
+                        })
+                    } catch (error) {
+                        await this.triggerErrorCallbacks(error, result, action)
+                    }
+                    for (const methodName of [name, '_all'])
+                        if (this.middlewares.post.hasOwnProperty(methodName))
+                            for (
+                                const interceptor of
+                                this.middlewares.post[methodName]
+                            ) {
+                                result = interceptor.call(
+                                    this.connection, result, action,
+                                    ...request.wrappedParameter.concat(
+                                        methodName === '_all' ? name : []))
+                                if ('then' in result)
+                                    try {
+                                        result = await result
+                                    } catch (error) {
+                                        clear()
+                                        await this.triggerErrorCallbacks(
+                                            error, result, action)
+                                    }
+                            }
+                    if ('then' in result)
+                        try {
+                            result = await result
+                        } catch (error) {
+                            clear()
+                            await this.triggerErrorCallbacks(
+                                error, result, action)
+                        }
+                    clear()
+                    return result
+                }
+            }
+        // endregion
     }
     /**
      * Creates a database index.
@@ -3909,7 +3917,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
      * @param additionalSelector - Custom filter criteria.
      * @returns A promise wrapping retrieved data.
      */
-    async list(
+    list(
         sort:Array<PlainObject> = [{
             [
             InitialDataService.defaultScope.configuration.database.model
@@ -3960,7 +3968,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 item:PlainObject
             ):PlainObject|string =>
                 Object.values(item)[0] === 'asc' ? Object.keys(item)[0] : item)
-        return await this.data.find(
+        return this.data.find(
             this.extendObject(true, selector, additionalSelector), options)
     }
     /**
