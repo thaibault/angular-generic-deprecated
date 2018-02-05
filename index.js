@@ -2979,99 +2979,110 @@ export class DataService {
                 }
             // endregion
         }
-        // region register interceptor and apply zone to database interactions
-        for (const name in this.connection)
-            if (
-                DataService.wrappableMethodNames.includes(name) &&
-                typeof this.connection[name] === 'function'
-            ) {
-                const method:Function = this.connection[name]
-                this.connection[name] = async (
-                    ...parameter:Array<any>
-                ):Promise<any> => {
-                    const request:{
-                        name:string;
-                        parameter:Array<any>;
-                        wrappedParameter?:Array<any>;
-                    } = {name, parameter, wrappedParameter: parameter}
-                    this.runningRequests.push(request)
-                    this.runningRequestsStream.next(this.runningRequests)
-                    const clear:Function = ():void => {
-                        const index:number = this.runningRequests.indexOf(
-                            request)
-                        if (index !== -1) {
-                            this.runningRequests.splice(index, 1)
-                            this.runningRequestsStream.next(
-                                this.runningRequests)
+        // region register interceptor and apply zones to database interactions
+        for (const name of DataService.wrappableMethodNames)
+            for (const connection of [this.connection].concat(
+                !this.remoteConnection ||
+                this.connection === this.remoteConnection ?
+                    [] :
+                    this.remoteConnection
+            ))
+                if (typeof connection[name] === 'function') {
+                    const method:Function = connection[name]
+                    connection[name] = async (
+                        ...parameter:Array<any>
+                    ):Promise<any> => {
+                        const request:{
+                            name:string;
+                            parameter:Array<any>;
+                            wrappedParameter?:Array<any>;
+                        } = {name, parameter, wrappedParameter: parameter}
+                        this.runningRequests.push(request)
+                        this.runningRequestsStream.next(this.runningRequests)
+                        const clear:Function = ():void => {
+                            const index:number = this.runningRequests.indexOf(
+                                request)
+                            if (index !== -1) {
+                                this.runningRequests.splice(index, 1)
+                                this.runningRequestsStream.next(
+                                    this.runningRequests)
+                            }
                         }
-                    }
-                    for (const methodName of [name, '_all'])
-                        if (this.middlewares.pre.hasOwnProperty(methodName))
-                            for (
-                                const interceptor of
-                                this.middlewares.pre[methodName]
-                            ) {
-                                let wrappedParameter:any = interceptor.apply(
-                                    this.connection,
-                                    request.wrappedParameter.concat(
-                                        methodName === '_all' ? name : []))
-                                if (wrappedParameter) {
-                                    if ('then' in wrappedParameter)
-                                        try {
-                                            wrappedParameter =
-                                                await wrappedParameter
-                                        } catch (error) {
-                                            clear()
-                                            throw error
-                                        }
-                                    if (Array.isArray(wrappedParameter))
-                                        request.wrappedParameter =
-                                            wrappedParameter
-                                }
-                            }
-                    const action:Function = (
-                        context:any=this.connection,
-                        givenParameter:Array<any>=request.wrappedParameter
-                    ):any => method.apply(context, givenParameter)
-                    let result:any
-                    try {
-                        this.zone.run(():void => {
-                            result = action()
-                        })
-                    } catch (error) {
-                        await this.triggerErrorCallbacks(error, result, action)
-                    }
-                    for (const methodName of [name, '_all'])
-                        if (this.middlewares.post.hasOwnProperty(methodName))
-                            for (
-                                const interceptor of
-                                this.middlewares.post[methodName]
-                            ) {
-                                result = interceptor.call(
-                                    this.connection, result, action,
-                                    ...request.wrappedParameter.concat(
-                                        methodName === '_all' ? name : []))
-                                if ('then' in result)
-                                    try {
-                                        result = await result
-                                    } catch (error) {
-                                        clear()
-                                        await this.triggerErrorCallbacks(
-                                            error, result, action)
+                        for (const methodName of [name, '_all'])
+                            if (this.middlewares.pre.hasOwnProperty(
+                                methodName
+                            ))
+                                for (
+                                    const interceptor of
+                                    this.middlewares.pre[methodName]
+                                ) {
+                                    let wrappedParameter:any =
+                                        interceptor.apply(
+                                            connection,
+                                            request.wrappedParameter.concat(
+                                                methodName === '_all' ?
+                                                    name :
+                                                    []))
+                                    if (wrappedParameter) {
+                                        if ('then' in wrappedParameter)
+                                            try {
+                                                wrappedParameter =
+                                                    await wrappedParameter
+                                            } catch (error) {
+                                                clear()
+                                                throw error
+                                            }
+                                        if (Array.isArray(wrappedParameter))
+                                            request.wrappedParameter =
+                                                wrappedParameter
                                     }
-                            }
-                    if ('then' in result)
+                                }
+                        const action:Function = (
+                            context:any=connection,
+                            givenParameter:Array<any>=request.wrappedParameter
+                        ):any => method.apply(context, givenParameter)
+                        let result:any
                         try {
-                            result = await result
+                            this.zone.run(():void => {
+                                result = action()
+                            })
                         } catch (error) {
-                            clear()
                             await this.triggerErrorCallbacks(
                                 error, result, action)
                         }
-                    clear()
-                    return result
+                        for (const methodName of [name, '_all'])
+                            if (this.middlewares.post.hasOwnProperty(
+                                methodName
+                            ))
+                                for (
+                                    const interceptor of
+                                    this.middlewares.post[methodName]
+                                ) {
+                                    result = interceptor.call(
+                                        connection, result, action,
+                                        ...request.wrappedParameter.concat(
+                                            methodName === '_all' ? name : []))
+                                    if ('then' in result)
+                                        try {
+                                            result = await result
+                                        } catch (error) {
+                                            clear()
+                                            await this.triggerErrorCallbacks(
+                                                error, result, action)
+                                        }
+                                }
+                        if ('then' in result)
+                            try {
+                                result = await result
+                            } catch (error) {
+                                clear()
+                                await this.triggerErrorCallbacks(
+                                    error, result, action)
+                            }
+                        clear()
+                        return result
+                    }
                 }
-            }
         // endregion
         this.initialized.emit(this.connection)
     }
@@ -4117,7 +4128,6 @@ export function dataServiceInitializerFactory(
         NOTE: We need this statement here to avoid having an ugly typescript
         error.
     */
-    // TODO remove if corresponding aot bug is fixed.
     2
     return ():Promise<void> => {
         InitialDataService.injectors.add(injector)
