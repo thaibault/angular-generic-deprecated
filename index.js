@@ -79,8 +79,9 @@ import {
     MAT_DIALOG_DATA,
     /* eslint-enable no-unused-vars */
     MatDialog,
-    MatDialogRef,
-    MatDialogModule
+    MatDialogConfig,
+    MatDialogModule,
+    MatDialogRef
 } from '@angular/material/dialog'
 import {MatInputModule} from '@angular/material/input'
 import {MatSelectModule} from '@angular/material/select'
@@ -2468,17 +2469,21 @@ export class ConfirmComponent {
  * Alert service to trigger a dialog window which can be confirmed.
  * @property dialog - Reference to the dialog component instance.
  * @property dialogReference - Reference to the dialog service instance.
+ * @property zone - Zone service instance.
  */
 export class AlertService {
     dialog:MatDialog
     dialogReference:MatDialogRef<ConfirmComponent>
+    zone:NgZone
     /**
      * Gets needed component dialog service instance injected.
      * @param dialog - Reference to the dialog component instance.
+     * @param ngZone - Injected zone service instance.
      * @returns Nothing.
      */
-    constructor(dialog:MatDialog) {
+    constructor(dialog:MatDialog, ngZone:NgZone) {
         this.dialog = dialog
+        this.zone = ngZone
     }
     /**
      * Triggers a confirmation dialog to show.
@@ -2488,14 +2493,20 @@ export class AlertService {
      * which decision was made.
      */
     confirm(data:string|{[key:string]:any}):Promise<boolean> {
+        let configuration:MatDialogConfig<any>
         if (typeof data === 'string')
-            data = {data: {message: data}}
+            configuration = {data: {message: data}}
         else if (
             typeof data !== 'object' || data === null || !data.hasOwnProperty(
                 'data')
         )
-            data = {data}
-        this.dialogReference = this.dialog.open(ConfirmComponent, data)
+            configuration = {data}
+        else
+            configuration = data
+        this.zone.run(():void => {
+            this.dialogReference = this.dialog.open(
+                ConfirmComponent, configuration)
+        })
         return this.dialogReference.afterClosed().toPromise()
     }
 }
