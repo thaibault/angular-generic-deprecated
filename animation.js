@@ -25,7 +25,7 @@ import {
 } from '@angular/animations'
 // NOTE: Only needed for debugging this file.
 try {
-    eval('require')('source-map-support/register')
+    require('source-map-support/register')
 } catch (error) {}
 // endregion
 export const defaultOptions:PlainObject = {
