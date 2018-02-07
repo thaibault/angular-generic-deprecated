@@ -45,7 +45,8 @@
         "skipLibCheck": true,
         "strictNullChecks": false,
         "suppressImplicitAnyIndexErrors": false,
-        "target": "esnext"
+        "target": "esnext",
+        "types": ["node"]
     },
     "files": ["index.ts"]
 }

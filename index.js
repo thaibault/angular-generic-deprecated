@@ -116,9 +116,8 @@ import {ISubscription} from 'rxjs/Subscription'
 import 'rxjs/add/operator/do'
 import 'rxjs/add/operator/debounceTime'
 import 'rxjs/add/operator/distinctUntilChanged'
-// NOTE: Only needed for debugging this file.
 try {
-    eval('require')('source-map-support/register')
+    require('source-map-support/register')
 } catch (error) {}
 
 /*
