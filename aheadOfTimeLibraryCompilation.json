@@ -2,7 +2,7 @@
     "angularCompilerOptions": {
         "genDir": "aheadOfTime.compiled",
         "skipMetadataEmit" : false,
-        "skipTemplateCodegen": true,
+        "skipTemplateCodegen": false,
         "strictMetadataEmit": true
     },
     "compilerOptions": {
