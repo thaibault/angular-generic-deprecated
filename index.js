@@ -1152,46 +1152,36 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
                 const name:string = 'genericTemp'
                 const databaseConnection:PouchDB = new this.data.database(name)
                 try {
-                    await new Promise((
-                        resolve:Function, reject:Function
-                    ):void => this.zone.run(():void => {
-                        /*
-                            NOTE: We need an extra self calling asynchronous
-                            function inside zone to satisfy typescript here.
-                        */
-                        (async ():Promise<void> => {
-                            try {
-                                await databaseConnection.put({
-                                    [this.specialNames.id]: name,
-                                    [this.specialNames.attachment]: {
-                                        [name]: {
-                                            data: data[type].data,
-                                            /* eslint-disable camelcase */
-                                            content_type:
-                                                'application/octet-stream'
-                                            /* eslint-enable camelcase */
-                                        }
+                    await this.zone.run(async ():Promise<void> => {
+                        try {
+                            await databaseConnection.put({
+                                [this.specialNames.id]: name,
+                                [this.specialNames.attachment]: {
+                                    [name]: {
+                                        data: data[type].data,
+                                        /* eslint-disable camelcase */
+                                        content_type:
+                                            'application/octet-stream'
+                                        /* eslint-enable camelcase */
                                     }
-                                })
-                                data[type].hash = (
-                                    await databaseConnection.get(name)
-                                )[this.specialNames.attachment][name].digest
-                            } catch (error) {
-                                let message:string = 'unknown'
-                                try {
-                                    message = this.representObject(error)
-                                } catch (error) {}
-                                console.warn(
-                                    'Given attachments for equality check ' +
-                                    `are not valid: ${message}`)
-                                reject()
-                                return
-                            } finally {
-                                await databaseConnection.destroy()
-                            }
-                            resolve()
-                        })()
-                    }))
+                                }
+                            })
+                            data[type].hash = (
+                                await databaseConnection.get(name)
+                            )[this.specialNames.attachment][name].digest
+                        } catch (error) {
+                            let message:string = 'unknown'
+                            try {
+                                message = this.representObject(error)
+                            } catch (error) {}
+                            console.warn(
+                                'Given attachments for equality check are ' +
+                                `not valid: ${message}`)
+                            throw error
+                        } finally {
+                            await databaseConnection.destroy()
+                        }
+                    })
                 } catch (error) {
                     return false
                 }
@@ -2502,10 +2492,9 @@ export class AlertService {
             configuration = {data}
         else
             configuration = data
-        this.zone.run(():void => {
-            this.dialogReference = this.dialog.open(
-                ConfirmComponent, configuration)
-        })
+        this.dialogReference = this.zone.run((
+        ):MatDialogRef<ConfirmComponent> => this.dialog.open(
+            ConfirmComponent, configuration))
         return this.dialogReference.afterClosed().toPromise()
     }
 }
@@ -2988,9 +2977,9 @@ export class DataService {
             ))
                 if (typeof connection[name] === 'function') {
                     const method:Function = connection[name]
-                    connection[name] = async (
+                    connection[name] = (
                         ...parameter:Array<any>
-                    ):Promise<any> => {
+                    ):Promise<any> => this.zone.run(async ():Promise<any> => {
                         const request:{
                             name:string;
                             parameter:Array<any>;
@@ -3042,9 +3031,7 @@ export class DataService {
                         ):any => method.apply(context, givenParameter)
                         let result:any
                         try {
-                            this.zone.run(():void => {
-                                result = action()
-                            })
+                            result = action()
                         } catch (error) {
                             await this.triggerErrorCallbacks(
                                 error, result, action)
@@ -3080,7 +3067,7 @@ export class DataService {
                             }
                         clear()
                         return result
-                    }
+                    })
                 }
         // endregion
         this.initialized.emit(this.connection)
