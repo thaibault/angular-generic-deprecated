@@ -4333,7 +4333,6 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
     autoRestartOnError:boolean = true
 
     _canceled:boolean = false
-    _changeDetectorReference:ChangeDetectorRef
     _changesStream:Stream
     _data:DataService
     _extendObject:Function
@@ -4349,7 +4348,6 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
     constructor(@Optional() injector:Injector) {
         const get:Function = determineInjector(
             injector, this, this.constructor)
-        this._changeDetectorReference = get(ChangeDetectorRef)
         this._data = get(DataService)
         this._extendObject = get(ExtendObjectPipe).transform.bind(get(
             ExtendObjectPipe))
@@ -4393,8 +4391,6 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
                         'then' in result
                     )
                         result = await result
-                    if (result)
-                        this._changeDetectorReference.detectChanges()
                     if (type === 'error')
                         if (
                             action.hasOwnProperty('name') &&
