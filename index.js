@@ -4408,12 +4408,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
                             initialize()
                 })
         }, 3000)
-        // TODO
-        /*
-            NOTE: We have to break out of angulars zone environment since long
-            polling seems to confuse its mocked environment.
-        */
-        this._tools.timeout(initialize)
+        initialize()
     }
     /**
      * Marks current live data observation as canceled and closes initially
