@@ -2492,9 +2492,8 @@ export class AlertService {
             configuration = {data}
         else
             configuration = data
-        this.dialogReference = this.zone.run((
-        ):MatDialogRef<ConfirmComponent> => this.dialog.open(
-            ConfirmComponent, configuration))
+        this.dialogReference = this.dialog.open(
+            ConfirmComponent, configuration)
         return this.dialogReference.afterClosed().toPromise()
     }
 }
@@ -4409,9 +4408,10 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
                             initialize()
                 })
         }, 3000)
+        // TODO
         /*
-            NOTE: We have to break out of the "zone.js" since long polling
-            seems to confuse its mocked environment.
+            NOTE: We have to break out of angulars zone environment since long
+            polling seems to confuse its mocked environment.
         */
         this._tools.timeout(initialize)
     }

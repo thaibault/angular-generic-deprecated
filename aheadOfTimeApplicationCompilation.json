@@ -8,7 +8,7 @@
         "noImplicitAny": false,
         "sourceMap": false,
         "suppressImplicitAnyIndexErrors": true,
-        "target": "esnext",
+        "target": "es2016",
         "types": ["node"]
     },
     "files": ["../../source/index.ts"]

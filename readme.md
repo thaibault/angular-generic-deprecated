@@ -29,6 +29,9 @@ This modules is ahead of time compatible and ready for tree-shaking, can be
 used as umd module for just in time compilation and supports the babel-stack
 as esnext with flow.js annotations or typescript within the same codebase!
 
+NOTE: We target es2016 insteat of esnext yet since angular zones don't support
+native async await context resolution.
+
 This module provides generic tools needed for any non trivial appliction:
 
 - Services
