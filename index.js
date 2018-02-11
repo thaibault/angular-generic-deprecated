@@ -4692,7 +4692,12 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      * @returns Indicator string.
      */
     trackByIDAndRevision(index:number, item:PlainObject):string {
-        return `${item[this.idName]}/${item[this.revisionName]}`
+        let id:any = item[this.idName]
+        if (
+            typeof id === 'object' && id !== null && id.hasOwnProperty('value')
+        )
+            id = id.value
+        return `${id}/${item[this.revisionName]}`
     }
     /**
      * Applies current filter criteria to current visible item set.
