@@ -4687,10 +4687,11 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     /**
      * Determines an items content specific hash value combined from id and
      * revision.
+     * @param index - Current index of current item in list.
      * @param item - Item with id and revision property.
      * @returns Indicator string.
      */
-    trackByIDAndRevision(item:PlainObject):string {
+    trackByIDAndRevision(index:number, item:PlainObject):string {
         return `${item[this.idName]}/${item[this.revisionName]}`
     }
     /**
