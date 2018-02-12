@@ -307,6 +307,23 @@ export function render(module:Object, options:{
                     // endregion
                     // region re-inject needed initial markup
                     if (options.reInjectInnerHTMLFromInitialDomNode) {
+                        /*
+                            NOTE: We have to prevent creating native "style"
+                            dom nodes to prevent jsdom from parsing the entire
+                            cascading style sheet. Which is error prune and
+                            very resource intensive.
+                        */
+                        const styleContents:Array<string> = []
+                        result = result.replace(
+                            /(<style[^>]*>)([\s\S]*?)(<\/style[^>]*>)/gi, (
+                                match:string,
+                                startTag:string,
+                                content:string,
+                                endTag:string
+                            ):string => {
+                                styleContents.push(content)
+                                return `${startTag}${endTag}`
+                            })
                         const window:Window = (new DOM(result)).window
                         /*
                             NOTE: We have to re-select the application node
@@ -330,9 +347,19 @@ export function render(module:Object, options:{
                         else
                             applicationDomNode.innerHTML +=
                                 renderScope.innerHTMLToReInject
-                        result =
-                            result.replace(/([\s\S]*)<html>[\s\S]*/, '$1') +
-                            window.document.documentElement.outerHTML
+                        result = result
+                            .replace(
+                                /^(\s*<!doctype [^>]+?>\s*)[\s\S]*$/i, '$1'
+                            ) + window.document.documentElement.outerHTML
+                                .replace(
+                                    /(<style[^>]*>)[\s\S]*?(<\/style[^>]*>)/gi,
+                                    (
+                                        match:string,
+                                        startTag:string,
+                                        endTag:string
+                                    ):string =>
+                                        `${startTag}${styleContents.shift()}` +
+                                        endTag)
                     }
                     // endregion
                     /* TODO
