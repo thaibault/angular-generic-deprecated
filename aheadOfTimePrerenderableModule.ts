@@ -28,9 +28,9 @@ import {Module} from './module'
         useValue: '/'
     }]
 })
-export class PrerenderableModule {}
-export default PrerenderableModule
-export const PrerenderableModuleNgFactory = null
+export class PreRenderableModule {}
+export default PreRenderableModule
+export const PreRenderableModuleNgFactory = null
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
