@@ -341,6 +341,10 @@ export function render(module:Object, options:{
                             '<!--generic-inject-application-->' +
                             '(?:[\\s\\S]*?<!---->)?',
                             'i')
+                        console.log(
+                            'A',
+                            regularExpression.test(
+                                renderScope.innerHTMLToReInject))
                         if (regularExpression.test(
                             renderScope.innerHTMLToReInject
                         ))
