@@ -343,6 +343,7 @@ export function render(module:Object, options:{
                             'i')
                         console.log(
                             'A',
+                            renderScope.innerHTMLToReInject,
                             regularExpression.test(
                                 renderScope.innerHTMLToReInject))
                         if (regularExpression.test(
