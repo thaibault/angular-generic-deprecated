@@ -48,7 +48,6 @@
     "build:typescript": "tsc --project aheadOfTimeLibraryCompilation.json",
     "clear": "webOptimizer clear",
     "document": "webOptimizer document",
-    "install": "ln --symbolic ../../source ./ &>/dev/null || echo No symbolic link from could be set for generic ahead of time pre-rendering. || true",
     "lint": "webOptimizer check:type; webOptimizer lint",
     "prepare": "npm run build",
     "report:coverage": "nyc report --reporter=text-lcov | coveralls",

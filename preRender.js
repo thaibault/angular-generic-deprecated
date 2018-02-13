@@ -27,9 +27,13 @@ import path from 'path'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 import removeDirectoryRecursively from 'rimraf'
 
+/* TODO
 import {
     applicationDomNodeSelector, globalVariableNameToRetrieveDataFrom
 } from './index'
+*/
+export const globalVariableNameToRetrieveDataFrom:string = 'genericInitialData'
+export const applicationDomNodeSelector:string = 'application, [application]'
 // endregion
 /**
  * Determines pre-renderable paths from given angular routes configuration
