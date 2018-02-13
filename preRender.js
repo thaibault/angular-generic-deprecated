@@ -27,13 +27,9 @@ import path from 'path'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 import removeDirectoryRecursively from 'rimraf'
 
-/* TODO
 import {
     applicationDomNodeSelector, globalVariableNameToRetrieveDataFrom
 } from './index'
-*/
-export const globalVariableNameToRetrieveDataFrom:string = 'genericInitialData'
-export const applicationDomNodeSelector:string = 'application, [application]'
 // endregion
 /**
  * Determines pre-renderable paths from given angular routes configuration
@@ -338,14 +334,10 @@ export function render(module:Object, options:{
                             window.document.querySelector(
                                 options.applicationDomNodeSelector)
                         const regularExpression:RegExp = new RegExp(
-                            '<!--generic-inject-application-->' +
-                            '(?:[\\s\\S]*?<!---->)?',
+                            '<!--{?generic-inject-application-->' +
+                            '(?:[\\s\\S]*?<!--generic-inject-application}' +
+                            '-->)?',
                             'i')
-                        console.log(
-                            'A',
-                            renderScope.innerHTMLToReInject,
-                            regularExpression.test(
-                                renderScope.innerHTMLToReInject))
                         if (regularExpression.test(
                             renderScope.innerHTMLToReInject
                         ))
