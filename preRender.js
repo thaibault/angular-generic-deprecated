@@ -123,7 +123,7 @@ export function render(module:Object, options:{
         htmlFilePath: path.resolve(
             path.dirname(process.argv[1]), 'index.html'),
         minify: null,
-        reInjectInnerHTMLFromInitialDomNode: true,
+        reInjectInnerHTMLFromInitialDomNode: false,
         routes: [],
         scope: {[globalVariableNameToRetrieveDataFrom]: {configuration: {
             database: {
