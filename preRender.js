@@ -254,7 +254,7 @@ export function render(module:Object, options:{
                 )) + '.html'
             filePaths.push(filePath)
             try {
-                await new Promise((
+                results.push(await new Promise((
                     resolve:Function, reject:Function
                 ):void => makeDirectoryPath(path.dirname(filePath), async (
                     error:?Error
@@ -367,12 +367,11 @@ export function render(module:Object, options:{
                     if (options.minify)
                         result = minifyHTML(result, options.minify)
                     */
-                    results.push(result)
                     console.info(`Write file "${filePath}".`)
                     fileSystem.writeFile(filePath, result, ((
                         error:?Error
                     ):void => error ? reject(error) : resolve(result)))
-                }))
+                })))
             } catch (error) {
                 reject(error)
                 return
