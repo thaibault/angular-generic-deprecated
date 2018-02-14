@@ -4314,6 +4314,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
  * @property _data - Data service instance.
  * @property _extendObject - Extend object pipe's transformation method.
  * @property _liveUpdateOptions - Options for database observation.
+ * @property _platformID - Platform identification string.
  * @property _stringCapitalize - String capitalize pipe transformation
  * function.
  * @property _tools - Holds the tools class from the tools service.
@@ -4337,6 +4338,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
     _data:DataService
     _extendObject:Function
     _liveUpdateOptions:PlainObject = {}
+    _platformID:string
     _stringCapitalize:Function
     _tools:typeof Tools
     /**
@@ -4351,6 +4353,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
         this._data = get(DataService)
         this._extendObject = get(ExtendObjectPipe).transform.bind(get(
             ExtendObjectPipe))
+        this._platformID = get(PLATFORM_ID)
         this._stringCapitalize = get(StringCapitalizePipe).transform.bind(get(
             StringCapitalizePipe))
         this._tools = get(UtilityService).fixed.tools
@@ -4360,6 +4363,8 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
      * @returns Nothing.
      */
     ngOnInit():void {
+        if (isPlatformServer(this._platformID))
+            return
         const initialize:Function = this._tools.debounce(():void => {
             if (this._changesStream)
                 this._changesStream.cancel()
