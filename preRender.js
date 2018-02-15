@@ -133,9 +133,10 @@ export function render(module:Object, options:{
                 plugins: [PouchDBAdapterMemory]
             }
         }}},
-        targetDirectoryPath: path.resolve(
-            path.dirname(process.argv[1]), 'preRendered')
+        targetDirectoryPath: 'preRendered'
     }, options || {})
+    options.targetDirectoryPath = path.resolve(
+        path.dirname(process.argv[1]), options.targetDirectoryPath)
     options.globalVariableNamesToInject = [].concat(
         options.globalVariableNamesToInject)
     options.routes = [].concat(options.routes)
