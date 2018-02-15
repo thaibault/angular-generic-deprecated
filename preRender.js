@@ -104,6 +104,7 @@ export function determinePaths(
  */
 export function render(module:Object, options:{
     applicationDomNodeSelector?:string;
+    basePath:string|null;
     component:Object|null;
     encoding:string;
     globalVariableNamesToInject:string|Array<string>;
@@ -114,9 +115,10 @@ export function render(module:Object, options:{
     scope:Object;
     targetDirectoryPath:string;
 }):Promise<Array<string>> {
-    // region determine options
+    // region determine  options
     options = Tools.extendObject(true, {
         applicationDomNodeSelector,
+        basePath: null,
         component: null,
         encoding: 'utf-8',
         globalVariableNamesToInject: globalVariableNameToRetrieveDataFrom,
@@ -164,7 +166,7 @@ export function render(module:Object, options:{
         if (renderScope.applicationDomNode)
             renderScope.innerHTMLToReInject =
                 renderScope.applicationDomNode.innerHTML
-        renderScope.basePath =
+        renderScope.basePath = options.basePath ? options.basePath :
             // IgnoreTypeCheck
             renderScope.window.document.getElementsByTagName('base')[0].href
         for (const name:string in renderScope.window)
