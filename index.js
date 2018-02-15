@@ -61,7 +61,7 @@ import {
     ViewChild,
     ViewContainerRef
 } from '@angular/core'
-import {DatePipe, isPlatformServer} from '@angular/common'
+import {DatePipe, isPlatformBrowser, isPlatformServer} from '@angular/common'
 import {
     HttpInterceptor, HTTP_INTERCEPTORS, HttpRequest, HttpHandler, HttpEvent
 } from '@angular/common/http'
