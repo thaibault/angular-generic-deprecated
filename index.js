@@ -4945,6 +4945,7 @@ export class DateDirective {
  * @property extendObject - Extend object's pipe transform method.
  * @property index - Index of currently selected content.
  * @property options - Sliding options.
+ * @property platformID - Platform identification string.
  * @property templateReference - Content element template to slide.
  * @property timerID - Timer id of next content switch.
  * @property viewContainerReference - View container reference to inject
@@ -4966,22 +4967,26 @@ export class SliderDirective implements OnInit {
         slides: [],
         updateIntervalInMilliseconds: 6000
     }
+    platformID:string
     templateReference:TemplateRef<any>
     timerID:any
     viewContainerReference:ViewContainerRef
     /**
      * Saves injected services as instance properties.
      * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param platformID - Platform identification string.
      * @param templateReference - Specified template reference.
      * @param viewContainerReference - Injected view container reference.
      * @returns Nothing.
      */
     constructor(
         extendObjectPipe:ExtendObjectPipe,
+        @Inject(PLATFORM_ID) platformID:string,
         templateReference:TemplateRef<any>,
         viewContainerReference:ViewContainerRef
     ) {
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.platformID = platformID
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
     }
@@ -5037,21 +5042,22 @@ export class SliderDirective implements OnInit {
      * @returns Nothing.
      */
     ngOnInit():void {
-        this.timerID = setInterval(():void => {
-            const newIndex:number = (this.index + this.options.step) %
-                this.options.slides.length
-            if (
-                this.options.freeze !== true &&
-                newIndex !== this.index && !(
-                    typeof this.options.freeze === 'number' &&
-                    this.options.freeze >= this.options.slides.length
-                )
-            ) {
-                this.viewContainerReference.remove()
-                this.index = this.getNextIndex()
-                this.update()
-            }
-        }, this.options.updateIntervalInMilliseconds)
+        if (isPlatformBrowser(this.platformID))
+            this.timerID = setInterval(():void => {
+                const newIndex:number = (this.index + this.options.step) %
+                    this.options.slides.length
+                if (
+                    this.options.freeze !== true &&
+                    newIndex !== this.index && !(
+                        typeof this.options.freeze === 'number' &&
+                        this.options.freeze >= this.options.slides.length
+                    )
+                ) {
+                    this.viewContainerReference.remove()
+                    this.index = this.getNextIndex()
+                    this.update()
+                }
+            }, this.options.updateIntervalInMilliseconds)
         this.index = this.options.startIndex
         this.update()
     }
