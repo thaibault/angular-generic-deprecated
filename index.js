@@ -4827,6 +4827,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
  * @property dateFormatter - Angular's date pipe transformation method.
  * @property extendObject - Extend object pipe's transform method.
  * @property options - Given formatting and update options.
+ * @property platformID - Platform identification string.
  * @property templateReference - Reference to given template.
  * @property timerID - Interval id to cancel it on destroy life cycle hook.
  * @property viewContainerReference - View container reference to embed
@@ -4846,6 +4847,7 @@ export class DateDirective {
         freeze: false,
         updateIntervalInMilliseconds: 1000
     }
+    platformID:string
     templateReference:TemplateRef<any>
     timerID:any
     viewContainerReference:ViewContainerRef
@@ -4853,6 +4855,7 @@ export class DateDirective {
      * Saves injected services as instance properties.
      * @param datePipe - Injected date pipe service instance.
      * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param platformID - Platform specific identifier.
      * @param templateReference - Specified template reference.
      * @param viewContainerReference - Injected view container reference.
      * @returns Nothing.
@@ -4860,11 +4863,13 @@ export class DateDirective {
     constructor(
         datePipe:DatePipe,
         extendObjectPipe:ExtendObjectPipe,
+        @Inject(PLATFORM_ID) platformID:string,
         templateReference:TemplateRef<any>,
         viewContainerReference:ViewContainerRef
     ) {
         this.dateFormatter = datePipe.transform.bind(datePipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.platformID = platformID
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
     }
@@ -4922,13 +4927,15 @@ export class DateDirective {
      * @returns Nothing.
      */
     ngOnInit():void {
-        this.timerID = setInterval(():void => {
-            if (!this.options.freeze) {
-                this.viewContainerReference.remove()
-                this.insert()
-            }
-        }, this.options.updateIntervalInMilliseconds)
-        this.insert()
+        if (isPlatformBrowser(this.platformID)) {
+            this.timerID = setInterval(():void => {
+                if (!this.options.freeze) {
+                    this.viewContainerReference.remove()
+                    this.insert()
+                }
+            }, this.options.updateIntervalInMilliseconds)
+            this.insert()
+        }
     }
 }
 // IgnoreTypeCheck
