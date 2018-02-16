@@ -4927,15 +4927,14 @@ export class DateDirective {
      * @returns Nothing.
      */
     ngOnInit():void {
-        if (isPlatformBrowser(this.platformID)) {
+        if (isPlatformBrowser(this.platformID))
             this.timerID = setInterval(():void => {
                 if (!this.options.freeze) {
                     this.viewContainerReference.remove()
                     this.insert()
                 }
             }, this.options.updateIntervalInMilliseconds)
-            this.insert()
-        }
+        this.insert()
     }
 }
 // IgnoreTypeCheck
