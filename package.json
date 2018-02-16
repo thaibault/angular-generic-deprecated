@@ -63,7 +63,7 @@
   },
   "dependencies": {
     "blob-util": "^1.3.0",
-    "clientnode": "^1.0.335",
+    "clientnode": "^1.0.336",
     "filereader": "^0.10.3",
     "hammerjs": "^2.0.8",
     "html-minifier": "^3.5.9",
@@ -120,7 +120,7 @@
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.44.0",
     "eslint-plugin-jsdoc": "^3.4.0",
-    "flow-bin": "^0.65.0",
+    "flow-bin": "^0.66.0",
     "jsdoc": "^3.5.4",
     "nyc": "^11.5.0",
     "qunit": "^2.5.0",
@@ -129,7 +129,7 @@
     "source-map-support": "^0.5.3",
     "tinymce": "^4.7.6",
     "typescript": "^2.7.2",
-    "weboptimizer": "^1.0.503",
+    "weboptimizer": "^1.0.505",
     "webpack": "^3.11.0",
     "webpack-dev-server": "^2.11.1",
     "zone.js": "^0.8.20"

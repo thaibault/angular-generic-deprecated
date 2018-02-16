@@ -20,7 +20,7 @@ import {
 } from '@angular/platform-server'
 import {Routes} from '@angular/router'
 import fileSystem from 'fs'
-// TODO import {minifyHTML} from 'html-minifier'
+import {minify as minifyHTML} from 'html-minifier'
 import {JSDOM as DOM, VirtualConsole} from 'jsdom'
 import makeDirectoryPath from 'mkdirp'
 import path from 'path'
@@ -187,7 +187,7 @@ export function render(module:Object, options:{
             renderScope.window.Object.prototype)
         Tools.extendObject(true, globalContext, options.scope)
         // endregion
-        // region determine pre-renderable paths
+        // region determi ne pre-renderable paths
         const links:Array<string> = []
         let urls:Array<string>
         if (options.routes.length) {
@@ -366,10 +366,25 @@ export function render(module:Object, options:{
                                         endTag)
                     }
                     // endregion
-                    /* TODO
-                    if (options.minify)
-                        result = minifyHTML(result, options.minify)
-                    */
+                    /* TODO if (options.minify)
+                        result = minifyHTML(result, options.minify)*/
+                    let stats:any = null
+                    try {
+                        stats = await new Promise((
+                            resolve:Function, reject:Function
+                        ):void => fileSystem.lstat(filePath, (
+                            error:any, stats:any
+                        ):void => error ? reject(error) : resolve(stats)))
+                    } catch (error) {
+                        if (error.code !== 'ENOENT')
+                            throw error
+                    }
+                    if (stats && (stats.isSymbolicLink() || stats.isFile()))
+                        await new Promise((
+                            resolve:Function, reject:Function
+                        ):void => removeDirectoryRecursively(filePath, (
+                            error:?Error
+                        ):void => error ? reject(error) : resolve()))
                     console.info(`Write file "${filePath}".`)
                     fileSystem.writeFile(filePath, result, ((
                         error:?Error
