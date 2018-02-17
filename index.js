@@ -3138,9 +3138,9 @@ export class DataService {
             parseInt(result[revisionName].match(
                 DataService.revisionNumberRegularExpression
             )[1]) < parseInt(
-                    LAST_KNOWN_DATA.data[result[idName]][revisionName].match(
-                        DataService.revisionNumberRegularExpression
-                    )[1])
+                LAST_KNOWN_DATA.data[result[idName]][revisionName].match(
+                    DataService.revisionNumberRegularExpression
+                )[1])
         )
             return LAST_KNOWN_DATA.data[result[idName]]
         return result

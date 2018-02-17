@@ -366,8 +366,8 @@ export function render(module:Object, options:{
                                         endTag)
                     }
                     // endregion
-                    /* TODO if (options.minify)
-                        result = minifyHTML(result, options.minify)*/
+                    if (options.minify)
+                        result = minifyHTML(result, options.minify)
                     let stats:any = null
                     try {
                         stats = await new Promise((
