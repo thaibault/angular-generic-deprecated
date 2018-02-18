@@ -20,7 +20,7 @@ import {
 } from '@angular/platform-server'
 import {Routes} from '@angular/router'
 import fileSystem from 'fs'
-import {minify as minifyHTML} from 'html-minifier'
+// TODO import {minify as minifyHTML} from 'html-minifier'
 import {JSDOM as DOM, VirtualConsole} from 'jsdom'
 import makeDirectoryPath from 'mkdirp'
 import path from 'path'
@@ -366,8 +366,8 @@ export function render(module:Object, options:{
                                         endTag)
                     }
                     // endregion
-                    if (options.minify)
-                        result = minifyHTML(result, options.minify)
+                    /* TODO if (options.minify)
+                        result = minifyHTML(result, options.minify)*/
                     let stats:any = null
                     try {
                         stats = await new Promise((
