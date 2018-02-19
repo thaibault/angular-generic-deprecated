@@ -219,7 +219,7 @@ export function render(module:Object, options:{
             renderScope.window.Object.prototype)
         Tools.extendObject(true, globalContext, options.scope)
         // endregion
-        // region determi ne pre-renderable paths
+        // region determine pre-renderable paths
         const links:Array<string> = []
         let urls:Array<string>
         if (options.routes.length) {
