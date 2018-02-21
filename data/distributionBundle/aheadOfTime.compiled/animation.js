@@ -3,27 +3,11 @@
 // -*- coding: utf-8 -*-
 /** @module angularGeneric */
 'use strict';
-/* !
-    region header
-    [Project page](http://torben.website/angularGeneric)
-
-    Copyright Torben Sickert (info["~at~"]torben.website) 16.12.2012
-
-    License
-    -------
-
-    This library written by torben sickert stand under a creative commons
-    naming 3.0 unported license.
-    see http://creativecommons.org/licenses/by/3.0/deed.de
-    endregion
-*/
-// region imports
-// IgnoreTypeCheck
 import Tools from 'clientnode';
 import { animate, style, transition, trigger } from '@angular/animations';
 // NOTE: Only needed for debugging this file.
 try {
-    module.require('source-map-support/register');
+    require('source-map-support/register');
 }
 catch (error) { }
 // endregion

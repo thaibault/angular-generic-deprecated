@@ -2,7 +2,7 @@
     "angularCompilerOptions": {
         "genDir": "../../aheadOfTime.compiled",
         "skipMetadataEmit" : false,
-        "skipTemplateCodegen": true,
+        "skipTemplateCodegen": false,
         "strictMetadataEmit": true
     },
     "compilerOptions": {
@@ -45,7 +45,8 @@
         "skipLibCheck": true,
         "strictNullChecks": false,
         "suppressImplicitAnyIndexErrors": false,
-        "target": "esnext"
+        "target": "es2016",
+        "types": ["node"]
     },
     "files": ["../../index.ts"]
 }

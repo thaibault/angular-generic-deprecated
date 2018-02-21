@@ -117,10 +117,13 @@ export function registerAngularTest(
         require('hammerjs')
         const {Component, enableProdMode} = require('@angular/core')
         const {TestBed} = require('@angular/core/testing')
+        /* eslint-disable require-jsdoc */
+        // IgnoreTypeCheck
+        @Component({selector: '#qunit-fixture', template})
+        /* eslint-enable require-jsdoc */
         /**
          * Dummy application root component to test bootstrapping.
          */
-        @Component({selector: '#qunit-fixture', template})
         class ApplicationComponent {}
         // endregion
         // region test services

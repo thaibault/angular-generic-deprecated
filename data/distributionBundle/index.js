@@ -18,6 +18,7 @@
     endregion
 */
 // region imports
+import {blobToBase64String} from 'blob-util'
 import Tools, {
     $, $DomNode, DomNode, globalContext, PlainObject
 } from 'clientnode'
@@ -41,6 +42,7 @@ import {
     Injector,
     Input,
     NgModule,
+    NgZone,
     OnChanges,
     OnDestroy,
     OnInit,
@@ -59,26 +61,34 @@ import {
     ViewChild,
     ViewContainerRef
 } from '@angular/core'
-import {DatePipe, isPlatformServer} from '@angular/common'
+import {DatePipe, isPlatformBrowser, isPlatformServer} from '@angular/common'
+import {
+    HttpInterceptor, HTTP_INTERCEPTORS, HttpRequest, HttpHandler, HttpEvent
+} from '@angular/common/http'
 import {
     DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
+/*
+    NOTE: We should not import directly from "@angular/material" to improve
+    tree shaking results.
+*/
+import {MatButtonModule} from '@angular/material/button'
+import {MatCardModule} from '@angular/material/card'
 import {
-    // IgnoreTypeCheck
-    MatButtonModule,
-    MatCardModule,
     /* eslint-disable no-unused-vars */
     MAT_DIALOG_DATA,
     /* eslint-enable no-unused-vars */
     MatDialog,
-    MatDialogRef,
+    MatDialogConfig,
     MatDialogModule,
-    MatInputModule,
-    MatSelectModule,
-    MatSnackBar,
-    MatSnackBarConfig,
-    MatTooltipModule
-} from '@angular/material'
+    MatDialogRef
+} from '@angular/material/dialog'
+import {MatInputModule} from '@angular/material/input'
+import {MatSelectModule} from '@angular/material/select'
+import {
+    MatSnackBar, MatSnackBarConfig, MatSnackBarModule
+} from '@angular/material/snack-bar'
+import {MatTooltipModule} from '@angular/material/tooltip'
 import {
     BrowserModule,
     DomSanitizer,
@@ -100,12 +110,14 @@ import {
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
-import {Subject} from 'rxjs'
+import {Subject} from 'rxjs/Subject'
 import {Observable} from 'rxjs/Observable'
 import {ISubscription} from 'rxjs/Subscription'
-// NOTE: Only needed for debugging this file.
+import 'rxjs/add/operator/do'
+import 'rxjs/add/operator/debounceTime'
+import 'rxjs/add/operator/distinctUntilChanged'
 try {
-    module.require('source-map-support/register')
+    require('source-map-support/register')
 } catch (error) {}
 
 /*
@@ -221,6 +233,10 @@ export type Stream = {
 if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
     /* eslint-disable no-var */
     var CHANGE_DETECTION_STRATEGY_NAME:string = 'default'
+    /* eslint-enable no-var */
+if (typeof require === 'undefined')
+    /* eslint-disable no-var */
+    var require:Function = Tools.noop
     /* eslint-enable no-var */
 if (typeof UTC_BUILD_TIMESTAMP === 'undefined')
     /* eslint-disable no-var */
@@ -1042,16 +1058,19 @@ export class NumberRoundPipe extends AbstractToolsPipe
  * @property specialNames - A mapping to database specific special property
  * names.
  * @property stringMD5 - String md5 pipe's instance transform method.
+ * @property zone - Zone service instance.
  */
 export class AttachmentsAreEqualPipe implements PipeTransform {
     data:DataService
     representObject:Function
     specialNames:PlainObject
     stringMD5:Function
+    zone:NgZone
     /**
      * Gets needed services injected.
      * @param initialData - Injected initial data service instance.
      * @param injector - Application specific injector instance.
+     * @param ngZone - Injected zone service instance.
      * @param representObjectPipe - Represent object pipe instance.
      * @param stringMD5Pipe - Injected string md5 pipe instance.
      * @returns Nothing.
@@ -1059,6 +1078,7 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
     constructor(
         initialData:InitialDataService,
         injector:Injector,
+        ngZone:NgZone,
         representObjectPipe:RepresentObjectPipe,
         stringMD5Pipe:StringMD5Pipe
     ) {
@@ -1068,6 +1088,7 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
         this.specialNames =
             initialData.configuration.database.model.property.name.special
         this.stringMD5 = stringMD5Pipe.transform.bind(stringMD5Pipe)
+        this.zone = ngZone
     }
     /**
      * Performs the actual transformations process.
@@ -1131,31 +1152,38 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
                 const name:string = 'genericTemp'
                 const databaseConnection:PouchDB = new this.data.database(name)
                 try {
-                    await databaseConnection.put({
-                        [this.specialNames.id]: name,
-                        [this.specialNames.attachment]: {
-                            [name]: {
-                                data: data[type].data,
-                                /* eslint-disable camelcase */
-                                content_type: 'application/octet-stream'
-                                /* eslint-enable camelcase */
-                            }
+                    await this.zone.run(async ():Promise<void> => {
+                        try {
+                            await databaseConnection.put({
+                                [this.specialNames.id]: name,
+                                [this.specialNames.attachment]: {
+                                    [name]: {
+                                        data: data[type].data,
+                                        /* eslint-disable camelcase */
+                                        content_type:
+                                            'application/octet-stream'
+                                        /* eslint-enable camelcase */
+                                    }
+                                }
+                            })
+                            data[type].hash = (
+                                await databaseConnection.get(name)
+                            )[this.specialNames.attachment][name].digest
+                        } catch (error) {
+                            let message:string = 'unknown'
+                            try {
+                                message = this.representObject(error)
+                            } catch (error) {}
+                            console.warn(
+                                'Given attachments for equality check are ' +
+                                `not valid: ${message}`)
+                            throw error
+                        } finally {
+                            await databaseConnection.destroy()
                         }
                     })
-                    data[type].hash = (await databaseConnection.get(
-                        name
-                    ))[this.specialNames.attachment][name].digest
                 } catch (error) {
-                    let message:string = 'unknown'
-                    try {
-                        message = this.representObject(error)
-                    } catch (error) {}
-                    console.warn(
-                        'Given attachments for equality check are not ' +
-                        `valid: ${message}`)
                     return false
-                } finally {
-                    await databaseConnection.destroy()
                 }
             }
         return data.first.hash === data.second.hash
@@ -1535,11 +1563,9 @@ export class ExtractRawDataPipe implements PipeTransform {
                                                 Existing attachment has been
                                                 renamed.
                                             */
-                                            result[fileName] = this.tools
-                                                .copyLimitedRecursively(
-                                                    oldAttachments[
-                                                        firstOldAttachmentName]
-                                                )
+                                            result[fileName] = this.tools.copy(
+                                                oldAttachments[
+                                                    firstOldAttachmentName])
                                             result[fileName].name = fileName
                                         }
                                     }
@@ -1558,10 +1584,8 @@ export class ExtractRawDataPipe implements PipeTransform {
                                     // Existing attachment has been renamed.
                                     const firstOldAttachmentName:string =
                                         Object.keys(oldAttachments)[0]
-                                    result[fileName] =
-                                        this.tools.copyLimitedRecursively(
-                                            oldAttachments[
-                                                firstOldAttachmentName])
+                                    result[fileName] = this.tools.copy(
+                                        oldAttachments[firstOldAttachmentName])
                                     result[fileName].name = fileName
                                     delete oldAttachments[
                                         firstOldAttachmentName]
@@ -1693,8 +1717,8 @@ export class ExtractRawDataPipe implements PipeTransform {
                                 data[name] !== null
                             ) {
                                 result[name] = {}
-                                for (const fileName in data[name]) {
-                                    if (data[name].hasOwnProperty(fileName))
+                                for (const fileName in data[name])
+                                    if (data[name].hasOwnProperty(fileName)) {
                                         result[name][fileName] = {
                                             /* eslint-disable camelcase */
                                             content_type:
@@ -1703,19 +1727,23 @@ export class ExtractRawDataPipe implements PipeTransform {
                                                 'application/octet-stream'
                                             /* eslint-enable camelcase */
                                         }
-                                    if (data[name][fileName].hasOwnProperty(
-                                        'data'
-                                    ))
-                                        result[name][fileName].data =
-                                            data[name][fileName].data
-                                    else
-                                        for (const type of ['digest', 'stub'])
-                                            if (data[name][
-                                                fileName
-                                            ].hasOwnProperty(type))
-                                                result[name][fileName][type] =
-                                                    data[name][fileName][type]
-                                }
+                                        if (data[name][
+                                            fileName
+                                        ].hasOwnProperty('data'))
+                                            result[name][fileName].data =
+                                                data[name][fileName].data
+                                        else
+                                            for (const type of [
+                                                'digest', 'stub'
+                                            ])
+                                                if (data[name][
+                                                    fileName
+                                                ].hasOwnProperty(type))
+                                                    result[name][fileName][
+                                                        type
+                                                    ] = data[name][fileName][
+                                                        type]
+                                    }
                             }
                         } else if (
                             ![
@@ -2430,17 +2458,21 @@ export class ConfirmComponent {
  * Alert service to trigger a dialog window which can be confirmed.
  * @property dialog - Reference to the dialog component instance.
  * @property dialogReference - Reference to the dialog service instance.
+ * @property zone - Zone service instance.
  */
 export class AlertService {
     dialog:MatDialog
     dialogReference:MatDialogRef<ConfirmComponent>
+    zone:NgZone
     /**
      * Gets needed component dialog service instance injected.
      * @param dialog - Reference to the dialog component instance.
+     * @param ngZone - Injected zone service instance.
      * @returns Nothing.
      */
-    constructor(dialog:MatDialog) {
+    constructor(dialog:MatDialog, ngZone:NgZone) {
         this.dialog = dialog
+        this.zone = ngZone
     }
     /**
      * Triggers a confirmation dialog to show.
@@ -2450,14 +2482,18 @@ export class AlertService {
      * which decision was made.
      */
     confirm(data:string|{[key:string]:any}):Promise<boolean> {
+        let configuration:MatDialogConfig<any>
         if (typeof data === 'string')
-            data = {data: {message: data}}
+            configuration = {data: {message: data}}
         else if (
             typeof data !== 'object' || data === null || !data.hasOwnProperty(
                 'data')
         )
-            data = {data}
-        this.dialogReference = this.dialog.open(ConfirmComponent, data)
+            configuration = {data}
+        else
+            configuration = data
+        this.dialogReference = this.dialog.open(
+            ConfirmComponent, configuration)
         return this.dialogReference.afterClosed().toPromise()
     }
 }
@@ -2477,9 +2513,12 @@ export class AlertService {
  *
  * @property connection - The current database connection instance.
  * @property database - The entire database constructor.
+ * @property errorCallbacks - Holds all registered error callbacks.
  * @property equals - Hilds the equals pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
+ * @property initialized - Event emitter triggering when database
+ * initialization has finished.
  * @property middlewares - Mapping of post and pre callback arrays to trigger
  * before or after each database transaction.
  * @property platformID - Platform identification string.
@@ -2490,6 +2529,7 @@ export class AlertService {
  * @property synchronisation - This synchronisation instance represents the
  * active synchronisation process if a local offline database is in use.
  * @property tools - Holds the tools class from the tools service.
+ * @property zone - Zone service instance.
  */
 export class DataService {
     // NOTE: Native regular expression definition is not allowed here.
@@ -2513,8 +2553,10 @@ export class DataService {
     connection:PouchDB
     configuration:PlainObject
     database:typeof PouchDB
+    errorCallbacks:Array<Function> = []
     equals:Function
     extendObject:Function
+    initialized:EventEmitter<PouchDB> = new EventEmitter()
     middlewares:{
         pre:{[key:string]:Array<Function>};
         post:{[key:string]:Array<Function>};
@@ -2529,12 +2571,14 @@ export class DataService {
     stringFormat:Function
     synchronisation:Stream|null = null
     tools:Tools
+    zone:NgZone
     /**
      * Creates the database constructor applies all plugins instantiates
      * the connection instance and registers all middlewares.
      * @param equalsPipe - Equals pipe service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
+     * @param ngZone - Injected zone service instance.
      * @param platformID - Platform identification string.
      * @param stringFormatPipe - Injected string format pipe instance.
      * @param utility - Injected utility service instance.
@@ -2544,6 +2588,7 @@ export class DataService {
         equalsPipe:EqualsPipe,
         extendObjectPipe:ExtendObjectPipe,
         initialData:InitialDataService,
+        ngZone:NgZone,
         @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe,
         utility:UtilityService
@@ -2555,6 +2600,7 @@ export class DataService {
         this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.tools = utility.fixed.tools
+        this.zone = ngZone
         const nativeBulkDocs:Function = this.database.prototype.bulkDocs
         const self:DataService = this
         this.database.plugin({bulkDocs: async function(
@@ -2580,8 +2626,14 @@ export class DataService {
                 NOTE: "bulkDocs()" does not get constructor given options
                 if none were provided for a single function call.
             */
-            if (parameter.length && typeof parameter[0] !== 'object')
-                parameter.unshift(this.configuration.database.connector)
+            if (
+                self.configuration.database.connector.ajax &&
+                self.configuration.database.connector.ajax.timeout && (
+                    parameter.length === 0 ||
+                    typeof parameter[0] !== 'object')
+            )
+                parameter.unshift({timeout:
+                    self.configuration.database.connector.ajax.timeout})
             let result:Array<PlainObject> = []
             try {
                 result = await nativeBulkDocs.call(
@@ -2604,12 +2656,8 @@ export class DataService {
                                 else
                                     throw error
                             }
-                    try {
-                        result = await nativeBulkDocs.call(
-                            this, firstParameter, ...parameter)
-                    } catch (error) {
-                        throw error
-                    }
+                    result = await nativeBulkDocs.call(
+                        this, firstParameter, ...parameter)
                 } else
                     throw error
             }
@@ -2665,6 +2713,16 @@ export class DataService {
             return result
         }})
         this.database.plugin(PouchDBFindPlugin).plugin(PouchDBValidationPlugin)
+    }
+    /**
+     * Adds an error callback to be triggered on database errors.
+     * @param callback - Function to call on errors.
+     * @returns A boolean indicating if given callback was already attached.
+     */
+    addErrorCallback(callback:Function):boolean {
+        const result:boolean = this.removeErrorCallback(callback)
+        this.errorCallbacks.push(callback)
+        return result
     }
     /**
      * Determines all property names which are indexable in a generic manner.
@@ -2742,6 +2800,57 @@ export class DataService {
             this.connection = new this.database(databaseName, options)
         else
             this.connection = this.remoteConnection
+        this.connection.installValidationMethods()
+        // region observe database changes stream error
+        const nativeChangesMethod:Function = this.connection.changes
+        this.connection.changes = (...parameter:Array<any>):any => {
+            /*
+                NOTE: We log a changes stream as running request if its is
+                expected to finish at last after expected data is given.
+            */
+            let track:boolean = false
+            if (
+                parameter.length &&
+                typeof parameter[0] === 'object' &&
+                parameter[0] !== null && (
+                    !parameter[0].live ||
+                    typeof parameter[0].since === 'number' &&
+                    parameter[0].since < 2
+                )
+            )
+                track = true
+            const changesStream:Stream = nativeChangesMethod.apply(
+                this.connection, parameter)
+            const clear:Function = track ? ():void => {
+                if (!track)
+                    return
+                track = false
+                const index:number = this.runningRequests.indexOf(
+                    changesStream)
+                if (index !== -1) {
+                    this.runningRequests.splice(index, 1)
+                    this.runningRequestsStream.next(this.runningRequests)
+                }
+            } : this.tools.noop
+            if (track) {
+                this.runningRequests.push(changesStream)
+                this.runningRequestsStream.next(this.runningRequests)
+                changesStream.on('change', clear)
+                changesStream.on('complete', clear)
+            }
+            changesStream.on('error', (
+                ...parameter:Array<any>
+            ):Promise<any> => {
+                clear()
+                // NOTE: Spread parameter does not satisfy typescript.
+                /* eslint-disable prefer-spread */
+                return this.triggerErrorCallbacks.apply(this, parameter.concat(
+                    changesStream))
+                /* eslint-disable prefer-spread */
+            })
+            return changesStream
+        }
+        // endregion
         // region apply "latest/upsert" and ignore "NoChange" error feature
         /*
             NOTE: A "bulkDocs" plugin does not get called for every "put" and
@@ -2797,84 +2906,6 @@ export class DataService {
             }
         }
         // endregion
-        // region register interceptor
-        for (const name in this.connection)
-            if (
-                DataService.wrappableMethodNames.includes(name) &&
-                typeof this.connection[name] === 'function'
-            ) {
-                const method:Function = this.connection[name]
-                this.connection[name] = async (
-                    ...parameter:Array<any>
-                ):Promise<any> => {
-                    const request:{
-                        name:string;
-                        parameter:Array<any>;
-                        wrappedParameter?:Array<any>;
-                    } = {name, parameter}
-                    this.runningRequests.push(request)
-                    this.runningRequestsStream.next(this.runningRequests)
-                    const clear:Function = ():void => {
-                        const index:number = this.runningRequests.indexOf(
-                            request)
-                        if (index !== -1)
-                            this.runningRequests.splice(index, 1)
-                        this.runningRequestsStream.next(this.runningRequests)
-                    }
-                    for (const methodName of [name, '_all'])
-                        if (this.middlewares.pre.hasOwnProperty(methodName))
-                            for (
-                                const interceptor of
-                                this.middlewares.pre[methodName]
-                            ) {
-                                parameter = interceptor.apply(
-                                    this.connection, parameter.concat(
-                                        methodName === '_all' ? name : []))
-                                if ('then' in parameter)
-                                    try {
-                                        parameter = await parameter
-                                    } catch (error) {
-                                        clear()
-                                        throw error
-                                    }
-                            }
-                    request.wrappedParameter = parameter
-                    const action:Function = (
-                        context:any=this.connection,
-                        givenParameter:Array<any>=parameter
-                    ):any => method.apply(context, givenParameter)
-                    let result:any = action()
-                    for (const methodName of [name, '_all'])
-                        if (this.middlewares.post.hasOwnProperty(methodName))
-                            for (
-                                const interceptor of
-                                this.middlewares.post[methodName]
-                            ) {
-                                result = interceptor.call(
-                                    this.connection, result, action,
-                                    ...parameter.concat(
-                                        methodName === '_all' ? name : []))
-                                if ('then' in result)
-                                    try {
-                                        result = await result
-                                    } catch (error) {
-                                        clear()
-                                        throw error
-                                    }
-                            }
-                    if ('then' in result)
-                        try {
-                            result = await result
-                        } catch (error) {
-                            clear()
-                            throw error
-                        }
-                    clear()
-                    return result
-                }
-            }
-        this.connection.installValidationMethods()
-        // endregion
         if (!(
             DataService.skipGenericIndexManagementOnServer &&
             isPlatformServer(this.platformID)
@@ -2899,25 +2930,17 @@ export class DataService {
                             this.configuration.database.model.entities[
                                 modelName])
                     )
-                        try {
-                            await this.connection.createIndex({index: {
-                                ddoc: `${modelName}-${name}-GenericIndex`,
-                                fields: [
-                                    this.configuration.database.model
-                                        .property.name.special.type,
-                                    name
-                                ],
-                                name: `${modelName}-${name}-GenericIndex`
-                            }})
-                        } catch (error) {
-                            throw error
-                        }
+                        await this.connection.createIndex({index: {
+                            ddoc: `${modelName}-${name}-GenericIndex`,
+                            fields: [
+                                this.configuration.database.model
+                                    .property.name.special.type,
+                                name
+                            ],
+                            name: `${modelName}-${name}-GenericIndex`
+                        }})
             let indexes:Array<PlainObject>
-            try {
-                indexes = (await this.connection.getIndexes()).indexes
-            } catch (error) {
-                throw error
-            }
+            indexes = (await this.connection.getIndexes()).indexes
             for (const index of indexes)
                 if (index.name.endsWith('-GenericIndex')) {
                     let exists:boolean = false
@@ -2939,14 +2962,114 @@ export class DataService {
                             break
                         }
                     if (!exists)
-                        try {
-                            await this.connection.deleteIndex(index)
-                        } catch (error) {
-                            throw error
-                        }
+                        await this.connection.deleteIndex(index)
                 }
             // endregion
         }
+        // region register interceptor and apply zones to database interactions
+        for (const name of DataService.wrappableMethodNames)
+            for (const connection of [this.connection].concat(
+                !this.remoteConnection ||
+                this.connection === this.remoteConnection ?
+                    [] :
+                    this.remoteConnection
+            ))
+                if (typeof connection[name] === 'function') {
+                    const method:Function = connection[name]
+                    connection[name] = (
+                        ...parameter:Array<any>
+                    ):Promise<any> => this.zone.run(async ():Promise<any> => {
+                        const request:{
+                            name:string;
+                            parameter:Array<any>;
+                            wrappedParameter?:Array<any>;
+                        } = {name, parameter, wrappedParameter: parameter}
+                        this.runningRequests.push(request)
+                        this.runningRequestsStream.next(this.runningRequests)
+                        const clear:Function = ():void => {
+                            const index:number = this.runningRequests.indexOf(
+                                request)
+                            if (index !== -1) {
+                                this.runningRequests.splice(index, 1)
+                                this.runningRequestsStream.next(
+                                    this.runningRequests)
+                            }
+                        }
+                        for (const methodName of [name, '_all'])
+                            if (this.middlewares.pre.hasOwnProperty(
+                                methodName
+                            ))
+                                for (
+                                    const interceptor of
+                                    this.middlewares.pre[methodName]
+                                ) {
+                                    let wrappedParameter:any =
+                                        interceptor.apply(
+                                            connection,
+                                            request.wrappedParameter.concat(
+                                                methodName === '_all' ?
+                                                    name :
+                                                    []))
+                                    if (wrappedParameter) {
+                                        if ('then' in wrappedParameter)
+                                            try {
+                                                wrappedParameter =
+                                                    await wrappedParameter
+                                            } catch (error) {
+                                                clear()
+                                                throw error
+                                            }
+                                        if (Array.isArray(wrappedParameter))
+                                            request.wrappedParameter =
+                                                wrappedParameter
+                                    }
+                                }
+                        const action:Function = (
+                            context:any=connection,
+                            givenParameter:Array<any>=request.wrappedParameter
+                        ):any => method.apply(context, givenParameter)
+                        let result:any
+                        try {
+                            result = action()
+                        } catch (error) {
+                            await this.triggerErrorCallbacks(
+                                error, result, action)
+                        }
+                        for (const methodName of [name, '_all'])
+                            if (this.middlewares.post.hasOwnProperty(
+                                methodName
+                            ))
+                                for (
+                                    const interceptor of
+                                    this.middlewares.post[methodName]
+                                ) {
+                                    result = interceptor.call(
+                                        connection, result, action,
+                                        ...request.wrappedParameter.concat(
+                                            methodName === '_all' ? name : []))
+                                    if ('then' in result)
+                                        try {
+                                            result = await result
+                                        } catch (error) {
+                                            clear()
+                                            await this.triggerErrorCallbacks(
+                                                error, result, action)
+                                        }
+                                }
+                        if ('then' in result)
+                            try {
+                                result = await result
+                            } catch (error) {
+                                clear()
+                                await this.triggerErrorCallbacks(
+                                    error, result, action)
+                            }
+                        clear()
+                        return result
+                    })
+                }
+        // endregion
+        this.initialized.emit(this.connection)
     }
     /**
      * Creates a database index.
@@ -3015,9 +3138,9 @@ export class DataService {
             parseInt(result[revisionName].match(
                 DataService.revisionNumberRegularExpression
             )[1]) < parseInt(
-                    LAST_KNOWN_DATA.data[result[idName]][revisionName].match(
-                        DataService.revisionNumberRegularExpression
-                    )[1])
+                LAST_KNOWN_DATA.data[result[idName]][revisionName].match(
+                    DataService.revisionNumberRegularExpression
+                )[1])
         )
             return LAST_KNOWN_DATA.data[result[idName]]
         return result
@@ -3098,6 +3221,19 @@ export class DataService {
         return this.connection.removeAttachment(...parameter)
     }
     /**
+     * Removes given error callback.
+     * @param callback - Function to remove.
+     * @returns A boolean indicating if given callback was registered.
+     */
+    removeErrorCallback(callback:Function):boolean {
+        const index:number = this.errorCallbacks.indexOf(callback)
+        if (index !== -1) {
+            this.errorCallbacks.splice(index, 1)
+            return true
+        }
+        return false
+    }
+    /**
      * Starts synchronisation between a local and remote database.
      * @returns A promise if a synchronisation has been started and is in sync
      * with remote database or null if no stream was initialized due to
@@ -3165,6 +3301,39 @@ export class DataService {
             return true
         }
         return false
+    }
+    /**
+     * Triggers registered error callbacks with given error in given changes
+     * stream context.
+     * @param error - Error which has been occurred.
+     * @param parameter - Additional arguments provided with given error.
+     * @returns A Promise resolving when all asynchrone error handler have done
+     * their work.
+     */
+    async triggerErrorCallbacks(
+        error:any, ...parameter:Array<any>
+    ):Promise<void> {
+        let result:boolean|null = null
+        for (const callback of this.errorCallbacks) {
+            let localResult:any = callback(error, ...parameter)
+            if (
+                typeof localResult === 'object' &&
+                localResult !== null &&
+                'then' in localResult
+            )
+                localResult = await localResult
+            if (typeof localResult === 'boolean')
+                result = localResult
+        }
+        if (result === true || result === null && !(
+            error.hasOwnProperty('name') &&
+            error.name === 'unauthorized' ||
+            error.hasOwnProperty('error') &&
+            error.error === 'unauthorized' ||
+            error.code === 'ETIMEDOUT' ||
+            error.status === 0
+        ))
+            throw error
     }
 }
 // IgnoreTypeCheck
@@ -3367,16 +3536,15 @@ export class DataScopeService {
                     for (const fileType in modelSpecification[name])
                         if (modelSpecification[name].hasOwnProperty(fileType))
                             result[name][fileType] = this.extendObject(
-                                true, this.tools.copyLimitedRecursively(
+                                true, this.tools.copy(
                                     this.configuration.database.model
                                         .property.defaultSpecification
                                 ), modelSpecification[name][fileType])
                 } else {
-                    result[name] = this.extendObject(
-                        true, this.tools.copyLimitedRecursively(
-                            this.configuration.database.model.property
-                                .defaultSpecification,
-                        ), modelSpecification[name])
+                    result[name] = this.extendObject(true, this.tools.copy(
+                        this.configuration.database.model.property
+                            .defaultSpecification,
+                    ), modelSpecification[name])
                     if (
                         this.configuration.database.model.entities
                             .hasOwnProperty(result[name].type)
@@ -3439,12 +3607,10 @@ export class DataScopeService {
             if (propertyNamesToIgnore.includes(name))
                 continue
             if (specification.hasOwnProperty(name))
-                result[name] = this.tools.copyLimitedRecursively(
-                    specification[name])
+                result[name] = this.tools.copy(specification[name])
             else
-                result[name] = this.tools.copyLimitedRecursively((
-                    'additional' in specialNames &&
-                    specialNames.additional
+                result[name] = this.tools.copy((
+                    'additional' in specialNames && specialNames.additional
                 ) ? specification[specialNames.additional] : {})
             const now:Date = new Date()
             const nowUTCTimestamp:number = this.numberGetUTCTimestamp(now)
@@ -3517,9 +3683,8 @@ export class DataScopeService {
                                 type
                             ].default)
                         )
-                            result[name][type].value =
-                                this.tools.copyLimitedRecursively(
-                                    {}, result[name][type].default)
+                            result[name][type].value = this.tools.copy(
+                                {}, result[name][type].default)
                     }
             } else {
                 result[name].name = name
@@ -3571,8 +3736,7 @@ export class DataScopeService {
                     result[name].hasOwnProperty('default') &&
                     ![undefined, null].includes(result[name].default)
                 )
-                    result[name].value = this.tools.copyLimitedRecursively(
-                        result[name].default)
+                    result[name].value = this.tools.copy(result[name].default)
                 else if (
                     result[name].hasOwnProperty('selection') &&
                     Array.isArray(result[name].selection) &&
@@ -3621,6 +3785,44 @@ export class DataScopeService {
         return result
     }
 }
+// IgnoreTypeCheck
+@Injectable()
+/**
+ * Registers each request in the data requests list to track number of running
+ * transactions.
+ * @property data - Data service instance.
+ */
+export class RegisterHTTPRequestInterceptor implements HttpInterceptor {
+    data:DataService
+    /**
+     * Registers needed service instances as instance properties.
+     * @param data - Injected data service instance.
+     * @returns Nothing.
+     */
+    constructor(data:DataService) {
+        this.data = data
+    }
+    /**
+     * Intercepts each request to perform request registration and
+     * un-registration.
+     * @param request - Request to register.
+     * @param next - Interceptor chain.
+     * @returns Result of the interceptor chain.
+     */
+    intercept(
+        request:HttpRequest<any>, next:HttpHandler
+    ):Observable<HttpEvent<any>> {
+        this.data.runningRequests.push(request)
+        this.data.runningRequestsStream.next(this.data.runningRequests)
+        const unregister = ():void => {
+            const index:number = this.data.runningRequests.indexOf(request)
+            if (index !== -1)
+                this.data.runningRequests.splice(index, 1)
+            this.data.runningRequestsStream.next(this.data.runningRequests)
+        }
+        return next.handle(request).do(unregister, unregister)
+    }
+}
 // / region abstract
 // IgnoreTypeCheck
 @Injectable()
@@ -3630,18 +3832,12 @@ export class DataScopeService {
  * @property static:skipResolvingOnServer - Indicates whether to skip resolving
  * data on server contexts.
  *
- * @property cache - Indicates whether retrieved resources should be cached.
- * @property cacheStore - Saves cached items.
- * @property changesStream - Changes stream to invalidate cache store.
  * @property convertCircularObjectToJSON - Saves convert circular object to
  * json's pipe transform method.
  * @property data - Holds currently retrieved data.
  * @property databaseBaseURL - Determined database base url.
  * @property databaseURL - Determined database url.
  * @property domSanitizer - Dom sanitizer service instance.
- * @property deepCopyItems - Indicates whether each item should be copied from
- * cache. Defaults to "true" to avoid errors but could have avoidable impact
- * on performance for large data sets.
  * @property escapeRegularExpressions - Holds the escape regular expressions's
  * pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
@@ -3670,15 +3866,11 @@ export class DataScopeService {
 export class AbstractResolver implements Resolve<PlainObject> {
     static skipResolvingOnServer:boolean = true
 
-    cache:boolean = true
-    cacheStore:PlainObject = {}
-    changesStream:Stream
     convertCircularObjectToJSON:Function
     data:PlainObject
     databaseBaseURL:string
     databaseURL:string
     databaseURLCache:{[key:string]:SafeResourceUrl} = {}
-    deepCopyItems:boolean = true
     domSanitizer:DomSanitizer
     escapeRegularExpressions:Function
     extendObject:Function
@@ -3734,29 +3926,6 @@ export class AbstractResolver implements Resolve<PlainObject> {
             InitialDataService
         ).configuration.database.model.property.name.special
         this.tools = get(UtilityService).fixed.tools
-        if (this.cache) {
-            const initialize:Function = this.tools.debounce(():void => {
-                if (this.changesStream)
-                    this.changesStream.cancel()
-                this.changesStream = this.data.connection.changes(
-                    this.extendObject(
-                        true, {}, {since: 'now'},
-                        AbstractLiveDataComponent.defaultLiveUpdateOptions,
-                        /* eslint-disable camelcase */
-                        {include_docs: false}
-                        /* eslint-enable camelcase */
-                    ))
-                this.changesStream.on('change', ():void => {
-                    this.cacheStore = {}
-                })
-                this.changesStream.on('error', initialize)
-            }, 3000)
-            /*
-                NOTE: We have to break out of the "zone.js" since long polling
-                seems to confuse its mocked environment.
-            */
-            this.tools.timeout(initialize)
-        }
     }
     /**
      * Determines item specific database url by given item data object.
@@ -3782,7 +3951,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
      * @param additionalSelector - Custom filter criteria.
      * @returns A promise wrapping retrieved data.
      */
-    async list(
+    list(
         sort:Array<PlainObject> = [{
             [
             InitialDataService.defaultScope.configuration.database.model
@@ -3833,17 +4002,8 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 item:PlainObject
             ):PlainObject|string =>
                 Object.values(item)[0] === 'asc' ? Object.keys(item)[0] : item)
-        this.extendObject(true, selector, additionalSelector)
-        if (this.cache) {
-            const key:string = this.convertCircularObjectToJSON({
-                selector, options})
-            if (!this.cacheStore.hasOwnProperty(key))
-                this.cacheStore[key] = await this.data.find(selector, options)
-            if (this.deepCopyItems)
-                return this.tools.copyLimitedRecursively(this.cacheStore[key])
-            return this.cacheStore[key].slice()
-        }
-        return await this.data.find(selector, options)
+        return this.data.find(
+            this.extendObject(true, selector, additionalSelector), options)
     }
     /**
      * Removes given item.
@@ -3953,7 +4113,6 @@ export function dataServiceInitializerFactory(
         NOTE: We need this statement here to avoid having an ugly typescript
         error.
     */
-    // TODO remove if corresponding aot bug is fixed.
     2
     return ():Promise<void> => {
         InitialDataService.injectors.add(injector)
@@ -4155,6 +4314,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
  * @property _data - Data service instance.
  * @property _extendObject - Extend object pipe's transformation method.
  * @property _liveUpdateOptions - Options for database observation.
+ * @property _platformID - Platform identification string.
  * @property _stringCapitalize - String capitalize pipe transformation
  * function.
  * @property _tools - Holds the tools class from the tools service.
@@ -4174,11 +4334,11 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
     autoRestartOnError:boolean = true
 
     _canceled:boolean = false
-    _changeDetectorReference:ChangeDetectorRef
     _changesStream:Stream
     _data:DataService
     _extendObject:Function
     _liveUpdateOptions:PlainObject = {}
+    _platformID:string
     _stringCapitalize:Function
     _tools:typeof Tools
     /**
@@ -4190,10 +4350,10 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
     constructor(@Optional() injector:Injector) {
         const get:Function = determineInjector(
             injector, this, this.constructor)
-        this._changeDetectorReference = get(ChangeDetectorRef)
         this._data = get(DataService)
         this._extendObject = get(ExtendObjectPipe).transform.bind(get(
             ExtendObjectPipe))
+        this._platformID = get(PLATFORM_ID)
         this._stringCapitalize = get(StringCapitalizePipe).transform.bind(get(
             StringCapitalizePipe))
         this._tools = get(UtilityService).fixed.tools
@@ -4203,7 +4363,11 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
      * @returns Nothing.
      */
     ngOnInit():void {
+        if (isPlatformServer(this._platformID))
+            return
         const initialize:Function = this._tools.debounce(():void => {
+            if (this._changesStream)
+                this._changesStream.cancel()
             this._changesStream = this._data.connection.changes(
                 this._extendObject(
                     true, {}, {since: LAST_KNOWN_DATA.sequence},
@@ -4232,17 +4396,20 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
                         'then' in result
                     )
                         result = await result
-                    if (result)
-                        this._changeDetectorReference.detectChanges()
-                    if (type === 'error' && this.autoRestartOnError)
-                        initialize()
+                    if (type === 'error')
+                        if (
+                            action.hasOwnProperty('name') &&
+                            action.name === 'unauthorized' ||
+                            action.hasOwnProperty('error') &&
+                            action.error === 'unauthorized'
+                        ) {
+                            if (this._changesStream)
+                                this._changesStream.cancel()
+                        } else if (this.autoRestartOnError)
+                            initialize()
                 })
         }, 3000)
-        /*
-            NOTE: We have to break out of the "zone.js" since long polling
-            seems to confuse its mocked environment.
-        */
-        this._tools.timeout(initialize)
+        initialize()
     }
     /**
      * Marks current live data observation as canceled and closes initially
@@ -4504,11 +4671,10 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     }
     /**
      * Unsubscribes all subscriptions when this component should be disposed.
-     * @param parameter - List of all parameter to forward to super method.
      * @returns Returns the super values return value.
      */
-    ngOnDestroy(...parameter:Array<any>):any {
-        const result:any = super.ngOnDestroy(...parameter)
+    ngOnDestroy():any {
+        const result:any = super.ngOnDestroy()
         for (const subscription of this._subscriptions)
             subscription.unsubscribe()
         return result
@@ -4526,11 +4692,17 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     /**
      * Determines an items content specific hash value combined from id and
      * revision.
+     * @param index - Current index of current item in list.
      * @param item - Item with id and revision property.
      * @returns Indicator string.
      */
-    trackByIDAndRevision(item:PlainObject):string {
-        return `${item[this.idName]}/${item[this.revisionName]}`
+    trackByIDAndRevision(index:number, item:PlainObject):string {
+        let id:any = item[this.idName]
+        if (
+            typeof id === 'object' && id !== null && id.hasOwnProperty('value')
+        )
+            id = id.value
+        return `${id}/${item[this.revisionName]}`
     }
     /**
      * Applies current filter criteria to current visible item set.
@@ -4618,44 +4790,31 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
     /**
      * Needed implementation for an angular control value accessor.
      * @param callback - Callback function to register.
-     * @param additionalParameter - Additional parameter will be forwarded to
-     * inherited super method.
      * @returns What inherited method returns.
      */
     registerOnChange(
-        callback:(value:any) => void, ...additionalParameter:Array<any>
+        callback:(...parameter:Array<any>) => void
     ):any {
-        this.onChangeCallback = (
-            value:any, ...additionalParameter:Array<any>
-        ):void => callback(this.import(value), ...additionalParameter)
-        return super.registerOnChange(
-            this.onChangeCallback, ...additionalParameter)
+        this.onChangeCallback = (value:any):void => callback(this.import(
+            value))
+        return super.registerOnChange(this.onChangeCallback)
     }
     /**
      * Needed implementation for an angular control value accessor.
      * @param callback - Callback function to register.
-     * @param additionalParameter - Additional parameter will be forwarded to
-     * inherited super method.
      * @returns What inherited method returns.
      */
-    registerOnTouched(
-        callback:() => void, ...additionalParameter:Array<any>
-    ):any {
+    registerOnTouched(callback:() => void):any {
         this.onTouchedCallback = callback
-        return super.registerOnTouched(
-            this.onTouchedCallback, ...additionalParameter)
+        return super.registerOnTouched(this.onTouchedCallback)
     }
     /**
      * Overridden inherited function for value export.
      * @param value - Value to export.
-     * @param additionalParameter - Additional arguments will be forwarded to
-     * the overridden method invocation.
      * @returns The transformed give value.
      */
-    writeValue(value:any, ...additionalParameter:Array<any>):any {
-        return super.writeValue(this.export(
-            value, ...additionalParameter
-        ), ...additionalParameter)
+    writeValue(value:any):any {
+        return super.writeValue(this.export(value))
     }
 }
 // / endregion
@@ -4668,6 +4827,7 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
  * @property dateFormatter - Angular's date pipe transformation method.
  * @property extendObject - Extend object pipe's transform method.
  * @property options - Given formatting and update options.
+ * @property platformID - Platform identification string.
  * @property templateReference - Reference to given template.
  * @property timerID - Interval id to cancel it on destroy life cycle hook.
  * @property viewContainerReference - View container reference to embed
@@ -4687,6 +4847,7 @@ export class DateDirective {
         freeze: false,
         updateIntervalInMilliseconds: 1000
     }
+    platformID:string
     templateReference:TemplateRef<any>
     timerID:any
     viewContainerReference:ViewContainerRef
@@ -4694,6 +4855,7 @@ export class DateDirective {
      * Saves injected services as instance properties.
      * @param datePipe - Injected date pipe service instance.
      * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param platformID - Platform specific identifier.
      * @param templateReference - Specified template reference.
      * @param viewContainerReference - Injected view container reference.
      * @returns Nothing.
@@ -4701,11 +4863,13 @@ export class DateDirective {
     constructor(
         datePipe:DatePipe,
         extendObjectPipe:ExtendObjectPipe,
+        @Inject(PLATFORM_ID) platformID:string,
         templateReference:TemplateRef<any>,
         viewContainerReference:ViewContainerRef
     ) {
         this.dateFormatter = datePipe.transform.bind(datePipe)
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.platformID = platformID
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
     }
@@ -4763,12 +4927,13 @@ export class DateDirective {
      * @returns Nothing.
      */
     ngOnInit():void {
-        this.timerID = setInterval(():void => {
-            if (!this.options.freeze) {
-                this.viewContainerReference.remove()
-                this.insert()
-            }
-        }, this.options.updateIntervalInMilliseconds)
+        if (isPlatformBrowser(this.platformID))
+            this.timerID = setInterval(():void => {
+                if (!this.options.freeze) {
+                    this.viewContainerReference.remove()
+                    this.insert()
+                }
+            }, this.options.updateIntervalInMilliseconds)
         this.insert()
     }
 }
@@ -4779,6 +4944,7 @@ export class DateDirective {
  * @property extendObject - Extend object's pipe transform method.
  * @property index - Index of currently selected content.
  * @property options - Sliding options.
+ * @property platformID - Platform identification string.
  * @property templateReference - Content element template to slide.
  * @property timerID - Timer id of next content switch.
  * @property viewContainerReference - View container reference to inject
@@ -4800,22 +4966,26 @@ export class SliderDirective implements OnInit {
         slides: [],
         updateIntervalInMilliseconds: 6000
     }
+    platformID:string
     templateReference:TemplateRef<any>
     timerID:any
     viewContainerReference:ViewContainerRef
     /**
      * Saves injected services as instance properties.
      * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param platformID - Platform identification string.
      * @param templateReference - Specified template reference.
      * @param viewContainerReference - Injected view container reference.
      * @returns Nothing.
      */
     constructor(
         extendObjectPipe:ExtendObjectPipe,
+        @Inject(PLATFORM_ID) platformID:string,
         templateReference:TemplateRef<any>,
         viewContainerReference:ViewContainerRef
     ) {
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.platformID = platformID
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
     }
@@ -4871,21 +5041,22 @@ export class SliderDirective implements OnInit {
      * @returns Nothing.
      */
     ngOnInit():void {
-        this.timerID = setInterval(():void => {
-            const newIndex:number = (this.index + this.options.step) %
-                this.options.slides.length
-            if (
-                this.options.freeze !== true &&
-                newIndex !== this.index && !(
-                    typeof this.options.freeze === 'number' &&
-                    this.options.freeze >= this.options.slides.length
-                )
-            ) {
-                this.viewContainerReference.remove()
-                this.index = this.getNextIndex()
-                this.update()
-            }
-        }, this.options.updateIntervalInMilliseconds)
+        if (isPlatformBrowser(this.platformID))
+            this.timerID = setInterval(():void => {
+                const newIndex:number = (this.index + this.options.step) %
+                    this.options.slides.length
+                if (
+                    this.options.freeze !== true &&
+                    newIndex !== this.index && !(
+                        typeof this.options.freeze === 'number' &&
+                        this.options.freeze >= this.options.slides.length
+                    )
+                ) {
+                    this.viewContainerReference.remove()
+                    this.index = this.getNextIndex()
+                    this.update()
+                }
+            }, this.options.updateIntervalInMilliseconds)
         this.index = this.options.startIndex
         this.update()
     }
@@ -5453,27 +5624,21 @@ export class AbstractEditorComponent extends AbstractValueAccessor
             */
             await this.fixedUtility.tools.timeout()
         } else {
-            try {
-                await AbstractEditorComponent.applicationInterfaceLoad[
-                    this.factoryName]
-            } catch (error) {
-                throw error
-            }
+            await AbstractEditorComponent.applicationInterfaceLoad[
+                this.factoryName]
             AbstractEditorComponent.factories[this.factoryName] = this.factory
         }
     }
     /**
      * Synchronizes given value into internal code mirror instance.
      * @param value - Given value to set in code editor.
-     * @param additionalParameter - Additional arguments will be forwarded to
-     * the overridden method invocation.
      * @returns What inherited method returns.
      */
-    export(value:any, ...additionalParameter:Array<any>):any {
+    export(value:any):any {
         this.model = [null, undefined].includes(value) ? '' : value.toString()
         if (this.instance)
             this.instance[this.contentSetterMethodName](this.model)
-        return super.export(value, ...additionalParameter)
+        return super.export(value)
     }
     /**
      * Triggers disabled state changes.
@@ -5568,12 +5733,8 @@ export class CodeEditorComponent extends AbstractEditorComponent
                     if (CodeEditorComponent.modesLoad[
                         this.configuration.mode
                     ] !== true)
-                        try {
-                            await CodeEditorComponent.modesLoad[
-                                this.configuration.mode]
-                        } catch (error) {
-                            throw error
-                        }
+                        await CodeEditorComponent.modesLoad[
+                            this.configuration.mode]
                 } else {
                     CodeEditorComponent.modesLoad[this.configuration.mode] =
                         new Promise((
@@ -5587,12 +5748,8 @@ export class CodeEditorComponent extends AbstractEditorComponent
                                 this.configuration.path.mode.replace(
                                     /{mode}/g, this.configuration.mode)
                         }))
-                    try {
-                        await CodeEditorComponent.modesLoad[
-                            this.configuration.mode]
-                    } catch (error) {
-                        throw error
-                    }
+                    await CodeEditorComponent.modesLoad[
+                        this.configuration.mode]
                 }
             const configuration:PlainObject = this.extendObject(
                 {}, this.configuration, {readOnly: this.disabled})
@@ -6100,12 +6257,10 @@ export class TextareaComponent extends AbstractNativeInputComponent
     }
     /**
      * Triggers after input values have been resolved.
-     * @param additionalParameter - Additional arguments will be forwarded to
-     * the overridden method invocation.
      * @returns Nothing.
      */
-    ngOnInit(...additionalParameter:Array<any>):void {
-        super.ngOnInit(...additionalParameter)
+    ngOnInit():void {
+        super.ngOnInit()
         if (this.editor === null && this.model.editor)
             this.editor = this.model.editor
         if (typeof this.editor === 'string') {
@@ -6647,6 +6802,34 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 this.file.type = 'binary'
     }
     /**
+     * Includes given error in current error state object.
+     * @param errors - Errors to apply in state.
+     * @returns Nothing.
+     */
+    updateErrorState(errors:any = null):void {
+        let currentErrors:PlainObject = this.model[this.attachmentTypeName][
+            this.internalName
+        ].state.errors
+        if (errors) {
+            if (!currentErrors)
+                currentErrors = this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors = {}
+            for (const name in errors)
+                if (errors[name])
+                    currentErrors[name] = errors[name]
+                else if (currentErrors.hasOwnProperty(name))
+                    delete currentErrors[name]
+            if (Object.keys(currentErrors).length === 0)
+                delete this.model[this.attachmentTypeName][
+                    this.internalName
+                ].state.errors
+        } else if (currentErrors)
+            delete this.model[this.attachmentTypeName][
+                this.internalName
+            ].state.errors
+    }
+    /**
      * Initializes file upload handler.
      * @param changes - Holds informations about changed bound properties.
      * @returns Nothing.
@@ -6672,14 +6855,15 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             this.file = this.model[this.attachmentTypeName][
                 this.internalName
             ].value
-            if (this.file)
+            if (this.file) {
                 this.file.initialName = this.file.name
-            else if (!this.model[this.attachmentTypeName][
+                this.updateErrorState({required: null})
+            } else if (!this.model[this.attachmentTypeName][
                 this.internalName
             ].nullable)
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors = {required: true}
+                this.updateErrorState({required: true})
+            else
+                this.updateErrorState({required: null})
         }
         if (
             changes.hasOwnProperty('model') ||
@@ -6706,11 +6890,10 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                             await this.retrieveAttachment(
                                 id, {rev: this.revision})
                         } catch (error) {
-                            this.model[this.attachmentTypeName][
-                                this.internalName
-                            ].state.errors.database = (
+                            this.updateErrorState({database: (
                                 'message' in error
-                            ) ? error.message : this._representObject(error)
+                            ) ? error.message : this._representObject(error)})
+                            this.modelChange.emit(this.model)
                             return
                         }
                     else
@@ -6722,6 +6905,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                                     this.configuration.name || 'generic'
                                 ) + `/${id}/${this.file.name}` +
                                 this.file.query)
+                    this.updateErrorState({database: null})
                 }
             }
             this.determinePresentationType()
@@ -6804,13 +6988,13 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             try {
                 result = await this._data.put(update)
             } catch (error) {
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors = {database: (
+                this.updateErrorState({database: (
                     'message' in error
-                ) ? error.message : this._representObject(error)}
+                ) ? error.message : this._representObject(error)})
+                this.modelChange.emit(this.model)
                 return
             }
+            this.updateErrorState({database: null})
             if (this.mapNameToField && this.mapNameToField.includes(
                 this.idName
             ))
@@ -6821,9 +7005,10 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         this.model[this.attachmentTypeName][this.internalName].state.errors =
             this.model[this.attachmentTypeName][this.internalName].value =
                 this.file = null
-        if (!this.model[this.attachmentTypeName][this.internalName].nullable)
-            this.model[this.attachmentTypeName][this.internalName].state
-                .errors = {required: true}
+        if (this.model[this.attachmentTypeName][this.internalName].nullable)
+            this.updateErrorState({required: null})
+        else
+            this.updateErrorState({required: true})
         this.modelChange.emit(this.model)
         this.fileChange.emit(this.file)
     }
@@ -6841,17 +7026,18 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         if (
             this.file.stub && this.mapNameToField && id &&
             this.mapNameToField.includes(this.idName)
-        )
+        ) {
             try {
                 await this.retrieveAttachment(id)
             } catch (error) {
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors = {database: (
+                this.updateErrorState({database: (
                     'message' in error
-                ) ? error.message : this._representObject(error)}
+                ) ? error.message : this._representObject(error)})
+                this.modelChange.emit(this.model)
                 return
             }
+            this.updateErrorState({database: null})
+        }
         this.file.name = name
         return this.update(oldName)
     }
@@ -6873,8 +7059,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             content_type: file.type || 'text/plain',
             /* eslint-enable camelcase */
             data: typeof Blob === 'undefined' ?
-                file.toString('base64') :
-                await require('blob-util').blobToBase64String(file),
+                file.toString('base64') : await blobToBase64String(file),
             length: file.size,
             name: this.file.name
         }
@@ -6882,8 +7067,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             `data:${this.file.content_type};base64,${this.file.data}`)
     }
     /**
-     * Updates given current file into database (replaces if old name is
-     * given).
+     * Uploads current file into database (replaces if old name is given).
      * @param oldName - Name of saved file to update or replace.
      * @returns A Promise which will be resolved after current file will be
      * synchronized.
@@ -6902,54 +7086,36 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             this.internalName
         ].value = this.file
         // region determine errors
-        if (!this.model[this.attachmentTypeName][
-            this.internalName
-        ].state.errors)
-            this.model[this.attachmentTypeName][
-                this.internalName
-            ].state.errors = {}
-        if (!(new RegExp(this.internalName)).test(this.file.name))
-            this.model[this.attachmentTypeName][
-                this.internalName
-            ].state.errors = {name: true}
-        if (!(
-            [undefined, null].includes(this.model[
-                this.attachmentTypeName
-            ][this.internalName].contentTypeRegularExpressionPattern) || (
-                new RegExp(this.model[this.attachmentTypeName][
-                    this.internalName
-                ].contentTypeRegularExpressionPattern)
-            ).test(this.file.content_type)
-        ))
-            this.model[this.attachmentTypeName][
-                this.internalName
-            ].state.errors.contentType = true
-        if (!(
-            [undefined, null].includes(this.model[
-                this.attachmentTypeName
-            ][this.internalName].minimumSize) || this.model[
-                this.attachmentTypeName
-            ][this.internalName].minimumSize <= this.file.length
-        ))
-            this.model[this.attachmentTypeName][
-                this.internalName
-            ].state.errors.minimuSize = true
-        if (!(
-            [undefined, null].includes(this.model[
-                this.attachmentTypeName
-            ][this.internalName].maximumSize) || this.model[
-                this.attachmentTypeName
-            ][this.internalName].maximumSize >= this.file.length
-        ))
-            this.model[this.attachmentTypeName][
-                this.internalName
-            ].state.errors.maximumSize = true
-        if (Object.keys(this.model[this.attachmentTypeName][
-            this.internalName
-        ].state.errors).length === 0)
-            delete this.model[this.attachmentTypeName][this.internalName]
-                .state.errors
-        else {
+        this.updateErrorState({
+            name: !(new RegExp(this.internalName)).test(this.file.name),
+            contentType: !(
+                [undefined, null].includes(this.model[
+                    this.attachmentTypeName
+                ][this.internalName].contentTypeRegularExpressionPattern) || (
+                    new RegExp(this.model[this.attachmentTypeName][
+                        this.internalName
+                    ].contentTypeRegularExpressionPattern)
+                ).test(this.file.content_type)
+            ),
+            minimumSize: !(
+                [undefined, null].includes(this.model[
+                    this.attachmentTypeName
+                ][this.internalName].minimumSize) || this.model[
+                    this.attachmentTypeName
+                ][this.internalName].minimumSize <= this.file.length
+            ),
+            maximumSize: !(
+                [undefined, null].includes(this.model[
+                    this.attachmentTypeName
+                ][this.internalName].maximumSize) || this.model[
+                    this.attachmentTypeName
+                ][this.internalName].maximumSize >= this.file.length
+            )
+        })
+        // endregion
+        if (
+            this.model[this.attachmentTypeName][this.internalName].state.errors
+        ) {
             let message:string =
                 'There was encountered an error during uploading file "' +
                 `${this.file.name}": `
@@ -6973,11 +7139,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                             this.internalName]
                     }))
             this.abstractResolver.message(message)
-        }
-        // endregion
-        if (this.synchronizeImmediately && !this.model[
-            this.attachmentTypeName
-        ][this.internalName].state.errors) {
+        } else if (this.synchronizeImmediately) {
             let newData:PlainObject = {
                 [this.typeName]: this.model[this.typeName],
                 [this.idName]: this._idIsObject ? this.model[
@@ -7037,11 +7199,9 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             try {
                 result = await this._data.bulkDocs(tasks)
             } catch (error) {
-                this.model[this.attachmentTypeName][
-                    this.internalName
-                ].state.errors = {database: (
+                this.updateErrorState({database: (
                     'message' in error
-                ) ? error.message : this._representObject(error)}
+                ) ? error.message : this._representObject(error)})
                 if (this.autoMessages)
                     this.abstractResolver.message(
                         'Database has encountered an error during uploading ' +
@@ -7049,25 +7209,26 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                         this.model[this.attachmentTypeName][
                             this.internalName
                         ].state.errors.database)
+                this.modelChange.emit(this.model)
                 return
             }
             id = newData[this.idName]
             let revision:string
             for (const item of result) {
                 if (item.error) {
-                    this.model[this.attachmentTypeName][
-                        this.internalName
-                    ].state.errors = {database: item.message}
+                    this.updateErrorState({database: item.message})
                     if (this.autoMessages)
                         this.abstractResolver.message(
                             'Database has encountered an error during ' +
                             `uploading file "${this.file.name}": ` +
                             item.message)
+                    this.modelChange.emit(this.model)
                     return
                 }
                 if (item.id === id)
                     revision = item.rev
             }
+            this.updateErrorState({database: null})
             if (this.file) {
                 this.file.revision = this.model[this.revisionName] = revision
                 this.file.query = `?rev=${revision}`
@@ -7484,6 +7645,7 @@ export class PaginationComponent {
         MatDialogModule,
         MatInputModule,
         MatSelectModule,
+        MatSnackBarModule,
         MatTooltipModule
     ],
     /*
@@ -7602,6 +7764,11 @@ export class PaginationComponent {
         // / endregion
         // endregion
         DatePipe,
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: RegisterHTTPRequestInterceptor,
+            multi: true
+        },
         {
             deps: [DataService, InitialDataService, Injector],
             multi: true,

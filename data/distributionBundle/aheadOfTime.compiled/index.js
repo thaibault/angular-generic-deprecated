@@ -2,56 +2,65 @@
 // -*- coding: utf-8 -*-
 /** @module angularGeneric */
 'use strict';
-/* !
-    region header
-    [Project page](http://torben.website/angularGeneric)
-
-    Copyright Torben Sickert (info["~at~"]torben.website) 16.12.2012
-
-    License
-    -------
-
-    This library written by torben sickert stand under a creative commons
-    naming 3.0 unported license.
-    see http://creativecommons.org/licenses/by/3.0/deed.de
-    endregion
-*/
-// region imports
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+import { blobToBase64String } from 'blob-util';
 import Tools, { $, globalContext, PlainObject } from 'clientnode';
-import { APP_INITIALIZER, ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Directive, ElementRef, EventEmitter, forwardRef, Injectable, /* eslint-disable no-unused-vars */
-Inject, /* eslint-enable no-unused-vars */
-Injector, Input, NgModule, /* eslint-disable no-unused-vars */
-Optional, /* eslint-enable no-unused-vars */
-Output, Pipe, /* eslint-disable no-unused-vars */
-PLATFORM_ID, /* eslint-enable no-unused-vars */
+import { APP_INITIALIZER, ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Directive, ElementRef, EventEmitter, forwardRef, Injectable, 
+/* eslint-disable no-unused-vars */
+Inject, 
+/* eslint-enable no-unused-vars */
+Injector, Input, NgModule, NgZone, 
+/* eslint-disable no-unused-vars */
+Optional, 
+/* eslint-enable no-unused-vars */
+Output, Pipe, 
+/* eslint-disable no-unused-vars */
+PLATFORM_ID, 
+/* eslint-enable no-unused-vars */
 Renderer2 as Renderer, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
-import { DatePipe, isPlatformServer } from '@angular/common';
+import { DatePipe, isPlatformBrowser, isPlatformServer } from '@angular/common';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { 
-// IgnoreTypeCheck
-MatButtonModule, MatCardModule, /* eslint-disable no-unused-vars */
-MAT_DIALOG_DATA, /* eslint-enable no-unused-vars */
-MatDialog, MatDialogRef, MatDialogModule, MatInputModule, MatSelectModule, MatSnackBar, MatSnackBarConfig, MatTooltipModule } from '@angular/material';
+/* eslint-disable no-unused-vars */
+MAT_DIALOG_DATA, 
+/* eslint-enable no-unused-vars */
+MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBar, MatSnackBarConfig, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { BrowserModule, DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import PouchDB from 'pouchdb';
 import PouchDBFindPlugin from 'pouchdb-find';
 import PouchDBValidationPlugin from 'pouchdb-validation';
-import { Subject } from 'rxjs';
-// NOTE: Only needed for debugging this file.
+import { Subject } from 'rxjs/Subject';
+import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/debounceTime';
+import 'rxjs/add/operator/distinctUntilChanged';
 try {
-    module.require('source-map-support/register');
+    require('source-map-support/register');
 }
 catch (error) { }
-/*
-    NOTE: Default import is not yet support for angular's ahead of time
-    compiler.
-*/
 import { defaultAnimation } from './animation';
 // endregion
 if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
     /* eslint-disable no-var */
     var CHANGE_DETECTION_STRATEGY_NAME = 'default';
+/* eslint-enable no-var */
+if (typeof require === 'undefined')
+    /* eslint-disable no-var */
+    var require = Tools.noop;
 /* eslint-enable no-var */
 if (typeof UTC_BUILD_TIMESTAMP === 'undefined')
     /* eslint-disable no-var */
@@ -117,7 +126,6 @@ export const TINYMCE_DEFAULT_OPTIONS = {
     toolbar2: 'alignleft aligncenter alignright alignjustify outdent indent | link hr nonbreaking bullist numlist bold italic underline strikethrough',
     /* eslint-enable max-len */
     trim: true
-    /* eslint-enable camelcase */
 };
 // endregion
 // region basic services
@@ -218,7 +226,6 @@ InitialDataService.defaultScope = { configuration: { database: {
                 /* eslint-disable camelcase */
                 auto_compaction: true,
                 revs_limit: 10
-                /* eslint-enable camelcase */
             },
             model: {
                 entities: {},
@@ -1163,22 +1170,25 @@ NumberRoundPipe.ctorParameters = () => [];
  * @property specialNames - A mapping to database specific special property
  * names.
  * @property stringMD5 - String md5 pipe's instance transform method.
+ * @property zone - Zone service instance.
  */
 export class AttachmentsAreEqualPipe {
     /**
          * Gets needed services injected.
          * @param initialData - Injected initial data service instance.
          * @param injector - Application specific injector instance.
+         * @param ngZone - Injected zone service instance.
          * @param representObjectPipe - Represent object pipe instance.
          * @param stringMD5Pipe - Injected string md5 pipe instance.
          * @returns Nothing.
          */
-    constructor(initialData, injector, representObjectPipe, stringMD5Pipe) {
+    constructor(initialData, injector, ngZone, representObjectPipe, stringMD5Pipe) {
         this.data = injector.get(DataService);
         this.representObject = representObjectPipe.transform.bind(representObjectPipe);
         this.specialNames =
             initialData.configuration.database.model.property.name.special;
         this.stringMD5 = stringMD5Pipe.transform.bind(stringMD5Pipe);
+        this.zone = ngZone;
     }
     /**
          * Performs the actual transformations process.
@@ -1186,73 +1196,81 @@ export class AttachmentsAreEqualPipe {
          * @param second - Second attachment to compare.
          * @returns Comparison result.
          */
-    async transform(first, second) {
-        /*
-                    Identical implies equality and should be checked first for
-                    performance.
-                */
-        if (first === second)
-            return true;
-        const data = {
-            first: { given: first },
-            second: { given: second }
-        };
-        for (const type of ['first', 'second']) {
-            if (typeof data[type].given !== 'object' ||
-                data[type].given === null)
-                return false;
-            /* eslint-disable camelcase */
-            data[type].content_type =
-                data[type].given.type || data[type].given.content_type;
-            /* eslint-enable camelcase */
-            data[type].data = (('data' in data[type].given) ? data[type].given.data : data[type].given) || NaN;
-            data[type].hash =
-                data[type].given.digest || data[type].given.hash || NaN;
-            data[type].size = data[type].given.size || data[type].given.length;
-        }
-        // Search for an exclusion criterion.
-        for (const type of ['content_type', 'size'])
-            if (![data.first[type], data.second[type]].includes(undefined) &&
-                data.first[type] !== data.second[type])
-                return false;
-        // Check for a sufficient criterion.
-        if (data.first.data === data.second.data)
-            return true;
-        for (const type of ['first', 'second'])
-            if (!data[type].hash) {
-                if (data[type].data === null || !['object', 'string'].includes(typeof data[type].data))
+    transform(first, second) {
+        return __awaiter(this, void 0, void 0, function* () {
+            /*
+                        Identical implies equality and should be checked first for
+                        performance.
+                    */
+            if (first === second)
+                return true;
+            const data = {
+                first: { given: first },
+                second: { given: second }
+            };
+            for (const type of ['first', 'second']) {
+                if (typeof data[type].given !== 'object' ||
+                    data[type].given === null)
                     return false;
-                const name = 'genericTemp';
-                const databaseConnection = new this.data.database(name);
-                try {
-                    await databaseConnection.put({
-                        [this.specialNames.id]: name,
-                        [this.specialNames.attachment]: {
-                            [name]: {
-                                data: data[type].data,
-                                /* eslint-disable camelcase */
-                                content_type: 'application/octet-stream'
-                                /* eslint-enable camelcase */
-                            }
-                        }
-                    });
-                    data[type].hash = (await databaseConnection.get(name))[this.specialNames.attachment][name].digest;
-                }
-                catch (error) {
-                    let message = 'unknown';
-                    try {
-                        message = this.representObject(error);
-                    }
-                    catch (error) { }
-                    console.warn('Given attachments for equality check are not ' +
-                        `valid: ${message}`);
-                    return false;
-                }
-                finally {
-                    await databaseConnection.destroy();
-                }
+                /* eslint-disable camelcase */
+                data[type].content_type =
+                    data[type].given.type || data[type].given.content_type;
+                /* eslint-enable camelcase */
+                data[type].data = (('data' in data[type].given) ? data[type].given.data : data[type].given) || NaN;
+                data[type].hash =
+                    data[type].given.digest || data[type].given.hash || NaN;
+                data[type].size = data[type].given.size || data[type].given.length;
             }
-        return data.first.hash === data.second.hash;
+            // Search for an exclusion criterion.
+            for (const type of ['content_type', 'size'])
+                if (![data.first[type], data.second[type]].includes(undefined) &&
+                    data.first[type] !== data.second[type])
+                    return false;
+            // Check for a sufficient criterion.
+            if (data.first.data === data.second.data)
+                return true;
+            for (const type of ['first', 'second'])
+                if (!data[type].hash) {
+                    if (data[type].data === null || !['object', 'string'].includes(typeof data[type].data))
+                        return false;
+                    const name = 'genericTemp';
+                    const databaseConnection = new this.data.database(name);
+                    try {
+                        yield this.zone.run(() => __awaiter(this, void 0, void 0, function* () {
+                            try {
+                                yield databaseConnection.put({
+                                    [this.specialNames.id]: name,
+                                    [this.specialNames.attachment]: {
+                                        [name]: {
+                                            data: data[type].data,
+                                            /* eslint-disable camelcase */
+                                            content_type: 'application/octet-stream'
+                                        }
+                                    }
+                                });
+                                data[type].hash = (yield databaseConnection.get(name))[this.specialNames.attachment][name].digest;
+                            }
+                            catch (error) {
+                                let message = 'unknown';
+                                try {
+                                    message = this.representObject(error);
+                                }
+                                catch (error) { }
+                                console.warn('Given attachments for equality check are ' +
+                                    `not valid: ${message}`);
+                                throw error;
+                            }
+                            finally {
+                                yield databaseConnection.destroy();
+                            }
+                        }));
+                    }
+                    catch (error) {
+                        return false;
+                    }
+                }
+            return data.first.hash === data.second.hash;
+        });
     }
 }
 AttachmentsAreEqualPipe.decorators = [
@@ -1262,6 +1280,7 @@ AttachmentsAreEqualPipe.decorators = [
 AttachmentsAreEqualPipe.ctorParameters = () => [
     { type: InitialDataService, },
     { type: Injector, },
+    { type: NgZone, },
     { type: RepresentObjectPipe, },
     { type: StringMD5Pipe, },
 ];
@@ -1509,77 +1528,77 @@ export class ExtractRawDataPipe {
          * @returns An object indicating existing data and sliced given attachment
          * data wrapped in a promise (to asynchronous compare attachment content).
          */
-    async getNotAlreadyExistingAttachmentData(newDocument, oldDocument, specification) {
-        const result = {};
-        if (specification && specification.hasOwnProperty(this.specialNames.attachment))
-            for (const type in specification[this.specialNames.attachment])
-                if (specification[this.specialNames.attachment].hasOwnProperty(type)) {
-                    // region retrieve all type specific existing attachments
-                    const oldAttachments = {};
-                    if (oldDocument.hasOwnProperty(this.specialNames.attachment) &&
-                        oldDocument[this.specialNames.attachment])
-                        for (const fileName in oldDocument[this.specialNames.attachment])
-                            if (oldDocument[this.specialNames.attachment].hasOwnProperty(fileName) &&
-                                new RegExp(type).test(fileName))
-                                oldAttachments[fileName] = oldDocument[this.specialNames.attachment][fileName];
-                    // endregion
-                    if (newDocument.hasOwnProperty(this.specialNames.attachment))
-                        for (const fileName in newDocument[this.specialNames.attachment])
-                            if (newDocument[this.specialNames.attachment].hasOwnProperty(fileName) &&
-                                new RegExp(type).test(fileName))
-                                // region determine latest attachment
-                                if (newDocument[this.specialNames.attachment][fileName].hasOwnProperty('data') ||
-                                    newDocument[this.specialNames.attachment][fileName].hasOwnProperty('stub')) {
-                                    // Insert new attachment.
-                                    result[fileName] = newDocument[this.specialNames.attachment][fileName];
-                                    // region remove already existing data
-                                    if (oldAttachments.hasOwnProperty(fileName)) {
-                                        if (await this.attachmentsAreEqual(newDocument[this.specialNames.attachment][fileName], oldAttachments[fileName]))
-                                            /*
-                                                                                            Existing attachment has not
-                                                                                            been changed.
-                                                                                        */
-                                            delete result[fileName];
-                                        delete oldAttachments[fileName];
+    getNotAlreadyExistingAttachmentData(newDocument, oldDocument, specification) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const result = {};
+            if (specification && specification.hasOwnProperty(this.specialNames.attachment))
+                for (const type in specification[this.specialNames.attachment])
+                    if (specification[this.specialNames.attachment].hasOwnProperty(type)) {
+                        // region retrieve all type specific existing attachments
+                        const oldAttachments = {};
+                        if (oldDocument.hasOwnProperty(this.specialNames.attachment) &&
+                            oldDocument[this.specialNames.attachment])
+                            for (const fileName in oldDocument[this.specialNames.attachment])
+                                if (oldDocument[this.specialNames.attachment].hasOwnProperty(fileName) &&
+                                    new RegExp(type).test(fileName))
+                                    oldAttachments[fileName] = oldDocument[this.specialNames.attachment][fileName];
+                        // endregion
+                        if (newDocument.hasOwnProperty(this.specialNames.attachment))
+                            for (const fileName in newDocument[this.specialNames.attachment])
+                                if (newDocument[this.specialNames.attachment].hasOwnProperty(fileName) &&
+                                    new RegExp(type).test(fileName))
+                                    // region determine latest attachment
+                                    if (newDocument[this.specialNames.attachment][fileName].hasOwnProperty('data') ||
+                                        newDocument[this.specialNames.attachment][fileName].hasOwnProperty('stub')) {
+                                        // Insert new attachment.
+                                        result[fileName] = newDocument[this.specialNames.attachment][fileName];
+                                        // region remove already existing data
+                                        if (oldAttachments.hasOwnProperty(fileName)) {
+                                            if (yield this.attachmentsAreEqual(newDocument[this.specialNames.attachment][fileName], oldAttachments[fileName]))
+                                                /*
+                                                                                                Existing attachment has not
+                                                                                                been changed.
+                                                                                            */
+                                                delete result[fileName];
+                                            delete oldAttachments[fileName];
+                                        }
+                                        else if (Object.keys(oldAttachments).length &&
+                                            specification[this.specialNames.attachment][type].maximumNumber === 1) {
+                                            const firstOldAttachmentName = Object.keys(oldAttachments)[0];
+                                            if (yield this.attachmentsAreEqual(newDocument[this.specialNames.attachment][fileName], oldAttachments[firstOldAttachmentName])) {
+                                                /*
+                                                                                                Existing attachment has been
+                                                                                                renamed.
+                                                                                            */
+                                                result[fileName] = this.tools.copy(oldAttachments[firstOldAttachmentName]);
+                                                result[fileName].name = fileName;
+                                            }
+                                        }
+                                        // endregion
                                     }
+                                    else if (oldAttachments.hasOwnProperty(fileName))
+                                        // Existing attachment has not been changed.
+                                        delete oldAttachments[fileName];
                                     else if (Object.keys(oldAttachments).length &&
                                         specification[this.specialNames.attachment][type].maximumNumber === 1) {
+                                        // Existing attachment has been renamed.
                                         const firstOldAttachmentName = Object.keys(oldAttachments)[0];
-                                        if (await this.attachmentsAreEqual(newDocument[this.specialNames.attachment][fileName], oldAttachments[firstOldAttachmentName])) {
-                                            /*
-                                                                                            Existing attachment has been
-                                                                                            renamed.
-                                                                                        */
-                                            result[fileName] = this.tools
-                                                .copyLimitedRecursively(oldAttachments[firstOldAttachmentName]);
-                                            result[fileName].name = fileName;
-                                        }
+                                        result[fileName] = this.tools.copy(oldAttachments[firstOldAttachmentName]);
+                                        result[fileName].name = fileName;
+                                        delete oldAttachments[firstOldAttachmentName];
                                     }
-                                    // endregion
-                                }
-                                else if (oldAttachments.hasOwnProperty(fileName))
-                                    // Existing attachment has not been changed.
-                                    delete oldAttachments[fileName];
-                                else if (Object.keys(oldAttachments).length &&
-                                    specification[this.specialNames.attachment][type].maximumNumber === 1) {
-                                    // Existing attachment has been renamed.
-                                    const firstOldAttachmentName = Object.keys(oldAttachments)[0];
-                                    result[fileName] =
-                                        this.tools.copyLimitedRecursively(oldAttachments[firstOldAttachmentName]);
-                                    result[fileName].name = fileName;
-                                    delete oldAttachments[firstOldAttachmentName];
-                                }
-                    // endregion
-                    // region mark all not mentioned old attachments as removed
-                    for (const fileName in oldAttachments)
-                        if (oldAttachments.hasOwnProperty(fileName))
-                            result[fileName] = { data: null };
-                    // endregion
-                }
-        return {
-            payloadExists: Object.keys(result).length !== 0,
-            result
-        };
+                        // endregion
+                        // region mark all not mentioned old attachments as removed
+                        for (const fileName in oldAttachments)
+                            if (oldAttachments.hasOwnProperty(fileName))
+                                result[fileName] = { data: null };
+                        // endregion
+                    }
+            return {
+                payloadExists: Object.keys(result).length !== 0,
+                result
+            };
+        });
     }
     /**
          * Remove already existing values and mark removed or truncated values
@@ -1669,24 +1688,24 @@ export class ExtractRawDataPipe {
                             if (typeof data[name] === 'object' &&
                                 data[name] !== null) {
                                 result[name] = {};
-                                for (const fileName in data[name]) {
-                                    if (data[name].hasOwnProperty(fileName))
+                                for (const fileName in data[name])
+                                    if (data[name].hasOwnProperty(fileName)) {
                                         result[name][fileName] = {
                                             /* eslint-disable camelcase */
                                             content_type: data[name][fileName]
                                                 .content_type ||
                                                 'application/octet-stream'
-                                            /* eslint-enable camelcase */
                                         };
-                                    if (data[name][fileName].hasOwnProperty('data'))
-                                        result[name][fileName].data =
-                                            data[name][fileName].data;
-                                    else
-                                        for (const type of ['digest', 'stub'])
-                                            if (data[name][fileName].hasOwnProperty(type))
-                                                result[name][fileName][type] =
-                                                    data[name][fileName][type];
-                                }
+                                        if (data[name][fileName].hasOwnProperty('data'))
+                                            result[name][fileName].data =
+                                                data[name][fileName].data;
+                                        else
+                                            for (const type of [
+                                                'digest', 'stub'
+                                            ])
+                                                if (data[name][fileName].hasOwnProperty(type))
+                                                    result[name][fileName][type] = data[name][fileName][type];
+                                    }
                             }
                         }
                         else if (![
@@ -1720,37 +1739,39 @@ export class ExtractRawDataPipe {
          * (checked against given old document) and "null" otherwise. Result is
          * wrapped into a promise to process binary data asynchronous.
          */
-    async transform(newDocument, oldDocument) {
-        let specification = null;
-        if (this.specialNames.type in newDocument &&
-            this.modelConfiguration.entities.hasOwnProperty(newDocument[this.specialNames.type]))
-            specification = this.modelConfiguration.entities[newDocument[this.specialNames.type]];
-        let result = this.removeMetaData(newDocument, specification);
-        let payloadExists = false;
-        if (oldDocument) {
-            const attachmentDifference = await this.getNotAlreadyExistingAttachmentData(result, oldDocument, specification);
-            if (attachmentDifference.payloadExists) {
-                result[this.specialNames.attachment] =
-                    attachmentDifference.result;
-                payloadExists = attachmentDifference.payloadExists;
-            }
-            if (this.removeAlreadyExistingData(result, this.removeMetaData(oldDocument, specification), specification).payloadExists)
-                payloadExists = true;
-        }
-        // Check if real payload exists in currently determined raw data.
-        if (!payloadExists)
-            /*
-                            NOTE: We have to check first level only since all unneeded
-                            nested values should have been already removed if not
-                            necessary.
-                        */
-            for (const name in result)
-                if (result.hasOwnProperty(name) &&
-                    !this.modelConfiguration.property.name.reserved.concat(this.specialNames.deleted, this.specialNames.id, this.specialNames.revision, this.specialNames.type).includes(name)) {
-                    payloadExists = true;
-                    break;
+    transform(newDocument, oldDocument) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let specification = null;
+            if (this.specialNames.type in newDocument &&
+                this.modelConfiguration.entities.hasOwnProperty(newDocument[this.specialNames.type]))
+                specification = this.modelConfiguration.entities[newDocument[this.specialNames.type]];
+            let result = this.removeMetaData(newDocument, specification);
+            let payloadExists = false;
+            if (oldDocument) {
+                const attachmentDifference = yield this.getNotAlreadyExistingAttachmentData(result, oldDocument, specification);
+                if (attachmentDifference.payloadExists) {
+                    result[this.specialNames.attachment] =
+                        attachmentDifference.result;
+                    payloadExists = attachmentDifference.payloadExists;
                 }
-        return payloadExists ? result : null;
+                if (this.removeAlreadyExistingData(result, this.removeMetaData(oldDocument, specification), specification).payloadExists)
+                    payloadExists = true;
+            }
+            // Check if real payload exists in currently determined raw data.
+            if (!payloadExists)
+                /*
+                                NOTE: We have to check first level only since all unneeded
+                                nested values should have been already removed if not
+                                necessary.
+                            */
+                for (const name in result)
+                    if (result.hasOwnProperty(name) &&
+                        !this.modelConfiguration.property.name.reserved.concat(this.specialNames.deleted, this.specialNames.id, this.specialNames.revision, this.specialNames.type).includes(name)) {
+                        payloadExists = true;
+                        break;
+                    }
+            return payloadExists ? result : null;
+        });
     }
 }
 ExtractRawDataPipe.decorators = [
@@ -2402,8 +2423,8 @@ export class ConfirmComponent {
          * @returns Nothing.
          */
     constructor(
-        // IgnoreTypeCheck
-        data, dialogReference) {
+    // IgnoreTypeCheck
+    data, dialogReference) {
         this.cancelText = 'Cancel';
         this.dialogReference = null;
         this.okText = 'OK';
@@ -2452,15 +2473,18 @@ ConfirmComponent.propDecorators = {
  * Alert service to trigger a dialog window which can be confirmed.
  * @property dialog - Reference to the dialog component instance.
  * @property dialogReference - Reference to the dialog service instance.
+ * @property zone - Zone service instance.
  */
 export class AlertService {
     /**
          * Gets needed component dialog service instance injected.
          * @param dialog - Reference to the dialog component instance.
+         * @param ngZone - Injected zone service instance.
          * @returns Nothing.
          */
-    constructor(dialog) {
+    constructor(dialog, ngZone) {
         this.dialog = dialog;
+        this.zone = ngZone;
     }
     /**
          * Triggers a confirmation dialog to show.
@@ -2470,11 +2494,14 @@ export class AlertService {
          * which decision was made.
          */
     confirm(data) {
+        let configuration;
         if (typeof data === 'string')
-            data = { data: { message: data } };
+            configuration = { data: { message: data } };
         else if (typeof data !== 'object' || data === null || !data.hasOwnProperty('data'))
-            data = { data };
-        this.dialogReference = this.dialog.open(ConfirmComponent, data);
+            configuration = { data };
+        else
+            configuration = data;
+        this.dialogReference = this.dialog.open(ConfirmComponent, configuration);
         return this.dialogReference.afterClosed().toPromise();
     }
 }
@@ -2484,6 +2511,7 @@ AlertService.decorators = [
 /** @nocollapse */
 AlertService.ctorParameters = () => [
     { type: MatDialog, },
+    { type: NgZone, },
 ];
 // / endregion
 // IgnoreTypeCheck
@@ -2500,9 +2528,12 @@ AlertService.ctorParameters = () => [
  *
  * @property connection - The current database connection instance.
  * @property database - The entire database constructor.
+ * @property errorCallbacks - Holds all registered error callbacks.
  * @property equals - Hilds the equals pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
  * method.
+ * @property initialized - Event emitter triggering when database
+ * initialization has finished.
  * @property middlewares - Mapping of post and pre callback arrays to trigger
  * before or after each database transaction.
  * @property platformID - Platform identification string.
@@ -2513,6 +2544,7 @@ AlertService.ctorParameters = () => [
  * @property synchronisation - This synchronisation instance represents the
  * active synchronisation process if a local offline database is in use.
  * @property tools - Holds the tools class from the tools service.
+ * @property zone - Zone service instance.
  */
 export class DataService {
     /**
@@ -2521,12 +2553,15 @@ export class DataService {
          * @param equalsPipe - Equals pipe service instance.
          * @param extendObjectPipe - Injected extend object pipe instance.
          * @param initialData - Injected initial data service instance.
+         * @param ngZone - Injected zone service instance.
          * @param platformID - Platform identification string.
          * @param stringFormatPipe - Injected string format pipe instance.
          * @param utility - Injected utility service instance.
          * @returns Nothing.
          */
-    constructor(equalsPipe, extendObjectPipe, initialData, platformID, stringFormatPipe, utility) {
+    constructor(equalsPipe, extendObjectPipe, initialData, ngZone, platformID, stringFormatPipe, utility) {
+        this.errorCallbacks = [];
+        this.initialized = new EventEmitter();
         this.middlewares = {
             post: {},
             pre: {}
@@ -2542,100 +2577,110 @@ export class DataService {
         this.platformID = platformID;
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe);
         this.tools = utility.fixed.tools;
+        this.zone = ngZone;
         const nativeBulkDocs = this.database.prototype.bulkDocs;
         const self = this;
-        this.database.plugin({ bulkDocs: async function (firstParameter, ...parameter) {
-                /*
-                                Implements a generic retry mechanism for "upsert" and "latest"
-                                updates and optionally supports to ignore "NoChange" errors.
-                            */
-                const idName = self.configuration.database.model.property.name.special.id;
-                const revisionName = self.configuration.database.model.property.name.special
-                    .revision;
-                if (!Array.isArray(firstParameter) &&
-                    typeof firstParameter === 'object' &&
-                    firstParameter !== null &&
-                    firstParameter.hasOwnProperty(idName))
-                    firstParameter = [firstParameter];
-                /*
-                                NOTE: "bulkDocs()" does not get constructor given options
-                                if none were provided for a single function call.
-                            */
-                if (parameter.length && typeof parameter[0] !== 'object')
-                    parameter.unshift(this.configuration.database.connector);
-                let result = [];
-                try {
-                    result = await nativeBulkDocs.call(this, firstParameter, ...parameter);
-                }
-                catch (error) {
+        this.database.plugin({ bulkDocs: function (firstParameter, ...parameter) {
+                return __awaiter(this, void 0, void 0, function* () {
                     /*
-                                        NOTE: We retrieve lastest revision in an additional request
-                                        if backend doesn't support the "latest" or "upsert" syntax.
-                                    */
-                    if (error.name === 'bad_request') {
-                        for (const item of firstParameter)
-                            if (['latest', 'upsert'].includes(item[revisionName]))
+                                    Implements a generic retry mechanism for "upsert" and "latest"
+                                    updates and optionally supports to ignore "NoChange" errors.
+                                */
+                    const idName = self.configuration.database.model.property.name.special.id;
+                    const revisionName = self.configuration.database.model.property.name.special
+                        .revision;
+                    if (!Array.isArray(firstParameter) &&
+                        typeof firstParameter === 'object' &&
+                        firstParameter !== null &&
+                        firstParameter.hasOwnProperty(idName))
+                        firstParameter = [firstParameter];
+                    /*
+                                    NOTE: "bulkDocs()" does not get constructor given options
+                                    if none were provided for a single function call.
+                                */
+                    if (self.configuration.database.connector.ajax &&
+                        self.configuration.database.connector.ajax.timeout && (parameter.length === 0 ||
+                        typeof parameter[0] !== 'object'))
+                        parameter.unshift({ timeout: self.configuration.database.connector.ajax.timeout });
+                    let result = [];
+                    try {
+                        result = yield nativeBulkDocs.call(this, firstParameter, ...parameter);
+                    }
+                    catch (error) {
+                        /*
+                                            NOTE: We retrieve lastest revision in an additional request
+                                            if backend doesn't support the "latest" or "upsert" syntax.
+                                        */
+                        if (error.name === 'bad_request') {
+                            for (const item of firstParameter)
+                                if (['latest', 'upsert'].includes(item[revisionName]))
+                                    try {
+                                        item[revisionName] = (yield this.get(item[idName]))[revisionName];
+                                    }
+                                    catch (error) {
+                                        if (error.name === 'not_found')
+                                            delete item[revisionName];
+                                        else
+                                            throw error;
+                                    }
+                            result = yield nativeBulkDocs.call(this, firstParameter, ...parameter);
+                        }
+                        else
+                            throw error;
+                    }
+                    const conflictingIndexes = [];
+                    const conflicts = [];
+                    let index = 0;
+                    for (const item of result) {
+                        if (typeof firstParameter[index] === 'object' &&
+                            firstParameter !== null)
+                            if (revisionName in firstParameter[index] &&
+                                item.name === 'conflict' &&
+                                ['latest', 'upsert'].includes(firstParameter[index][revisionName])) {
+                                conflicts.push(item);
+                                conflictingIndexes.push(index);
+                            }
+                            else if (idName in firstParameter[index] &&
+                                self.configuration.database.ignoreNoChangeError &&
+                                'name' in item &&
+                                item.name === 'forbidden' &&
+                                'message' in item &&
+                                item.message.startsWith('NoChange:')) {
+                                result[index] = {
+                                    id: firstParameter[index][idName],
+                                    ok: true
+                                };
                                 try {
-                                    item[revisionName] = (await this.get(item[idName]))[revisionName];
+                                    result[index].rev =
+                                        revisionName in firstParameter[index] &&
+                                            !['latest', 'upsert'].includes(firstParameter[index][revisionName]) ? firstParameter[index][revisionName] : (yield this.get(result[index].id))[revisionName];
                                 }
                                 catch (error) {
-                                    if (error.name === 'not_found')
-                                        delete item[revisionName];
-                                    else
-                                        throw error;
+                                    throw error;
                                 }
-                        try {
-                            result = await nativeBulkDocs.call(this, firstParameter, ...parameter);
-                        }
-                        catch (error) {
-                            throw error;
-                        }
+                            }
+                        index += 1;
                     }
-                    else
-                        throw error;
-                }
-                const conflictingIndexes = [];
-                const conflicts = [];
-                let index = 0;
-                for (const item of result) {
-                    if (typeof firstParameter[index] === 'object' &&
-                        firstParameter !== null)
-                        if (revisionName in firstParameter[index] &&
-                            item.name === 'conflict' &&
-                            ['latest', 'upsert'].includes(firstParameter[index][revisionName])) {
-                            conflicts.push(item);
-                            conflictingIndexes.push(index);
-                        }
-                        else if (idName in firstParameter[index] &&
-                            self.configuration.database.ignoreNoChangeError &&
-                            'name' in item &&
-                            item.name === 'forbidden' &&
-                            'message' in item &&
-                            item.message.startsWith('NoChange:')) {
-                            result[index] = {
-                                id: firstParameter[index][idName],
-                                ok: true
-                            };
-                            try {
-                                result[index].rev =
-                                    revisionName in firstParameter[index] &&
-                                        !['latest', 'upsert'].includes(firstParameter[index][revisionName]) ? firstParameter[index][revisionName] : (await this.get(result[index].id))[revisionName];
-                            }
-                            catch (error) {
-                                throw error;
-                            }
-                        }
-                    index += 1;
-                }
-                if (conflicts.length) {
-                    firstParameter = conflicts;
-                    const retriedResults = await this.bulkDocs(firstParameter, ...parameter);
-                    for (const retriedResult of retriedResults)
-                        result[conflictingIndexes.shift()] = retriedResult;
-                }
-                return result;
+                    if (conflicts.length) {
+                        firstParameter = conflicts;
+                        const retriedResults = yield this.bulkDocs(firstParameter, ...parameter);
+                        for (const retriedResult of retriedResults)
+                            result[conflictingIndexes.shift()] = retriedResult;
+                    }
+                    return result;
+                });
             } });
         this.database.plugin(PouchDBFindPlugin).plugin(PouchDBValidationPlugin);
+    }
+    /**
+         * Adds an error callback to be triggered on database errors.
+         * @param callback - Function to call on errors.
+         * @returns A boolean indicating if given callback was already attached.
+         */
+    addErrorCallback(callback) {
+        const result = this.removeErrorCallback(callback);
+        this.errorCallbacks.push(callback);
+        return result;
     }
     /**
          * Determines all property names which are indexable in a generic manner.
@@ -2656,139 +2701,125 @@ export class DataService {
          * Initializes database connection and synchronisation if needed.
          * @returns A promise resolving when initialisation has finished.
          */
-    async initialize() {
-        /*
-                    NOTE: We want to allow other services to manipulate the database
-                    constructor and configurations before initializing them.
-                */
-        await this.tools.timeout();
-        if (this.configuration.database.hasOwnProperty('publicURL'))
-            this.configuration.database.url =
-                this.configuration.database.publicURL;
-        for (const plugin of this.configuration.database.plugins)
-            this.database.plugin(plugin);
-        const options = this.extendObject(/* eslint-disable camelcase */
-        true, { skip_setup: true }, /* eslint-enable camelcase */
-        this.configuration.database.connector || {});
-        const databaseName = this.configuration.name || 'generic';
-        if (!(DataService.skipRemoteConnectionOnServer &&
-            isPlatformServer(this.platformID)))
-            this.remoteConnection = new this.database(this.stringFormat(this.configuration.database.url, '') + `/${databaseName}`, options);
-        if (this.configuration.database.local ||
-            DataService.skipRemoteConnectionOnServer &&
-                isPlatformServer(this.platformID))
-            this.connection = new this.database(databaseName, options);
-        else
-            this.connection = this.remoteConnection;
-        // region apply "latest/upsert" and ignore "NoChange" error feature
-        /*
-                    NOTE: A "bulkDocs" plugin does not get called for every "put" and
-                    "post" call so we have to wrap runtime generated methods.
-                */
-        const configuration = this.configuration;
-        const idName = this.configuration.database.model.property.name.special.id;
-        const revisionName = this.configuration.database.model.property.name.special.revision;
-        for (const pluginName of ['post', 'put']) {
-            const nativeMethod = this.connection[pluginName].bind(this.connection);
-            this.connection[pluginName] = async function (firstParameter, secondParameter, ...parameter) {
-                try {
-                    return await nativeMethod(firstParameter, secondParameter, ...parameter);
-                }
-                catch (error) {
-                    const id = (typeof firstParameter === 'object' &&
-                        idName in firstParameter) ? firstParameter[idName] : firstParameter;
-                    if (id &&
-                        configuration.database.ignoreNoChangeError &&
-                        'name' in error &&
-                        error.name === 'forbidden' &&
-                        'message' in error &&
-                        error.message.startsWith('NoChange:')) {
-                        const result = { id, ok: true };
-                        const revision = (typeof secondParameter === 'object' &&
-                            revisionName in secondParameter) ? secondParameter[revisionName] : secondParameter;
-                        try {
-                            result.rev =
-                                revisionName in firstParameter &&
-                                    !['latest', 'upsert'].includes(revision) ? revision : (await this.get(result.id))[revisionName];
-                        }
-                        catch (error) {
-                            throw error;
-                        }
-                        return result;
-                    }
-                    throw error;
-                }
-            };
-        }
-        // endregion
-        // region register interceptor
-        for (const name in this.connection)
-            if (DataService.wrappableMethodNames.includes(name) &&
-                typeof this.connection[name] === 'function') {
-                const method = this.connection[name];
-                this.connection[name] = async (...parameter) => {
-                    const request = { name, parameter };
-                    this.runningRequests.push(request);
-                    this.runningRequestsStream.next(this.runningRequests);
-                    const clear = () => {
-                        const index = this.runningRequests.indexOf(request);
-                        if (index !== -1)
-                            this.runningRequests.splice(index, 1);
+    initialize() {
+        return __awaiter(this, void 0, void 0, function* () {
+            /*
+                        NOTE: We want to allow other services to manipulate the database
+                        constructor and configurations before initializing them.
+                    */
+            yield this.tools.timeout();
+            if (this.configuration.database.hasOwnProperty('publicURL'))
+                this.configuration.database.url =
+                    this.configuration.database.publicURL;
+            for (const plugin of this.configuration.database.plugins)
+                this.database.plugin(plugin);
+            const options = this.extendObject(/* eslint-disable camelcase */
+            true, { skip_setup: true }, /* eslint-enable camelcase */
+            this.configuration.database.connector || {});
+            const databaseName = this.configuration.name || 'generic';
+            if (!(DataService.skipRemoteConnectionOnServer &&
+                isPlatformServer(this.platformID)))
+                this.remoteConnection = new this.database(this.stringFormat(this.configuration.database.url, '') + `/${databaseName}`, options);
+            if (this.configuration.database.local ||
+                DataService.skipRemoteConnectionOnServer &&
+                    isPlatformServer(this.platformID))
+                this.connection = new this.database(databaseName, options);
+            else
+                this.connection = this.remoteConnection;
+            this.connection.installValidationMethods();
+            // region observe database changes stream error
+            const nativeChangesMethod = this.connection.changes;
+            this.connection.changes = (...parameter) => {
+                /*
+                                NOTE: We log a changes stream as running request if its is
+                                expected to finish at last after expected data is given.
+                            */
+                let track = false;
+                if (parameter.length &&
+                    typeof parameter[0] === 'object' &&
+                    parameter[0] !== null && (!parameter[0].live ||
+                    typeof parameter[0].since === 'number' &&
+                        parameter[0].since < 2))
+                    track = true;
+                const changesStream = nativeChangesMethod.apply(this.connection, parameter);
+                const clear = track ? () => {
+                    if (!track)
+                        return;
+                    track = false;
+                    const index = this.runningRequests.indexOf(changesStream);
+                    if (index !== -1) {
+                        this.runningRequests.splice(index, 1);
                         this.runningRequestsStream.next(this.runningRequests);
-                    };
-                    for (const methodName of [name, '_all'])
-                        if (this.middlewares.pre.hasOwnProperty(methodName))
-                            for (const interceptor of this.middlewares.pre[methodName]) {
-                                parameter = interceptor.apply(this.connection, parameter.concat(methodName === '_all' ? name : []));
-                                if ('then' in parameter)
-                                    try {
-                                        parameter = await parameter;
-                                    }
-                                    catch (error) {
-                                        clear();
-                                        throw error;
-                                    }
-                            }
-                    request.wrappedParameter = parameter;
-                    const action = (context = this.connection, givenParameter = parameter) => method.apply(context, givenParameter);
-                    let result = action();
-                    for (const methodName of [name, '_all'])
-                        if (this.middlewares.post.hasOwnProperty(methodName))
-                            for (const interceptor of this.middlewares.post[methodName]) {
-                                result = interceptor.call(this.connection, result, action, ...parameter.concat(methodName === '_all' ? name : []));
-                                if ('then' in result)
-                                    try {
-                                        result = await result;
-                                    }
-                                    catch (error) {
-                                        clear();
-                                        throw error;
-                                    }
-                            }
-                    if ('then' in result)
+                    }
+                } : this.tools.noop;
+                if (track) {
+                    this.runningRequests.push(changesStream);
+                    this.runningRequestsStream.next(this.runningRequests);
+                    changesStream.on('change', clear);
+                    changesStream.on('complete', clear);
+                }
+                changesStream.on('error', (...parameter) => {
+                    clear();
+                    // NOTE: Spread parameter does not satisfy typescript.
+                    /* eslint-disable prefer-spread */
+                    return this.triggerErrorCallbacks.apply(this, parameter.concat(changesStream));
+                    /* eslint-disable prefer-spread */
+                });
+                return changesStream;
+            };
+            // endregion
+            // region apply "latest/upsert" and ignore "NoChange" error feature
+            /*
+                        NOTE: A "bulkDocs" plugin does not get called for every "put" and
+                        "post" call so we have to wrap runtime generated methods.
+                    */
+            const configuration = this.configuration;
+            const idName = this.configuration.database.model.property.name.special.id;
+            const revisionName = this.configuration.database.model.property.name.special.revision;
+            for (const pluginName of ['post', 'put']) {
+                const nativeMethod = this.connection[pluginName].bind(this.connection);
+                this.connection[pluginName] = function (firstParameter, secondParameter, ...parameter) {
+                    return __awaiter(this, void 0, void 0, function* () {
                         try {
-                            result = await result;
+                            return yield nativeMethod(firstParameter, secondParameter, ...parameter);
                         }
                         catch (error) {
-                            clear();
+                            const id = (typeof firstParameter === 'object' &&
+                                idName in firstParameter) ? firstParameter[idName] : firstParameter;
+                            if (id &&
+                                configuration.database.ignoreNoChangeError &&
+                                'name' in error &&
+                                error.name === 'forbidden' &&
+                                'message' in error &&
+                                error.message.startsWith('NoChange:')) {
+                                const result = { id, ok: true };
+                                const revision = (typeof secondParameter === 'object' &&
+                                    revisionName in secondParameter) ? secondParameter[revisionName] : secondParameter;
+                                try {
+                                    result.rev =
+                                        revisionName in firstParameter &&
+                                            !['latest', 'upsert'].includes(revision) ? revision : (yield this.get(result.id))[revisionName];
+                                }
+                                catch (error) {
+                                    throw error;
+                                }
+                                return result;
+                            }
                             throw error;
                         }
-                    clear();
-                    return result;
+                    });
                 };
             }
-        this.connection.installValidationMethods();
-        // endregion
-        if (!(DataService.skipGenericIndexManagementOnServer &&
-            isPlatformServer(this.platformID)) && this.configuration.database.createGenericFlatIndex &&
-            this.connection !== this.remoteConnection) {
-            // region create/remove needed/unneeded generic indexes
-            for (const modelName in this.configuration.database.model.entities)
-                if (this.configuration.database.model.entities.hasOwnProperty(modelName) && (new RegExp(this.configuration.database.model.property.name
-                    .typeRegularExpressionPattern.public)).test(modelName))
-                    for (const name of DataService.determineGenericIndexablePropertyNames(this.configuration.database.model, this.configuration.database.model.entities[modelName]))
-                        try {
-                            await this.connection.createIndex({ index: {
+            // endregion
+            if (!(DataService.skipGenericIndexManagementOnServer &&
+                isPlatformServer(this.platformID)) && this.configuration.database.createGenericFlatIndex &&
+                this.connection !== this.remoteConnection) {
+                // region create/remove needed/unneeded generic indexes
+                for (const modelName in this.configuration.database.model.entities)
+                    if (this.configuration.database.model.entities.hasOwnProperty(modelName) && (new RegExp(this.configuration.database.model.property.name
+                        .typeRegularExpressionPattern.public)).test(modelName))
+                        for (const name of DataService.determineGenericIndexablePropertyNames(this.configuration.database.model, this.configuration.database.model.entities[modelName]))
+                            yield this.connection.createIndex({ index: {
                                     ddoc: `${modelName}-${name}-GenericIndex`,
                                     fields: [
                                         this.configuration.database.model
@@ -2797,39 +2828,101 @@ export class DataService {
                                     ],
                                     name: `${modelName}-${name}-GenericIndex`
                                 } });
-                        }
-                        catch (error) {
-                            throw error;
-                        }
-            let indexes;
-            try {
-                indexes = (await this.connection.getIndexes()).indexes;
+                let indexes;
+                indexes = (yield this.connection.getIndexes()).indexes;
+                for (const index of indexes)
+                    if (index.name.endsWith('-GenericIndex')) {
+                        let exists = false;
+                        for (const modelName in this.configuration.database.model.entities)
+                            if (index.name.startsWith(`${modelName}-`)) {
+                                for (const name of DataService
+                                    .determineGenericIndexablePropertyNames(this.configuration.database.model, this.configuration.database.model.entities[modelName]))
+                                    if (index.name ===
+                                        `${modelName}-${name}-GenericIndex`)
+                                        exists = true;
+                                break;
+                            }
+                        if (!exists)
+                            yield this.connection.deleteIndex(index);
+                    }
+                // endregion
             }
-            catch (error) {
-                throw error;
-            }
-            for (const index of indexes)
-                if (index.name.endsWith('-GenericIndex')) {
-                    let exists = false;
-                    for (const modelName in this.configuration.database.model.entities)
-                        if (index.name.startsWith(`${modelName}-`)) {
-                            for (const name of DataService
-                                .determineGenericIndexablePropertyNames(this.configuration.database.model, this.configuration.database.model.entities[modelName]))
-                                if (index.name ===
-                                    `${modelName}-${name}-GenericIndex`)
-                                    exists = true;
-                            break;
-                        }
-                    if (!exists)
-                        try {
-                            await this.connection.deleteIndex(index);
-                        }
-                        catch (error) {
-                            throw error;
-                        }
-                }
+            // region register interceptor and apply zones to database interactions
+            for (const name of DataService.wrappableMethodNames)
+                for (const connection of [this.connection].concat(!this.remoteConnection ||
+                    this.connection === this.remoteConnection ?
+                    [] :
+                    this.remoteConnection))
+                    if (typeof connection[name] === 'function') {
+                        const method = connection[name];
+                        connection[name] = (...parameter) => this.zone.run(() => __awaiter(this, void 0, void 0, function* () {
+                            const request = { name, parameter, wrappedParameter: parameter };
+                            this.runningRequests.push(request);
+                            this.runningRequestsStream.next(this.runningRequests);
+                            const clear = () => {
+                                const index = this.runningRequests.indexOf(request);
+                                if (index !== -1) {
+                                    this.runningRequests.splice(index, 1);
+                                    this.runningRequestsStream.next(this.runningRequests);
+                                }
+                            };
+                            for (const methodName of [name, '_all'])
+                                if (this.middlewares.pre.hasOwnProperty(methodName))
+                                    for (const interceptor of this.middlewares.pre[methodName]) {
+                                        let wrappedParameter = interceptor.apply(connection, request.wrappedParameter.concat(methodName === '_all' ?
+                                            name :
+                                            []));
+                                        if (wrappedParameter) {
+                                            if ('then' in wrappedParameter)
+                                                try {
+                                                    wrappedParameter =
+                                                        yield wrappedParameter;
+                                                }
+                                                catch (error) {
+                                                    clear();
+                                                    throw error;
+                                                }
+                                            if (Array.isArray(wrappedParameter))
+                                                request.wrappedParameter =
+                                                    wrappedParameter;
+                                        }
+                                    }
+                            const action = (context = connection, givenParameter = request.wrappedParameter) => method.apply(context, givenParameter);
+                            let result;
+                            try {
+                                result = action();
+                            }
+                            catch (error) {
+                                yield this.triggerErrorCallbacks(error, result, action);
+                            }
+                            for (const methodName of [name, '_all'])
+                                if (this.middlewares.post.hasOwnProperty(methodName))
+                                    for (const interceptor of this.middlewares.post[methodName]) {
+                                        result = interceptor.call(connection, result, action, ...request.wrappedParameter.concat(methodName === '_all' ? name : []));
+                                        if ('then' in result)
+                                            try {
+                                                result = yield result;
+                                            }
+                                            catch (error) {
+                                                clear();
+                                                yield this.triggerErrorCallbacks(error, result, action);
+                                            }
+                                    }
+                            if ('then' in result)
+                                try {
+                                    result = yield result;
+                                }
+                                catch (error) {
+                                    clear();
+                                    yield this.triggerErrorCallbacks(error, result, action);
+                                }
+                            clear();
+                            return result;
+                        }));
+                    }
             // endregion
-        }
+            this.initialized.emit(this.connection);
+        });
     }
     /**
          * Creates a database index.
@@ -2868,10 +2961,12 @@ export class DataService {
          * @param options - Options to use during selecting items.
          * @returns A promise with resulting array of retrieved resources.
          */
-    async find(selector, options = {}) {
-        return (await this.connection.find(this.extendObject(true, {
-            selector
-        }, options))).docs;
+    find(selector, options = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return (yield this.connection.find(this.extendObject(true, {
+                selector
+            }, options))).docs;
+        });
     }
     /**
          * Retrieves a resource by id.
@@ -2879,17 +2974,19 @@ export class DataService {
          * pouchdb's "get()" method.
          * @returns Whatever pouchdb's method returns.
          */
-    async get(...parameter) {
-        const idName = this.configuration.database.model.property.name.special.id;
-        const revisionName = this.configuration.database.model.property.name.special.revision;
-        const result = await this.connection.get(...parameter);
-        if (LAST_KNOWN_DATA.data.hasOwnProperty(result[idName]) &&
-            parameter.length > 1 && (this.equals(parameter[1], { rev: 'latest' }) ||
-            this.equals(parameter[1], { latest: true }) ||
-            this.equals(parameter[1], { latest: true, rev: 'latest' })) &&
-            parseInt(result[revisionName].match(DataService.revisionNumberRegularExpression)[1]) < parseInt(LAST_KNOWN_DATA.data[result[idName]][revisionName].match(DataService.revisionNumberRegularExpression)[1]))
-            return LAST_KNOWN_DATA.data[result[idName]];
-        return result;
+    get(...parameter) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const idName = this.configuration.database.model.property.name.special.id;
+            const revisionName = this.configuration.database.model.property.name.special.revision;
+            const result = yield this.connection.get(...parameter);
+            if (LAST_KNOWN_DATA.data.hasOwnProperty(result[idName]) &&
+                parameter.length > 1 && (this.equals(parameter[1], { rev: 'latest' }) ||
+                this.equals(parameter[1], { latest: true }) ||
+                this.equals(parameter[1], { latest: true, rev: 'latest' })) &&
+                parseInt(result[revisionName].match(DataService.revisionNumberRegularExpression)[1]) < parseInt(LAST_KNOWN_DATA.data[result[idName]][revisionName].match(DataService.revisionNumberRegularExpression)[1]))
+                return LAST_KNOWN_DATA.data[result[idName]];
+            return result;
+        });
     }
     /**
          * Retrieves an attachment by given id.
@@ -2964,63 +3061,109 @@ export class DataService {
         return this.connection.removeAttachment(...parameter);
     }
     /**
+         * Removes given error callback.
+         * @param callback - Function to remove.
+         * @returns A boolean indicating if given callback was registered.
+         */
+    removeErrorCallback(callback) {
+        const index = this.errorCallbacks.indexOf(callback);
+        if (index !== -1) {
+            this.errorCallbacks.splice(index, 1);
+            return true;
+        }
+        return false;
+    }
+    /**
          * Starts synchronisation between a local and remote database.
          * @returns A promise if a synchronisation has been started and is in sync
          * with remote database or null if no stream was initialized due to
          * corresponding database configuration.
          */
-    async startSynchronisation() {
-        if (this.configuration.database.local &&
-            this.remoteConnection &&
-            this.synchronisation === null) {
-            let resolved = false;
-            return await new Promise((resolve, reject) => {
-                this.synchronisation = this.connection.sync(this.remoteConnection, { live: true, retry: true })
-                    .on('change', (info) => console.info('change', info))
-                    .on('paused', () => {
-                    if (!resolved) {
-                        resolved = true;
-                        resolve(this.synchronisation);
-                    }
-                    console.info('paused');
-                })
-                    .on('active', () => console.info('active'))
-                    .on('denied', (error) => {
-                    if (!resolved) {
-                        resolved = true;
-                        reject({ name: 'denied', error });
-                    }
-                    console.warn('denied', error);
-                })
-                    .on('complete', (info) => console.info('complete', info))
-                    .on('error', (error) => {
-                    if (!resolved) {
-                        resolved = true;
-                        reject({ name: 'error', error });
-                    }
-                    console.error('error', error);
+    startSynchronisation() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.configuration.database.local &&
+                this.remoteConnection &&
+                this.synchronisation === null) {
+                let resolved = false;
+                return yield new Promise((resolve, reject) => {
+                    this.synchronisation = this.connection.sync(this.remoteConnection, { live: true, retry: true })
+                        .on('change', (info) => console.info('change', info))
+                        .on('paused', () => {
+                        if (!resolved) {
+                            resolved = true;
+                            resolve(this.synchronisation);
+                        }
+                        console.info('paused');
+                    })
+                        .on('active', () => console.info('active'))
+                        .on('denied', (error) => {
+                        if (!resolved) {
+                            resolved = true;
+                            reject({ name: 'denied', error });
+                        }
+                        console.warn('denied', error);
+                    })
+                        .on('complete', (info) => console.info('complete', info))
+                        .on('error', (error) => {
+                        if (!resolved) {
+                            resolved = true;
+                            reject({ name: 'error', error });
+                        }
+                        console.error('error', error);
+                    });
                 });
-            });
-        }
-        return null;
+            }
+            return null;
+        });
     }
     /**
          * Stop a current running data synchronisation.
          * @returns A boolean indicating whether a synchronisation was really
          * stopped or there were none.
          */
-    async stopSynchronisation() {
-        if (this.synchronisation) {
-            const promise = new Promise((resolve, reject) => {
-                this.synchronisation.on('complete', resolve);
-                this.synchronisation.on('error', reject);
-            });
-            this.synchronisation.cancel();
-            await promise;
-            this.synchronisation = null;
-            return true;
-        }
-        return false;
+    stopSynchronisation() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.synchronisation) {
+                const promise = new Promise((resolve, reject) => {
+                    this.synchronisation.on('complete', resolve);
+                    this.synchronisation.on('error', reject);
+                });
+                this.synchronisation.cancel();
+                yield promise;
+                this.synchronisation = null;
+                return true;
+            }
+            return false;
+        });
+    }
+    /**
+         * Triggers registered error callbacks with given error in given changes
+         * stream context.
+         * @param error - Error which has been occurred.
+         * @param parameter - Additional arguments provided with given error.
+         * @returns A Promise resolving when all asynchrone error handler have done
+         * their work.
+         */
+    triggerErrorCallbacks(error, ...parameter) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let result = null;
+            for (const callback of this.errorCallbacks) {
+                let localResult = callback(error, ...parameter);
+                if (typeof localResult === 'object' &&
+                    localResult !== null &&
+                    'then' in localResult)
+                    localResult = yield localResult;
+                if (typeof localResult === 'boolean')
+                    result = localResult;
+            }
+            if (result === true || result === null && !(error.hasOwnProperty('name') &&
+                error.name === 'unauthorized' ||
+                error.hasOwnProperty('error') &&
+                    error.error === 'unauthorized' ||
+                error.code === 'ETIMEDOUT' ||
+                error.status === 0))
+                throw error;
+        });
     }
 }
 // NOTE: Native regular expression definition is not allowed here.
@@ -3048,6 +3191,7 @@ DataService.ctorParameters = () => [
     { type: EqualsPipe, },
     { type: ExtendObjectPipe, },
     { type: InitialDataService, },
+    { type: NgZone, },
     { type: undefined, decorators: [{ type: Inject, args: [PLATFORM_ID,] },] },
     { type: StringFormatPipe, },
     { type: UtilityService, },
@@ -3110,62 +3254,64 @@ export class DataScopeService {
          * be included.
          * @returns A promise wrapping requested data.
          */
-    async determine(modelName, id = null, propertyNames = null, revision = 'latest', revisionHistory = false) {
-        let data = {};
-        if (id) {
-            const options = {};
-            if (revision === 'latest') {
-                options.latest = true;
-                if (revisionHistory)
-                    /* eslint-disable camelcase */
-                    options.revs_info = true;
-                /* eslint-enable camelcase */
-            }
-            else
-                options.rev = revision;
-            try {
-                data = await this.data.get(id, options);
-            }
-            catch (error) {
-                throw new Error(`Document with given id "${id}" and revision "` +
-                    `${revision}" isn't available: ` + (('message' in error) ? error.message : this.representObject(error)));
-            }
-            if (revisionHistory) {
-                const revisionsInformationName = this.configuration.database.model.property.name.special
-                    .revisionsInformation;
-                let revisions;
-                let latestData = null;
-                if (revision !== 'latest') {
-                    delete options.rev;
-                    /* eslint-disable camelcase */
-                    options.revs_info = true;
+    determine(modelName, id = null, propertyNames = null, revision = 'latest', revisionHistory = false) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let data = {};
+            if (id) {
+                const options = {};
+                if (revision === 'latest') {
+                    options.latest = true;
+                    if (revisionHistory)
+                        /* eslint-disable camelcase */
+                        options.revs_info = true;
                     /* eslint-enable camelcase */
-                    try {
-                        latestData = await this.data.get(id, options);
-                    }
-                    catch (error) {
-                        throw new Error(`Document with given id "${id}" and revision "` +
-                            `${revision}" isn't available: ` + (('message' in error) ? error.message :
-                            this.representObject(error)));
-                    }
-                    revisions = latestData[revisionsInformationName];
-                    delete latestData[revisionsInformationName];
                 }
                 else
-                    revisions = data[revisionsInformationName];
-                data[revisionsInformationName] = {};
-                let first = true;
-                for (const item of revisions)
-                    if (item.status === 'available') {
-                        data[revisionsInformationName][first ? 'latest' : item.rev] = { revision: item.rev };
-                        first = false;
+                    options.rev = revision;
+                try {
+                    data = yield this.data.get(id, options);
+                }
+                catch (error) {
+                    throw new Error(`Document with given id "${id}" and revision "` +
+                        `${revision}" isn't available: ` + (('message' in error) ? error.message : this.representObject(error)));
+                }
+                if (revisionHistory) {
+                    const revisionsInformationName = this.configuration.database.model.property.name.special
+                        .revisionsInformation;
+                    let revisions;
+                    let latestData = null;
+                    if (revision !== 'latest') {
+                        delete options.rev;
+                        /* eslint-disable camelcase */
+                        options.revs_info = true;
+                        /* eslint-enable camelcase */
+                        try {
+                            latestData = yield this.data.get(id, options);
+                        }
+                        catch (error) {
+                            throw new Error(`Document with given id "${id}" and revision "` +
+                                `${revision}" isn't available: ` + (('message' in error) ? error.message :
+                                this.representObject(error)));
+                        }
+                        revisions = latestData[revisionsInformationName];
+                        delete latestData[revisionsInformationName];
                     }
-                if (latestData)
-                    data[revisionsInformationName].latest.scope =
-                        this.generate(modelName, propertyNames, latestData);
+                    else
+                        revisions = data[revisionsInformationName];
+                    data[revisionsInformationName] = {};
+                    let first = true;
+                    for (const item of revisions)
+                        if (item.status === 'available') {
+                            data[revisionsInformationName][first ? 'latest' : item.rev] = { revision: item.rev };
+                            first = false;
+                        }
+                    if (latestData)
+                        data[revisionsInformationName].latest.scope =
+                            this.generate(modelName, propertyNames, latestData);
+                }
             }
-        }
-        return this.generate(modelName, propertyNames, data);
+            return this.generate(modelName, propertyNames, data);
+        });
     }
     /**
          * Determines a nested specification object for given property name and
@@ -3207,11 +3353,11 @@ export class DataScopeService {
                     result[name] = {};
                     for (const fileType in modelSpecification[name])
                         if (modelSpecification[name].hasOwnProperty(fileType))
-                            result[name][fileType] = this.extendObject(true, this.tools.copyLimitedRecursively(this.configuration.database.model
+                            result[name][fileType] = this.extendObject(true, this.tools.copy(this.configuration.database.model
                                 .property.defaultSpecification), modelSpecification[name][fileType]);
                 }
                 else {
-                    result[name] = this.extendObject(true, this.tools.copyLimitedRecursively(this.configuration.database.model.property
+                    result[name] = this.extendObject(true, this.tools.copy(this.configuration.database.model.property
                         .defaultSpecification), modelSpecification[name]);
                     if (this.configuration.database.model.entities
                         .hasOwnProperty(result[name].type))
@@ -3244,19 +3390,16 @@ export class DataScopeService {
             propertyNames = Object.keys(specification).filter((key) => typeof specification[key] === 'object' &&
                 typeof specification[key] !== null &&
                 !Array.isArray(specification[key]));
-            propertyNames = propertyNames.concat(Object.keys(data).filter((name
-                // IgnoreTypeCheck
-            ) => !propertyNames.concat(reservedNames).includes(name)));
+            propertyNames = propertyNames.concat(Object.keys(data).filter((name) => !propertyNames.concat(reservedNames).includes(name)));
         }
         const result = {};
         for (const name of propertyNames) {
             if (propertyNamesToIgnore.includes(name))
                 continue;
             if (specification.hasOwnProperty(name))
-                result[name] = this.tools.copyLimitedRecursively(specification[name]);
+                result[name] = this.tools.copy(specification[name]);
             else
-                result[name] = this.tools.copyLimitedRecursively(('additional' in specialNames &&
-                    specialNames.additional) ? specification[specialNames.additional] : {});
+                result[name] = this.tools.copy(('additional' in specialNames && specialNames.additional) ? specification[specialNames.additional] : {});
             const now = new Date();
             const nowUTCTimestamp = this.numberGetUTCTimestamp(now);
             if (name === specialNames.attachment) {
@@ -3304,8 +3447,7 @@ export class DataScopeService {
                         if (!fileFound &&
                             result[name][type].hasOwnProperty('default') &&
                             ![undefined, null].includes(result[name][type].default))
-                            result[name][type].value =
-                                this.tools.copyLimitedRecursively({}, result[name][type].default);
+                            result[name][type].value = this.tools.copy({}, result[name][type].default);
                     }
             }
             else {
@@ -3345,7 +3487,7 @@ export class DataScopeService {
                     result[name].value = data[name];
                 else if (result[name].hasOwnProperty('default') &&
                     ![undefined, null].includes(result[name].default))
-                    result[name].value = this.tools.copyLimitedRecursively(result[name].default);
+                    result[name].value = this.tools.copy(result[name].default);
                 else if (result[name].hasOwnProperty('selection') &&
                     Array.isArray(result[name].selection) &&
                     result[name].selection.length)
@@ -3396,6 +3538,47 @@ DataScopeService.ctorParameters = () => [
     { type: RepresentObjectPipe, },
     { type: UtilityService, },
 ];
+// IgnoreTypeCheck
+/**
+ * Registers each request in the data requests list to track number of running
+ * transactions.
+ * @property data - Data service instance.
+ */
+export class RegisterHTTPRequestInterceptor {
+    /**
+         * Registers needed service instances as instance properties.
+         * @param data - Injected data service instance.
+         * @returns Nothing.
+         */
+    constructor(data) {
+        this.data = data;
+    }
+    /**
+         * Intercepts each request to perform request registration and
+         * un-registration.
+         * @param request - Request to register.
+         * @param next - Interceptor chain.
+         * @returns Result of the interceptor chain.
+         */
+    intercept(request, next) {
+        this.data.runningRequests.push(request);
+        this.data.runningRequestsStream.next(this.data.runningRequests);
+        const unregister = () => {
+            const index = this.data.runningRequests.indexOf(request);
+            if (index !== -1)
+                this.data.runningRequests.splice(index, 1);
+            this.data.runningRequestsStream.next(this.data.runningRequests);
+        };
+        return next.handle(request).do(unregister, unregister);
+    }
+}
+RegisterHTTPRequestInterceptor.decorators = [
+    { type: Injectable },
+];
+/** @nocollapse */
+RegisterHTTPRequestInterceptor.ctorParameters = () => [
+    { type: DataService, },
+];
 // / region abstract
 // IgnoreTypeCheck
 /**
@@ -3404,18 +3587,12 @@ DataScopeService.ctorParameters = () => [
  * @property static:skipResolvingOnServer - Indicates whether to skip resolving
  * data on server contexts.
  *
- * @property cache - Indicates whether retrieved resources should be cached.
- * @property cacheStore - Saves cached items.
- * @property changesStream - Changes stream to invalidate cache store.
  * @property convertCircularObjectToJSON - Saves convert circular object to
  * json's pipe transform method.
  * @property data - Holds currently retrieved data.
  * @property databaseBaseURL - Determined database base url.
  * @property databaseURL - Determined database url.
  * @property domSanitizer - Dom sanitizer service instance.
- * @property deepCopyItems - Indicates whether each item should be copied from
- * cache. Defaults to "true" to avoid errors but could have avoidable impact
- * on performance for large data sets.
  * @property escapeRegularExpressions - Holds the escape regular expressions's
  * pipe transformation method.
  * @property extendObject - Holds the extend object's pipe transformation
@@ -3449,10 +3626,7 @@ export class AbstractResolver {
          * @returns Nothing.
          */
     constructor(injector) {
-        this.cache = true;
-        this.cacheStore = {};
         this.databaseURLCache = {};
-        this.deepCopyItems = true;
         this.messageConfiguration = new MatSnackBarConfig();
         this.relevantKeys = null;
         this.relevantSearchKeys = null;
@@ -3479,25 +3653,6 @@ export class AbstractResolver {
         this.representObject = get(RepresentObjectPipe).transform.bind(get(RepresentObjectPipe));
         this.specialNames = get(InitialDataService).configuration.database.model.property.name.special;
         this.tools = get(UtilityService).fixed.tools;
-        if (this.cache) {
-            const initialize = this.tools.debounce(() => {
-                if (this.changesStream)
-                    this.changesStream.cancel();
-                this.changesStream = this.data.connection.changes(this.extendObject(true, {}, { since: 'now' }, AbstractLiveDataComponent.defaultLiveUpdateOptions, /* eslint-disable camelcase */
-                { include_docs: false }
-                /* eslint-enable camelcase */
-                ));
-                this.changesStream.on('change', () => {
-                    this.cacheStore = {};
-                });
-                this.changesStream.on('error', initialize);
-            }, 3000);
-            /*
-                            NOTE: We have to break out of the "zone.js" since long polling
-                            seems to confuse its mocked environment.
-                        */
-            this.tools.timeout(initialize);
-        }
     }
     /**
          * Determines item specific database url by given item data object.
@@ -3521,10 +3676,10 @@ export class AbstractResolver {
          * @param additionalSelector - Custom filter criteria.
          * @returns A promise wrapping retrieved data.
          */
-    async list(sort = [{
-                [InitialDataService.defaultScope.configuration.database.model
-                    .property.name.special.id]: 'asc'
-            }], page = 1, limit = 10, searchTerm = '', additionalSelector = {}) {
+    list(sort = [{
+            [InitialDataService.defaultScope.configuration.database.model
+                .property.name.special.id]: 'asc'
+        }], page = 1, limit = 10, searchTerm = '', additionalSelector = {}) {
         if (!this.relevantSearchKeys) {
             this.relevantSearchKeys =
                 DataService.determineGenericIndexablePropertyNames(this.modelConfiguration, this.modelConfiguration.entities[this.type]);
@@ -3559,18 +3714,7 @@ export class AbstractResolver {
             delete options.skip;
         if (sort.length)
             options.sort = [this.specialNames.type].concat(sort).map((item) => Object.values(item)[0] === 'asc' ? Object.keys(item)[0] : item);
-        this.extendObject(true, selector, additionalSelector);
-        if (this.cache) {
-            const key = this.convertCircularObjectToJSON({
-                selector, options
-            });
-            if (!this.cacheStore.hasOwnProperty(key))
-                this.cacheStore[key] = await this.data.find(selector, options);
-            if (this.deepCopyItems)
-                return this.tools.copyLimitedRecursively(this.cacheStore[key]);
-            return this.cacheStore[key].slice();
-        }
-        return await this.data.find(selector, options);
+        return this.data.find(this.extendObject(true, selector, additionalSelector), options);
     }
     /**
          * Removes given item.
@@ -3629,24 +3773,26 @@ export class AbstractResolver {
          * @param message - Message to should if process was successfully.
          * @returns A boolean indicating if requested update was successful.
          */
-    async update(item, data, message = '') {
-        const newData = data ? this.extendObject({
-            [this.specialNames.id]: (typeof item[this.specialNames.id] === 'object') ? item[this.specialNames.id].value :
-                item[this.specialNames.id],
-            [this.specialNames.revision]: 'latest',
-            [this.specialNames.type]: item[this.specialNames.type]
-        }, data) : item;
-        try {
-            item[this.specialNames.revision] =
-                (await this.data.put(newData)).rev;
-        }
-        catch (error) {
-            this.message('message' in error ? error.message : this.representObject(error));
-            return false;
-        }
-        if (message)
-            this.message(message);
-        return true;
+    update(item, data, message = '') {
+        return __awaiter(this, void 0, void 0, function* () {
+            const newData = data ? this.extendObject({
+                [this.specialNames.id]: (typeof item[this.specialNames.id] === 'object') ? item[this.specialNames.id].value :
+                    item[this.specialNames.id],
+                [this.specialNames.revision]: 'latest',
+                [this.specialNames.type]: item[this.specialNames.type]
+            }, data) : item;
+            try {
+                item[this.specialNames.revision] =
+                    (yield this.data.put(newData)).rev;
+            }
+            catch (error) {
+                this.message('message' in error ? error.message : this.representObject(error));
+                return false;
+            }
+            if (message)
+                this.message(message);
+            return true;
+        });
     }
 }
 AbstractResolver.skipResolvingOnServer = true;
@@ -3673,7 +3819,6 @@ export function dataServiceInitializerFactory(data, initialData, injector) {
             NOTE: We need this statement here to avoid having an ugly typescript
             error.
         */
-    // TODO remove if corresponding aot bug is fixed.
     2;
     return () => {
         InitialDataService.injectors.add(injector);
@@ -3860,6 +4005,7 @@ AbstractNativeInputComponent.ctorParameters = () => [
  * @property _data - Data service instance.
  * @property _extendObject - Extend object pipe's transformation method.
  * @property _liveUpdateOptions - Options for database observation.
+ * @property _platformID - Platform identification string.
  * @property _stringCapitalize - String capitalize pipe transformation
  * function.
  * @property _tools - Holds the tools class from the tools service.
@@ -3877,9 +4023,9 @@ export class AbstractLiveDataComponent {
         this._canceled = false;
         this._liveUpdateOptions = {};
         const get = determineInjector(injector, this, this.constructor);
-        this._changeDetectorReference = get(ChangeDetectorRef);
         this._data = get(DataService);
         this._extendObject = get(ExtendObjectPipe).transform.bind(get(ExtendObjectPipe));
+        this._platformID = get(PLATFORM_ID);
         this._stringCapitalize = get(StringCapitalizePipe).transform.bind(get(StringCapitalizePipe));
         this._tools = get(UtilityService).fixed.tools;
     }
@@ -3888,10 +4034,14 @@ export class AbstractLiveDataComponent {
          * @returns Nothing.
          */
     ngOnInit() {
+        if (isPlatformServer(this._platformID))
+            return;
         const initialize = this._tools.debounce(() => {
+            if (this._changesStream)
+                this._changesStream.cancel();
             this._changesStream = this._data.connection.changes(this._extendObject(true, {}, { since: LAST_KNOWN_DATA.sequence }, AbstractLiveDataComponent.defaultLiveUpdateOptions, this._liveUpdateOptions));
             for (const type of ['change', 'complete', 'error'])
-                this._changesStream.on(type, async (action) => {
+                this._changesStream.on(type, (action) => __awaiter(this, void 0, void 0, function* () {
                     if (this._canceled)
                         return;
                     if (type === 'change') {
@@ -3906,18 +4056,20 @@ export class AbstractLiveDataComponent {
                     if (result !== null &&
                         typeof result === 'object' &&
                         'then' in result)
-                        result = await result;
-                    if (result)
-                        this._changeDetectorReference.detectChanges();
-                    if (type === 'error' && this.autoRestartOnError)
-                        initialize();
-                });
+                        result = yield result;
+                    if (type === 'error')
+                        if (action.hasOwnProperty('name') &&
+                            action.name === 'unauthorized' ||
+                            action.hasOwnProperty('error') &&
+                                action.error === 'unauthorized') {
+                            if (this._changesStream)
+                                this._changesStream.cancel();
+                        }
+                        else if (this.autoRestartOnError)
+                            initialize();
+                }));
         }, 3000);
-        /*
-                    NOTE: We have to break out of the "zone.js" since long polling
-                    seems to confuse its mocked environment.
-                */
-        this._tools.timeout(initialize);
+        initialize();
     }
     /**
          * Marks current live data observation as canceled and closes initially
@@ -4089,7 +4241,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
          * @returns Given function wrapped.
          */
     changeItemWrapperFactory(callback) {
-        return async (...parameter) => {
+        return (...parameter) => __awaiter(this, void 0, void 0, function* () {
             let update = true;
             const subscription = this._router.events.subscribe((event) => {
                 if (event instanceof NavigationEnd) {
@@ -4102,11 +4254,11 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
             if (typeof result === 'object' &&
                 result !== null &&
                 'then' in result)
-                await result;
+                yield result;
             if (update)
-                await this.update(true);
+                yield this.update(true);
             return result;
-        };
+        });
     }
     /**
          * Clear all currently selected items.
@@ -4162,11 +4314,10 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     }
     /**
          * Unsubscribes all subscriptions when this component should be disposed.
-         * @param parameter - List of all parameter to forward to super method.
          * @returns Returns the super values return value.
          */
-    ngOnDestroy(...parameter) {
-        const result = super.ngOnDestroy(...parameter);
+    ngOnDestroy() {
+        const result = super.ngOnDestroy();
         for (const subscription of this._subscriptions)
             subscription.unsubscribe();
         return result;
@@ -4184,11 +4335,15 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
     /**
          * Determines an items content specific hash value combined from id and
          * revision.
+         * @param index - Current index of current item in list.
          * @param item - Item with id and revision property.
          * @returns Indicator string.
          */
-    trackByIDAndRevision(item) {
-        return `${item[this.idName]}/${item[this.revisionName]}`;
+    trackByIDAndRevision(index, item) {
+        let id = item[this.idName];
+        if (typeof id === 'object' && id !== null && id.hasOwnProperty('value'))
+            id = id.value;
+        return `${id}/${item[this.revisionName]}`;
     }
     /**
          * Applies current filter criteria to current visible item set.
@@ -4196,38 +4351,40 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent {
          * a changed list of available items is expected for example.
          * @returns A boolean indicating whether route change was successful.
          */
-    async update(reload = false) {
-        let result = false;
-        await this._toolsInstance.acquireLock(`${this.constructor.name}Update`);
-        if (!this.navigateAway) {
-            this.applyPageConstraints();
-            if (reload && parseInt(this._currentParameter.page) !== 0)
-                /*
-                                    NOTE: Will be normalised to "1" after route reload (hack to
-                                    enforce route reloading).
-                                */
-                this.page = 0;
-            let sort = '';
-            for (const name in this.sort)
-                if (this.sort.hasOwnProperty(name)) {
-                    sort += `${sort ? ',' : ''}${name}`;
-                    if (this.sort[name] !== 'asc')
-                        sort += `-${this.sort[name]}`;
-                }
-            result = await this._router.navigate([
-                this._itemsPath, sort, this.page, this.limit,
-                `${this.regularExpression ? 'regex' : 'exact'}-` +
-                    encodeURIComponent(this.searchTerm)
-            ], {
-                preserveFragment: true,
-                replaceUrl: parseInt(this._currentParameter.page) === 0,
-                skipLocationChange: this.page === 0
-            });
-            if (result)
-                this.allItemsChecked = false;
-        }
-        this._toolsInstance.releaseLock(`${this.constructor.name}Update`);
-        return result;
+    update(reload = false) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let result = false;
+            yield this._toolsInstance.acquireLock(`${this.constructor.name}Update`);
+            if (!this.navigateAway) {
+                this.applyPageConstraints();
+                if (reload && parseInt(this._currentParameter.page) !== 0)
+                    /*
+                                        NOTE: Will be normalised to "1" after route reload (hack to
+                                        enforce route reloading).
+                                    */
+                    this.page = 0;
+                let sort = '';
+                for (const name in this.sort)
+                    if (this.sort.hasOwnProperty(name)) {
+                        sort += `${sort ? ',' : ''}${name}`;
+                        if (this.sort[name] !== 'asc')
+                            sort += `-${this.sort[name]}`;
+                    }
+                result = yield this._router.navigate([
+                    this._itemsPath, sort, this.page, this.limit,
+                    `${this.regularExpression ? 'regex' : 'exact'}-` +
+                        encodeURIComponent(this.searchTerm)
+                ], {
+                    preserveFragment: true,
+                    replaceUrl: parseInt(this._currentParameter.page) === 0,
+                    skipLocationChange: this.page === 0
+                });
+                if (result)
+                    this.allItemsChecked = false;
+            }
+            this._toolsInstance.releaseLock(`${this.constructor.name}Update`);
+            return result;
+        });
     }
     /**
          * Applies current search term to the search term stream.
@@ -4280,34 +4437,28 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
     /**
          * Needed implementation for an angular control value accessor.
          * @param callback - Callback function to register.
-         * @param additionalParameter - Additional parameter will be forwarded to
-         * inherited super method.
          * @returns What inherited method returns.
          */
-    registerOnChange(callback, ...additionalParameter) {
-        this.onChangeCallback = (value, ...additionalParameter) => callback(this.import(value), ...additionalParameter);
-        return super.registerOnChange(this.onChangeCallback, ...additionalParameter);
+    registerOnChange(callback) {
+        this.onChangeCallback = (value) => callback(this.import(value));
+        return super.registerOnChange(this.onChangeCallback);
     }
     /**
          * Needed implementation for an angular control value accessor.
          * @param callback - Callback function to register.
-         * @param additionalParameter - Additional parameter will be forwarded to
-         * inherited super method.
          * @returns What inherited method returns.
          */
-    registerOnTouched(callback, ...additionalParameter) {
+    registerOnTouched(callback) {
         this.onTouchedCallback = callback;
-        return super.registerOnTouched(this.onTouchedCallback, ...additionalParameter);
+        return super.registerOnTouched(this.onTouchedCallback);
     }
     /**
          * Overridden inherited function for value export.
          * @param value - Value to export.
-         * @param additionalParameter - Additional arguments will be forwarded to
-         * the overridden method invocation.
          * @returns The transformed give value.
          */
-    writeValue(value, ...additionalParameter) {
-        return super.writeValue(this.export(value, ...additionalParameter), ...additionalParameter);
+    writeValue(value) {
+        return super.writeValue(this.export(value));
     }
 }
 AbstractValueAccessor.propDecorators = {
@@ -4322,6 +4473,7 @@ AbstractValueAccessor.propDecorators = {
  * @property dateFormatter - Angular's date pipe transformation method.
  * @property extendObject - Extend object pipe's transform method.
  * @property options - Given formatting and update options.
+ * @property platformID - Platform identification string.
  * @property templateReference - Reference to given template.
  * @property timerID - Interval id to cancel it on destroy life cycle hook.
  * @property viewContainerReference - View container reference to embed
@@ -4332,11 +4484,12 @@ export class DateDirective {
          * Saves injected services as instance properties.
          * @param datePipe - Injected date pipe service instance.
          * @param extendObjectPipe - Injected extend object pipe service instance.
+         * @param platformID - Platform specific identifier.
          * @param templateReference - Specified template reference.
          * @param viewContainerReference - Injected view container reference.
          * @returns Nothing.
          */
-    constructor(datePipe, extendObjectPipe, templateReference, viewContainerReference) {
+    constructor(datePipe, extendObjectPipe, platformID, templateReference, viewContainerReference) {
         this.options = {
             dateTime: 'now',
             format: 'HH:mm:ss',
@@ -4345,6 +4498,7 @@ export class DateDirective {
         };
         this.dateFormatter = datePipe.transform.bind(datePipe);
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe);
+        this.platformID = platformID;
         this.templateReference = templateReference;
         this.viewContainerReference = viewContainerReference;
     }
@@ -4394,12 +4548,13 @@ export class DateDirective {
          * @returns Nothing.
          */
     ngOnInit() {
-        this.timerID = setInterval(() => {
-            if (!this.options.freeze) {
-                this.viewContainerReference.remove();
-                this.insert();
-            }
-        }, this.options.updateIntervalInMilliseconds);
+        if (isPlatformBrowser(this.platformID))
+            this.timerID = setInterval(() => {
+                if (!this.options.freeze) {
+                    this.viewContainerReference.remove();
+                    this.insert();
+                }
+            }, this.options.updateIntervalInMilliseconds);
         this.insert();
     }
 }
@@ -4410,6 +4565,7 @@ DateDirective.decorators = [
 DateDirective.ctorParameters = () => [
     { type: DatePipe, },
     { type: ExtendObjectPipe, },
+    { type: undefined, decorators: [{ type: Inject, args: [PLATFORM_ID,] },] },
     { type: TemplateRef, },
     { type: ViewContainerRef, },
 ];
@@ -4422,6 +4578,7 @@ DateDirective.propDecorators = {
  * @property extendObject - Extend object's pipe transform method.
  * @property index - Index of currently selected content.
  * @property options - Sliding options.
+ * @property platformID - Platform identification string.
  * @property templateReference - Content element template to slide.
  * @property timerID - Timer id of next content switch.
  * @property viewContainerReference - View container reference to inject
@@ -4431,11 +4588,12 @@ export class SliderDirective {
     /**
          * Saves injected services as instance properties.
          * @param extendObjectPipe - Injected extend object pipe service instance.
+         * @param platformID - Platform identification string.
          * @param templateReference - Specified template reference.
          * @param viewContainerReference - Injected view container reference.
          * @returns Nothing.
          */
-    constructor(extendObjectPipe, templateReference, viewContainerReference) {
+    constructor(extendObjectPipe, platformID, templateReference, viewContainerReference) {
         this.index = 0;
         this.options = {
             freeze: false,
@@ -4445,6 +4603,7 @@ export class SliderDirective {
             updateIntervalInMilliseconds: 6000
         };
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe);
+        this.platformID = platformID;
         this.templateReference = templateReference;
         this.viewContainerReference = viewContainerReference;
     }
@@ -4498,17 +4657,18 @@ export class SliderDirective {
          * @returns Nothing.
          */
     ngOnInit() {
-        this.timerID = setInterval(() => {
-            const newIndex = (this.index + this.options.step) %
-                this.options.slides.length;
-            if (this.options.freeze !== true &&
-                newIndex !== this.index && !(typeof this.options.freeze === 'number' &&
-                this.options.freeze >= this.options.slides.length)) {
-                this.viewContainerReference.remove();
-                this.index = this.getNextIndex();
-                this.update();
-            }
-        }, this.options.updateIntervalInMilliseconds);
+        if (isPlatformBrowser(this.platformID))
+            this.timerID = setInterval(() => {
+                const newIndex = (this.index + this.options.step) %
+                    this.options.slides.length;
+                if (this.options.freeze !== true &&
+                    newIndex !== this.index && !(typeof this.options.freeze === 'number' &&
+                    this.options.freeze >= this.options.slides.length)) {
+                    this.viewContainerReference.remove();
+                    this.index = this.getNextIndex();
+                    this.update();
+                }
+            }, this.options.updateIntervalInMilliseconds);
         this.index = this.options.startIndex;
         this.update();
     }
@@ -4519,6 +4679,7 @@ SliderDirective.decorators = [
 /** @nocollapse */
 SliderDirective.ctorParameters = () => [
     { type: ExtendObjectPipe, },
+    { type: undefined, decorators: [{ type: Inject, args: [PLATFORM_ID,] },] },
     { type: TemplateRef, },
     { type: ViewContainerRef, },
 ];
@@ -5004,7 +5165,6 @@ IntervalsInputComponent.decorators = [
         >+</a>
         <ng-template #fallback>--</ng-template>
     `
-                /* eslint-enable max-len */
             },] },
 ];
 /** @nocollapse */
@@ -5089,43 +5249,38 @@ export class AbstractEditorComponent extends AbstractValueAccessor {
          * Initializes the code editor element.
          * @returns Nothing.
          */
-    async ngAfterViewInit() {
-        if (!this.factory)
-            if (this.fixedUtility.globalContext[this.factoryName])
-                this.factory =
-                    this.fixedUtility.globalContext[this.factoryName];
-            else if (AbstractEditorComponent.factories[this.factoryName])
-                this.factory = AbstractEditorComponent.factories[this.factoryName];
-        if (this.factory) {
-            AbstractEditorComponent.factories[this.factoryName] = this.factory;
-            /*
-                            NOTE: We have to do a dummy timeout to avoid an event emit in
-                            first initializing call stack.
-                        */
-            await this.fixedUtility.tools.timeout();
-        }
-        else {
-            try {
-                await AbstractEditorComponent.applicationInterfaceLoad[this.factoryName];
+    ngAfterViewInit() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.factory)
+                if (this.fixedUtility.globalContext[this.factoryName])
+                    this.factory =
+                        this.fixedUtility.globalContext[this.factoryName];
+                else if (AbstractEditorComponent.factories[this.factoryName])
+                    this.factory = AbstractEditorComponent.factories[this.factoryName];
+            if (this.factory) {
+                AbstractEditorComponent.factories[this.factoryName] = this.factory;
+                /*
+                                NOTE: We have to do a dummy timeout to avoid an event emit in
+                                first initializing call stack.
+                            */
+                yield this.fixedUtility.tools.timeout();
             }
-            catch (error) {
-                throw error;
+            else {
+                yield AbstractEditorComponent.applicationInterfaceLoad[this.factoryName];
+                AbstractEditorComponent.factories[this.factoryName] = this.factory;
             }
-            AbstractEditorComponent.factories[this.factoryName] = this.factory;
-        }
+        });
     }
     /**
          * Synchronizes given value into internal code mirror instance.
          * @param value - Given value to set in code editor.
-         * @param additionalParameter - Additional arguments will be forwarded to
-         * the overridden method invocation.
          * @returns What inherited method returns.
          */
-    export(value, ...additionalParameter) {
+    export(value) {
         this.model = [null, undefined].includes(value) ? '' : value.toString();
         if (this.instance)
             this.instance[this.contentSetterMethodName](this.model);
-        return super.export(value, ...additionalParameter);
+        return super.export(value);
     }
     /**
          * Triggers disabled state changes.
@@ -5200,16 +5355,11 @@ export class CodeEditorComponent extends AbstractEditorComponent {
                     NOTE: "await super.ngAfterViewInit()" is not supported by
                     transpiler yet.
                 */
-        return super.ngAfterViewInit().then(async () => {
+        return super.ngAfterViewInit().then(() => __awaiter(this, void 0, void 0, function* () {
             if (this.configuration.mode)
                 if (CodeEditorComponent.modesLoad.hasOwnProperty(this.configuration.mode)) {
                     if (CodeEditorComponent.modesLoad[this.configuration.mode] !== true)
-                        try {
-                            await CodeEditorComponent.modesLoad[this.configuration.mode];
-                        }
-                        catch (error) {
-                            throw error;
-                        }
+                        yield CodeEditorComponent.modesLoad[this.configuration.mode];
                 }
                 else {
                     CodeEditorComponent.modesLoad[this.configuration.mode] =
@@ -5221,12 +5371,7 @@ export class CodeEditorComponent extends AbstractEditorComponent {
                             url: this.configuration.path.base +
                                 this.configuration.path.mode.replace(/{mode}/g, this.configuration.mode)
                         }));
-                    try {
-                        await CodeEditorComponent.modesLoad[this.configuration.mode];
-                    }
-                    catch (error) {
-                        throw error;
-                    }
+                    yield CodeEditorComponent.modesLoad[this.configuration.mode];
                 }
             const configuration = this.extendObject({}, this.configuration, { readOnly: this.disabled });
             delete configuration.path;
@@ -5239,7 +5384,7 @@ export class CodeEditorComponent extends AbstractEditorComponent {
             });
             this.instance.on('focus', (instance, event) => this.focus.emit(event));
             this.initialized.emit(this.instance);
-        });
+        }));
     }
     /**
          * Triggers disabled state changes.
@@ -5749,12 +5894,10 @@ export class TextareaComponent extends AbstractNativeInputComponent {
     }
     /**
          * Triggers after input values have been resolved.
-         * @param additionalParameter - Additional arguments will be forwarded to
-         * the overridden method invocation.
          * @returns Nothing.
          */
-    ngOnInit(...additionalParameter) {
-        super.ngOnInit(...additionalParameter);
+    ngOnInit() {
+        super.ngOnInit();
         if (this.editor === null && this.model.editor)
             this.editor = this.model.editor;
         if (typeof this.editor === 'string') {
@@ -5787,13 +5930,11 @@ export class TextareaComponent extends AbstractNativeInputComponent {
                     /* eslint-disable max-len */
                     toolbar1: 'cut copy paste | undo redo removeformat | bold italic underline strikethrough subscript superscript | fullscreen',
                     toolbar2: false
-                    /* eslint-enable max-len */
                 };
             else if (this.editor === 'normal')
                 this.editor = {
                     /* eslint-disable max-len */
                     toolbar1: 'cut copy paste | undo redo removeformat | styleselect formatselect | searchreplace visualblocks fullscreen code'
-                    /* eslint-enable max-len */
                 };
             else
                 // Advanced editor.
@@ -6043,59 +6184,88 @@ export class FileInputComponent {
                 this.file.type = 'binary';
     }
     /**
+         * Includes given error in current error state object.
+         * @param errors - Errors to apply in state.
+         * @returns Nothing.
+         */
+    updateErrorState(errors = null) {
+        let currentErrors = this.model[this.attachmentTypeName][this.internalName].state.errors;
+        if (errors) {
+            if (!currentErrors)
+                currentErrors = this.model[this.attachmentTypeName][this.internalName].state.errors = {};
+            for (const name in errors)
+                if (errors[name])
+                    currentErrors[name] = errors[name];
+                else if (currentErrors.hasOwnProperty(name))
+                    delete currentErrors[name];
+            if (Object.keys(currentErrors).length === 0)
+                delete this.model[this.attachmentTypeName][this.internalName].state.errors;
+        }
+        else if (currentErrors)
+            delete this.model[this.attachmentTypeName][this.internalName].state.errors;
+    }
+    /**
          * Initializes file upload handler.
          * @param changes - Holds informations about changed bound properties.
          * @returns Nothing.
          */
-    async ngOnChanges(changes) {
-        if (typeof this.model[this.idName] === 'object')
-            this._idIsObject = true;
-        if (changes.hasOwnProperty('mapNameToField') && this.mapNameToField && !Array.isArray(this.mapNameToField))
-            this.mapNameToField = [this.mapNameToField];
-        if (changes.hasOwnProperty('model') || changes.hasOwnProperty('name')) {
-            this.internalName = this._getFilenameByPrefix(this.model[this.attachmentTypeName], this.name);
-            if (this.name && this.internalName &&
-                this.internalName !== this.name)
-                this._prefixMatch = true;
-            this.model[this.attachmentTypeName][this.internalName].state = {};
-            this.file = this.model[this.attachmentTypeName][this.internalName].value;
-            if (this.file)
-                this.file.initialName = this.file.name;
-            else if (!this.model[this.attachmentTypeName][this.internalName].nullable)
-                this.model[this.attachmentTypeName][this.internalName].state.errors = { required: true };
-        }
-        if (changes.hasOwnProperty('model') ||
-            changes.hasOwnProperty('name') ||
-            changes.hasOwnProperty('revision')) {
-            if (this.file) {
-                this.file.query = `?version=${this.file.digest}`;
-                /*
-                                    NOTE: Only set new file source if isn't already present to
-                                    prevent to download an immediately uploaded file and grab
-                                    and older cached one.
-                                */
-                if (!this.file.source) {
-                    const id = this._idIsObject ? this.model[this.idName].value : this.model[this.idName];
-                    if (this.revision &&
-                        changes.revision.currentValue !==
-                            changes.revision.previousValue)
-                        try {
-                            await this.retrieveAttachment(id, { rev: this.revision });
-                        }
-                        catch (error) {
-                            this.model[this.attachmentTypeName][this.internalName].state.errors.database = ('message' in error) ? error.message : this._representObject(error);
-                            return;
-                        }
-                    else
-                        this.file.source =
-                            this._domSanitizer.bypassSecurityTrustResourceUrl(this._stringFormat(this.configuration.database.url, '') + '/' + (this.configuration.name || 'generic') + `/${id}/${this.file.name}` +
-                                this.file.query);
+    ngOnChanges(changes) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (typeof this.model[this.idName] === 'object')
+                this._idIsObject = true;
+            if (changes.hasOwnProperty('mapNameToField') && this.mapNameToField && !Array.isArray(this.mapNameToField))
+                this.mapNameToField = [this.mapNameToField];
+            if (changes.hasOwnProperty('model') || changes.hasOwnProperty('name')) {
+                this.internalName = this._getFilenameByPrefix(this.model[this.attachmentTypeName], this.name);
+                if (this.name && this.internalName &&
+                    this.internalName !== this.name)
+                    this._prefixMatch = true;
+                this.model[this.attachmentTypeName][this.internalName].state = {};
+                this.file = this.model[this.attachmentTypeName][this.internalName].value;
+                if (this.file) {
+                    this.file.initialName = this.file.name;
+                    this.updateErrorState({ required: null });
                 }
+                else if (!this.model[this.attachmentTypeName][this.internalName].nullable)
+                    this.updateErrorState({ required: true });
+                else
+                    this.updateErrorState({ required: null });
             }
-            this.determinePresentationType();
-            this.modelChange.emit(this.model);
-            this.fileChange.emit(this.file);
-        }
+            if (changes.hasOwnProperty('model') ||
+                changes.hasOwnProperty('name') ||
+                changes.hasOwnProperty('revision')) {
+                if (this.file) {
+                    this.file.query = `?version=${this.file.digest}`;
+                    /*
+                                        NOTE: Only set new file source if isn't already present to
+                                        prevent to download an immediately uploaded file and grab
+                                        and older cached one.
+                                    */
+                    if (!this.file.source) {
+                        const id = this._idIsObject ? this.model[this.idName].value : this.model[this.idName];
+                        if (this.revision &&
+                            changes.revision.currentValue !==
+                                changes.revision.previousValue)
+                            try {
+                                yield this.retrieveAttachment(id, { rev: this.revision });
+                            }
+                            catch (error) {
+                                this.updateErrorState({ database: ('message' in error) ? error.message : this._representObject(error) });
+                                this.modelChange.emit(this.model);
+                                return;
+                            }
+                        else
+                            this.file.source =
+                                this._domSanitizer.bypassSecurityTrustResourceUrl(this._stringFormat(this.configuration.database.url, '') + '/' + (this.configuration.name || 'generic') + `/${id}/${this.file.name}` +
+                                    this.file.query);
+                        this.updateErrorState({ database: null });
+                    }
+                }
+                this.determinePresentationType();
+                this.modelChange.emit(this.model);
+                this.fileChange.emit(this.file);
+            }
+        });
     }
     /**
          * Initializes current file input field. Adds needed event observer.
@@ -6143,43 +6313,48 @@ export class FileInputComponent {
          * @returns A Promise which will be resolved after current file will be
          * removed.
          */
-    async remove() {
-        if (this.synchronizeImmediately && this.file) {
-            let result;
-            const update = {
-                [this.typeName]: this.model[this.typeName],
-                [this.idName]: this._idIsObject ? this.model[this.idName].value : this.model[this.idName],
-                [this.revisionName]: this.model[this.revisionName]
-            };
-            if (this.oneDocumentPerFileMode)
-                update[this.deletedName] = true;
-            else
-                update[this.attachmentTypeName] = { [this.file.name]: {
-                        /* eslint-disable camelcase */
-                        content_type: 'text/plain',
-                        /* eslint-enable camelcase */
-                        data: null
-                    } };
-            try {
-                result = await this._data.put(update);
+    remove() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.synchronizeImmediately && this.file) {
+                let result;
+                const update = {
+                    [this.typeName]: this.model[this.typeName],
+                    [this.idName]: this._idIsObject ? this.model[this.idName].value : this.model[this.idName],
+                    [this.revisionName]: this.model[this.revisionName]
+                };
+                if (this.oneDocumentPerFileMode)
+                    update[this.deletedName] = true;
+                else
+                    update[this.attachmentTypeName] = { [this.file.name]: {
+                            /* eslint-disable camelcase */
+                            content_type: 'text/plain',
+                            /* eslint-enable camelcase */
+                            data: null
+                        } };
+                try {
+                    result = yield this._data.put(update);
+                }
+                catch (error) {
+                    this.updateErrorState({ database: ('message' in error) ? error.message : this._representObject(error) });
+                    this.modelChange.emit(this.model);
+                    return;
+                }
+                this.updateErrorState({ database: null });
+                if (this.mapNameToField && this.mapNameToField.includes(this.idName))
+                    this.delete.emit(result);
+                else
+                    this.model[this.revisionName] = result.rev;
             }
-            catch (error) {
-                this.model[this.attachmentTypeName][this.internalName].state.errors = { database: ('message' in error) ? error.message : this._representObject(error) };
-                return;
-            }
-            if (this.mapNameToField && this.mapNameToField.includes(this.idName))
-                this.delete.emit(result);
+            this.model[this.attachmentTypeName][this.internalName].state.errors =
+                this.model[this.attachmentTypeName][this.internalName].value =
+                    this.file = null;
+            if (this.model[this.attachmentTypeName][this.internalName].nullable)
+                this.updateErrorState({ required: null });
             else
-                this.model[this.revisionName] = result.rev;
-        }
-        this.model[this.attachmentTypeName][this.internalName].state.errors =
-            this.model[this.attachmentTypeName][this.internalName].value =
-                this.file = null;
-        if (!this.model[this.attachmentTypeName][this.internalName].nullable)
-            this.model[this.attachmentTypeName][this.internalName].state
-                .errors = { required: true };
-        this.modelChange.emit(this.model);
-        this.fileChange.emit(this.file);
+                this.updateErrorState({ required: true });
+            this.modelChange.emit(this.model);
+            this.fileChange.emit(this.file);
+        });
     }
     /**
          * Renames current file.
@@ -6187,20 +6362,25 @@ export class FileInputComponent {
          * @returns A Promise which will be resolved after current file will be
          * renamed.
          */
-    async rename(name) {
-        const id = this._idIsObject ? this.model[this.idName].value : this.model[this.idName];
-        const oldName = this.file.name;
-        if (this.file.stub && this.mapNameToField && id &&
-            this.mapNameToField.includes(this.idName))
-            try {
-                await this.retrieveAttachment(id);
+    rename(name) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const id = this._idIsObject ? this.model[this.idName].value : this.model[this.idName];
+            const oldName = this.file.name;
+            if (this.file.stub && this.mapNameToField && id &&
+                this.mapNameToField.includes(this.idName)) {
+                try {
+                    yield this.retrieveAttachment(id);
+                }
+                catch (error) {
+                    this.updateErrorState({ database: ('message' in error) ? error.message : this._representObject(error) });
+                    this.modelChange.emit(this.model);
+                    return;
+                }
+                this.updateErrorState({ database: null });
             }
-            catch (error) {
-                this.model[this.attachmentTypeName][this.internalName].state.errors = { database: ('message' in error) ? error.message : this._representObject(error) };
-                return;
-            }
-        this.file.name = name;
-        return this.update(oldName);
+            this.file.name = name;
+            return this.update(oldName);
+        });
     }
     /**
          * Retrieves current attachment with given document id and converts them
@@ -6209,169 +6389,167 @@ export class FileInputComponent {
          * @param options - Options to use for the attachment retrieving.
          * @returns A promise which resolves if requested attachment was retrieved.
          */
-    async retrieveAttachment(id, options = {}) {
-        const file = await this._data.getAttachment(id, this.file.name, options);
-        this.file = {
-            /* eslint-disable camelcase */
-            content_type: file.type || 'text/plain',
-            /* eslint-enable camelcase */
-            data: typeof Blob === 'undefined' ?
-                file.toString('base64') :
-                await require('blob-util').blobToBase64String(file),
-            length: file.size,
-            name: this.file.name
-        };
-        this.file.source = this._domSanitizer.bypassSecurityTrustResourceUrl(`data:${this.file.content_type};base64,${this.file.data}`);
+    retrieveAttachment(id, options = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const file = yield this._data.getAttachment(id, this.file.name, options);
+            this.file = {
+                /* eslint-disable camelcase */
+                content_type: file.type || 'text/plain',
+                /* eslint-enable camelcase */
+                data: typeof Blob === 'undefined' ?
+                    file.toString('base64') : yield blobToBase64String(file),
+                length: file.size,
+                name: this.file.name
+            };
+            this.file.source = this._domSanitizer.bypassSecurityTrustResourceUrl(`data:${this.file.content_type};base64,${this.file.data}`);
+        });
     }
     /**
-         * Updates given current file into database (replaces if old name is
-         * given).
+         * Uploads current file into database (replaces if old name is given).
          * @param oldName - Name of saved file to update or replace.
          * @returns A Promise which will be resolved after current file will be
          * synchronized.
          */
-    async update(oldName) {
-        this.model[this.attachmentTypeName][this.internalName].state = {};
-        if (this._prefixMatch) {
-            const lastIndex = this.file.name.lastIndexOf('.');
-            if ([0, -1].includes(lastIndex))
-                this.file.name = this.name;
-            else
-                this.file.name = this.name + this.file.name.substring(lastIndex);
-        }
-        this.model[this.attachmentTypeName][this.internalName].value = this.file;
-        // region determine errors
-        if (!this.model[this.attachmentTypeName][this.internalName].state.errors)
-            this.model[this.attachmentTypeName][this.internalName].state.errors = {};
-        if (!(new RegExp(this.internalName)).test(this.file.name))
-            this.model[this.attachmentTypeName][this.internalName].state.errors = { name: true };
-        if (!([undefined, null].includes(this.model[this.attachmentTypeName][this.internalName].contentTypeRegularExpressionPattern) || (new RegExp(this.model[this.attachmentTypeName][this.internalName].contentTypeRegularExpressionPattern)).test(this.file.content_type)))
-            this.model[this.attachmentTypeName][this.internalName].state.errors.contentType = true;
-        if (!([undefined, null].includes(this.model[this.attachmentTypeName][this.internalName].minimumSize) || this.model[this.attachmentTypeName][this.internalName].minimumSize <= this.file.length))
-            this.model[this.attachmentTypeName][this.internalName].state.errors.minimuSize = true;
-        if (!([undefined, null].includes(this.model[this.attachmentTypeName][this.internalName].maximumSize) || this.model[this.attachmentTypeName][this.internalName].maximumSize >= this.file.length))
-            this.model[this.attachmentTypeName][this.internalName].state.errors.maximumSize = true;
-        if (Object.keys(this.model[this.attachmentTypeName][this.internalName].state.errors).length === 0)
-            delete this.model[this.attachmentTypeName][this.internalName]
-                .state.errors;
-        else {
-            let message = 'There was encountered an error during uploading file "' +
-                `${this.file.name}": `;
-            for (const name in this.model[this.attachmentTypeName][this.internalName].state.errors)
-                if (this.model[this.attachmentTypeName][this.internalName].state.errors.hasOwnProperty(name))
-                    message += (`\n${name} - ` + this.template(this[{
-                        contentType: 'typePatternText',
-                        maximumSize: 'maximumSizeText',
-                        minimumSize: 'minimumSizeText',
-                        name: 'namePatternText',
-                        required: 'requiredText'
-                    }[name]], {
-                        attachmentTypeName: this.attachmentTypeName,
-                        file: this.file,
-                        internalName: this.internalName,
-                        model: this.model[this.attachmentTypeName][this.internalName]
-                    }));
-            this.abstractResolver.message(message);
-        }
-        // endregion
-        if (this.synchronizeImmediately && !this.model[this.attachmentTypeName][this.internalName].state.errors) {
-            let newData = {
-                [this.typeName]: this.model[this.typeName],
-                [this.idName]: this._idIsObject ? this.model[this.idName].value : this.model[this.idName]
-            };
-            if (this.synchronizeImmediately !== null &&
-                typeof this.synchronizeImmediately === 'object') {
-                const data = {};
-                for (const name in this.synchronizeImmediately)
-                    if (this.synchronizeImmediately.hasOwnProperty(name))
-                        data[name] = this.template(this.synchronizeImmediately[name], this.file);
-                this._extendObject(true, newData, data);
+    update(oldName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.model[this.attachmentTypeName][this.internalName].state = {};
+            if (this._prefixMatch) {
+                const lastIndex = this.file.name.lastIndexOf('.');
+                if ([0, -1].includes(lastIndex))
+                    this.file.name = this.name;
+                else
+                    this.file.name = this.name + this.file.name.substring(lastIndex);
             }
-            let id = this._idIsObject ? this.model[this.idName].value : this.model[this.idName];
-            // NOTE: We want to replace old medium.
-            if (oldName && oldName !== this.file.name && !(this.mapNameToField && id &&
-                this.mapNameToField.includes(this.idName)))
-                newData[this.attachmentTypeName] = { [oldName]: { data: null } };
-            if (![undefined, null].includes(this.model[this.revisionName]))
-                newData[this.revisionName] = this.model[this.revisionName];
-            const tasks = [];
-            if (this.mapNameToField) {
-                if (id && id !== this.file.name &&
-                    this.mapNameToField.includes(this.idName)) {
-                    newData[this.deletedName] = true;
-                    tasks.unshift(newData);
-                    newData = this._extendObject(true, {}, newData, { [this.deletedName]: false });
+            this.model[this.attachmentTypeName][this.internalName].value = this.file;
+            // region determine errors
+            this.updateErrorState({
+                name: !(new RegExp(this.internalName)).test(this.file.name),
+                contentType: !([undefined, null].includes(this.model[this.attachmentTypeName][this.internalName].contentTypeRegularExpressionPattern) || (new RegExp(this.model[this.attachmentTypeName][this.internalName].contentTypeRegularExpressionPattern)).test(this.file.content_type)),
+                minimumSize: !([undefined, null].includes(this.model[this.attachmentTypeName][this.internalName].minimumSize) || this.model[this.attachmentTypeName][this.internalName].minimumSize <= this.file.length),
+                maximumSize: !([undefined, null].includes(this.model[this.attachmentTypeName][this.internalName].maximumSize) || this.model[this.attachmentTypeName][this.internalName].maximumSize >= this.file.length)
+            });
+            // endregion
+            if (this.model[this.attachmentTypeName][this.internalName].state.errors) {
+                let message = 'There was encountered an error during uploading file "' +
+                    `${this.file.name}": `;
+                for (const name in this.model[this.attachmentTypeName][this.internalName].state.errors)
+                    if (this.model[this.attachmentTypeName][this.internalName].state.errors.hasOwnProperty(name))
+                        message += (`\n${name} - ` + this.template(this[{
+                            contentType: 'typePatternText',
+                            maximumSize: 'maximumSizeText',
+                            minimumSize: 'minimumSizeText',
+                            name: 'namePatternText',
+                            required: 'requiredText'
+                        }[name]], {
+                            attachmentTypeName: this.attachmentTypeName,
+                            file: this.file,
+                            internalName: this.internalName,
+                            model: this.model[this.attachmentTypeName][this.internalName]
+                        }));
+                this.abstractResolver.message(message);
+            }
+            else if (this.synchronizeImmediately) {
+                let newData = {
+                    [this.typeName]: this.model[this.typeName],
+                    [this.idName]: this._idIsObject ? this.model[this.idName].value : this.model[this.idName]
+                };
+                if (this.synchronizeImmediately !== null &&
+                    typeof this.synchronizeImmediately === 'object') {
+                    const data = {};
+                    for (const name in this.synchronizeImmediately)
+                        if (this.synchronizeImmediately.hasOwnProperty(name))
+                            data[name] = this.template(this.synchronizeImmediately[name], this.file);
+                    this._extendObject(true, newData, data);
                 }
-                for (const name of this.mapNameToField) {
-                    newData[name] = this.file.name;
-                    if (name === this.idName && this._idIsObject)
-                        this.model[name].value = this.file.name;
-                    else
-                        this.model[name] = this.file.name;
+                let id = this._idIsObject ? this.model[this.idName].value : this.model[this.idName];
+                // NOTE: We want to replace old medium.
+                if (oldName && oldName !== this.file.name && !(this.mapNameToField && id &&
+                    this.mapNameToField.includes(this.idName)))
+                    newData[this.attachmentTypeName] = { [oldName]: { data: null } };
+                if (![undefined, null].includes(this.model[this.revisionName]))
+                    newData[this.revisionName] = this.model[this.revisionName];
+                const tasks = [];
+                if (this.mapNameToField) {
+                    if (id && id !== this.file.name &&
+                        this.mapNameToField.includes(this.idName)) {
+                        newData[this.deletedName] = true;
+                        tasks.unshift(newData);
+                        newData = this._extendObject(true, {}, newData, { [this.deletedName]: false });
+                    }
+                    for (const name of this.mapNameToField) {
+                        newData[name] = this.file.name;
+                        if (name === this.idName && this._idIsObject)
+                            this.model[name].value = this.file.name;
+                        else
+                            this.model[name] = this.file.name;
+                    }
                 }
-            }
-            newData[this.revisionName] = 'upsert';
-            newData[this.attachmentTypeName] = { [this.file.name]: {
-                    /* eslint-disable camelcase */
-                    content_type: this.file.content_type,
-                    /* eslint-enable camelcase */
-                    data: this.file.data
-                } };
-            tasks.unshift(newData);
-            let result;
-            try {
-                result = await this._data.bulkDocs(tasks);
-            }
-            catch (error) {
-                this.model[this.attachmentTypeName][this.internalName].state.errors = { database: ('message' in error) ? error.message : this._representObject(error) };
-                if (this.autoMessages)
-                    this.abstractResolver.message('Database has encountered an error during uploading ' +
-                        `file "${this.file.name}": ` +
-                        this.model[this.attachmentTypeName][this.internalName].state.errors.database);
-                return;
-            }
-            id = newData[this.idName];
-            let revision;
-            for (const item of result) {
-                if (item.error) {
-                    this.model[this.attachmentTypeName][this.internalName].state.errors = { database: item.message };
+                newData[this.revisionName] = 'upsert';
+                newData[this.attachmentTypeName] = { [this.file.name]: {
+                        /* eslint-disable camelcase */
+                        content_type: this.file.content_type,
+                        /* eslint-enable camelcase */
+                        data: this.file.data
+                    } };
+                tasks.unshift(newData);
+                let result;
+                try {
+                    result = yield this._data.bulkDocs(tasks);
+                }
+                catch (error) {
+                    this.updateErrorState({ database: ('message' in error) ? error.message : this._representObject(error) });
                     if (this.autoMessages)
-                        this.abstractResolver.message('Database has encountered an error during ' +
-                            `uploading file "${this.file.name}": ` +
-                            item.message);
+                        this.abstractResolver.message('Database has encountered an error during uploading ' +
+                            `file "${this.file.name}": ` +
+                            this.model[this.attachmentTypeName][this.internalName].state.errors.database);
+                    this.modelChange.emit(this.model);
                     return;
                 }
-                if (item.id === id)
-                    revision = item.rev;
-            }
-            if (this.file) {
-                this.file.revision = this.model[this.revisionName] = revision;
-                this.file.query = `?rev=${revision}`;
-                this.file.source =
-                    this._domSanitizer.bypassSecurityTrustResourceUrl(this._stringFormat(this.configuration.database.url, '') + `/${this.configuration.name}/${id}/` +
-                        `${this.file.name}${this.file.query}`);
-                this.determinePresentationType();
-            }
-            if (this.autoMessages)
-                this.abstractResolver.message(`Uploading file ${this.file.name} was succesful.`);
-            this.modelChange.emit(this.model);
-            this.fileChange.emit(this.file);
-        }
-        else if (this.file.data) {
-            this.determinePresentationType();
-            const fileReader = new FileReader();
-            fileReader.onload = (event) => {
-                this.file.digest = (new Date()).getTime();
-                this.file.source =
-                    this._domSanitizer.bypassSecurityTrustResourceUrl(event.target['result']);
-                if (this.mapNameToField)
-                    for (const name of this.mapNameToField)
-                        this.model[name] = this.file.name;
+                id = newData[this.idName];
+                let revision;
+                for (const item of result) {
+                    if (item.error) {
+                        this.updateErrorState({ database: item.message });
+                        if (this.autoMessages)
+                            this.abstractResolver.message('Database has encountered an error during ' +
+                                `uploading file "${this.file.name}": ` +
+                                item.message);
+                        this.modelChange.emit(this.model);
+                        return;
+                    }
+                    if (item.id === id)
+                        revision = item.rev;
+                }
+                this.updateErrorState({ database: null });
+                if (this.file) {
+                    this.file.revision = this.model[this.revisionName] = revision;
+                    this.file.query = `?rev=${revision}`;
+                    this.file.source =
+                        this._domSanitizer.bypassSecurityTrustResourceUrl(this._stringFormat(this.configuration.database.url, '') + `/${this.configuration.name}/${id}/` +
+                            `${this.file.name}${this.file.query}`);
+                    this.determinePresentationType();
+                }
+                if (this.autoMessages)
+                    this.abstractResolver.message(`Uploading file ${this.file.name} was succesful.`);
                 this.modelChange.emit(this.model);
                 this.fileChange.emit(this.file);
-            };
-            fileReader.readAsDataURL(this.file.data);
-        }
+            }
+            else if (this.file.data) {
+                this.determinePresentationType();
+                const fileReader = new FileReader();
+                fileReader.onload = (event) => {
+                    this.file.digest = (new Date()).getTime();
+                    this.file.source =
+                        this._domSanitizer.bypassSecurityTrustResourceUrl(event.target['result']);
+                    if (this.mapNameToField)
+                        for (const name of this.mapNameToField)
+                            this.model[name] = this.file.name;
+                    this.modelChange.emit(this.model);
+                    this.fileChange.emit(this.file);
+                };
+                fileReader.readAsDataURL(this.file.data);
+            }
+        });
     }
 }
 FileInputComponent.imageMimeTypeRegularExpression = new RegExp('^image/(?:p?jpe?g|png|svg(?:\\+xml)?|vnd\\.microsoft\\.icon|gif|' +
@@ -6911,7 +7089,6 @@ Module.decorators = [
                     TextareaComponent,
                     FileInputComponent,
                     PaginationComponent
-                    // endregion
                 ],
                 entryComponents: [ConfirmComponent],
                 /*
@@ -7008,7 +7185,6 @@ Module.decorators = [
                     TextareaComponent,
                     FileInputComponent,
                     PaginationComponent
-                    // endregion
                 ],
                 imports: [
                     BrowserModule.withServerTransition({ appId: 'generic-universal' }),
@@ -7018,6 +7194,7 @@ Module.decorators = [
                     MatDialogModule,
                     MatInputModule,
                     MatSelectModule,
+                    MatSnackBarModule,
                     MatTooltipModule
                 ],
                 /*
@@ -7110,6 +7287,11 @@ Module.decorators = [
                     StringTemplatePipe,
                     NumberPercentPipe,
                     DatePipe,
+                    {
+                        provide: HTTP_INTERCEPTORS,
+                        useClass: RegisterHTTPRequestInterceptor,
+                        multi: true
+                    },
                     {
                         deps: [DataService, InitialDataService, Injector],
                         multi: true,

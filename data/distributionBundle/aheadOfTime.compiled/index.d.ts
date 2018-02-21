@@ -1,14 +1,18 @@
 import Tools, { DomNode, PlainObject } from 'clientnode';
-import { AfterContentChecked, AfterViewInit, ChangeDetectorRef, ElementRef, EventEmitter, Injector, OnChanges, OnDestroy, OnInit, PipeTransform, SimpleChanges, TemplateRef, ViewContainerRef } from '@angular/core';
+import { AfterContentChecked, AfterViewInit, ChangeDetectorRef, ElementRef, EventEmitter, Injector, NgZone, OnChanges, OnDestroy, OnInit, PipeTransform, SimpleChanges, TemplateRef, ViewContainerRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent } from '@angular/common/http';
 import { DefaultValueAccessor } from '@angular/forms';
-import { MatDialog, MatDialogRef } from '@angular/material';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { DomSanitizer, SafeScript, SafeHtml, SafeResourceUrl, SafeStyle, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, ActivatedRouteSnapshot, CanDeactivate, Resolve, Router, RouterStateSnapshot } from '@angular/router';
 import PouchDB from 'pouchdb';
-import { Subject } from 'rxjs';
+import { Subject } from 'rxjs/Subject';
 import { Observable } from 'rxjs/Observable';
 import { ISubscription } from 'rxjs/Subscription';
+import 'rxjs/add/operator/do';
+import 'rxjs/add/operator/debounceTime';
+import 'rxjs/add/operator/distinctUntilChanged';
 export declare type AllowedRoles = string | Array<string> | {
     read: string | Array<string>;
     write: string | Array<string>;
@@ -354,15 +358,17 @@ export declare class AttachmentsAreEqualPipe implements PipeTransform {
     representObject: Function;
     specialNames: PlainObject;
     stringMD5: Function;
+    zone: NgZone;
     /**
      * Gets needed services injected.
      * @param initialData - Injected initial data service instance.
      * @param injector - Application specific injector instance.
+     * @param ngZone - Injected zone service instance.
      * @param representObjectPipe - Represent object pipe instance.
      * @param stringMD5Pipe - Injected string md5 pipe instance.
      * @returns Nothing.
      */
-    constructor(initialData: InitialDataService, injector: Injector, representObjectPipe: RepresentObjectPipe, stringMD5Pipe: StringMD5Pipe);
+    constructor(initialData: InitialDataService, injector: Injector, ngZone: NgZone, representObjectPipe: RepresentObjectPipe, stringMD5Pipe: StringMD5Pipe);
     /**
      * Performs the actual transformations process.
      * @param first - First attachment to compare.
@@ -756,12 +762,14 @@ export declare class ConfirmComponent {
 export declare class AlertService {
     dialog: MatDialog;
     dialogReference: MatDialogRef<ConfirmComponent>;
+    zone: NgZone;
     /**
      * Gets needed component dialog service instance injected.
      * @param dialog - Reference to the dialog component instance.
+     * @param ngZone - Injected zone service instance.
      * @returns Nothing.
      */
-    constructor(dialog: MatDialog);
+    constructor(dialog: MatDialog, ngZone: NgZone);
     /**
      * Triggers a confirmation dialog to show.
      * @param data - Data to provide for the confirmations component instance.
@@ -781,8 +789,10 @@ export declare class DataService {
     connection: PouchDB;
     configuration: PlainObject;
     database: typeof PouchDB;
+    errorCallbacks: Array<Function>;
     equals: Function;
     extendObject: Function;
+    initialized: EventEmitter<PouchDB>;
     middlewares: {
         pre: {
             [key: string]: Array<Function>;
@@ -798,18 +808,26 @@ export declare class DataService {
     stringFormat: Function;
     synchronisation: Stream | null;
     tools: Tools;
+    zone: NgZone;
     /**
      * Creates the database constructor applies all plugins instantiates
      * the connection instance and registers all middlewares.
      * @param equalsPipe - Equals pipe service instance.
      * @param extendObjectPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
+     * @param ngZone - Injected zone service instance.
      * @param platformID - Platform identification string.
      * @param stringFormatPipe - Injected string format pipe instance.
      * @param utility - Injected utility service instance.
      * @returns Nothing.
      */
-    constructor(equalsPipe: EqualsPipe, extendObjectPipe: ExtendObjectPipe, initialData: InitialDataService, platformID: string, stringFormatPipe: StringFormatPipe, utility: UtilityService);
+    constructor(equalsPipe: EqualsPipe, extendObjectPipe: ExtendObjectPipe, initialData: InitialDataService, ngZone: NgZone, platformID: string, stringFormatPipe: StringFormatPipe, utility: UtilityService);
+    /**
+     * Adds an error callback to be triggered on database errors.
+     * @param callback - Function to call on errors.
+     * @returns A boolean indicating if given callback was already attached.
+     */
+    addErrorCallback(callback: Function): boolean;
     /**
      * Determines all property names which are indexable in a generic manner.
      * @param modelConfiguration - Model specification object.
@@ -903,6 +921,12 @@ export declare class DataService {
      */
     removeAttachment(...parameter: Array<any>): Promise<PlainObject>;
     /**
+     * Removes given error callback.
+     * @param callback - Function to remove.
+     * @returns A boolean indicating if given callback was registered.
+     */
+    removeErrorCallback(callback: Function): boolean;
+    /**
      * Starts synchronisation between a local and remote database.
      * @returns A promise if a synchronisation has been started and is in sync
      * with remote database or null if no stream was initialized due to
@@ -915,6 +939,15 @@ export declare class DataService {
      * stopped or there were none.
      */
     stopSynchronisation(): Promise<boolean>;
+    /**
+     * Triggers registered error callbacks with given error in given changes
+     * stream context.
+     * @param error - Error which has been occurred.
+     * @param parameter - Additional arguments provided with given error.
+     * @returns A Promise resolving when all asynchrone error handler have done
+     * their work.
+     */
+    triggerErrorCallbacks(error: any, ...parameter: Array<any>): Promise<void>;
 }
 export declare class DataScopeService {
     attachmentWithPrefixExists: Function;
@@ -985,11 +1018,25 @@ export declare class DataScopeService {
      */
     generate(modelName: string, propertyNames?: Array<string>, data?: PlainObject, propertyNamesToIgnore?: Array<string>): PlainObject;
 }
+export declare class RegisterHTTPRequestInterceptor implements HttpInterceptor {
+    data: DataService;
+    /**
+     * Registers needed service instances as instance properties.
+     * @param data - Injected data service instance.
+     * @returns Nothing.
+     */
+    constructor(data: DataService);
+    /**
+     * Intercepts each request to perform request registration and
+     * un-registration.
+     * @param request - Request to register.
+     * @param next - Interceptor chain.
+     * @returns Result of the interceptor chain.
+     */
+    intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>>;
+}
 export declare class AbstractResolver implements Resolve<PlainObject> {
     static skipResolvingOnServer: boolean;
-    cache: boolean;
-    cacheStore: PlainObject;
-    changesStream: Stream;
     convertCircularObjectToJSON: Function;
     data: PlainObject;
     databaseBaseURL: string;
@@ -997,7 +1044,6 @@ export declare class AbstractResolver implements Resolve<PlainObject> {
     databaseURLCache: {
         [key: string]: SafeResourceUrl;
     };
-    deepCopyItems: boolean;
     domSanitizer: DomSanitizer;
     escapeRegularExpressions: Function;
     extendObject: Function;
@@ -1178,6 +1224,7 @@ export declare class AbstractNativeInputComponent extends AbstractInputComponent
  * @property _data - Data service instance.
  * @property _extendObject - Extend object pipe's transformation method.
  * @property _liveUpdateOptions - Options for database observation.
+ * @property _platformID - Platform identification string.
  * @property _stringCapitalize - String capitalize pipe transformation
  * function.
  * @property _tools - Holds the tools class from the tools service.
@@ -1187,11 +1234,11 @@ export declare class AbstractLiveDataComponent implements OnDestroy, OnInit {
     actions: Array<PlainObject>;
     autoRestartOnError: boolean;
     _canceled: boolean;
-    _changeDetectorReference: ChangeDetectorRef;
     _changesStream: Stream;
     _data: DataService;
     _extendObject: Function;
     _liveUpdateOptions: PlainObject;
+    _platformID: string;
     _stringCapitalize: Function;
     _tools: typeof Tools;
     /**
@@ -1340,10 +1387,9 @@ export declare class AbstractItemsComponent extends AbstractLiveDataComponent im
     onDataChange(...parameter: Array<any>): false;
     /**
      * Unsubscribes all subscriptions when this component should be disposed.
-     * @param parameter - List of all parameter to forward to super method.
      * @returns Returns the super values return value.
      */
-    ngOnDestroy(...parameter: Array<any>): any;
+    ngOnDestroy(): any;
     /**
      * Select all available items.
      * @returns Nothing.
@@ -1352,10 +1398,11 @@ export declare class AbstractItemsComponent extends AbstractLiveDataComponent im
     /**
      * Determines an items content specific hash value combined from id and
      * revision.
+     * @param index - Current index of current item in list.
      * @param item - Item with id and revision property.
      * @returns Indicator string.
      */
-    trackByIDAndRevision(item: PlainObject): string;
+    trackByIDAndRevision(index: number, item: PlainObject): string;
     /**
      * Applies current filter criteria to current visible item set.
      * @param reload - Indicates whether a simple reload should be made because
@@ -1402,27 +1449,21 @@ export declare class AbstractValueAccessor extends DefaultValueAccessor {
     /**
      * Needed implementation for an angular control value accessor.
      * @param callback - Callback function to register.
-     * @param additionalParameter - Additional parameter will be forwarded to
-     * inherited super method.
      * @returns What inherited method returns.
      */
-    registerOnChange(callback: (value: any) => void, ...additionalParameter: Array<any>): any;
+    registerOnChange(callback: (...parameter: Array<any>) => void): any;
     /**
      * Needed implementation for an angular control value accessor.
      * @param callback - Callback function to register.
-     * @param additionalParameter - Additional parameter will be forwarded to
-     * inherited super method.
      * @returns What inherited method returns.
      */
-    registerOnTouched(callback: () => void, ...additionalParameter: Array<any>): any;
+    registerOnTouched(callback: () => void): any;
     /**
      * Overridden inherited function for value export.
      * @param value - Value to export.
-     * @param additionalParameter - Additional arguments will be forwarded to
-     * the overridden method invocation.
      * @returns The transformed give value.
      */
-    writeValue(value: any, ...additionalParameter: Array<any>): any;
+    writeValue(value: any): any;
 }
 export declare class DateDirective {
     dateFormatter: Function;
@@ -1433,6 +1474,7 @@ export declare class DateDirective {
         freeze: boolean;
         updateIntervalInMilliseconds: number;
     };
+    platformID: string;
     templateReference: TemplateRef<any>;
     timerID: any;
     viewContainerReference: ViewContainerRef;
@@ -1440,11 +1482,12 @@ export declare class DateDirective {
      * Saves injected services as instance properties.
      * @param datePipe - Injected date pipe service instance.
      * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param platformID - Platform specific identifier.
      * @param templateReference - Specified template reference.
      * @param viewContainerReference - Injected view container reference.
      * @returns Nothing.
      */
-    constructor(datePipe: DatePipe, extendObjectPipe: ExtendObjectPipe, templateReference: TemplateRef<any>, viewContainerReference: ViewContainerRef);
+    constructor(datePipe: DatePipe, extendObjectPipe: ExtendObjectPipe, platformID: string, templateReference: TemplateRef<any>, viewContainerReference: ViewContainerRef);
     /**
      * Options setter to merge into options interactively.
      * @param options - Options object to merge into.
@@ -1478,17 +1521,19 @@ export declare class SliderDirective implements OnInit {
         slides: Array<any>;
         updateIntervalInMilliseconds: number;
     };
+    platformID: string;
     templateReference: TemplateRef<any>;
     timerID: any;
     viewContainerReference: ViewContainerRef;
     /**
      * Saves injected services as instance properties.
      * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param platformID - Platform identification string.
      * @param templateReference - Specified template reference.
      * @param viewContainerReference - Injected view container reference.
      * @returns Nothing.
      */
-    constructor(extendObjectPipe: ExtendObjectPipe, templateReference: TemplateRef<any>, viewContainerReference: ViewContainerRef);
+    constructor(extendObjectPipe: ExtendObjectPipe, platformID: string, templateReference: TemplateRef<any>, viewContainerReference: ViewContainerRef);
     /**
      * Calculates next index from given reference point.
      * @param startIndex - Reference index.
@@ -1690,11 +1735,9 @@ export declare class AbstractEditorComponent extends AbstractValueAccessor imple
     /**
      * Synchronizes given value into internal code mirror instance.
      * @param value - Given value to set in code editor.
-     * @param additionalParameter - Additional arguments will be forwarded to
-     * the overridden method invocation.
      * @returns What inherited method returns.
      */
-    export(value: any, ...additionalParameter: Array<any>): any;
+    export(value: any): any;
     /**
      * Triggers disabled state changes.
      * @param isDisabled - Indicates disabled state.
@@ -1834,11 +1877,9 @@ export declare class TextareaComponent extends AbstractNativeInputComponent impl
     constructor(initialData: InitialDataService, injector: Injector);
     /**
      * Triggers after input values have been resolved.
-     * @param additionalParameter - Additional arguments will be forwarded to
-     * the overridden method invocation.
      * @returns Nothing.
      */
-    ngOnInit(...additionalParameter: Array<any>): void;
+    ngOnInit(): void;
 }
 export declare class FileInputComponent implements AfterViewInit, OnChanges {
     static imageMimeTypeRegularExpression: RegExp;
@@ -1931,6 +1972,12 @@ export declare class FileInputComponent implements AfterViewInit, OnChanges {
      */
     determinePresentationType(): void;
     /**
+     * Includes given error in current error state object.
+     * @param errors - Errors to apply in state.
+     * @returns Nothing.
+     */
+    updateErrorState(errors?: any): void;
+    /**
      * Initializes file upload handler.
      * @param changes - Holds informations about changed bound properties.
      * @returns Nothing.
@@ -1963,8 +2010,7 @@ export declare class FileInputComponent implements AfterViewInit, OnChanges {
      */
     retrieveAttachment(id: any, options?: PlainObject): Promise<void>;
     /**
-     * Updates given current file into database (replaces if old name is
-     * given).
+     * Uploads current file into database (replaces if old name is given).
      * @param oldName - Name of saved file to update or replace.
      * @returns A Promise which will be resolved after current file will be
      * synchronized.

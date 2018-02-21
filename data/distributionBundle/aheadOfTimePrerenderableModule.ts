@@ -13,7 +13,8 @@ import {APP_BASE_HREF} from '@angular/common'
 import {NgModule} from '@angular/core'
 import {ServerModule} from '@angular/platform-server'
 
-import {ApplicationComponent, Module} from './source/module'
+import {ApplicationComponent} from './component/application'
+import {Module} from './module'
 // endregion
 // region server pre-renderable module
 /**
@@ -27,9 +28,9 @@ import {ApplicationComponent, Module} from './source/module'
         useValue: '/'
     }]
 })
-export class PrerenderableModule {}
-export default PrerenderableModule
-export const PrerenderableModuleNgFactory = null
+export class PreRenderableModule {}
+export default PreRenderableModule
+export const PreRenderableModuleNgFactory = null
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
