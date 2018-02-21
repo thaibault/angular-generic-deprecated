@@ -64,7 +64,7 @@
   },
   "dependencies": {
     "blob-util": "^1.3.0",
-    "clientnode": "^1.0.345",
+    "clientnode": "^1.0.346",
     "filereader": "^0.10.3",
     "hammerjs": "^2.0.8",
     "jsdom": "^11.6.2",
@@ -116,7 +116,7 @@
     "babel-plugin-transform-decorators-legacy": "^1.3.4",
     "babel-polyfill": "^6.26.0",
     "coveralls": "^3.0.0",
-    "documentation-website": "^1.0.102",
+    "documentation-website": "^1.0.103",
     "eslint": "^4.18.1",
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.45.0",
@@ -131,7 +131,7 @@
     "source-map-support": "^0.5.3",
     "tinymce": "^4.7.7",
     "typescript": "^2.7.2",
-    "weboptimizer": "^1.0.526",
+    "weboptimizer": "^1.0.527",
     "webpack": "^3.11.0",
     "webpack-dev-server": "^2.11.1",
     "zone.js": "^0.8.20"
