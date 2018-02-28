@@ -38,7 +38,7 @@
     "url": "https://github.com/thaibault/angularGeneric"
   },
   "scripts": {
-    "build": "npm run build:config && npm run build:aot && webOptimizer build:client && npm run build:pre-renderer && npm run build:test",
+    "build": "npm run build:config && npm run build:aot && npm run build:client && npm run build:pre-renderer && npm run build:test",
     "build:aot": "ngc --project aheadOfTimeLibraryCompilation.json",
     "build:client": "webOptimizer build",
     "build:config": "sed 's/\"genDir\"\\: *\"/\\0..\\/..\\//' aheadOfTimeLibraryCompilation.json | sed 's/\"outDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"rootDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"index\\.ts\"/\"..\\/..\\/index.ts\"/' >aheadOfTimeLibraryCompilation.compiled.json",
