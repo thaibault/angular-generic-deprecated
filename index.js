@@ -4908,10 +4908,17 @@ export class DateDirective {
             `${parseFloat(dateTime)}` === dateTime
         )
             dateTime = parseFloat(dateTime) * 1000
+        let result:any
+        try {
+            result = this.dateFormatter(dateTime, this.options.format)
+        } catch (error) {
+            console.warn(
+                `Given date time "${dateTime}" could not be formatted. ` +
+                'Using current date time.')
+            result = this.dateFormatter(Date.now(), this.options.format)
+        }
         this.viewContainerReference.createEmbeddedView(
-            this.templateReference, {
-                dateTime: this.dateFormatter(dateTime, this.options.format)
-            })
+            this.templateReference, {dateTime: result})
     }
     /**
      * On destroy life cycle hook to cancel initialized interval timer.
