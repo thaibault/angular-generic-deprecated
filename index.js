@@ -6069,7 +6069,7 @@ const inputContent:string = `
         align="end"
         @defaultAnimation
         *ngIf="!model.selection && model.type === 'string' && model.maximumLength !== null && model.maximumLength < 100"
-    >{{model.value?.length}} / {{model.maximumLength}}</mat-hint>
+    >{{model.value?.length || 0}} / {{model.maximumLength}}</mat-hint>
 `
 /* eslint-enable max-len */
 // IgnoreTypeCheck
