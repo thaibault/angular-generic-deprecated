@@ -1837,17 +1837,32 @@ export class ExtractRawDataPipe implements PipeTransform {
     }
 }
 // IgnoreTypeCheck
+@Pipe({name: 'genericIsArray'})
+/**
+ * Checks if given reference points to an array.
+ */
+export class IsArrayPipe implements PipeTransform {
+    /**
+     * Performs the actual check.
+     * @param object - Object to compare against "undefined" or "null".
+     * @returns The test result.
+     */
+    transform(object:any):boolean {
+        return Array.isArray(object)
+    }
+}
+// IgnoreTypeCheck
 @Pipe({name: 'genericIsDefined'})
 /**
  * Checks if given reference is defined.
  */
 export class IsDefinedPipe implements PipeTransform {
     /**
-     * Performs the actual comparison.
+     * Performs the actual check.
      * @param object - Object to compare against "undefined" or "null".
      * @param nullIsUndefined - Indicates whether "null" should be handles as
      * "undefined".
-     * @returns The comparison result.
+     * @returns The test result.
      */
     transform(object:any, nullIsUndefined:boolean = false):boolean {
         return !(object === undefined || nullIsUndefined && object === null)
@@ -1979,6 +1994,49 @@ export class ObjectKeysPipe implements PipeTransform {
     }
 }
 // IgnoreTypeCheck
+@Pipe({name: 'genericObjectValues'})
+/**
+ * Retrieves a matching filename by given filename prefix.
+ */
+export class ObjectValuesPipe implements PipeTransform {
+    /**
+     * Performs the "Object" native "keys()" method.
+     * @param object - Object to retrieve key names from.
+     * @param sort - Indicates whether sorting should be enabled. If an array
+     * is provided it will be interpreted as arguments given to the array's
+     * sort method.
+     * @param reverse - Reverses sorted list.
+     * @param asNumber - Sort number aware.
+     * @returns Arrays of key names.
+     */
+    transform(
+        object?:Object, sort:any = false, reverse:boolean = false,
+        asNumber:boolean = false
+    ):Array<string> {
+        if (typeof object === 'object' && object !== null) {
+            const result:Array<string> = Object.values(object)
+            if (sort) {
+                if (!Array.isArray(sort))
+                    sort = asNumber ? [(first:any, second:any):number => {
+                        first = parseInt(first)
+                        second = parseInt(second)
+                        if (isNaN(first))
+                            return isNaN(second) ? 0 : +1
+                        else if (isNaN(second))
+                            return -1
+                        return first - second
+                    }] : []
+                result.sort(...sort)
+                if (reverse)
+                    result.reverse()
+                return result
+            }
+            return result
+        }
+        return []
+    }
+}
+// IgnoreTypeCheck
 @Pipe({name: 'genericReverse'})
 /**
  * Reverses a given list.
@@ -2029,7 +2087,7 @@ export class ArrayDependentConcatPipe/* immplements PipeTransform*/ {
      * Does the given array transformation logic.
      * @param array - Array to transform.
      * @param indicator - Indicator to decide if concatenation should be done.
-     * @param item - Object(s) to concatenate.
+     * @param item - One ore object or array of objects to concatenate.
      * @returns Transformed given array.
      */
     transform(array:Array<any>, indicator:boolean, item:any):Array<any> {
@@ -6126,17 +6184,33 @@ export class InputComponent extends AbstractInputComponent {
         <ng-container
             @defaultAnimation *ngIf="model.selection; else textInput"
         >
-            <mat-form-field>
-                <mat-select [(ngModel)]="model.value" ${propertyContent.nativ}>
-                    <mat-option
+            <ng-container
+                @defaultAnimation
+                *ngIf="model.selection | genericIsArray; else labeledSelect"
+            >
+                <mat-form-field>
+                    <mat-select
+                        [(ngModel)]="model.value"
+                        ${propertyContent.nativ}
+                    ><mat-option
                         *ngFor="let value of model.selection" [value]="value"
                     >
                         {{labels.hasOwnProperty(value) ? labels[value] : value}}
-                    </mat-option>
+                    </mat-option></mat-select>
+                    ${inputContent}
+                    <ng-content></ng-content>
+                </mat-form-field>
+            </ng-container>
+            <ng-template #labeledSelect><mat-form-field>
+                <mat-select [(ngModel)]="model.value" ${propertyContent.nativ}>
+                    <mat-option
+                        *ngFor="let key of model.selection | genericObjectKeys:true"
+                        [value]="model.selection[key]"
+                    >{{key}}</mat-option>
                 </mat-select>
                 ${inputContent}
                 <ng-content></ng-content>
-            </mat-form-field>
+            </mat-form-field></ng-template>
         </ng-container>
         <ng-template #textInput><mat-form-field>
             <input
@@ -7472,10 +7546,12 @@ export class PaginationComponent {
         AttachmentWithPrefixExistsPipe,
         ExtractDataPipe,
         ExtractRawDataPipe,
+        IsArrayPipe,
         IsDefinedPipe,
         LimitToPipe,
         MapPipe,
         ObjectKeysPipe,
+        ObjectValuesPipe,
         ReversePipe,
         TypePipe,
         // / endregion
@@ -7597,10 +7673,12 @@ export class PaginationComponent {
         AttachmentWithPrefixExistsPipe,
         ExtractDataPipe,
         ExtractRawDataPipe,
+        IsArrayPipe,
         IsDefinedPipe,
         LimitToPipe,
         MapPipe,
         ObjectKeysPipe,
+        ObjectValuesPipe,
         ReversePipe,
         TypePipe,
         // / endregion
@@ -7740,10 +7818,12 @@ export class PaginationComponent {
         AttachmentWithPrefixExistsPipe,
         ExtractDataPipe,
         ExtractRawDataPipe,
+        IsArrayPipe,
         IsDefinedPipe,
         LimitToPipe,
         MapPipe,
         ObjectKeysPipe,
+        ObjectValuesPipe,
         ReversePipe,
         TypePipe,
         // / endregion

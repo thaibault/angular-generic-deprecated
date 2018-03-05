@@ -78,11 +78,13 @@ registerAngularTest(function(
         GetFilenameByPrefixPipe,
         InitialDataService,
         InputComponent,
+        IsArrayPipe,
         IsDefinedPipe,
         LimitToPipe,
         MapPipe,
         NumberPercentPipe,
         ObjectKeysPipe,
+        ObjectValuesPipe,
         PaginationComponent,
         ReversePipe,
         SimpleInputComponent,
@@ -252,6 +254,7 @@ registerAngularTest(function(
                             ExtendObjectPipe)
                         const getFilenameByPrefixPipe:GetFilenameByPrefixPipe =
                             get(GetFilenameByPrefixPipe)
+                        const isArrayPipe:IsArrayPipe = get(IsArrayPipe)
                         const isDefinedPipe:IsDefinedPipe = get(IsDefinedPipe)
                         const limitToPipe:LimitToPipe = get(LimitToPipe)
                         const mapPipe:MapPipe = get(MapPipe)
@@ -259,6 +262,8 @@ registerAngularTest(function(
                             NumberPercentPipe)
                         const objectKeysPipe:ObjectKeysPipe = get(
                             ObjectKeysPipe)
+                        const objectValuesPipe:ObjectValuesPipe = get(
+                            ObjectValuesPipe)
                         const resolver:AbstractResolver = get(AbstractResolver)
                         resolver.type = 'Test'
                         const reversePipe:ReversePipe = get(ReversePipe)
@@ -1230,6 +1235,23 @@ registerAngularTest(function(
                             // endregion
                             done()
                         })
+                        self.test(`IsArrayPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:any of [
+                                [],
+                                [2],
+                                [[]]
+                            ])
+                                assert.ok(isArrayPipe.transform(test))
+                            for (const test:any of [
+                                null,
+                                {},
+                                2,
+                                true
+                            ])
+                                assert.notOk(isArrayPipe.transform(test))
+                        })
                         self.test(`IsDefinedPipe (${roundType})`, (
                             assert:Object
                         ):void => {
@@ -1292,6 +1314,35 @@ registerAngularTest(function(
                                     'a', '3-c', '2-a', '1-b']]
                             ])
                                 assert.deepEqual(objectKeysPipe.transform(
+                                    ...test[0]
+                                ), test[1])
+                        })
+                        self.test(`ObjectValuesPipe (${roundType})`, (
+                            assert:Object
+                        ):void => {
+                            for (const test:Array<any> of [
+                                [[{}], []],
+                                [[null], []],
+                                [[2], []],
+                                [[[2]], [2]],
+                                [[{a: 2}], [2]],
+                                [[{'3': 'b', '2': 'a'}, true], ['a', 'b']],
+                                [
+                                    [{'3': 'b', '2': 'a'}, true, true],
+                                    ['b', 'a']
+                                ],
+                                [[{
+                                    '4': '2-a', '2': '1-b', '3': '3-c'
+                                }, true, true, true], ['3-c', '2-a', '1-b']],
+                                [[{
+                                    '3': '2-a',
+                                    '2': '1-b',
+                                    '4': 'a',
+                                    '1': '3-c'
+                                }, true, true, true], [
+                                    'a', '3-c', '2-a', '1-b']]
+                            ])
+                                assert.deepEqual(objectValuesPipe.transform(
                                     ...test[0]
                                 ), test[1])
                         })
