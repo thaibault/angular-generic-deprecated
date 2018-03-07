@@ -3803,12 +3803,12 @@ export class DataScopeService {
                         result[name].value = result[name].selection[0]
                     else if (
                         typeof result[name].selection === 'object' &&
-                        typeof result[name].selection !== null
+                        result[name].selection !== null
                     ) {
-                        const values:Array<any> = Object.values(
+                        const selection:Array<any> = Object.values(
                             result[name].selection)
-                        if (values.length)
-                            result[name].value = values.sort()[0]
+                        if (selection.length)
+                            result[name].value = selection.sort()[0]
                     }
                 }
                 if (
