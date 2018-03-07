@@ -3632,9 +3632,12 @@ export class DataScopeService {
         const modelSpecification:PlainObject = entities[modelName]
         const specialNames:PlainObject =
             this.configuration.database.model.property.name.special
+        const idName:string = specialNames.id
+        const revisionName:string = specialNames.revision
+        const typeName:string = specialNames.type
         if (!propertyNamesToIgnore)
             propertyNamesToIgnore = modelName.startsWith('_') ? [
-                specialNames.id, specialNames.attachment
+                idName, specialNames.attachment
             ] : []
         const reservedNames:Array<string> =
             this.configuration.database.model.property.name.reserved.concat(
@@ -3642,10 +3645,10 @@ export class DataScopeService {
                 specialNames.deleted,
                 specialNames.deletedConflict,
                 specialNames.localSequence,
-                specialNames.revision,
+                revisionName,
                 specialNames.revisions,
                 specialNames.revisionsInformation,
-                specialNames.type)
+                typeName)
         const specification:PlainObject = this.determineSpecificationObject(
             modelSpecification, propertyNames,
             propertyNamesToIgnore.concat(reservedNames))
@@ -3679,25 +3682,29 @@ export class DataScopeService {
                         result[name][type].value = null
                         if (Object.keys(data).length === 0) {
                             const scope:Object = {
-                                newDocument: data,
-                                oldDocument: null,
-                                userConteyt: {},
-                                securitySettings: {},
-                                name: type,
-                                models: entities,
-                                modelConfiguration:
-                                    this.configuration.database.model,
-                                serialize: (object:Object):string =>
-                                    JSON.stringify(object, null, 4),
-                                modelName,
-                                model: modelSpecification,
-                                propertySpecification: result[name][type],
-                                now,
-                                nowUTCTimestamp,
-                                getFilenameByPrefix: this.getFilenameByPrefix,
                                 attachmentWithPrefixExists:
                                     this.attachmentWithPrefixExists.bind(
-                                        data, data)
+                                        data, data),
+                                getFilenameByPrefix: this.getFilenameByPrefix,
+                                idName,
+                                model: modelSpecification,
+                                modelConfiguration:
+                                    this.configuration.database.model,
+                                modelName,
+                                models: entities,
+                                name: type,
+                                newDocument: data,
+                                now,
+                                nowUTCTimestamp,
+                                oldDocument: null,
+                                propertySpecification: result[name][type],
+                                revisionName,
+                                securitySettings: {},
+                                serialize: (object:Object):string =>
+                                    JSON.stringify(object, null, 4),
+                                specialNames,
+                                typeName,
+                                userContext: {}
                             }
                             for (const hookType of [
                                 'onCreateExecution', 'onCreateExpression'
@@ -3749,24 +3756,28 @@ export class DataScopeService {
                 result[name].value = null
                 if (Object.keys(data).length === 0) {
                     const scope:Object = {
-                        newDocument: data,
-                        oldDocument: null,
-                        userContext: {},
-                        securitySettings: {},
-                        name,
-                        models: entities,
-                        modelConfiguration: this.configuration.database.model,
-                        serialize: (object:Object):string => JSON.stringify(
-                            object, null, 4),
-                        modelName,
-                        model: modelSpecification,
-                        propertySpecification: result[name],
-                        now,
-                        nowUTCTimestamp,
-                        getFilenameByPrefix: this.getFilenameByPrefix,
                         attachmentWithPrefixExists:
                             this.attachmentWithPrefixExists.bind(
-                                data, data)
+                                data, data),
+                        getFilenameByPrefix: this.getFilenameByPrefix,
+                        idName,
+                        model: modelSpecification,
+                        modelConfiguration: this.configuration.database.model,
+                        modelName,
+                        models: entities,
+                        name,
+                        newDocument: data,
+                        now,
+                        nowUTCTimestamp,
+                        oldDocument: null,
+                        propertySpecification: result[name],
+                        revisionName,
+                        securitySettings: {},
+                        serialize: (object:Object):string => JSON.stringify(
+                            object, null, 4),
+                        specialNames,
+                        typeName,
+                        userContext: {}
                     }
                     for (const type of [
                         'onCreateExpression', 'onCreateExecution'
@@ -3825,7 +3836,7 @@ export class DataScopeService {
                     if (entities.hasOwnProperty(result[name].type))
                         result[name].value = this.generate(
                             result[name].type, null, result[name].value || {},
-                            [specialNames.attachment, specialNames.id])
+                            [specialNames.attachment, idName])
                     else if (result[name].type.endsWith('[]')) {
                         const type:string = result[name].type.substring(
                             0, result[name].type.length - 2)
@@ -3847,7 +3858,7 @@ export class DataScopeService {
         for (const name of reservedNames)
             if (data.hasOwnProperty(name))
                 result[name] = data[name]
-            else if (name === specialNames.type)
+            else if (name === typeName)
                 result[name] = modelName
         result._metaData = {submitted: false}
         return result
@@ -4310,17 +4321,33 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
             this.model.value === this.model.value.trim()
         for (const hookType of ['onUpdateExpression', 'onUpdateExecution'])
             if (
-                this.model.hasOwnProperty(hookType) && this.model[hookType] &&
+                this.model.hasOwnProperty(hookType) &&
+                this.model[hookType] &&
                 typeof this.model[hookType] !== 'function'
             )
                 this.model[hookType] = new Function(
-                    'newDocument', 'oldDocument', 'userContext',
-                    'securitySettings', 'name', 'models', 'modelConfiguration',
-                    'serialize', 'modelName', 'model', 'propertySpecification',
-                    'now', 'nowUTCTimestamp', 'getFilenameByPrefix',
-                    'attachmentWithPrefixExists', (
-                        hookType.endsWith('Expression') ? 'return ' : ''
-                    ) + this.model[hookType])
+                    'attachmentWithPrefixExists',
+                    'getFilenameByPrefix',
+                    'idName',
+                    'model',
+                    'modelConfiguration',
+                    'modelName',
+                    'models',
+                    'name',
+                    'newDocument',
+                    'now',
+                    'nowUTCTimestamp',
+                    'oldDocument',
+                    'propertySpecification',
+                    'revisionName',
+                    'securitySettings',
+                    'serialize',
+                    'specialNames',
+                    'typeName',
+                    'userContext',
+                    (hookType.endsWith('Expression') ? 'return ' : '') +
+                        this.model[hookType]
+                )
     }
     /**
      * Triggers when ever a change to current model happens inside this
@@ -4345,15 +4372,27 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
                 typeof this.model[hookType] === 'function'
             ) {
                 newValue = this.model[hookType](
-                    newData, null, {}, {}, this.model.name,
-                    this._modelConfiguration.entities,
-                    this._modelConfiguration, (object:Object):string =>
-                        JSON.stringify(object, null, 4),
-                    'generic', {generic: {[this.model.name]: this.model}},
-                    this.model, now, nowUTCTimestamp,
-                    this._getFilenameByPrefix,
                     this._attachmentWithPrefixExists.bind(newData, newData),
-                    newValue)
+                    this._getFilenameByPrefix,
+                    this._modelConfiguration.property.name.special.id,
+                    {generic: {[this.model.name]: this.model}},
+                    this._modelConfiguration,
+                    'generic',
+                    this._modelConfiguration.entities,
+                    this.model.name,
+                    newData,
+                    now,
+                    nowUTCTimestamp,
+                    null,
+                    this.model,
+                    this._modelConfiguration.property.name.special.revision,
+                    {},
+                    (object:Object):string => JSON.stringify(object, null, 4),
+                    this._modelConfiguration.property.name.special,
+                    this._modelConfiguration.property.name.special.type,
+                    {}
+                    newValue,
+                )
                 if (!(newValue instanceof Date) && (
                     this.model.type.endsWith('Date') ||
                     this.model.type.endsWith('Time')
