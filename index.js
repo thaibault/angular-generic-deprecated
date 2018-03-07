@@ -3806,7 +3806,7 @@ export class DataScopeService {
                     ![undefined, null].includes(result[name].default)
                 )
                     result[name].value = this.tools.copy(result[name].default)
-                else if (result[name].hasOwnProperty('selection')) {
+                else if (result[name].hasOwnProperty('selection'))
                     if (
                         Array.isArray(result[name].selection) &&
                         result[name].selection.length
@@ -3821,7 +3821,6 @@ export class DataScopeService {
                         if (selection.length)
                             result[name].value = selection.sort()[0]
                     }
-                }
                 if (
                     typeof result[name].value === 'number' &&
                     result[name].hasOwnProperty('type') &&
@@ -4390,8 +4389,8 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
                     (object:Object):string => JSON.stringify(object, null, 4),
                     this._modelConfiguration.property.name.special,
                     this._modelConfiguration.property.name.special.type,
-                    {}
-                    newValue,
+                    {},
+                    newValue
                 )
                 if (!(newValue instanceof Date) && (
                     this.model.type.endsWith('Date') ||
