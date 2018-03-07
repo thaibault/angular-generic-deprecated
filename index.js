@@ -3805,7 +3805,8 @@ export class DataScopeService {
                         typeof result[name].selection === 'object' &&
                         typeof result[name].selection !== null
                     ) {
-                        values = Object.values(result[name].selection)
+                        const values:Array<any> = Object.values(
+                            result[name].selection)
                         if (values.length)
                             result[name].value = values.sort()[0]
                     }
