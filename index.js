@@ -3795,12 +3795,20 @@ export class DataScopeService {
                     ![undefined, null].includes(result[name].default)
                 )
                     result[name].value = this.tools.copy(result[name].default)
-                else if (
-                    result[name].hasOwnProperty('selection') &&
-                    Array.isArray(result[name].selection) &&
-                    result[name].selection.length
-                )
-                    result[name].value = result[name].selection[0]
+                else if (result[name].hasOwnProperty('selection'))
+                    if (
+                        Array.isArray(result[name].selection) &&
+                        result[name].selection.length
+                    )
+                        result[name].value = result[name].selection[0]
+                    else if (
+                        typeof result[name].selection === 'object' &&
+                        typeof result[name].selection !== null
+                    ) {
+                        values = Object.values(typeof result[name].selection)
+                        if (values.length)
+                            result[name].value = values.sort()[0]
+                    }
                 if (
                     typeof result[name].value === 'number' &&
                     result[name].hasOwnProperty('type') &&
