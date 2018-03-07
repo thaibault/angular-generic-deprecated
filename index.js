@@ -3795,7 +3795,7 @@ export class DataScopeService {
                     ![undefined, null].includes(result[name].default)
                 )
                     result[name].value = this.tools.copy(result[name].default)
-                else if (result[name].hasOwnProperty('selection'))
+                else if (result[name].hasOwnProperty('selection')) {
                     if (
                         Array.isArray(result[name].selection) &&
                         result[name].selection.length
@@ -3810,6 +3810,7 @@ export class DataScopeService {
                         if (values.length)
                             result[name].value = values.sort()[0]
                     }
+                }
                 if (
                     typeof result[name].value === 'number' &&
                     result[name].hasOwnProperty('type') &&
