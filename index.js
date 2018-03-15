@@ -18,7 +18,7 @@
     endregion
 */
 // region imports
-import {blobToBase64String} from 'blob-util'
+import {blobToBase64String, dataURLToBlob} from 'blob-util'
 import Tools, {
     $, $DomNode, DomNode, globalContext, PlainObject
 } from 'clientnode'
@@ -56,6 +56,7 @@ import {
     PLATFORM_ID,
     /* eslint-enable no-unused-vars */
     Renderer2 as Renderer,
+    SecurityContext,
     SimpleChanges,
     TemplateRef,
     ViewChild,
@@ -5050,6 +5051,108 @@ export class DateDirective {
         this.insert()
     }
 }
+const providers:Array<PlainObject> = [{
+    provide: NG_VALUE_ACCESSOR,
+    useExisting: forwardRef(
+        ():typeof DateTimeValueAccessor => DateTimeValueAccessor),
+    multi: true
+}]
+/*
+    NOTE: This core update resistent version is not compatible with angular's
+    ahead of time compilation.
+
+// IgnoreTypeCheck
+@Directive(UtilityService.tools.extendObject(true, {
+}, DefaultValueAccessor.decorators[0].args[0], {providers}))
+*/
+@Directive({
+    selector: `
+        input:not([type=checkbox])[formControlName],
+        textarea[formControlName],
+        input:not([type=checkbox])[formControl],
+        textarea[formControl],
+        input:not([type=checkbox])[ngModel],
+        textarea[ngModel],[ngDefaultControl]'
+    `,
+    // TODO: vsavkin replace the above selector with the one below it once
+    // https://github.com/angular/angular/issues/3011 is implemented
+    // selector: '[ngModel],[formControl],[formControlName]',
+    host: {
+        '(input)': '_handleInput($event.target.value)',
+        '(blur)': 'onTouched()',
+        '(compositionstart)': '_compositionStart()',
+        '(compositionend)': '_compositionEnd($event.target.value)'
+    },
+    providers
+})
+/**
+ * Time value accessor with "ngModel" support.
+ */
+export class DateTimeValueAccessor extends AbstractValueAccessor {
+    /**
+     * Delegates injected injector service instance to the super constructor.
+     * @param injector - Injected injector service instance.
+     * @returns Nothing.
+     */
+    constructor(injector:Injector) {
+        super(injector)
+    }
+    /**
+     * Manipulates editable value representation.
+     * @param value - Value to manipulate.
+     * @returns Given and transformed value.
+     */
+    export(value:any):any {
+        if (
+            ![undefined, null].includes(value) &&
+            ['date', 'time'].includes(this.type)
+        ) {
+            const date:Date = new Date(value)
+            if (isNaN(date.getDate()))
+                return
+            else if (this.type === 'time') {
+                let hours:string = `${date.getHours()}`
+                if (hours.length === 1)
+                    hours = `0${hours}`
+                let minutes:string = `${date.getMinutes()}`
+                if (minutes.length === 1)
+                    minutes = `0${minutes}`
+                return `${hours}:${minutes}`
+            } else if (this.type === 'date') {
+                let month:string = `${date.getMonth() + 1}`
+                if (month.length === 1)
+                    month = `0${month}`
+                let day:string = `${date.getDate()}`
+                if (day.length === 1)
+                    day = `0${day}`
+                return `${date.getFullYear()}-${month}-${day}`
+            }
+        }
+        return value
+    }
+    /**
+     * Reads internal value representation.
+     * @param value - Value to convert to its internal representation.
+     * @returns Given and transformed value.
+     */
+    import(value:any):any {
+        if (typeof value === 'string')
+            if (this.type === 'time') {
+                const match = /^([0-9]{2}):([0-9]{2})$/.exec(value)
+                if (match)
+                    return new Date(
+                        1970, 0, 1, parseInt(match[1]), parseInt(match[2]))
+            } else if (this.type === 'date') {
+                const match = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(value)
+                if (match)
+                    return new Date(
+                        parseInt(match[1]), parseInt(match[2]) - 1,
+                        parseInt(match[3]))
+            }
+        return value
+    }
+}
+// // endregion
 // IgnoreTypeCheck
 @Directive({selector: '[genericSlider]'})
 /**
@@ -5172,107 +5275,6 @@ export class SliderDirective implements OnInit {
             }, this.options.updateIntervalInMilliseconds)
         this.index = this.options.startIndex
         this.update()
-    }
-}
-const providers:Array<PlainObject> = [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(
-        ():typeof DateTimeValueAccessor => DateTimeValueAccessor),
-    multi: true
-}]
-/*
-    NOTE: This core update resistent version is not compatible with angular's
-    ahead of time compilation.
-
-// IgnoreTypeCheck
-@Directive(UtilityService.tools.extendObject(true, {
-}, DefaultValueAccessor.decorators[0].args[0], {providers}))
-*/
-@Directive({
-    selector: `
-        input:not([type=checkbox])[formControlName],
-        textarea[formControlName],
-        input:not([type=checkbox])[formControl],
-        textarea[formControl],
-        input:not([type=checkbox])[ngModel],
-        textarea[ngModel],[ngDefaultControl]'
-    `,
-    // TODO: vsavkin replace the above selector with the one below it once
-    // https://github.com/angular/angular/issues/3011 is implemented
-    // selector: '[ngModel],[formControl],[formControlName]',
-    host: {
-        '(input)': '_handleInput($event.target.value)',
-        '(blur)': 'onTouched()',
-        '(compositionstart)': '_compositionStart()',
-        '(compositionend)': '_compositionEnd($event.target.value)'
-    },
-    providers
-})
-/**
- * Time value accessor with "ngModel" support.
- */
-export class DateTimeValueAccessor extends AbstractValueAccessor {
-    /**
-     * Delegates injected injector service instance to the super constructor.
-     * @param injector - Injected injector service instance.
-     * @returns Nothing.
-     */
-    constructor(injector:Injector) {
-        super(injector)
-    }
-    /**
-     * Manipulates editable value representation.
-     * @param value - Value to manipulate.
-     * @returns Given and transformed value.
-     */
-    export(value:any):any {
-        if (
-            ![undefined, null].includes(value) &&
-            ['date', 'time'].includes(this.type)
-        ) {
-            const date:Date = new Date(value)
-            if (isNaN(date.getDate()))
-                return
-            else if (this.type === 'time') {
-                let hours:string = `${date.getHours()}`
-                if (hours.length === 1)
-                    hours = `0${hours}`
-                let minutes:string = `${date.getMinutes()}`
-                if (minutes.length === 1)
-                    minutes = `0${minutes}`
-                return `${hours}:${minutes}`
-            } else if (this.type === 'date') {
-                let month:string = `${date.getMonth() + 1}`
-                if (month.length === 1)
-                    month = `0${month}`
-                let day:string = `${date.getDate()}`
-                if (day.length === 1)
-                    day = `0${day}`
-                return `${date.getFullYear()}-${month}-${day}`
-            }
-        }
-        return value
-    }
-    /**
-     * Reads internal value representation.
-     * @param value - Value to convert to its internal representation.
-     * @returns Given and transformed value.
-     */
-    import(value:any):any {
-        if (typeof value === 'string')
-            if (this.type === 'time') {
-                const match = /^([0-9]{2}):([0-9]{2})$/.exec(value)
-                if (match)
-                    return new Date(
-                        1970, 0, 1, parseInt(match[1]), parseInt(match[2]))
-            } else if (this.type === 'date') {
-                const match = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(value)
-                if (match)
-                    return new Date(
-                        parseInt(match[1]), parseInt(match[2]) - 1,
-                        parseInt(match[3]))
-            }
-        return value
     }
 }
 // // / region interval
@@ -5664,6 +5666,114 @@ export class IntervalsInputComponent implements OnInit {
     }
 }
 // // / endregion
+// IgnoreTypeCheck
+@Directive({selector: '[genericRepresentTextFile]'})
+/**
+ * Displays text files.
+ * @property change - Change event emitter triggering when new has been
+ * consumed.
+ * @property domSanitizer - Sanitizing service instance.
+ * @property extendObject - Extend object pipe's transform method.
+ * @property options - Given formatting and update options.
+ * @property templateReference - Reference to given template.
+ * @property viewContainerReference - View container reference to embed
+ * rendered template instance into.
+ */
+export class RepresentTextFileDirective {
+    @Output() change:EventEmitter<string> = new EventEmitter()
+    domSanitizer:DomSanitizer
+    extendObject:Function
+    options:{
+        content:string;
+        encoding:string;
+        placeholder:string
+    } = {
+        content: '',
+        encoding: 'utf-8',
+        placeholder: ''
+    }
+    templateReference:TemplateRef<any>
+    viewContainerReference:ViewContainerRef
+    /**
+     * Saves injected services as instance properties.
+     * @param domSanitizer - Injected dom sanitizer object service instance.
+     * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param templateReference - Specified template reference.
+     * @param viewContainerReference - Injected view container reference.
+     * @returns Nothing.
+     */
+    constructor(
+        domSanitizer:DomSanitizer,
+        extendObjectPipe:ExtendObjectPipe,
+        templateReference:TemplateRef<any>,
+        viewContainerReference:ViewContainerRef
+    ) {
+        this.domSanitizer = domSanitizer
+        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.templateReference = templateReference
+        this.viewContainerReference = viewContainerReference
+    }
+    /* eslint-disable flowtype/require-return-type */
+    /**
+     * Options setter to merge into options interactively.
+     * @param options - Options object to merge into.
+     * @returns Nothing.
+     */
+    @Input('genericRepresentTextFile')
+    set insertOptions(options:any) {
+        if (typeof options === 'object')
+            for (const name in SecurityContext)
+                if (
+                    SecurityContext.hasOwnProperty(name) &&
+                    name !== 'NONE' &&
+                    typeof SecurityContext[name] === 'number'
+                ) {
+                    const context:any = SecurityContext[name]
+                    try {
+                        options = this.domSanitizer.sanitize(context, options)
+                        break
+                    } catch (error) {}
+                }
+        if (
+            ['string', 'number'].includes(typeof options) ||
+            [null, undefined].includes(options)
+        )
+            options = {content: `${options}`}
+        if (options.content.startsWith('data:'))
+            (async ():Promise<void> => {
+                const fileReader:FileReader = new FileReader()
+                fileReader.onload = (event:Event):void => {
+                    this.options.content = event.target['result']
+                    this.change.emit(this.options.content)
+                    this.viewContainerReference.remove()
+                    this.viewContainerReference.createEmbeddedView(
+                        this.templateReference, {
+                            content: this.options.content,
+                            options: this.options
+                        })
+                }
+                fileReader.readAsText(
+                    await dataURLToBlob(options.content), options.encoding)
+            })()
+        else
+            console.log('TODO retrieve file', options.content)
+        this.extendObject(true, this.options, options)
+        this.options.content = this.options.placeholder
+    }
+    /* eslint-enable flowtype/require-return-type */
+    /**
+     * Initializes interval timer and inserts initial template instance into
+     * current view.
+     * @returns Nothing.
+     */
+    ngOnInit():void {
+        this.viewContainerReference.createEmbeddedView(
+            this.templateReference, {
+                content: this.options.content,
+                options: this.options
+            })
+    }
+}
 // // endregion
 // // region text/selection
 /**
@@ -6572,34 +6682,48 @@ export class TextareaComponent extends AbstractNativeInputComponent
                     </ng-template>
                 </mat-card-title>
             </mat-card-header>
-            <img mat-card-image
+            <img
                 [attr.alt]="name"
                 [attr.src]="file.source"
                 @defaultAnimation
-                *ngIf="file?.type === 'image' && file?.source"
+                mat-card-image
+                *ngIf="file?.type === 'image' && file.source"
             >
             <video
                 autoplay
                 @defaultAnimation
                 mat-card-image
                 muted
-                *ngIf="file?.type === 'video' && file?.source"
+                *ngIf="file?.type === 'video' && file.source"
                 loop
             >
                 <source [attr.src]="file.source" [type]="file.content_type">
-                No preview possible.
+                {{noPreviewText}}
             </video>
-            <iframe
-                @defaultAnimation
-                *ngIf="file?.type === 'text' && file?.source"
-                [src]="file.source"
-                style="border: none; width: 100%; max-height: 150px"
-            ></iframe>
             <div
+                class="iframe-wrapper"
+                [class.wrapped]="['text/html', 'text/plain'].includes(file?.content_type)"
+                *ngIf="file?.type === 'renderableText' && file.source"
+            ><iframe
                 @defaultAnimation
-                mat-card-image
-                *ngIf="(!file?.type && (file?.source || (file?.source | genericType) === 'string') ? noPreviewText : noFileText) as text"
-            ><p>{{text}}</p></div>
+                [src]="file.source"
+                style="border: none; height: 125%; overflow: hidden; transform: scale(.75); transform-origin: 0 0; width: 125%"
+            ></iframe></div>
+            <ng-container *ngIf="!file?.type || file?.type === 'text'">
+                <div
+                    class="preview"
+                    @defaultAnimation
+                    mat-card-image
+                    *ngIf="file?.type === 'text' && file.source; else noPreview"
+                ><p
+                    *genericRepresentTextFile="{content: file.source, encoding: encoding}; let content = content"
+                >{{content}}</p></div>
+                <ng-template #noPreview>
+                    <div class="no-preview" @defaultAnimation mat-card-image>
+                        <p>{{file?.source ? noPreviewText : noFileText}}</p>
+                    </div>
+                </ng-template>
+            </ng-container>
             <mat-card-content>
                 <ng-content></ng-content>
                 <div
@@ -6731,6 +6855,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
  * @property deletedName - Holds the deleted model field name.
  * @property downloadButtonText - Text for button to download current file.
  * @property editableName - Indicates whether file name could be edited.
+ * @property encoding - Encoding to use to represent given text files.
  * @property file - Holds the current selected file object if present.
  * @property headerText - Header text to show instead of property description
  * or name.
@@ -6783,7 +6908,10 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         '^image/(?:p?jpe?g|png|svg(?:\\+xml)?|vnd\\.microsoft\\.icon|gif|' +
         'tiff|webp|vnd\\.wap\\.wbmp|x-(?:icon|jng|ms-bmp))$')
     static textMimeTypeRegularExpression:RegExp = new RegExp(
-        '^(?:application/xml)|(?:text/(?:plain|x-ndpb[wy]html|(?:x-)?csv))$')
+        '^(?:application/xml)|' +
+        '(?:text/(?:plain|x-ndpb[wy]html|(?:x-)?csv|x?html?|xml))$')
+    static representableTextMimeTypeRegularExpression:RegExp = new RegExp(
+        '^(?:application/xml)|(?:text/(?:plain|x?html?|xml))$')
     static videoMimeTypeRegularExpression:RegExp = new RegExp(
         '^video/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|' +
         '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
@@ -6798,6 +6926,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     deletedName:string
     @Input() downloadButtonText:string = 'download'
     @Input() editableName:boolean = true
+    @Input() encoding:string = 'utf-8'
     file:any = null
     @Output() fileChange:EventEmitter<any> = new EventEmitter()
     @Input() filter:Array<{
@@ -6835,8 +6964,8 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         'Given filename "${file.name}" doesn\'t match specified pattern "' +
         '${internalName}".'
     @Input() newButtonText:string = 'new'
-    @Input() noFileText:string = ''
-    @Input() noPreviewText:string = ''
+    @Input() noFileText:string = 'No file selected.'
+    @Input() noPreviewText:string = 'No preview available.'
     @Input() oneDocumentPerFileMode:boolean = true
     @Input() requiredText:string = 'Please select a file.'
     @Input() revision:string|null = null
@@ -6918,7 +7047,14 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             if (FileInputComponent.textMimeTypeRegularExpression.test(
                 this.file.content_type
             ))
-                this.file.type = 'text'
+                if (
+                    FileInputComponent
+                        .representableTextMimeTypeRegularExpression.test(
+                            this.file.content_type)
+                )
+                    this.file.type = 'renderableText'
+                else
+                    this.file.type = 'text'
             else if (FileInputComponent.imageMimeTypeRegularExpression.test(
                 this.file.content_type
             ))
@@ -7401,7 +7537,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     changeDetection: ChangeDetectionStrategy.OnPush,
     selector: 'generic-pagination',
     template: `
-        <ul class="hans" @defaultAnimation *ngIf="lastPage > 1">
+        <ul @defaultAnimation *ngIf="lastPage > 1">
             <li @defaultAnimation *ngIf="page > 2">
                 <a href="" (click)="change($event, 1)">--</a>
             </li>
@@ -7632,6 +7768,7 @@ export class PaginationComponent {
         // endregion
         // region directives
         DateDirective,
+        RepresentTextFileDirective,
         SliderDirective,
         // endregion
         // region components
@@ -7755,6 +7892,7 @@ export class PaginationComponent {
         // endregion
         // region directives
         DateDirective,
+        RepresentTextFileDirective,
         SliderDirective,
         // endregion
         // region components
