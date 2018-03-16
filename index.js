@@ -1,4 +1,3 @@
-
 // #!/usr/bin/env node
 // -*- coding: utf-8 -*-
 /** @module angularGeneric */
