@@ -5721,7 +5721,12 @@ export class RepresentTextFileDirective {
      */
     @Input('genericRepresentTextFile')
     set insertOptions(options:any) {
-        if (typeof options === 'object')
+        if (
+            ['string', 'number'].includes(typeof options) ||
+            [null, undefined].includes(options)
+        )
+            options = {content: `${options}`}
+        if (typeof options.content === 'object')
             for (const name in SecurityContext)
                 if (
                     SecurityContext.hasOwnProperty(name) &&
@@ -5730,20 +5735,18 @@ export class RepresentTextFileDirective {
                 ) {
                     const context:any = SecurityContext[name]
                     try {
-                        options = this.domSanitizer.sanitize(context, options)
+                        options.content = this.domSanitizer.sanitize(
+                            context, options.content)
                         break
                     } catch (error) {}
                 }
-        if (
-            ['string', 'number'].includes(typeof options) ||
-            [null, undefined].includes(options)
-        )
-            options = {content: `${options}`}
         if (options.content.startsWith('data:'))
-            (async ():Promise<void> => {
+            dataURLToBlob(options.content).then((blob:any):void => {
                 const fileReader:FileReader = new FileReader()
                 fileReader.onload = (event:Event):void => {
                     this.options.content = event.target['result']
+                    this.options.content = this.options.content.replace(
+                        /\r\n/g, '\n')
                     this.change.emit(this.options.content)
                     this.viewContainerReference.remove()
                     this.viewContainerReference.createEmbeddedView(
@@ -5752,13 +5755,16 @@ export class RepresentTextFileDirective {
                             options: this.options
                         })
                 }
-                fileReader.readAsText(
-                    await dataURLToBlob(options.content), options.encoding)
-            })()
+                console.log('A', options.encoding)
+                fileReader.readAsText(blob, options.encoding)
+            })
         else
             console.log('TODO retrieve file', options.content)
         this.extendObject(true, this.options, options)
         this.options.content = this.options.placeholder
+    }
+    ngOnChanges(changes:SimpleChanges):void {
+        console.log('CHANGE', changes)
     }
     /* eslint-enable flowtype/require-return-type */
     /**
@@ -6710,17 +6716,17 @@ export class TextareaComponent extends AbstractNativeInputComponent
                 style="border: none; height: 125%; overflow: hidden; transform: scale(.75); transform-origin: 0 0; width: 125%"
             ></iframe></div>
             <ng-container *ngIf="!file?.type || file?.type === 'text'">
-                <div
+                <ng-container
+                    *ngIf="file?.type === 'text' && file.source; else noPreview"
+                ><pre
                     class="preview"
                     @defaultAnimation
-                    mat-card-image
-                    *ngIf="file?.type === 'text' && file.source; else noPreview"
-                ><p
                     *genericRepresentTextFile="{content: file.source, encoding: encoding}; let content = content"
-                >{{content}}</p></div>
+                    mat-card-image
+                >{{content}}</pre></ng-container>
                 <ng-template #noPreview>
                     <div class="no-preview" @defaultAnimation mat-card-image>
-                        <p>{{file?.source ? noPreviewText : noFileText}}</p>
+                        {{file?.source ? noPreviewText : noFileText}}
                     </div>
                 </ng-template>
             </ng-container>
