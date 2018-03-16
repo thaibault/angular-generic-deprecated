@@ -3211,6 +3211,21 @@ export class DataService {
      * @returns Whatever pouchdb's method returns.
      */
     getAttachment(...parameter:Array<any>):Promise<PlainObject> {
+        if (parameter.length === 1 && typeof parameter[0] === 'string') {
+            // NOTE: Support attachment retrieving by given url.
+            const match:Array<string> = parameter[0].match(
+                /([^/]+)\/([^/]+)(\?[^?]*)?$/)
+            if (match) {
+                if (match[3]) {
+                    const versionMatch:Array<string> = match[3].match(
+                        /^\?(.+&)?rev=([^&]+)[^?]*$/)
+                    if (versionMatch)
+                        return this.connection.getAttachment(
+                            match[1], match[2], {rev: versionMatch[1]})
+                }
+                return this.connection.getAttachment(match[1], match[2])
+            }
+        }
         return this.connection.getAttachment(...parameter)
     }
     /**
@@ -5152,131 +5167,6 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
         return value
     }
 }
-// // endregion
-// IgnoreTypeCheck
-@Directive({selector: '[genericSlider]'})
-/**
- * Directive to automatically switch a list of content elements.
- * @property extendObject - Extend object's pipe transform method.
- * @property index - Index of currently selected content.
- * @property options - Sliding options.
- * @property platformID - Platform identification string.
- * @property templateReference - Content element template to slide.
- * @property timerID - Timer id of next content switch.
- * @property viewContainerReference - View container reference to inject
- * instantiated template reference into.
- */
-export class SliderDirective implements OnInit {
-    extendObject:Function
-    index:number = 0
-    options:{
-        freeze:boolean;
-        startIndex:number;
-        step:number;
-        slides:Array<any>;
-        updateIntervalInMilliseconds:number;
-    } = {
-        freeze: false,
-        startIndex: 0,
-        step: 1,
-        slides: [],
-        updateIntervalInMilliseconds: 6000
-    }
-    platformID:string
-    templateReference:TemplateRef<any>
-    timerID:any
-    viewContainerReference:ViewContainerRef
-    /**
-     * Saves injected services as instance properties.
-     * @param extendObjectPipe - Injected extend object pipe service instance.
-     * @param platformID - Platform identification string.
-     * @param templateReference - Specified template reference.
-     * @param viewContainerReference - Injected view container reference.
-     * @returns Nothing.
-     */
-    constructor(
-        extendObjectPipe:ExtendObjectPipe,
-        @Inject(PLATFORM_ID) platformID:string,
-        templateReference:TemplateRef<any>,
-        viewContainerReference:ViewContainerRef
-    ) {
-        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
-        this.platformID = platformID
-        this.templateReference = templateReference
-        this.viewContainerReference = viewContainerReference
-    }
-    /**
-     * Calculates next index from given reference point.
-     * @param startIndex - Reference index.
-     * @returns New calculated index.
-     */
-    getNextIndex(startIndex:number = -1):number {
-        if (startIndex === -1)
-            startIndex = this.index
-        return (startIndex + this.options.step) % this.options.slides.length
-    }
-    /* eslint-disable flowtype/require-return-type */
-    /**
-     * Options setter to merge into options interactively.
-     * @param options - Options object to merge into.
-     * @returns Nothing.
-     */
-    @Input('genericSlider')
-    set insertOptions(options:Array<any>|PlainObject) {
-        if (Array.isArray(options))
-            options = {slides: options}
-        this.extendObject(true, this.options, options)
-    }
-    /* eslint-enable flowtype/require-return-type */
-    /**
-     * Inserts a rendered template instance into current view.
-     * @returns Nothing.
-     */
-    update():void {
-        if (this.options.slides.length)
-            this.viewContainerReference.createEmbeddedView(
-                this.templateReference, {
-                    getNextIndex: this.getNextIndex.bind(this),
-                    index: this.index,
-                    options: this.options,
-                    slide: this.options.slides[this.index],
-                    slides: this.options.slides
-                })
-    }
-    /**
-     * On destroy life cycle hook to cancel initialized interval timer.
-     * @returns Nothing.
-     */
-    ngOnDestroy():void {
-        if (this.timerID)
-            clearInterval(this.timerID)
-    }
-    /**
-     * Initializes interval timer and inserts initial template instance into
-     * current view.
-     * @returns Nothing.
-     */
-    ngOnInit():void {
-        if (isPlatformBrowser(this.platformID))
-            this.timerID = setInterval(():void => {
-                const newIndex:number = (this.index + this.options.step) %
-                    this.options.slides.length
-                if (
-                    this.options.freeze !== true &&
-                    newIndex !== this.index && !(
-                        typeof this.options.freeze === 'number' &&
-                        this.options.freeze >= this.options.slides.length
-                    )
-                ) {
-                    this.viewContainerReference.remove()
-                    this.index = this.getNextIndex()
-                    this.update()
-                }
-            }, this.options.updateIntervalInMilliseconds)
-        this.index = this.options.startIndex
-        this.update()
-    }
-}
 // // / region interval
 // IgnoreTypeCheck
 @Component({
@@ -5666,52 +5556,68 @@ export class IntervalsInputComponent implements OnInit {
     }
 }
 // // / endregion
+// // endregion
 // IgnoreTypeCheck
-@Directive({selector: '[genericRepresentTextFile]'})
+@Directive({selector: '[genericSlider]'})
 /**
- * Displays text files.
- * @property change - Change event emitter triggering when new has been
- * consumed.
- * @property domSanitizer - Sanitizing service instance.
- * @property extendObject - Extend object pipe's transform method.
- * @property options - Given formatting and update options.
- * @property templateReference - Reference to given template.
- * @property viewContainerReference - View container reference to embed
- * rendered template instance into.
+ * Directive to automatically switch a list of content elements.
+ * @property extendObject - Extend object's pipe transform method.
+ * @property index - Index of currently selected content.
+ * @property options - Sliding options.
+ * @property platformID - Platform identification string.
+ * @property templateReference - Content element template to slide.
+ * @property timerID - Timer id of next content switch.
+ * @property viewContainerReference - View container reference to inject
+ * instantiated template reference into.
  */
-export class RepresentTextFileDirective {
-    @Output() change:EventEmitter<string> = new EventEmitter()
-    domSanitizer:DomSanitizer
+export class SliderDirective implements OnInit {
     extendObject:Function
+    index:number = 0
     options:{
-        content:string;
-        encoding:string;
-        placeholder:string
+        freeze:boolean;
+        startIndex:number;
+        step:number;
+        slides:Array<any>;
+        updateIntervalInMilliseconds:number;
     } = {
-        content: '',
-        encoding: 'utf-8',
-        placeholder: ''
+        freeze: false,
+        startIndex: 0,
+        step: 1,
+        slides: [],
+        updateIntervalInMilliseconds: 6000
     }
+    platformID:string
     templateReference:TemplateRef<any>
+    timerID:any
     viewContainerReference:ViewContainerRef
     /**
      * Saves injected services as instance properties.
-     * @param domSanitizer - Injected dom sanitizer object service instance.
      * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param platformID - Platform identification string.
      * @param templateReference - Specified template reference.
      * @param viewContainerReference - Injected view container reference.
      * @returns Nothing.
      */
     constructor(
-        domSanitizer:DomSanitizer,
         extendObjectPipe:ExtendObjectPipe,
+        @Inject(PLATFORM_ID) platformID:string,
         templateReference:TemplateRef<any>,
         viewContainerReference:ViewContainerRef
     ) {
-        this.domSanitizer = domSanitizer
         this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.platformID = platformID
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
+    }
+    /**
+     * Calculates next index from given reference point.
+     * @param startIndex - Reference index.
+     * @returns New calculated index.
+     */
+    getNextIndex(startIndex:number = -1):number {
+        if (startIndex === -1)
+            startIndex = this.index
+        return (startIndex + this.options.step) % this.options.slides.length
     }
     /* eslint-disable flowtype/require-return-type */
     /**
@@ -5719,68 +5625,62 @@ export class RepresentTextFileDirective {
      * @param options - Options object to merge into.
      * @returns Nothing.
      */
-    @Input('genericRepresentTextFile')
-    set insertOptions(options:any) {
-        if (
-            ['string', 'number'].includes(typeof options) ||
-            [null, undefined].includes(options)
-        )
-            options = {content: `${options}`}
-        if (typeof options.content === 'object')
-            for (const name in SecurityContext)
-                if (
-                    SecurityContext.hasOwnProperty(name) &&
-                    name !== 'NONE' &&
-                    typeof SecurityContext[name] === 'number'
-                ) {
-                    const context:any = SecurityContext[name]
-                    try {
-                        options.content = this.domSanitizer.sanitize(
-                            context, options.content)
-                        break
-                    } catch (error) {}
-                }
-        if (options.content.startsWith('data:'))
-            dataURLToBlob(options.content).then((blob:any):void => {
-                const fileReader:FileReader = new FileReader()
-                fileReader.onload = (event:Event):void => {
-                    this.options.content = event.target['result']
-                    this.options.content = this.options.content.replace(
-                        /\r\n/g, '\n')
-                    this.change.emit(this.options.content)
-                    this.viewContainerReference.remove()
-                    this.viewContainerReference.createEmbeddedView(
-                        this.templateReference, {
-                            content: this.options.content,
-                            options: this.options
-                        })
-                }
-                console.log('A', options.encoding)
-                fileReader.readAsText(blob, options.encoding)
-            })
-        else
-            console.log('TODO retrieve file', options.content)
+    @Input('genericSlider')
+    set insertOptions(options:Array<any>|PlainObject) {
+        if (Array.isArray(options))
+            options = {slides: options}
         this.extendObject(true, this.options, options)
-        this.options.content = this.options.placeholder
-    }
-    ngOnChanges(changes:SimpleChanges):void {
-        console.log('CHANGE', changes)
     }
     /* eslint-enable flowtype/require-return-type */
+    /**
+     * Inserts a rendered template instance into current view.
+     * @returns Nothing.
+     */
+    update():void {
+        if (this.options.slides.length)
+            this.viewContainerReference.createEmbeddedView(
+                this.templateReference, {
+                    getNextIndex: this.getNextIndex.bind(this),
+                    index: this.index,
+                    options: this.options,
+                    slide: this.options.slides[this.index],
+                    slides: this.options.slides
+                })
+    }
+    /**
+     * On destroy life cycle hook to cancel initialized interval timer.
+     * @returns Nothing.
+     */
+    ngOnDestroy():void {
+        if (this.timerID)
+            clearInterval(this.timerID)
+    }
     /**
      * Initializes interval timer and inserts initial template instance into
      * current view.
      * @returns Nothing.
      */
     ngOnInit():void {
-        this.viewContainerReference.createEmbeddedView(
-            this.templateReference, {
-                content: this.options.content,
-                options: this.options
-            })
+        if (isPlatformBrowser(this.platformID))
+            this.timerID = setInterval(():void => {
+                const newIndex:number = (this.index + this.options.step) %
+                    this.options.slides.length
+                if (
+                    this.options.freeze !== true &&
+                    newIndex !== this.index && !(
+                        typeof this.options.freeze === 'number' &&
+                        this.options.freeze >= this.options.slides.length
+                    )
+                ) {
+                    this.viewContainerReference.remove()
+                    this.index = this.getNextIndex()
+                    this.update()
+                }
+            }, this.options.updateIntervalInMilliseconds)
+        this.index = this.options.startIndex
+        this.update()
     }
 }
-// // endregion
 // // region text/selection
 /**
  * Provides a generic editor.
@@ -6006,6 +5906,151 @@ export class CodeEditorComponent extends AbstractEditorComponent
         super.setDisabledState(isDisabled)
         if (this.instance)
             this.instance.setOption('readOnly', this.disabled)
+    }
+}
+// IgnoreTypeCheck
+@Directive({selector: '[genericRepresentTextFile]'})
+/**
+ * Displays text files.
+ * @property change - Change event emitter triggering when new has been
+ * consumed.
+ * @property data -  Data service instance.
+ * @property domSanitizer - Sanitizing service instance.
+ * @property extendObject - Extend object pipe's transform method.
+ * @property lastContent - Caches last content to avoid unneeded re-reading of
+ * blob file objects.
+ * @property options - Given formatting and update options.
+ * @property templateReference - Reference to given template.
+ * @property viewContainerReference - View container reference to embed
+ * rendered template instance into.
+ */
+export class RepresentTextFileDirective {
+    @Output() change:EventEmitter<string> = new EventEmitter()
+    data:DataService
+    domSanitizer:DomSanitizer
+    extendObject:Function
+    lastContent:{input:string;output:any} = {
+        input: '',
+        output: null
+    }
+    options:{
+        content:string;
+        encoding:string;
+        placeholder:string
+    } = {
+        content: '',
+        encoding: 'utf-8',
+        placeholder: 'Loading preview...'
+    }
+    templateReference:TemplateRef<any>
+    viewContainerReference:ViewContainerRef
+    /**
+     * Saves injected services as instance properties.
+     * @param data - Injected data service instance.
+     * @param domSanitizer - Injected dom sanitizer object service instance.
+     * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param templateReference - Specified template reference.
+     * @param viewContainerReference - Injected view container reference.
+     * @returns Nothing.
+     */
+    constructor(
+        data:DataService,
+        domSanitizer:DomSanitizer,
+        extendObjectPipe:ExtendObjectPipe,
+        templateReference:TemplateRef<any>,
+        viewContainerReference:ViewContainerRef
+    ) {
+        this.data = data
+        this.domSanitizer = domSanitizer
+        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.templateReference = templateReference
+        this.viewContainerReference = viewContainerReference
+    }
+    /* eslint-disable flowtype/require-return-type */
+    /**
+     * Options setter to merge into options interactively.
+     * @param options - Options object to merge into.
+     * @returns Nothing.
+     */
+    @Input('genericRepresentTextFile')
+    set insertOptions(options:any) {
+        if (
+            ['string', 'number'].includes(typeof options) ||
+            [null, undefined].includes(options)
+        )
+            options = {content: `${options}`}
+        if (typeof options.content === 'object')
+            for (const name in SecurityContext)
+                if (
+                    SecurityContext.hasOwnProperty(name) &&
+                    name !== 'NONE' &&
+                    typeof SecurityContext[name] === 'number'
+                ) {
+                    const context:any = SecurityContext[name]
+                    try {
+                        options.content = this.domSanitizer.sanitize(
+                            context, options.content)
+                        break
+                    } catch (error) {}
+                }
+        this.extendObject(true, this.options, options)
+        const readBinaryDataIntoText = (blob:any):void => {
+            this.lastContent.output = blob
+            const fileReader:FileReader = new FileReader()
+            fileReader.onload = (event:Event):void => {
+                this.options.content = event.target['result']
+                // Remove preceding BOM.
+                if (
+                    this.options.encoding.endsWith('-sig') &&
+                    this.options.content.length &&
+                    this.options.content.charCodeAt(0) === 0xFEFF
+                )
+                    this.options.content = this.options.content.slice(1)
+                // Normalize line endings to unix format.
+                this.options.content = this.options.content.replace(
+                    /\r\n/g, '\n')
+                this.change.emit(this.options.content)
+                this.viewContainerReference.remove()
+                this.viewContainerReference.createEmbeddedView(
+                    this.templateReference, {
+                        content: this.options.content,
+                        options: this.options
+                    })
+            }
+            fileReader.readAsText(blob, this.options.encoding.endsWith(
+                '-sig'
+            ) ? this.options.encoding.substring(
+                    0, this.options.encoding.length - '-sig'.length
+                ) : this.options.encoding)
+        }
+        if (/^(data:|((file|https?):\/\/)).+/.test(this.options.content)) {
+            if (this.lastContent.input === this.options.content) {
+                if (this.lastContent.output)
+                    readBinaryDataIntoText(this.lastContent.output)
+            } else {
+                this.lastContent.input = this.options.content
+                if (this.options.content.startsWith('data:'))
+                    dataURLToBlob(this.options.content).then(
+                        readBinaryDataIntoText)
+                else
+                    this.data.getAttachment(this.options.content).then(
+                        readBinaryDataIntoText)
+            }
+            this.options.content = this.options.placeholder
+        }
+    }
+    /* eslint-enable flowtype/require-return-type */
+    /**
+     * Initializes interval timer and inserts initial template instance into
+     * current view.
+     * @returns Nothing.
+     */
+    ngOnInit():void {
+        this.viewContainerReference.createEmbeddedView(
+            this.templateReference, {
+                content: this.options.content,
+                options: this.options
+            })
     }
 }
 @Component({
@@ -6715,21 +6760,24 @@ export class TextareaComponent extends AbstractNativeInputComponent
                 [src]="file.source"
                 style="border: none; height: 125%; overflow: hidden; transform: scale(.75); transform-origin: 0 0; width: 125%"
             ></iframe></div>
-            <ng-container *ngIf="!file?.type || file?.type === 'text'">
-                <ng-container
-                    *ngIf="file?.type === 'text' && file.source; else noPreview"
-                ><pre
-                    class="preview"
-                    @defaultAnimation
-                    *genericRepresentTextFile="{content: file.source, encoding: encoding}; let content = content"
-                    mat-card-image
-                >{{content}}</pre></ng-container>
-                <ng-template #noPreview>
-                    <div class="no-preview" @defaultAnimation mat-card-image>
-                        {{file?.source ? noPreviewText : noFileText}}
-                    </div>
-                </ng-template>
-            </ng-container>
+            <ng-container *ngIf="file?.type === 'text' && file.source"><pre
+                class="preview"
+                @defaultAnimation
+                *genericRepresentTextFile="{content: file.source, encoding: encoding}; let content = content"
+                mat-card-image
+            >{{content}}</pre></ng-container>
+            <div
+                class="no-preview"
+                @defaultAnimation
+                mat-card-image
+                *ngIf="file?.type === 'binary' && noPreviewText"
+            >{{noPreviewText}}</div>
+            <div
+                class="no-file"
+                @defaultAnimation
+                mat-card-image
+                *ngIf="!file?.type && noFileText"
+            >{{noFileText}}</div>
             <mat-card-content>
                 <ng-content></ng-content>
                 <div
@@ -6917,7 +6965,11 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         '^(?:application/xml)|' +
         '(?:text/(?:plain|x-ndpb[wy]html|(?:x-)?csv|x?html?|xml))$')
     static representableTextMimeTypeRegularExpression:RegExp = new RegExp(
-        '^(?:application/xml)|(?:text/(?:plain|x?html?|xml))$')
+        // Plain version:
+        '^text/plain$'
+        // Rendered version:
+        // '^(?:application/xml)|(?:text/(?:plain|x?html?|xml))$'
+    )
     static videoMimeTypeRegularExpression:RegExp = new RegExp(
         '^video/(?:(?:x-)?(?:x-)?webm|3gpp|mp2t|mp4|mpeg|quicktime|' +
         '(?:x-)?flv|(?:x-)?m4v|(?:x-)mng|x-ms-as|x-ms-wmv|x-msvideo)|' +
@@ -7049,28 +7101,31 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
      * @returns Nothing.
      */
     determinePresentationType():void {
-        if (this.file && this.file.content_type)
+        if (this.file && this.file.content_type) {
+            const contentType:string = this.file.content_type.replace(
+                /; *charset=.+$/, '')
             if (FileInputComponent.textMimeTypeRegularExpression.test(
-                this.file.content_type
+                contentType
             ))
                 if (
                     FileInputComponent
                         .representableTextMimeTypeRegularExpression.test(
-                            this.file.content_type)
+                            contentType)
                 )
                     this.file.type = 'renderableText'
                 else
                     this.file.type = 'text'
             else if (FileInputComponent.imageMimeTypeRegularExpression.test(
-                this.file.content_type
+                contentType
             ))
                 this.file.type = 'image'
             else if (FileInputComponent.videoMimeTypeRegularExpression.test(
-                this.file.content_type
+                contentType
             ))
                 this.file.type = 'video'
             else
                 this.file.type = 'binary'
+        }
     }
     /**
      * Includes given error in current error state object.
