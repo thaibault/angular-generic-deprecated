@@ -387,15 +387,14 @@ export function render(module:Object, options:{
                             .replace(
                                 /^(\s*<!doctype [^>]+?>\s*)[\s\S]*$/i, '$1'
                             ) + window.document.documentElement.outerHTML
-                                .replace(
-                                    /(<style[^>]*>)[\s\S]*?(<\/style[^>]*>)/gi,
-                                    (
-                                        match:string,
-                                        startTag:string,
-                                        endTag:string
-                                    ):string =>
-                                        `${startTag}${styleContents.shift()}` +
-                                        endTag)
+                            .replace(
+                                /(<style[^>]*>)[\s\S]*?(<\/style[^>]*>)/gi, (
+                                    match:string,
+                                    startTag:string,
+                                    endTag:string
+                                ):string =>
+                                    `${startTag}${styleContents.shift()}` +
+                                    endTag)
                     }
                     // endregion
                     if (options.minify)
