@@ -131,7 +131,7 @@
     "source-map-support": "^0.5.4",
     "tinymce": "^4.7.9",
     "typescript": "^2.7.2",
-    "weboptimizer": "^2.0.41",
+    "weboptimizer": "^2.0.42",
     "webpack": "^4.1.1",
     "webpack-cli": "^2.0.12",
     "webpack-dev-server": "^3.1.1",
