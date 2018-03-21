@@ -3213,7 +3213,7 @@ export class DataService {
         if (parameter.length === 1 && typeof parameter[0] === 'string') {
             // NOTE: Support attachment retrieving by given url.
             const match:Array<string> = parameter[0].match(
-                /([^/]+)\/([^/]+)(\?[^?]*)?$/)
+                /([^/]+)\/([^/]+?)(\?[^?]*)?$/)
             if (match) {
                 if (match[3]) {
                     const versionMatch:Array<string> = match[3].match(
