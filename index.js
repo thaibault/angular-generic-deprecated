@@ -65,8 +65,15 @@ import {DatePipe, isPlatformBrowser, isPlatformServer} from '@angular/common'
 import {
     HttpInterceptor, HTTP_INTERCEPTORS, HttpRequest, HttpHandler, HttpEvent
 } from '@angular/common/http'
+/*
+ * NOTE: "No provider for InjectionToken CompositionEventMode"
+ * triggered  if this IME compatible code is activated:
+ */
 import {
-    DefaultValueAccessor, FormsModule, NG_VALUE_ACCESSOR
+    // COMPOSITION_BUFFER_MODE,
+    ControlValueAccessor,
+    FormsModule,
+    NG_VALUE_ACCESSOR
 } from '@angular/forms'
 /*
     NOTE: We should not import directly from "@angular/material" to improve
@@ -92,6 +99,7 @@ import {MatTooltipModule} from '@angular/material/tooltip'
 import {
     BrowserModule,
     DomSanitizer,
+    ɵgetDOM as getDOM,
     SafeScript,
     SafeHtml,
     SafeResourceUrl,
@@ -116,9 +124,6 @@ import {ISubscription} from 'rxjs/Subscription'
 import 'rxjs/add/operator/do'
 import 'rxjs/add/operator/debounceTime'
 import 'rxjs/add/operator/distinctUntilChanged'
-try {
-    require('source-map-support/register')
-} catch (error) {}
 
 /*
     NOTE: Default import is not yet support for angular's ahead of time
@@ -212,6 +217,10 @@ export type ModelConfiguration = {
         name:{
             reserved:Array<string>;
             special:SpecialPropertyNames;
+            typeRegularExpressionPattern:{
+                private:string;
+                public:string;
+            };
             validatedDocumentsCache:string;
         }
     }
@@ -221,6 +230,7 @@ export type Configuration = {database:{
         auto_compaction:boolean;
         revs_limit:number;
     },
+    createGenericFlatIndex:boolean;
     model:ModelConfiguration,
     plugins:Array<Object>;
     url:string;
@@ -348,6 +358,7 @@ export class InitialDataService {
             revs_limit: 10
             /* eslint-enable camelcase */
         },
+        createGenericFlatIndex: true,
         model: {
             entities: {},
             property: {
@@ -388,6 +399,10 @@ export class InitialDataService {
                             execution: '_updateExecution',
                             expression: '_updateExpression'
                         }
+                    },
+                    typeRegularExpressionPattern: {
+                        private: '^_[a-z][A-Za-z0-9]+$',
+                        public: '^[A-Z][A-Za-z0-9]+$'
                     },
                     validatedDocumentsCache: '_validatedDocuments'
                 }
@@ -2516,30 +2531,36 @@ export class ConfirmComponent {
  * Alert service to trigger a dialog window which can be confirmed.
  * @property dialog - Reference to the dialog component instance.
  * @property dialogReference - Reference to the dialog service instance.
- * @property zone - Zone service instance.
+ * @property extendObject - Holds the extend object's pipe transformation
+ * method.
  */
 export class AlertService {
     dialog:MatDialog
     dialogReference:MatDialogRef<ConfirmComponent>
-    zone:NgZone
+    extendObject:Function
     /**
      * Gets needed component dialog service instance injected.
      * @param dialog - Reference to the dialog component instance.
-     * @param ngZone - Injected zone service instance.
+     * @param extendObjectPipe - Injected extend object pipe instance.
      * @returns Nothing.
      */
-    constructor(dialog:MatDialog, ngZone:NgZone) {
+    constructor(dialog:MatDialog, extendObjectPipe:ExtendObjectPipe) {
         this.dialog = dialog
-        this.zone = ngZone
+        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
     }
     /**
      * Triggers a confirmation dialog to show.
      * @param data - Data to provide for the confirmations component instance.
+     * @param additionalConfiguration - Additional configuration object to
+     * apply to the underlying dialog instance.
      * @returns A promise resolving when confirmation window where confirmed or
      * rejected due to user interaction. A promised wrapped boolean indicates
      * which decision was made.
      */
-    confirm(data:string|{[key:string]:any}):Promise<boolean> {
+    confirm(
+        data:string|{[key:string]:any},
+        additionalConfiguration:PlainObject = {}
+    ):Promise<boolean> {
         let configuration:MatDialogConfig<any>
         if (typeof data === 'string')
             configuration = {data: {message: data}}
@@ -2551,7 +2572,8 @@ export class AlertService {
         else
             configuration = data
         this.dialogReference = this.dialog.open(
-            ConfirmComponent, configuration)
+            ConfirmComponent, this.extendObject(
+                true, configuration, additionalConfiguration))
         return this.dialogReference.afterClosed().toPromise()
     }
 }
@@ -2598,7 +2620,7 @@ export class DataService {
         'allDocs', 'bulkDocs', 'bulkGet',
         'close',
         'compact', 'compactDocument',
-        'createIndex', 'deleteIndexs',
+        'createIndex', 'deleteIndex',
         'destroy',
         'find', 'get',
         'getAttachment', 'getIndexes',
@@ -2681,8 +2703,8 @@ export class DataService {
             )
                 firstParameter = [firstParameter]
             /*
-                NOTE: "bulkDocs()" does not get constructor given options
-                if none were provided for a single function call.
+                NOTE: "bulkDocs()" does not get constructor given options if
+                none were provided for a single function call.
             */
             if (
                 self.configuration.database.connector.ajax &&
@@ -2967,9 +2989,7 @@ export class DataService {
         if (!(
             DataService.skipGenericIndexManagementOnServer &&
             isPlatformServer(this.platformID)
-        ) && this.configuration.database.createGenericFlatIndex &&
-            this.connection !== this.remoteConnection
-        ) {
+        ) && this.configuration.database.createGenericFlatIndex) {
             // region create/remove needed/unneeded generic indexes
             for (const modelName in this.configuration.database.model.entities)
                 if (
@@ -2980,7 +3000,15 @@ export class DataService {
                             this.configuration.database.model.property.name
                                 .typeRegularExpressionPattern.public)
                     ).test(modelName)
-                )
+                ) {
+                    await this.connection.createIndex({index: {
+                        ddoc: `${modelName}-GenericIndex`,
+                        fields: [
+                            this.configuration.database.model.property.name
+                                .special.type
+                        ],
+                        name: `${modelName}-GenericIndex`
+                    }})
                     for (
                         const name of
                         DataService.determineGenericIndexablePropertyNames(
@@ -2991,12 +3019,13 @@ export class DataService {
                         await this.connection.createIndex({index: {
                             ddoc: `${modelName}-${name}-GenericIndex`,
                             fields: [
-                                this.configuration.database.model
-                                    .property.name.special.type,
+                                this.configuration.database.model.property.name
+                                    .special.type,
                                 name
                             ],
                             name: `${modelName}-${name}-GenericIndex`
                         }})
+                }
             let indexes:Array<PlainObject>
             indexes = (await this.connection.getIndexes()).indexes
             for (const index of indexes)
@@ -3007,15 +3036,18 @@ export class DataService {
                         this.configuration.database.model.entities
                     )
                         if (index.name.startsWith(`${modelName}-`)) {
-                            for (const name of DataService
-                                .determineGenericIndexablePropertyNames(
-                                    this.configuration.database.model,
-                                    this.configuration.database.model.entities[
-                                        modelName])
+                            for (
+                                const name of
+                                DataService
+                                    .determineGenericIndexablePropertyNames(
+                                        this.configuration.database.model,
+                                        this.configuration.database.model
+                                            .entities[modelName])
                             )
-                                if (index.name ===
-                                    `${modelName}-${name}-GenericIndex`
-                                )
+                                if ([
+                                    `${modelName}-${name}-GenericIndex`,
+                                    `${modelName}-GenericIndex`
+                                ].includes(index.name))
                                     exists = true
                             break
                         }
@@ -3922,8 +3954,8 @@ export class RegisterHTTPRequestInterceptor implements HttpInterceptor {
 /**
  * Helper class to extend from to have some basic methods to deal with database
  * entities.
- * @property static:skipResolvingOnServer - Indicates whether to skip resolving
- * data on server contexts.
+ * @property static:skipResolving - Indicates whether to skip resolving data
+ * contexts.
  *
  * @property convertCircularObjectToJSON - Saves convert circular object to
  * json's pipe transform method.
@@ -3957,7 +3989,7 @@ export class RegisterHTTPRequestInterceptor implements HttpInterceptor {
  * auto completion e.g.
  */
 export class AbstractResolver implements Resolve<PlainObject> {
-    static skipResolvingOnServer:boolean = true
+    static skipResolving:boolean = true
 
     convertCircularObjectToJSON:Function
     data:PlainObject
@@ -4090,11 +4122,21 @@ export class AbstractResolver implements Resolve<PlainObject> {
             options.fields = this.relevantKeys
         if (options.skip === 0)
             delete options.skip
-        if (sort.length)
+        if (sort.length) {
             options.sort = [this.specialNames.type].concat(sort).map((
                 item:PlainObject
             ):PlainObject|string =>
                 Object.values(item)[0] === 'asc' ? Object.keys(item)[0] : item)
+            for (const item of options.sort.slice(1))
+                if (
+                    item === this.specialNames.type ||
+                    typeof item === 'object' &&
+                    item.hasOwnProperty(this.specialNames.type)
+                ) {
+                    options.sort.shift()
+                    break
+                }
+        }
         return this.data.find(
             this.extendObject(true, selector, additionalSelector), options)
     }
@@ -4120,9 +4162,10 @@ export class AbstractResolver implements Resolve<PlainObject> {
         route:ActivatedRouteSnapshot, state:RouterStateSnapshot
     ):Array<PlainObject>|Promise<Array<PlainObject>> {
     /* eslint-enable no-unused-vars */
-        if (AbstractResolver.skipResolvingOnServer && isPlatformServer(
-            this.platformID
-        ))
+        if (
+            AbstractResolver.skipResolving &&
+            isPlatformServer(this.platformID)
+        )
             return []
         let searchTerm:string = ''
         if ('searchTerm' in route.params) {
@@ -4211,6 +4254,16 @@ export function dataServiceInitializerFactory(
         InitialDataService.injectors.add(injector)
         return data.initialize()
     }
+}
+/**
+ * We have to check whether the agent is Android because composition events
+ * behave differently between IOS and Android.
+ * @returns The indicating result.
+ */
+export function isAndroid():boolean {
+    return /android (\d+)/.test((
+        getDOM() ? getDOM().getUserAgent() : ''
+    ).toLowerCase())
 }
 // endregion
 // region components/directives
@@ -4874,13 +4927,22 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
 }
 /**
  * Generic value accessor with "ngModel" support.
+ * @property composing - Indicates whether the user is creating a composition
+ * string (IME events).
+ * @property compositionMode - Indicates whether composition is active.
+ * @property elementReference - Current dom node to handle input for.
  * @property onChangeCallback - Saves current on change callback.
  * @property onTouchedCallback - Saves current on touch callback.
+ * @property renderer - Rendering abstraction layer.
  * @property type - Saves current input type.
  */
-export class AbstractValueAccessor extends DefaultValueAccessor {
+export class AbstractValueAccessor implements ControlValueAccessor {
+    composing:boolean = false
+    compositionMode:boolean = false
+    elementReference:ElementRef
     onChangeCallback:(value:any) => void = UtilityService.tools.noop
     onTouchedCallback:() => void = UtilityService.tools.noop
+    renderer:Renderer
     @Input() type:string|null = null
     /**
      * Initializes and forwards needed services to the default value accessor
@@ -4890,7 +4952,32 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
      * @returns Nothing.
      */
     constructor(injector:Injector) {
-        super(injector.get(Renderer), injector.get(ElementRef), null)
+        this.renderer = injector.get(Renderer)
+        this.elementReference = injector.get(ElementRef)
+        /*
+         * NOTE: "No provider for InjectionToken CompositionEventMode"
+         * triggered  if this IME compatible code is activated:
+         * "this.compositionMode = injector.get(COMPOSITION_BUFFER_MODE)"
+         */
+        this.compositionMode = null
+        if ([null, undefined].includes(this.compositionMode))
+            this.compositionMode = !isAndroid()
+    }
+    /**
+     * Indicates the end of composition.
+     * @param value - Current value.
+     * @returns Nothing.
+     */
+    compositionEnd(value:any):void {
+        this.composing = false
+        if (this.compositionMode)
+            this.onChangeCallback(value)
+    }
+    /**
+     * Indicates compositions start event.
+     */
+    compositionStart():void {
+        this.composing = true
     }
     /**
      * Manipulates editable value representation.
@@ -4899,6 +4986,15 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
      */
     export(value:any):any {
         return value
+    }
+    /**
+     * This method is triggered on each input.
+     * @param value - Changed value.
+     * @returns Nothing.
+     */
+    handleInput(value:any):void {
+        if (!this.compositionMode || this.compositionMode && !this.composing)
+            this.onChangeCallback(value)
     }
     /**
      * Reads internal value representation.
@@ -4913,29 +5009,37 @@ export class AbstractValueAccessor extends DefaultValueAccessor {
      * @param callback - Callback function to register.
      * @returns What inherited method returns.
      */
-    registerOnChange(
-        callback:(...parameter:Array<any>) => void
-    ):any {
+    registerOnChange(callback:(...parameter:Array<any>) => void):void {
         this.onChangeCallback = (value:any):void => callback(this.import(
             value))
-        return super.registerOnChange(this.onChangeCallback)
     }
     /**
      * Needed implementation for an angular control value accessor.
      * @param callback - Callback function to register.
      * @returns What inherited method returns.
      */
-    registerOnTouched(callback:() => void):any {
+    registerOnTouched(callback:() => void):void {
         this.onTouchedCallback = callback
-        return super.registerOnTouched(this.onTouchedCallback)
+    }
+    /**
+     * Renders the disabled state into view.
+     * @param isDisabled - Represents the state itself.
+     * @returns Nothing.
+     */
+    setDisabledState(isDisabled:boolean):void {
+        this.renderer.setProperty(
+            this.elementReference.nativeElement, 'disabled', isDisabled)
     }
     /**
      * Overridden inherited function for value export.
      * @param value - Value to export.
      * @returns The transformed give value.
      */
-    writeValue(value:any):any {
-        return super.writeValue(this.export(value))
+    writeValue(value:any):void {
+        value = this.export(value)
+        this.renderer.setProperty(
+            this.elementReference.nativeElement, 'value',
+            [null, undefined].includes(value) ? '' : value)
     }
 }
 // / endregion
@@ -5080,24 +5184,21 @@ const providers:Array<PlainObject> = [{
 }, DefaultValueAccessor.decorators[0].args[0], {providers}))
 */
 @Directive({
-    selector: `
-        input:not([type=checkbox])[formControlName],
-        textarea[formControlName],
-        input:not([type=checkbox])[formControl],
-        textarea[formControl],
-        input:not([type=checkbox])[ngModel],
-        textarea[ngModel],[ngDefaultControl]'
-    `,
     // TODO: vsavkin replace the above selector with the one below it once
     // https://github.com/angular/angular/issues/3011 is implemented
     // selector: '[ngModel],[formControl],[formControlName]',
     host: {
-        '(input)': '_handleInput($event.target.value)',
+        '(compositionend)': '$any(this).compositionEnd($event.target.value)',
+        '(compositionstart)': '$any(this).compositionStart()',
         '(blur)': 'onTouched()',
-        '(compositionstart)': '_compositionStart()',
-        '(compositionend)': '_compositionEnd($event.target.value)'
+        '(input)': '$any(this).handleInput($event.target.value)'
     },
-    providers
+    providers,
+    selector: `
+        input:not([type=checkbox])[formControlName],
+        input:not([type=checkbox])[formControl],
+        input:not([type=checkbox])[ngModel]
+    `
 })
 /**
  * Time value accessor with "ngModel" support.
@@ -5780,6 +5881,15 @@ export class AbstractEditorComponent extends AbstractValueAccessor
 @Component({
     animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
+    // TODO: vsavkin replace the above selector with the one below it once
+    // https://github.com/angular/angular/issues/3011 is implemented
+    // selector: '[ngModel],[formControl],[formControlName]',
+    host: {
+        '(compositionend)': '$any(this).compositionEnd($event.target.value)',
+        '(compositionstart)': '$any(this).compositionStart()',
+        '(blur)': 'onTouched()',
+        '(input)': '$any(this).handleInput($event.target.value)'
+    },
     providers: [{
         multi: true,
         provide: NG_VALUE_ACCESSOR,
@@ -6055,6 +6165,15 @@ export class RepresentTextFileDirective {
 @Component({
     animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
+    // TODO: vsavkin replace the above selector with the one below it once
+    // https://github.com/angular/angular/issues/3011 is implemented
+    // selector: '[ngModel],[formControl],[formControlName]',
+    host: {
+        '(compositionend)': '$any(this).compositionEnd($event.target.value)',
+        '(compositionstart)': '$any(this).compositionStart()',
+        '(blur)': 'onTouched()',
+        '(input)': '$any(this).handleInput($event.target.value)'
+    },
     providers: [{
         multi: true,
         provide: NG_VALUE_ACCESSOR,
@@ -7823,7 +7942,6 @@ export class PaginationComponent {
         // / endregion
         // endregion
         // region accessors
-        AbstractValueAccessor,
         DateTimeValueAccessor,
         // endregion
         // region directives
@@ -7832,7 +7950,6 @@ export class PaginationComponent {
         SliderDirective,
         // endregion
         // region components
-        AbstractEditorComponent,
         ConfirmComponent,
         IntervalInputComponent,
         IntervalsInputComponent,

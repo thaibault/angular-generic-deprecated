@@ -18,7 +18,9 @@
     endregion
 */
 // region imports
-import {Component, Directive, Injectable, Input} from '@angular/core'
+import {
+    Component, Directive, Injectable, Input, ViewContainerRef, ViewChild
+} from '@angular/core'
 import {NavigationExtras} from '@angular/router'
 import type {PlainObject} from 'clientnode'
 import {Subject} from 'rxjs/Subject'
@@ -135,6 +137,23 @@ export class RouterLinkStubDirective {
         this.navigatedTo = this.linkParameter
     }
 }
+// IgnoreTypeCheck
+@Directive({selector: 'directive-with-view-container'})
+/**
+ * Mock directive with nested view.
+ * @property viewContainerReference - Nested view container reference.
+ */
+export class DirectiveWithViewContainer {
+    viewContainerReference:ViewContainerRef
+    /**
+     * Initialized needed properties.
+     * @param viewContainerReference - Current view container reference.
+     * @returns Nothing.
+     */
+    constructor(viewContainerReference:ViewContainerRef) {
+        this.viewContainerReference = viewContainerReference
+    }
+}
 // endregion
 // region components
 // IgnoreTypeCheck
@@ -143,6 +162,21 @@ export class RouterLinkStubDirective {
  * Mocks the router outlet component.
  */
 export class RouterOutletStubComponent {}
+// IgnoreTypeCheck
+@Component({
+    selector: 'component-with-child-view-container',
+    template: `
+        <directive-with-view-container></directive-with-view-container>
+    `
+})
+/**
+ * Mocks a component with mocking child directive.
+ * @property childWithViewContainer - Reference to child view container.
+ */
+export class ComponentWithChildViewContainer {
+    @ViewChild(DirectiveWithViewContainer)
+    childWithViewContainer:DirectiveWithViewContainer
+}
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

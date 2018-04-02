@@ -19,10 +19,6 @@
 import type {DomNode, PlainObject} from 'clientnode'
 /* eslint-disable no-unused-vars */
 import registerTest from 'clientnode/test'
-// NOTE: Only needed for debugging this file.
-try {
-    module.require('source-map-support/register')
-} catch (error) {}
 
 import dummyEvent from './mockup'
 // endregion
@@ -44,7 +40,7 @@ declare var TARGET_TECHNOLOGY:string
  * @returns Whatever the underlying clientnode test runner returns.
  */
 export function registerAngularTest(
-    callback:Function|{bootstrap:Function;component:Function},
+    callback:Function|{bootstrap:Function;test:Function},
     template:string = '<div></div>', roundTypes:Array<string> = ['full'],
     productionMode:boolean = false, ...additionalParameter:Array<any>
 ):any {
@@ -115,7 +111,11 @@ export function registerAngularTest(
             }
         }
         require('hammerjs')
-        const {Component, enableProdMode} = require('@angular/core')
+        const {
+            ApplicationRef: ApplicationReference,
+            Component,
+            enableProdMode
+        } = require('@angular/core')
         const {TestBed} = require('@angular/core/testing')
         /* eslint-disable require-jsdoc */
         // IgnoreTypeCheck
@@ -126,7 +126,6 @@ export function registerAngularTest(
          */
         class ApplicationComponent {}
         // endregion
-        // region test services
         if (typeof callback === 'function')
             callback = callback.call(
                 this, ApplicationComponent, roundType, targetTechnology, $,
@@ -138,14 +137,13 @@ export function registerAngularTest(
             ...extraParameter)
         if ('then' in result)
             result = await result
-        if (!Array.isArray(result))
-            result = [result]
-        // / region bootstrap test application
+        result = [].concat(result)
+        // / region bootstrap dummy application
         if (!(typeof DEBUG === 'boolean' && DEBUG) && productionMode)
             enableProdMode()
         let platform:Object
         let module:Object
-        if (result[0]) {
+        if (result.length > 1 && result[1]) {
             try {
                 platform = ((
                     typeof TARGET_TECHNOLOGY === 'string' &&
@@ -154,27 +152,21 @@ export function registerAngularTest(
                     require(
                         '@angular/platform-browser-dynamic'
                     ).platformBrowserDynamic)()
-                module = await platform.bootstrapModule(result[0])
+                module = await platform.bootstrapModule(result[1])
             } catch (error) {
                 throw error
             }
-            this.load()
-            await new Promise((resolve:Function):void => {
-                let done:boolean = false
-                this.moduleDone(():void => {
-                    if (done)
-                        return
-                    done = true
-                    module.destroy()
-                    platform.destroy()
-                    resolve()
-                })
-            })
+            const stableState:Object = module.injector.get(
+                ApplicationReference
+            ).isStable
+            if ('then' in stableState)
+                await stableState
+            module.destroy()
+            platform.destroy()
         }
         // / endregion
-        // endregion
-        // region test components
-        if (result.length < 2)
+        // region test
+        if (result.length === 0)
             return
         let parameter:Array<Object>
         if (
@@ -192,9 +184,9 @@ export function registerAngularTest(
                 BrowserDynamicTestingModule, platformBrowserDynamicTesting()]
         }
         TestBed.initTestEnvironment(...parameter).configureTestingModule(
-            result[1])
+            result[0])
         await TestBed.compileComponents()
-        await callback.component.call(
+        await callback.test.call(
             this, TestBed, roundType, targetTechnology, $, ...parameter.concat(
                 result.slice(2)))
         // endregion

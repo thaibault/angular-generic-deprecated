@@ -17,12 +17,6 @@
     see http://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
-// region imports
-// NOTE: Only needed for debugging this file.
-try {
-    module.require('source-map-support/register')
-} catch (error) {}
-// endregion
 export const determineExports:Function = (module:Object):Array<Object> =>
     Object.keys(module.exports).filter((name:string):boolean =>
         !name.startsWith('Abstract') &&

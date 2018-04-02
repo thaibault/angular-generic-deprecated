@@ -23,10 +23,6 @@ import Tools, {PlainObject} from 'clientnode'
 import {
     animate, AnimationTriggerMetadata, style, transition, trigger
 } from '@angular/animations'
-// NOTE: Only needed for debugging this file.
-try {
-    require('source-map-support/register')
-} catch (error) {}
 // endregion
 export const defaultOptions:PlainObject = {
     duration: '.3s',
