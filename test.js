@@ -29,7 +29,7 @@ registerAngularTest(function(
 ):{bootstrap:Function;test:Function} {
     if (typeof localStorage !== 'undefined' && 'clear' in localStorage)
         localStorage.clear()
-    const bootstrapping:Object = {}
+    let bootstrapped:boolean = false
     const now:Date = new Date()
     const nowUTCTimestamp:number = Tools.numberGetUTCTimestamp(now)
     // region imports
@@ -236,22 +236,10 @@ registerAngularTest(function(
             class TestModule {
                 /**
                  * Dummy constructor to test bootstrapping.
-                 * @param data - Injected data service instance.
-                 * @param initialData - Injected initial data service instance.
-                 * @param injector - Injected injector service instance.
                  * @returns Nothing.
                  */
-                constructor(
-                    data:DataService,
-                    initialData:InitialDataService,
-                    injector:Injector
-                ):void {
-                    initialData.constructor.injectors.add(injector)
-                    bootstrapping.before = data.connection
-                    bootstrapping.promise = data.initialize().then(():void => {
-                        bootstrapping.after = data.connection
-                        return data
-                    })
+                constructor():void {
+                    bootstrapped = true
                 }
             }
             // endregion
@@ -273,11 +261,11 @@ registerAngularTest(function(
         test: async function(
             TestBed:Object, roundType:string, targetTechnology:string, $:Object
         ):Promise<void> {
-            await bootstrapping.promise
             this.module(`Module.bootstrap (${roundType})`)
-            this.test('Bootstrap', (assert:Object):void =>
-                assert.notStrictEqual(
-                    bootstrapping.before, bootstrapping.after))
+            this.test('Bootstrap', (assert:Object):void => {
+                assert.ok(bootstrapped)
+                assert.strictEqual(InitialDataService.injectors.size, 2)
+            })
             this.module(`Module.services (${roundType})`)
             const data:DataService = TestBed.get(DataService)
             await data.initialize()

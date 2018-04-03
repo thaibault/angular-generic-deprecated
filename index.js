@@ -4245,11 +4245,8 @@ export class AbstractResolver implements Resolve<PlainObject> {
 export function dataServiceInitializerFactory(
     data:DataService, initialData:InitialDataService, injector:Injector
 ):Function {
-    /*
-        NOTE: We need this statement here to avoid having an ugly typescript
-        error.
-    */
-    2
+    // NOTE: We need this statement here to avoid having an typescript error.
+    0
     return ():Promise<void> => {
         InitialDataService.injectors.add(injector)
         return data.initialize()
