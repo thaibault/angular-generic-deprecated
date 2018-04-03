@@ -215,7 +215,6 @@ registerAngularTest(function(
         name: `test-${(new Date()).getTime()}`,
         test: true
     }}
-    const self:Object = this
     const moduleImports:Array<Object> = [Module, NoopAnimationsModule]
     // endregion
     return {
@@ -277,7 +276,7 @@ registerAngularTest(function(
                 StringEndsWithPipe)
             const utility:UtilityService = TestBed.get(UtilityService)
             // region basic services
-            self.test(`UtilityService (${roundType})`, (
+            this.test(`UtilityService (${roundType})`, (
                 assert:Object
             ):void => {
                 assert.ok(utility.fixed.$)
@@ -286,7 +285,7 @@ registerAngularTest(function(
                     utility.fixed.tools.stringMD5('test'),
                     '098f6bcd4621d373cade4e832627b4f6')
             })
-            self.test(`InitialDataService (${roundType})`, (
+            this.test(`InitialDataService (${roundType})`, (
                 assert:Object
             ):void => {
                 assert.strictEqual(initialData.configuration.test, true)
@@ -304,7 +303,7 @@ registerAngularTest(function(
             // endregion
             // region pipes
             // / region forwarded
-            self.test(`StringMD5Pipe (${roundType})`, (assert:Object):void => {
+            this.test(`StringMD5Pipe (${roundType})`, (assert:Object):void => {
                 const stringMD5Pipe:StringMD5Pipe = TestBed.get(StringMD5Pipe)
                 assert.strictEqual(
                     stringMD5Pipe.transform(''),
@@ -315,7 +314,7 @@ registerAngularTest(function(
             })
             // / endregion
             // / region object
-            self.test(`AttachmentsAreEqualPipe (${roundType})`, async (
+            this.test(`AttachmentsAreEqualPipe (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
@@ -458,7 +457,7 @@ registerAngularTest(function(
                 }
                 done()
             })
-            self.test(`GetFilenameByPrefixPipe (${roundType})`, (
+            this.test(`GetFilenameByPrefixPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 const getFilenameByPrefixPipe:GetFilenameByPrefixPipe =
@@ -474,7 +473,7 @@ registerAngularTest(function(
                             ...test[0]),
                         test[1])
             })
-            self.test(`AttachmentWithPrefixExistsPipe (${roundType})`, (
+            this.test(`AttachmentWithPrefixExistsPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 /* eslint-disable indent */
@@ -495,7 +494,7 @@ registerAngularTest(function(
                     assert.notOk(attachmentWithPrefixExistsPipe.transform(
                         test[0], test[1]))
             })
-            self.test(`ExtractDataPipe (${roundType})`, (
+            this.test(`ExtractDataPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 const extractDataPipe:ExtractDataPipe = TestBed.get(
@@ -674,7 +673,7 @@ registerAngularTest(function(
                         test[1])
                 // endregion
             })
-            self.test(`ExtractRawDataPipe (${roundType})`, async (
+            this.test(`ExtractRawDataPipe (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
@@ -1076,7 +1075,7 @@ registerAngularTest(function(
                 // endregion
                 done()
             })
-            self.test(`IsArrayPipe (${roundType})`, (
+            this.test(`IsArrayPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 const isArrayPipe:IsArrayPipe = TestBed.get(IsArrayPipe)
@@ -1085,7 +1084,7 @@ registerAngularTest(function(
                 for (const test:any of [null, {}, 2, true])
                     assert.notOk(isArrayPipe.transform(test))
             })
-            self.test(`IsDefinedPipe (${roundType})`, (
+            this.test(`IsDefinedPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 const isDefinedPipe:IsDefinedPipe = TestBed.get(IsDefinedPipe)
@@ -1098,7 +1097,7 @@ registerAngularTest(function(
                 assert.notOk(isDefinedPipe.transform(
                     undefined, true))
             })
-            self.test(`LimitToPipe (${roundType})`, (assert:Object):void => {
+            this.test(`LimitToPipe (${roundType})`, (assert:Object):void => {
                 const limitToPipe:LimitToPipe = TestBed.get(LimitToPipe)
                 for (const test:Array<any> of [
                     [[{}], {}],
@@ -1120,12 +1119,12 @@ registerAngularTest(function(
                     assert.deepEqual(
                         limitToPipe.transform(...test[0]), test[1])
             })
-            self.test(`MapPipe (${roundType})`, (assert:Object):void => {
+            this.test(`MapPipe (${roundType})`, (assert:Object):void => {
                 assert.deepEqual(TestBed.get(MapPipe).transform(
                     ['a', 'b', 'ab'], StringEndsWithPipe, 'b'
                 ), [false, true, true])
             })
-            self.test(`ObjectKeysPipe (${roundType})`, (
+            this.test(`ObjectKeysPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 for (const test:Array<any> of [
@@ -1154,7 +1153,7 @@ registerAngularTest(function(
                         TestBed.get(ObjectKeysPipe).transform(...test[0]),
                         test[1])
             })
-            self.test(`ObjectValuesPipe (${roundType})`, (
+            this.test(`ObjectValuesPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 for (const test:Array<any> of [
@@ -1179,7 +1178,7 @@ registerAngularTest(function(
                         TestBed.get(ObjectValuesPipe).transform(...test[0]),
                         test[1])
             })
-            self.test(`ReversePipe (${roundType})`, (
+            this.test(`ReversePipe (${roundType})`, (
                 assert:Object
             ):void => {
                 for (const test:Array<any> of [
@@ -1194,7 +1193,7 @@ registerAngularTest(function(
                     assert.deepEqual(
                         TestBed.get(ReversePipe).transform(test[0]), test[1])
             })
-            self.test(`TypePipe (${roundType})`, (assert:Object):void => {
+            this.test(`TypePipe (${roundType})`, (assert:Object):void => {
                 for (const test:Array<any> of [
                     [null, 'object'],
                     [true, 'boolean'],
@@ -1208,13 +1207,13 @@ registerAngularTest(function(
             })
             // / endregion
             // / region string
-            self.test(`StringEndsWithPipe (${roundType})`, (
+            this.test(`StringEndsWithPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 assert.ok(stringEndsWithPipe.transform('aab', 'b'))
                 assert.notOk(stringEndsWithPipe.transform('aab', 'a'))
             })
-            self.test(`StringHasTimeSuffixPipe (${roundType})`, (
+            this.test(`StringHasTimeSuffixPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 const stringHasTimeSuffixPipe:StringHasTimeSuffixPipe =
@@ -1228,7 +1227,7 @@ registerAngularTest(function(
                 ])
                     assert.notOk(stringHasTimeSuffixPipe.transform(test))
             })
-            self.test(`StringMatchPipe (${roundType})`, (
+            this.test(`StringMatchPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 const stringMatchPipe:StringMatchPipe = TestBed.get(
@@ -1250,7 +1249,7 @@ registerAngularTest(function(
                 ])
                     assert.notOk(stringMatchPipe.transform(...test))
             })
-            self.test(`StringMaximumLengthPipe (${roundType})`, (
+            this.test(`StringMaximumLengthPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 for (const test:Array<any> of [
@@ -1273,7 +1272,7 @@ registerAngularTest(function(
                             ...test[0]),
                         test[1])
             })
-            self.test(`StringReplacePipe (${roundType})`, (
+            this.test(`StringReplacePipe (${roundType})`, (
                 assert:Object
             ):void => {
                 for (const test:Array<any> of [
@@ -1286,7 +1285,7 @@ registerAngularTest(function(
                         TestBed.get(StringReplacePipe).transform(...test[0]),
                         test[1])
             })
-            self.test(`StringShowIfPatternMatchesPipe (${roundType})`, (
+            this.test(`StringShowIfPatternMatchesPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 for (const test:Array<any> of [
@@ -1301,7 +1300,7 @@ registerAngularTest(function(
                         StringShowIfPatternMatchesPipe
                     ).transform(...test[0]), test[1])
             })
-            self.test(`StringSliceMatchPipe (${roundType})`, (
+            this.test(`StringSliceMatchPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 for (const test:Array<any> of [
@@ -1315,7 +1314,7 @@ registerAngularTest(function(
                             ...test[0]),
                         test[1])
             })
-            self.test(`StringStartsWithPipe (${roundType})`, (
+            this.test(`StringStartsWithPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 const stringStartsWithPipe:StringStartsWithPipe = TestBed.get(
@@ -1323,7 +1322,7 @@ registerAngularTest(function(
                 assert.ok(stringStartsWithPipe.transform('baa', 'b'))
                 assert.notOk(stringStartsWithPipe.transform('baa', 'a'))
             })
-            self.test(`StringTemplatePipe (${roundType})`, (
+            this.test(`StringTemplatePipe (${roundType})`, (
                 assert:Object
             ):void => {
                 for (const test:Array<any> of [
@@ -1342,7 +1341,7 @@ registerAngularTest(function(
             })
             // / endregion
             // / region number
-            self.test(`NumberPercentPipe (${roundType})`, (
+            this.test(`NumberPercentPipe (${roundType})`, (
                 assert:Object
             ):void => {
                 for (const test:Array<number> of [
@@ -1360,17 +1359,17 @@ registerAngularTest(function(
             // / endregion
             // endregion
             // region animations
-            self.test(`createFadeAnimation (${roundType})`, (
+            this.test(`createFadeAnimation (${roundType})`, (
                 assert:Object
             ):void => assert.strictEqual(
                 typeof createFadeAnimation(), 'object'))
-            self.test(`createDefaultAnimation (${roundType})`, (
+            this.test(`createDefaultAnimation (${roundType})`, (
                 assert:Object
             ):void => assert.strictEqual(
                 typeof createDefaultAnimation(), 'object'))
             // endregion
             // region services
-            self.test(`CanDeactivateRouteLeaveGuard (${roundType})`, (
+            this.test(`CanDeactivateRouteLeaveGuard (${roundType})`, (
                 assert:Object
             ):void => {
                 for (const test:Array<any> of [
@@ -1382,7 +1381,7 @@ registerAngularTest(function(
                     ).canDeactivate(test[0]), test[1])
             })
             // / region confirm
-            self[targetTechnology === 'web' ? 'test' : 'skip'](
+            this[targetTechnology === 'web' ? 'test' : 'skip'](
                 `AlertService (${roundType})`, (assert:Object):void => {
                     const done:Function = assert.async()
                     const alert:AlertService = TestBed.get(AlertService)
@@ -1408,7 +1407,7 @@ registerAngularTest(function(
                     fixture.detectChanges()
                 })
             // / endregion
-            self.test(`DataService (${roundType})`, async (
+            this.test(`DataService (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
@@ -1460,7 +1459,7 @@ registerAngularTest(function(
                 }
                 done()
             })
-            self.test(`DataScopeService (${roundType})`, async (
+            this.test(`DataScopeService (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
@@ -1803,7 +1802,7 @@ registerAngularTest(function(
                 done()
             })
             // / region abstract
-            self.test(`AbstractResolver (${roundType})`, async (
+            this.test(`AbstractResolver (${roundType})`, async (
                 assert:Object
             ):Promise<void> => {
                 const done:Function = assert.async()
