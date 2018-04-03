@@ -173,7 +173,7 @@
           "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './animation'"
         },
         "index": {
-          "__evaluate__": "(self.givenCommandLineArguments.length && ['build', 'export'].includes(self.givenCommandLineArguments[2]) ? [] : ['babel-polyfill', 'reflect-metadata', 'zone.js']).concat(self.givenCommandLineArguments.length && ['build:dll', 'serve', 'test:browser', 'watch:dll'].includes(self.givenCommandLineArguments[2]) ? `webpack-dev-server/client?http${self.development.server.cert ? 's' : ''}://0.0.0.0:${self.development.server.port}` : []).concat(self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? './test' : './index')"
+          "__evaluate__": "(self.givenCommandLineArguments.length && ['build', 'export'].includes(self.givenCommandLineArguments[2]) ? [] : ['babel-polyfill', 'reflect-metadata', 'zone.js']).concat(self.givenCommandLineArguments.length && ['serve', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? `webpack-dev-server/client?http${self.development.server.cert ? 's' : ''}://0.0.0.0:${self.development.server.port}` : []).concat(self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? './test' : './index')"
         },
         "mockup": {
           "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './mockup'"
@@ -238,12 +238,10 @@
       "injection": {
         "internal": {
           "animation": [],
-          "developmentHelper": [],
           "index": [],
           "mockup": [],
           "moduleHelper": [],
-          "preRender": "./preRender",
-          "vendor": []
+          "preRender": "./preRender"
         }
       },
       "targetTechnology": "node"
