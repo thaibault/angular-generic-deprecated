@@ -18,6 +18,7 @@
     endregion
 */
 // region imports
+import {Location} from '@angular/common'
 import {
     Component, Directive, Injectable, Input, ViewContainerRef, ViewChild
 } from '@angular/core'
@@ -50,11 +51,41 @@ export default dummyEvent
 // IgnoreTypeCheck
 @Injectable()
 /**
- * Mocks the router.
+ * Mocks the location service.
+ * @property _path - Holds current path state.
+ */
+export class LocationStub {
+    _path:string = ''
+    /**
+     * Getter and setter for current path state.
+     * @param path - New path to set.
+     * @returns The current path if used as getter.
+     */
+    path(path:string|null = null):?string {
+        if (path)
+            this._path = path
+        else
+            return this._path
+    }
+}
+// IgnoreTypeCheck
+@Injectable()
+/**
+ * Mocks the router service.
+ * @property events - TODO
+ * @property location - Location service instance.
  */
 export class RouterStub {
     events:Subject<any> = new Subject()
-    url:string
+    location:LocationStub
+    /**
+     * Initializes service properties.
+     * @param location - Injected location service instance.
+     * @returns Nothing.
+     */
+    constructor(location:Location) {
+        this.location = location
+    }
     /* eslint-disable no-unused-vars */
     /**
      * Mocks the imperative router navigation method.
@@ -63,30 +94,38 @@ export class RouterStub {
      * @returns Nothing.
      */
     navigate(commands:Array<any>, extras:?NavigationExtras):void {
-        this.url = commands.join('/')
+        this.location._path = commands.join('/')
     }
+    /* eslint-enable no-unused-vars */
     /**
      * Mocks the imperative router navigation method.
      * @param url - URL to emulate section switch to.
      * @returns Nothing.
      */
     navigateByUrl(url:string):void {
-        this.url = url
+        this.location._path = url
     }
-    /* eslint-enable no-unused-vars */
 }
 // IgnoreTypeCheck
 @Injectable()
 /**
  * Mocks the current route data instance.
+ * @property dataSubject - Mutable data instance.
+ * @property data - Current raw data.
+ * @property parameterSubject - Mutable parameter instance.
+ * @property params - Current raw parameter data.
+ *
+ * @property _data - Current test data.
+ * @property _parameter - Current test parameter.
  */
 export class ActivatedRouteStub {
-    _data:PlainObject = {}
-    _parameter:PlainObject = {}
     dataSubject:BehaviorSubject = new BehaviorSubject(this._data)
     data:Object = this.dataSubject.asObservable()
     parameterSubject:BehaviorSubject = new BehaviorSubject(this._parameter)
     params:Object = this.parameterSubject.asObservable()
+
+    _data:PlainObject = {}
+    _parameter:PlainObject = {}
     /**
      * Setter for test data property value.
      * @param data - Sets data of current route.
@@ -125,6 +164,8 @@ export class ActivatedRouteStub {
 })
 /**
  * Mocks the router link directive.
+ * @property linkParameter - Link parameter to save as state.
+ * @property navigatedTo - Last navigation target.
  */
 export class RouterLinkStubDirective {
     @Input('routerLink') linkParameter:Array<string>
