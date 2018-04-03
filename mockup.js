@@ -61,10 +61,12 @@ export class LocationStub {
      * @param path - New path to set.
      * @returns The current path if used as getter.
      */
-    path(path:string|null = null):?string {
-        if (path)
+    path(path:string|null|true = null):?string {
+        if (path) {
+            if (path === true)
+                return this._path
             this._path = path
-        else
+        } else
             return this._path
     }
 }

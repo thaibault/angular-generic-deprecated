@@ -452,7 +452,7 @@ export default render
 export const renderScope:{
     applicationDomNode?:DomNode;
     basePath:string;
-    dom:DOM;
+    dom?:DOM;
     innerHTMLToReInject:string;
     virtualConsole?:Object;
     window?:Window;
