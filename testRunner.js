@@ -41,7 +41,7 @@ declare var TARGET_TECHNOLOGY:string
  */
 export function registerAngularTest(
     callback:Function|{bootstrap:Function;test:Function},
-    template:string = '<div></div>', roundTypes:Array<string> = ['full'],
+    template:string = '<div></div>', roundTypes:string|Array<string> = 'full',
     productionMode:boolean = false, ...additionalParameter:Array<any>
 ):any {
     return registerTest(async function(

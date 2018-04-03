@@ -188,10 +188,11 @@ export function render(module:Object, options:{
             'trace', 'warn'
         ])
             renderScope.virtualConsole.on(name, console[name].bind(console))
-        renderScope.window = (new DOM(data, {
+        renderScope.dom = (new DOM(data, {
             runScripts: 'dangerously',
             virtualConsole: renderScope.virtualConsole
-        })).window
+        }))
+        renderScope.window = renderScope.dom.window
         renderScope.applicationDomNode =
             renderScope.window.document.querySelector(
                 options.applicationDomNodeSelector)
@@ -359,7 +360,8 @@ export function render(module:Object, options:{
                                 styleContents.push(content)
                                 return `${startTag}${endTag}`
                             })
-                        const window:Window = (new DOM(result)).window
+                        const dom:DOM = new DOM(result)
+                        const window:Window = dom.window
                         /*
                             NOTE: We have to re-select the application node
                             here, because it's embedded in another document
@@ -383,18 +385,13 @@ export function render(module:Object, options:{
                         else
                             applicationDomNode.innerHTML +=
                                 renderScope.innerHTMLToReInject
-                        result = result
-                            .replace(
-                                /^(\s*<!doctype [^>]+?>\s*)[\s\S]*$/i, '$1'
-                            ) + window.document.documentElement.outerHTML
-                            .replace(
-                                /(<style[^>]*>)[\s\S]*?(<\/style[^>]*>)/gi, (
-                                    match:string,
-                                    startTag:string,
-                                    endTag:string
-                                ):string =>
-                                    `${startTag}${styleContents.shift()}` +
-                                    endTag)
+                        result = dom.serialize().replace(
+                            /(<style[^>]*>)[\s\S]*?(<\/style[^>]*>)/gi, (
+                                match:string,
+                                startTag:string,
+                                endTag:string
+                            ):string =>
+                                `${startTag}${styleContents.shift()}${endTag}`)
                     }
                     // endregion
                     if (options.minify)
@@ -453,8 +450,9 @@ export function render(module:Object, options:{
 }
 export default render
 export const renderScope:{
-    basePath:string;
     applicationDomNode?:DomNode;
+    basePath:string;
+    dom:DOM;
     innerHTMLToReInject:string;
     virtualConsole?:Object;
     window?:Window;
