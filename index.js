@@ -4149,19 +4149,17 @@ export class AbstractResolver implements Resolve<PlainObject> {
     remove(item:PlainObject, message:string = ''):Promise<boolean> {
         return this.update(item, {[this.specialNames.deleted]: true}, message)
     }
-    /* eslint-disable no-unused-vars */
     /**
      * Implements the resolver method which converts route informations into
      * "list()" method parameter and forward their result as result in an
      * observable.
      * @param route - Current route informations.
-     * @param state - Current state informations.
+     * @param _state - Current state informations.
      * @returns Promise with data filtered by current route informations.
      */
     resolve(
-        route:ActivatedRouteSnapshot, state:RouterStateSnapshot
+        route:ActivatedRouteSnapshot, _state:RouterStateSnapshot
     ):Array<PlainObject>|Promise<Array<PlainObject>> {
-    /* eslint-enable no-unused-vars */
         if (
             AbstractResolver.skipResolving &&
             isPlatformServer(this.platformID)
@@ -4592,38 +4590,36 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
         if (this._changesStream)
             this._changesStream.cancel()
     }
-    /* eslint-disable no-unused-vars */
     /**
      * Triggers on any data changes.
-     * @param event - An event object holding informations about the triggered
+     * @param _event - An event object holding informations about the triggered
      * reason.
      * @returns A boolean (or promise wrapped) indicating whether a view update
      * should be triggered or not.
      */
-    onDataChange(event:any = null):Promise<boolean>|boolean {
+    onDataChange(_event:any = null):Promise<boolean>|boolean {
         return true
     }
     /**
      * Triggers on completed data change observation.
-     * @param event - An event object holding informations about the triggered
+     * @param _event - An event object holding informations about the triggered
      * reason.
      * @returns A boolean (or promise wrapped) indicating whether a view update
      * should be triggered or not.
      */
-    onDataComplete(event:any = null):Promise<boolean>|boolean {
+    onDataComplete(_event:any = null):Promise<boolean>|boolean {
         return false
     }
     /**
      * Triggers on data change observation errors.
-     * @param event - An event object holding informations about the triggered
+     * @param _event - An event object holding informations about the triggered
      * reason.
      * @returns A boolean (or promise wrapped) indicating whether a view update
      * should be triggered or not.
      */
-    onDataError(event:any = null):Promise<boolean>|boolean {
+    onDataError(_event:any = null):Promise<boolean>|boolean {
         return false
     }
-    /* eslint-enable no-unused-vars */
 }
 /**
  * A generic abstract component to edit, search, navigate and filter a list of

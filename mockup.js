@@ -24,8 +24,9 @@ import {
 } from '@angular/core'
 import {NavigationExtras} from '@angular/router'
 import type {PlainObject} from 'clientnode'
-import {Subject} from 'rxjs/Subject'
 import {BehaviorSubject} from 'rxjs/BehaviorSubject'
+import {Subject} from 'rxjs/Subject'
+import {Subscription} from 'rxjs/Subscription'
 // endregion
 // region native
 /**
@@ -69,6 +70,14 @@ export class LocationStub {
         } else
             return this._path
     }
+    /**
+     * Dummy subscriber for location changes.
+     * @param _parameter - Catches all given parameter.
+     * @returns A dummy subscription instance.
+     */
+    subscribe(..._parameter:Array<any>):Subscription {
+        return new Subscription()
+    }
 }
 // IgnoreTypeCheck
 @Injectable()
@@ -88,17 +97,15 @@ export class RouterStub {
     constructor(location:Location) {
         this.location = location
     }
-    /* eslint-disable no-unused-vars */
     /**
      * Mocks the imperative router navigation method.
      * @param commands - New route parameter.
-     * @param extras - Defines new route meta data.
+     * @param _extras - Defines new route meta data.
      * @returns Nothing.
      */
-    navigate(commands:Array<any>, extras:?NavigationExtras):void {
+    navigate(commands:Array<any>, _extras:?NavigationExtras):void {
         this.location._path = commands.join('/')
     }
-    /* eslint-enable no-unused-vars */
     /**
      * Mocks the imperative router navigation method.
      * @param url - URL to emulate section switch to.

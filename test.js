@@ -32,7 +32,7 @@ registerAngularTest(function(
     let bootstrapped:boolean = false
     const now:Date = new Date()
     const nowUTCTimestamp:number = Tools.numberGetUTCTimestamp(now)
-    // region imports
+    // region import s
     const blobToBase64String:Function = typeof Blob === 'undefined' ?
         async (file:Object):Promise<string> => file.toString('base64') :
         require('blob-util').blobToBase64String
@@ -40,6 +40,7 @@ registerAngularTest(function(
         typeof Blob === 'undefined'
     ) ? new Buffer(data) : new Blob([data], {
             type: 'application/octet-stream'})
+    const {Location} = require('@angular/common')
     const {
         Component,
         Injector,
@@ -62,6 +63,7 @@ registerAngularTest(function(
         DirectiveWithViewContainer,
         dummyEvent,
         getNativeEvent,
+        LocationStub,
         RouterOutletStubComponent,
         RouterStub
     } = require('./mockup')
@@ -253,7 +255,8 @@ registerAngularTest(function(
                 imports: moduleImports,
                 providers: [
                     {provide: ActivatedRoute, useClass: ActivatedRouteStub},
-                    {provide: Router, useClass: RouterStub}
+                    {provide: Router, useClass: RouterStub},
+                    {provide: Location, useClass: LocationStub}
                 ]
             }, TestModule]
         },
@@ -2070,6 +2073,7 @@ registerAngularTest(function(
                 const fixture:ComponentFixture<ItemsComponent> =
                     TestBed.createComponent(ItemsComponent)
                 const instance:Object = fixture.componentInstance
+                const location:Location = TestBed.get(Location)
                 try {
                     fixture.detectChanges()
                     await fixture.whenStable()
@@ -2111,7 +2115,7 @@ registerAngularTest(function(
                     await instance.update(true)
                     await fixture.whenStable()
                     assert.strictEqual(
-                        instance._router.url,
+                        location.path(),
                         `${instance._itemsPath}/${specialNames.id}/0/2/` +
                         'regex-test')
                     // endregion
@@ -2120,7 +2124,7 @@ registerAngularTest(function(
                         'regex-'])
                     await fixture.whenStable()
                     assert.strictEqual(
-                        instance._router.url,
+                        location.path(),
                         `${instance._itemsPath}/${specialNames.id}/1/2/` +
                         'regex-')
                     // region changeItemWrapperFactory
@@ -2128,7 +2132,7 @@ registerAngularTest(function(
                         (a:number):number => a)(2), 2)
                     await fixture.whenStable()
                     assert.strictEqual(
-                        instance._router.url,
+                        location.path(),
                         `${instance._itemsPath}/${specialNames.id}/0/2/` +
                         'regex-test')
                     // endregion
@@ -2146,7 +2150,7 @@ registerAngularTest(function(
                     await instance.goToItem(1, 2)
                     await fixture.whenStable()
                     assert.strictEqual(
-                        instance._router.url, `${instance._itemPath}/1/2`)
+                        location.path(), `${instance._itemPath}/1/2`)
                     // endregion
                     // region selectedAllItems
                     instance.clearSelectedItems()
