@@ -2594,6 +2594,8 @@ export class AlertService {
  * expression to retrieve revision number from revision hash.
  * @property static:skipGenericIndexManagementOnServer - Indicates whether
  * generic index creation deletion should be done on server context.
+ * @property static:skipRemoteConnectionOnBrowser - Indicates whether remote
+ * connections should be avoided on browser contexts.
  * @property static:skipRemoteConnectionOnServer - Indicates whether remote
  * connections should be avoided on server contexts.
  * @property static:wrappableMethodNames - Saves a list of method names which
@@ -2623,6 +2625,7 @@ export class DataService {
     // NOTE: Native regular expression definition is not allowed here.
     static revisionNumberRegularExpression:RegExp = new RegExp('^([0-9]+)-')
     static skipGenericIndexManagementOnServer:boolean = true
+    static skipRemoteConnectionOnBrowser:boolean = false
     static skipRemoteConnectionOnServer:boolean = true
     static wrappableMethodNames:Array<string> = [
         'allDocs', 'bulkDocs', 'bulkGet',
@@ -2879,7 +2882,9 @@ export class DataService {
         const databaseName:string = this.configuration.name || 'generic'
         if (!(
             DataService.skipRemoteConnectionOnServer &&
-            isPlatformServer(this.platformID)
+            isPlatformServer(this.platformID) ||
+            DataService.skipRemoteConnectionOnBrowser &&
+            isPlatformBrowser(this.platformID)
         ))
             this.remoteConnection = new this.database(this.stringFormat(
                 this.configuration.database.url, ''
@@ -3001,7 +3006,9 @@ export class DataService {
         if (!(
             DataService.skipGenericIndexManagementOnServer &&
             isPlatformServer(this.platformID)
-        ) && this.configuration.database.createGenericFlatIndex) {
+        ) && this.configuration.database.createGenericFlatIndex &&
+            this.connection !== this.remoteConnection
+        ) {
             // region create/remove needed/unneeded generic indexes
             for (const modelName in this.configuration.database.model.entities)
                 if (

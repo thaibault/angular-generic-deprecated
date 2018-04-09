@@ -112,6 +112,7 @@ registerAngularTest(function(
     const Module:Object = index.default
     AbstractResolver.skipResolving = false
     DataService.skipGenericIndexManagementOnServer = false
+    DataService.skipRemoteConnectionOnBrowser = true
     // endregion
     // region extend abstract components
     /* eslint-disable require-jsdoc */
@@ -179,6 +180,7 @@ registerAngularTest(function(
     InitialDataService.removeFoundData = false
     $.global.genericInitialData = {configuration: {
         database: {
+            local: true,
             connector: {adapter: 'memory'},
             model: {entities: {Test: {
                 [specialNames.attachment]: {'.+\\.(?:jpe?g|png)': {
