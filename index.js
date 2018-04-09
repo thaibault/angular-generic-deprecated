@@ -193,6 +193,10 @@ export type SpecialPropertyNames = {
         execution:string;
         expression:string;
     };
+    create:{
+        execution:string;
+        expression:string;
+    };
     deleted:string;
     deletedConflict:string;
     extend:string;
@@ -205,6 +209,10 @@ export type SpecialPropertyNames = {
     revisionsInformation:string;
     strategy:string;
     type:string;
+    update:{
+        execution:string;
+        expression:string;
+    };
 }
 export type ModelConfiguration = {
     entities:PlainObject;
@@ -2837,7 +2845,7 @@ export class DataService {
                     specialNames.revisionsInformation,
                     specialNames.type,
                     specialNames.update.execution,
-                    specialNames.updaze.expression
+                    specialNames.update.expression
                 ).includes(name) || model[name].type && (
                     typeof model[name].type === 'string' &&
                     model[name].type.endsWith('[]') ||
