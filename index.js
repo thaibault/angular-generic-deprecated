@@ -5183,7 +5183,7 @@ const providers:Array<PlainObject> = [{
     host: {
         '(compositionend)': '$any(this).compositionEnd($event.target.value)',
         '(compositionstart)': '$any(this).compositionStart()',
-        '(blur)': 'onTouched()',
+        '(blur)': 'onTouchedCallback()',
         '(input)': '$any(this).handleInput($event.target.value)'
     },
     providers,
@@ -5880,7 +5880,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
     host: {
         '(compositionend)': '$any(this).compositionEnd($event.target.value)',
         '(compositionstart)': '$any(this).compositionStart()',
-        '(blur)': 'onTouched()',
+        '(blur)': 'onTouchedCallback()',
         '(input)': '$any(this).handleInput($event.target.value)'
     },
     providers: [{
@@ -6164,7 +6164,7 @@ export class RepresentTextFileDirective {
     host: {
         '(compositionend)': '$any(this).compositionEnd($event.target.value)',
         '(compositionstart)': '$any(this).compositionStart()',
-        '(blur)': 'onTouched()',
+        '(blur)': 'onTouchedCallback()',
         '(input)': '$any(this).handleInput($event.target.value)'
     },
     providers: [{
