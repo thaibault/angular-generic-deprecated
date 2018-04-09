@@ -2824,8 +2824,10 @@ export class DataService {
                     specialNames.conflict,
                     specialNames.constraint.execution,
                     specialNames.constraint.expression,
+                    specialNames.create.execution,
+                    specialNames.create.expression,
                     specialNames.deleted,
-                    specialNames.deleted_conflict,
+                    specialNames.deletedConflict,
                     specialNames.extend,
                     specialNames.id,
                     specialNames.maximumAggregatedSize,
@@ -2833,7 +2835,9 @@ export class DataService {
                     specialNames.revision,
                     specialNames.revisions,
                     specialNames.revisionsInformation,
-                    specialNames.type
+                    specialNames.type,
+                    specialNames.update.execution,
+                    specialNames.updaze.expression
                 ).includes(name) || model[name].type && (
                     typeof model[name].type === 'string' &&
                     model[name].type.endsWith('[]') ||
