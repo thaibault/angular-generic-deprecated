@@ -5041,8 +5041,8 @@ export class AbstractOfflineApplicationComponent {
             }, 1000)
             if (this.stateDescriptionDomNode)
                 this._renderer.addClass(
-                    this.stateDescriptionDomNode, state.replace(/[ _+]+/g, '-')
-                )
+                    this.stateDescriptionDomNode.nativeElement,
+                    state.replace(/[ _+]+/g, '-'))
             this._changeDetectorReference.detectChanges()
         }
         /*
