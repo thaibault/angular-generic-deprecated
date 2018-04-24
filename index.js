@@ -4992,23 +4992,17 @@ export class AbstractOfflineApplicationComponent {
     _renderer:Renderer
     /**
      * Initializes root application component.
-     * @param changeDetectorReference - Change detector reference service
-     * instance.
-     * @param offlineState - Injected offline state service instance.
-     * @param platformID - Injected platform specific identifier.
-     * @param renderer - Injected renderer service instance.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
      * @returns Nothing.
      */
-    constructor(
-        changeDetectorReference:ChangeDetectorRef,
-        offlineState:OfflineState,
-        @Inject(PLATFORM_ID) platformID:string,
-        renderer:Renderer
-    ) {
-        this.offlineState = offlineState
-        this._changeDetectorReference = changeDetectorReference
-        this._platformID = platformID
-        this._renderer = renderer
+    constructor(@Optional() injector:Injector) {
+        const get:Function = determineInjector(
+            injector, this, this.constructor)
+        this.offlineState = get(OfflineState)
+        this._changeDetectorReference = get(ChangeDetectorRef)
+        this._platformID = get(PLATFORM_ID)
+        this._renderer = get(Renderer)
         if (isPlatformBrowser(this._platformID))
             this.showStateDomNode = Boolean(this.offlineState.events.length)
     }
