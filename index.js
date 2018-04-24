@@ -3967,6 +3967,34 @@ export class RegisterHTTPRequestInterceptor implements HttpInterceptor {
         return next.handle(request).do(unregister, unregister)
     }
 }
+@Injectable()
+/**
+ * Represents current global offline state. Saves buffered offline caching
+ * events.
+ * @property static:changeCallbacks - List of registered offline state change
+ * callbacks.
+ * @property static:events - List of triggered events.
+ *
+ * @property changeCallbacks - List of registered offline state change
+ * callbacks.
+ * @property events - List of triggered events.
+ */
+export class OfflineState {
+    static changeCallbacks:Array<Function> = []
+    static events:Array<Array<any>> = []
+
+    changeCallbacks:Array<Function>
+    events:Array<Array<any>>
+    /**
+     * Sets static properties as instance properties to be compatible with
+     * angulars singleton dependency injection concept.
+     * @returns Nothing.
+     */
+    constructor() {
+        this.changeCallbacks = OfflineState.changeCallbacks
+        this.events = OfflineState.events
+    }
+}
 // / region abstract
 // IgnoreTypeCheck
 @Injectable()
@@ -4935,6 +4963,102 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
      */
     updateSearch():void {
         this.searchTermStream.next(this.searchTerm)
+    }
+}
+/**
+ * Abstract offline applications root component.
+ * @property offlineState - Offline state representation.
+ * @property renderer - Renderer service instance.
+ * @property showStateDomNode - Indicates whether to render offline state dom
+ * node.
+ * @property stateDescription - Current state representations.
+ * @property stateDescriptionDomNode - Nested node which shows current state
+ * description.
+ *
+ * @property _changeDetectorReference - Change detector reference service
+ * instance.
+ * @property _platformID - Holds a platform specific identifier.
+ * @property _renderer - Rendering abstraction layer.
+ */
+export class AbstractOfflineApplicationComponent {
+    offlineState:OfflineState
+    renderer:Renderer
+    showStateDomNode:boolean = true
+    stateDescription:string = 'loading...'
+    stateDescriptionDomNode:ElementRef|null = null
+
+    _changeDetectorReference:ChangeDetectorRef
+    _platformID:string
+    _renderer:Renderer
+    /**
+     * Initializes root application component.
+     * @param changeDetectorReference - Change detector reference service
+     * instance.
+     * @param offlineState - Injected offline state service instance.
+     * @param platformID - Injected platform specific identifier.
+     * @param renderer - Injected renderer service instance.
+     * @returns Nothing.
+     */
+    constructor(
+        changeDetectorReference:ChangeDetectorRef,
+        offlineState:OfflineState,
+        @Inject(PLATFORM_ID) platformID:string,
+        renderer:Renderer
+    ) {
+        this.offlineState = offlineState
+        this._changeDetectorReference = changeDetectorReference
+        this._platformID = platformID
+        this._renderer = renderer
+        if (isPlatformBrowser(this._platformID))
+            this.showStateDomNode = Boolean(this.offlineState.events.length)
+    }
+    /**
+     * Initializes offline state handler.
+     * @returns Nothing.
+     */
+    ngAfterViewInit():void {
+        if (isPlatformServer(this._platformID))
+            return
+        let timerID:any = null
+        const onOfflineStateChange:Function = (state:string):void => {
+            this.stateDescription = `Offline-cache state: "${state}"`
+            let counter:number|null = null
+            this.showStateDomNode = state === 'running'
+            if (['error', 'installed', 'updated'].includes(state)) {
+                counter = 30
+                this.stateDescription += ` ${counter}sec`
+                this.showStateDomNode = true
+            }
+            if (timerID)
+                clearInterval(timerID)
+            timerID = setInterval(():void => {
+                if (typeof counter === 'number') {
+                    counter -= 1
+                    if (counter <= 0) {
+                        clearInterval(timerID)
+                        this.showStateDomNode = false
+                    } else
+                        this.stateDescription =
+                            `Offline-cache state: "${state}" ${counter}sec`
+                } else
+                    this.stateDescription =
+                        `Offline-cache state: "${state}"`
+                this._changeDetectorReference.detectChanges()
+            }, 1000)
+            if (this.stateDescriptionDomNode)
+                this.renderer.addClass(
+                    this.stateDescriptionDomNode, state.replace(/[ _+]+/g, '-')
+                )
+            this._changeDetectorReference.detectChanges()
+        }
+        /*
+            NOTE: We only want to show initial loading and real offline state
+            changes.
+        */
+        this.showStateDomNode = false
+        this.offlineState.changeCallbacks.push(onOfflineStateChange)
+        for (const event of this.offlineState.events)
+            onOfflineStateChange(...event)
     }
 }
 /**
@@ -8114,11 +8238,12 @@ export class PaginationComponent {
     */
     providers: [
         // region services
-        UtilityService,
-        InitialDataService,
         AlertService,
-        DataService,
         DataScopeService,
+        DataService,
+        InitialDataService,
+        OfflineState,
+        UtilityService,
         // / region guards
         CanDeactivateRouteLeaveGuard,
         // / endregion
