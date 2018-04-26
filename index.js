@@ -118,12 +118,8 @@ import {
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
-import {Subject} from 'rxjs/Subject'
-import {Observable} from 'rxjs/Observable'
-import {ISubscription} from 'rxjs/Subscription'
-import 'rxjs/add/operator/do'
-import 'rxjs/add/operator/debounceTime'
-import 'rxjs/add/operator/distinctUntilChanged'
+import {Observable, Subject, Subscription} from 'rxjs'
+import {debounceTime, distinctUntilChanged, tap} from 'rxjs/operators'
 
 /*
     NOTE: Default import is not yet support for angular's ahead of time
@@ -3964,7 +3960,7 @@ export class RegisterHTTPRequestInterceptor implements HttpInterceptor {
                 this.data.runningRequests.splice(index, 1)
             this.data.runningRequestsStream.next(this.data.runningRequests)
         }
-        return next.handle(request).do(unregister, unregister)
+        return next.handle(request).pipe(tap(unregister, unregister))
     }
 }
 @Injectable()
@@ -4726,7 +4722,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     _itemsPath:string = 'items'
     _route:ActivatedRoute
     _router:Router
-    _subscriptions:Array<ISubscription> = []
+    _subscriptions:Array<Subscription> = []
     _toolsInstance:Tools
     /**
      * Saves injected service instances as instance properties.
@@ -4777,11 +4773,13 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             if (this.applyPageConstraints())
                 this.update()
         }))
-        this._subscriptions.push(this.searchTermStream.debounceTime(200)
-            .distinctUntilChanged().subscribe(():Promise<boolean> => {
-                this.page = 1
-                return this.update()
-            }))
+        this._subscriptions.push(this.searchTermStream.pipe(
+            debounceTime(200),
+            distinctUntilChanged()
+        ).subscribe(():Promise<boolean> => {
+            this.page = 1
+            return this.update()
+        }))
         this.debouncedUpdate = this._tools.debounce(this.update.bind(this))
     }
     /**
@@ -4808,7 +4806,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     changeItemWrapperFactory(callback:Function):Function {
         return async (...parameter:Array<any>):Promise<any> => {
             let update:boolean = true
-            const subscription:ISubscription = this._router.events.subscribe((
+            const subscription:Subscription = this._router.events.subscribe((
                 event:Object
             ):void => {
                 if (event instanceof NavigationEnd) {

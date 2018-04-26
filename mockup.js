@@ -24,9 +24,7 @@ import {
 } from '@angular/core'
 import {NavigationExtras} from '@angular/router'
 import type {PlainObject} from 'clientnode'
-import {BehaviorSubject} from 'rxjs/BehaviorSubject'
-import {Subject} from 'rxjs/Subject'
-import {Subscription} from 'rxjs/Subscription'
+import {BehaviorSubject, Subject, Subscription} from 'rxjs/BehaviorSubject'
 // endregion
 // region native
 /**
