@@ -38,7 +38,7 @@ registerAngularTest(function(
         require('blob-util').blobToBase64String
     const getBinary:Function = (data:string):Object => (
         typeof Blob === 'undefined'
-    ) ? new Buffer(data) : new Blob([data], {
+    ) ? new Buffer.from(data) : new Blob([data], {
             type: 'application/octet-stream'})
     const {Location} = require('@angular/common')
     const {
