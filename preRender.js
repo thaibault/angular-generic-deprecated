@@ -113,9 +113,9 @@ export function render(
         encoding:string;
         globalVariableNamesToInject:string|Array<string>;
         htmlFilePath:string;
-        minify:PlainObject|null;
+        minify:PlainObject|false|null;
         reInjectInnerHTMLFromInitialDomNode:boolean;
-        routes:Array<string>|Routes;
+        routes:Array<string|PlainObject>|Routes;
         scope:Object;
         targetDirectoryPath:string;
     } = Tools.extendObject(true, {
