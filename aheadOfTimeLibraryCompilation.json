@@ -1,6 +1,7 @@
 {
     "angularCompilerOptions": {
         "genDir": "aheadOfTime.compiled",
+        "preserveWhitespaces": false,
         "skipMetadataEmit" : false,
         "skipTemplateCodegen": false,
         "strictMetadataEmit": true

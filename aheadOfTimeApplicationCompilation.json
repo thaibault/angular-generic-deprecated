@@ -1,4 +1,7 @@
 {
+    "angularCompilerOptions": {
+        "preserveWhitespaces": false
+    },
     "compilerOptions": {
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
@@ -7,6 +10,8 @@
         "moduleResolution": "node",
         "noImplicitAny": false,
         "sourceMap": false,
+        "strict": true,
+        "strictPropertyInitialization": false,
         "suppressImplicitAnyIndexErrors": true,
         "target": "es2016",
         "types": ["node"]
