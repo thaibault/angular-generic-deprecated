@@ -98,24 +98,27 @@ export function determinePaths(
 /**
  * Pre-renders given application routes to given target directory structure.
  * @param module - Application module to pre-render.
- * @param options - Additional options to configure pre-rendering in detail.
+ * @param givenOptions - Additional options to configure pre-rendering in
+ * detail.
  * @returns A promise which resolves to a list of pre-rendered html strings.
  */
-export function render(module:Object, options:{
-    applicationDomNodeSelector?:string;
-    basePath:string|null;
-    component:Object|null;
-    encoding:string;
-    globalVariableNamesToInject:string|Array<string>;
-    htmlFilePath:string;
-    minify:PlainObject|null;
-    reInjectInnerHTMLFromInitialDomNode:boolean;
-    routes:Array<string>|Routes;
-    scope:Object;
-    targetDirectoryPath:string;
-}):Promise<Array<string>> {
+export function render(
+    module:Object, givenOptions:PlainObject
+):Promise<Array<string>> {
     // region determine  options
-    options = Tools.extendObject(true, {
+    const options:{
+        applicationDomNodeSelector?:string;
+        basePath:string|null;
+        component:Object|null;
+        encoding:string;
+        globalVariableNamesToInject:string|Array<string>;
+        htmlFilePath:string;
+        minify:PlainObject|null;
+        reInjectInnerHTMLFromInitialDomNode:boolean;
+        routes:Array<string>|Routes;
+        scope:Object;
+        targetDirectoryPath:string;
+    } = Tools.extendObject(true, {
         applicationDomNodeSelector,
         basePath: null,
         component: null,
@@ -133,7 +136,7 @@ export function render(module:Object, options:{
             }
         }}},
         targetDirectoryPath: 'preRendered'
-    }, options || {})
+    }, givenOptions || {})
     if (typeof options.minify === 'object' && options.minify !== null)
         options.minify = Tools.extendObject(true, {
             caseSensitive: true,
