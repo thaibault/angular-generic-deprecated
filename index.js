@@ -3637,7 +3637,8 @@ export class DataScopeService {
      * @returns Resolved specification object.
      */
     determineSpecificationObject(
-        modelSpecification:PlainObject, propertyNames?:Array<string>,
+        modelSpecification:PlainObject,
+        propertyNames:Array<string>|null = null,
         propertyNamesToIgnore:Array<string> = []
     ):PlainObject {
         if (!propertyNames)
@@ -3687,7 +3688,7 @@ export class DataScopeService {
      * @returns The generated scope object.
      */
     generate(
-        modelName:string, propertyNames?:Array<string>,
+        modelName:string, propertyNames:Array<string>|null = null,
         data:PlainObject = {}, propertyNamesToIgnore?:Array<string>
     ):PlainObject {
         const entities:PlainObject = this.configuration.database.model.entities
