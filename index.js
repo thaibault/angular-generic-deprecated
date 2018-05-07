@@ -4342,21 +4342,21 @@ export class AbstractInputComponent {
     @Input() maximum:number|null = null
     @Input() maximumLength:number|null = null
     @Input() maximumLengthText:string =
-        'Please type less or equal than ${model.maximumLength} symbols.'
+        'Please type less or equal than ${maximumLength} symbols.'
     @Input() maximumText:string =
-        'Please give a number less or equal than ${model.maximum}.'
+        'Please give a number less or equal than ${maximum}.'
     @Input() minimum:number|null = null
     @Input() minimumLength:number|null = null
     @Input() minimumLengthText:string =
-        'Please type at least or equal ${model.minimumLength} symbols.'
+        'Please type at least or equal ${minimumLength} symbols.'
     @Input() minimumText:string =
-        'Please given a number at least or equal to {{model.minimum}}.'
+        'Please given a number at least or equal to ${minimum}.'
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
     @Input() pattern:string
     @Input() patternText:string =
         'Your string have to match the regular expression: "' +
-        '${model.regularExpressionPattern}".'
+        '${regularExpressionPattern}".'
     @Input() required:boolean|null = null
     @Input() requiredText:string = 'Please fill this field.'
     @Input() showDeclarationText:string = 'ℹ'
@@ -5501,17 +5501,17 @@ export class IntervalInputComponent {
     @Input() startMaximum:number|null = null
 
     @Input() endMaximumText:string =
-        'Please give a number less or equal than ${model.maximum}.'
+        'Please give a number less or equal than ${maximum}.'
     @Input() startMaximumText:string =
-        'Please give a number less or equal than ${model.maximum}.'
+        'Please give a number less or equal than ${maximum}.'
 
     @Input() endMinimum:number|null = null
     @Input() startMinimum:number|null = null
 
     @Input() endMinimumText:string =
-        'Please given a number at least or equal to {{model.minimum}}.'
+        'Please given a number at least or equal to ${minimum}.'
     @Input() startMinimumText:string =
-        'Please given a number at least or equal to {{model.minimum}}.'
+        'Please given a number at least or equal to ${minimum}.'
 
     @Input() endRequired:boolean|null = null
     @Input() startRequired:boolean|null = null
@@ -5688,17 +5688,17 @@ export class IntervalsInputComponent implements OnInit {
     @Input() startMaximum:number|null = null
 
     @Input() endMaximumText:string =
-        'Please give a number less or equal than ${model.maximum}.'
+        'Please give a number less or equal than ${maximum}.'
     @Input() startMaximumText:string =
-        'Please give a number less or equal than ${model.maximum}.'
+        'Please give a number less or equal than ${maximum}.'
 
     @Input() endMinimum:number|null = null
     @Input() startMinimum:number|null = null
 
     @Input() endMinimumText:string =
-        'Please given a number at least or equal to {{model.minimum}}.'
+        'Please given a number at least or equal to ${minimum}.'
     @Input() startMinimumText:string =
-        'Please given a number at least or equal to {{model.minimum}}.'
+        'Please given a number at least or equal to ${minimum}.'
 
     @Input() endRequired:boolean|null = null
     @Input() startRequired:boolean|null = null
