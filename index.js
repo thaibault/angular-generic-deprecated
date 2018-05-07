@@ -2502,7 +2502,7 @@ export class CanDeactivateRouteLeaveGuard implements CanDeactivate<Object> {
  */
 export class ConfirmComponent {
     @Input() cancelText:string = 'Cancel'
-    dialogReference:MatDialogRef<ConfirmComponent>|null = null
+    dialogReference:MatDialogRef<ConfirmComponent>
     @Input() okText:string = 'OK'
     title:string = ''
     message:string = ''
