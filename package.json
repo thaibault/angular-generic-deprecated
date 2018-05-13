@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "blob-util": "^1.3.0",
-    "clientnode": "^3.0.55",
+    "clientnode": "^3.0.61",
     "filereader": "^0.10.3",
     "hammerjs": "^2.0.8",
     "jsdom": "^11.10.0",
@@ -114,13 +114,14 @@
     "babel-plugin-transform-decorators-legacy": "^1.3.4",
     "babel-polyfill": "^6.26.0",
     "coveralls": "^3.0.1",
-    "documentation-website": "^1.0.132",
+    "documentation-website": "^1.0.134",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.46.3",
     "eslint-plugin-jsdoc": "^3.6.3",
-    "flow-bin": "^0.72.0",
+    "flow-bin": "*",
     "html-minifier": "^3.5.15",
+    "jquery": "^3.3.1",
     "jsdoc": "^3.5.4",
     "nyc": "^11.7.3",
     "qunit": "^2.6.0",
@@ -128,8 +129,8 @@
     "rxjs": "^6.1.0",
     "tinymce": "^4.7.12",
     "typescript": "2.7.x",
-    "weboptimizer": "^2.0.125",
-    "webpack": "^4.8.1",
+    "weboptimizer": "^2.0.130",
+    "webpack": "^4.8.3",
     "webpack-cli": "^2.1.3",
     "webpack-dev-server": "^3.1.4",
     "zone.js": "^0.8.26"
@@ -211,7 +212,7 @@
       "replacements": {
         "context": [
           [
-            "/@angular\\/+core\\/+esm(?:201)?5/",
+            "/@angular\\/+core\\/+f?esm(?:201)?5/",
             {
               "__evaluate__": "`'${self.path.source.base}'`"
             }
@@ -221,7 +222,9 @@
           "^babel-polyfill$": "babel-polyfill/dist/polyfill.min.js",
           "^blob-util$": "blob-util/dist/blob-util.min.js",
           "^hammerjs$": "hammerjs/hammer.min.js",
-          "^jquery$": "jquery/dist/jquery.min.js",
+          "^jquery$": {
+            "__evaluate__": "path.resolve('./node_modules/jquery/dist/jquery.min.js')"
+          },
           "^pouchdb(?:/.+)?$": "pouchdb/dist/pouchdb.min.js",
           "^pouchdb-promise(?:/.+)?$": "pouchdb-promise/lib/index.js"
         }
