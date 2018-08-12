@@ -1968,9 +1968,11 @@ registerAngularTest(function(
                         `(${roundType})`,
                     async (assert:Object):Promise<void> => {
                         const done:Function = assert.async()
+                        /* eslint-disable flowtype/space-after-type-colon */
                         const fixture:
                             ComponentFixture<AbstractNativeInputComponent> =
                                 TestBed.createComponent(component)
+                        /* eslint-enable flowtype/space-after-type-colon */
                         const instance:Object = fixture.componentInstance
                         try {
                             instance.model = {

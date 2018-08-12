@@ -6268,8 +6268,7 @@ export class RepresentTextFileDirective {
             } else {
                 this.lastContent.input = this.options.content
                 if (this.options.content.startsWith('data:'))
-                    dataURLToBlob(this.options.content).then(
-                        readBinaryDataIntoText)
+                    readBinaryDataIntoText(dataURLToBlob(this.options.content))
                 else
                     this.data.getAttachment(this.options.content).then(
                         readBinaryDataIntoText)
@@ -7622,11 +7621,8 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
      * @returns A promise which resolves if requested attachment was retrieved.
      */
     async retrieveAttachment(id:any, options:PlainObject = {}):Promise<void> {
-        const file:{
-            size:number;
-            toString:(value:string) => string;
-            type:string;
-        } = await this._data.getAttachment(id, this.file.name, options)
+        const file:any = await this._data.getAttachment(
+            id, this.file.name, options)
         this.file = {
             /* eslint-disable camelcase */
             content_type: file.type || 'text/plain',
