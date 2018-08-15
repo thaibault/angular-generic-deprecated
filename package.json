@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "blob-util": "^2.0.2",
-    "clientnode": "^3.0.80",
+    "clientnode": "^3.0.81",
     "filereader": "^0.10.3",
     "hammerjs": "^2.0.8",
     "jsdom": "^11.12.0",
@@ -129,7 +129,7 @@
     "rxjs": "^6.2.2",
     "tinymce": "^4.8.2",
     "typescript": "2.9.x",
-    "weboptimizer": "^2.0.183",
+    "weboptimizer": "^2.0.184",
     "webpack": "^4.16.5",
     "webpack-cli": "^3.1.0",
     "webpack-dev-server": "^3.1.5",
