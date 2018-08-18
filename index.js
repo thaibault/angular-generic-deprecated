@@ -115,6 +115,11 @@ import {
     Router,
     RouterStateSnapshot
 } from '@angular/router'
+// NOTE: Pouchdb expects to have "fetch" available in global contexts.
+import fetch from 'node-fetch'
+if (typeof global !== 'undefined')
+    // NOTE: Writing "global.fetch = fetch" would result in type script error.
+    global['fetch'] = fetch
 import PouchDB from 'pouchdb'
 import PouchDBFindPlugin from 'pouchdb-find'
 import PouchDBValidationPlugin from 'pouchdb-validation'
