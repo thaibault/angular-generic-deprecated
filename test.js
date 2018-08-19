@@ -1961,7 +1961,7 @@ registerAngularTest(function(
                 done()
             })
             for (const component:AbstractNativeInputComponent of [
-                TextareaComponent, SimpleInputComponent
+                /*SimpleInputComponent,*/ TextareaComponent
             ])
                 this[targetTechnology === 'web' ? 'test' : 'skip'](
                     `${AbstractNativeInputComponent.name}/${component.name} ` +

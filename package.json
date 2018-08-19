@@ -114,7 +114,7 @@
     "babel-plugin-transform-decorators-legacy": "^1.3.5",
     "babel-polyfill": "^6.26.0",
     "coveralls": "^3.0.2",
-    "documentation-website": "^1.0.135",
+    "documentation-website": "^1.0.136",
     "eslint": "^5.4.0",
     "eslint-config-google": "^0.9.1",
     "eslint-plugin-flowtype": "^2.50.0",
@@ -193,7 +193,9 @@
         "#0": "We want to use the pre-compiled artefact.",
         "clientnode/test$": "clientnode/test.compiled",
         "#1": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
-        "node-fetch$": "node-fetch/lib/index.js"
+        "node-fetch$": "node-fetch/lib/index.js",
+        "#2": "Avoid using default buggy \"pouchdb-promise/lib/index.es.js\" version.",
+        "pouchdb-promise$": "pouchdb-promise/lib/index.js"
       },
       "optimizer": {
         "babelMinify": {
