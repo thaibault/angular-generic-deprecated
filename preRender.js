@@ -192,7 +192,10 @@ export function render(
         ])
             renderScope.virtualConsole.on(name, console[name].bind(console))
         renderScope.dom = (new DOM(data, {
+            includeNodeLocations: true,
+            referrer: 'https://localhost',
             runScripts: 'dangerously',
+            url: 'https://localhost',
             virtualConsole: renderScope.virtualConsole
         }))
         renderScope.window = renderScope.dom.window
