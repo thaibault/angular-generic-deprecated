@@ -1,6 +1,6 @@
 {
   "name": "angular-generic",
-  "version": "1.0.673",
+  "version": "1.0.674",
   "license": "CC-BY-3.0",
   "description": "useful services, filters and directives for every project needs",
   "homepage": "https://torben.website/angularGeneric",
@@ -107,12 +107,12 @@
     "@angular/platform-browser-dynamic": "*",
     "@angular/platform-server": "*",
     "@angular/router": "*",
-    "@types/node": "*",
     "@babel/cli": "*",
-    "babel-eslint": "*",
-    "babel-plugin-angular2-annotations": "^5.1.0",
     "@babel/plugin-proposal-decorators": "*",
     "@babel/polyfill": "*",
+    "@types/node": "*",
+    "babel-eslint": "*",
+    "babel-plugin-angular2-annotations": "^5.1.0",
     "coveralls": "*",
     "documentation-website": "*",
     "eslint": "*",
@@ -209,7 +209,12 @@
             "plugins": {
               "__prepend__": [
                 "angular2-annotations",
-                ["@babel/plugin-proposal-decorators", {"legacy": true}]
+                [
+                  "@babel/plugin-proposal-decorators",
+                  {
+                    "legacy": true
+                  }
+                ]
               ],
               "__remove__": "@babel/plugin-transform-runtime"
             }
