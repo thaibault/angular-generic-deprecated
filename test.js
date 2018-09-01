@@ -2095,8 +2095,6 @@ registerAngularTest(function(
                     // region applyPageConstraints/update
                     instance._route.testData = {items: [{
                         [specialNames.id]: 2}]}
-                    fixture.detectChanges()
-                    await fixture.whenStable()
                     assert.deepEqual(
                         instance.allItems, [{[specialNames.id]: 2}])
                     assert.deepEqual(instance.items, [{[specialNames.id]: 2}])

@@ -215,9 +215,18 @@
                   {
                     "legacy": true
                   }
+                ],
+                [
+                  "@babel/plugin-proposal-class-properties",
+                  {
+                    "loose": true
+                  }
                 ]
               ],
-              "__remove__": "@babel/plugin-transform-runtime"
+              "__remove__": [
+                "@babel/plugin-proposal-class-properties",
+                "@babel/plugin-transform-runtime"
+              ]
             }
           }
         }

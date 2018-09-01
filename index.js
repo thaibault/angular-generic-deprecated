@@ -4942,7 +4942,10 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
                         sort += `-${this.sort[name]}`
                 }
             result = await this._router.navigate([
-                this._itemsPath, sort, this.page, this.limit,
+                this._itemsPath,
+                sort,
+                this.page,
+                this.limit,
                 `${this.regularExpression ? 'regex' : 'exact'}-` +
                 encodeURIComponent(this.searchTerm)
             ], {
