@@ -284,11 +284,7 @@ export function render(
         console.info(
             `Found ${urls.length} pre-renderable url` +
             `${urls.length > 1 ? 's' : ''}.`)
-        // region provide pre-rendering environment
-        global.document = renderScope.window.document
-        global.window = renderScope.window
         enableProdMode()
-        // endregion
         // region generate pre-rendered html files
         const results:Array<string> = []
         const filePaths:Array<string> = []
