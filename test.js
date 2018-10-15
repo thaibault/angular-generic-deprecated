@@ -174,7 +174,7 @@ registerAngularTest(function(
     }
     // endregion
     // region prepare services
-    let specialNames:PlainObject =
+    const specialNames:PlainObject =
         InitialDataService.defaultScope.configuration.database.model.property
             .name.special
     InitialDataService.removeFoundData = false

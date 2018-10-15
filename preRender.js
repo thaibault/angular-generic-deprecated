@@ -42,7 +42,7 @@ import {
 export function determinePaths(
     basePath:string = '/', routes:Routes = [], root:string = ''
 ):{links:{[key:string]:string};paths:Set<string>} {
-    let links:{[key:string]:string} = {}
+    const links:{[key:string]:string} = {}
     let paths:Set<string> = new Set()
     let defaultPath:string = ''
     /*
