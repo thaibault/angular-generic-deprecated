@@ -3,6 +3,7 @@
         "preserveWhitespaces": false
     },
     "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "lib": ["esnext", "dom"],

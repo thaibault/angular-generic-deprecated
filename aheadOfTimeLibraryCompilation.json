@@ -7,6 +7,7 @@
         "strictMetadataEmit": true
     },
     "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
         "allowJs": false,
         "allowSyntheticDefaultImports": false,
         "allowUnreachableCode": true,
