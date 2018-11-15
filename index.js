@@ -2638,6 +2638,11 @@ export class DataService {
     ]
 
     connection:PouchDB
+    connectionOptions:PlainObject = {
+        /* eslint-disable camelcase */
+        skip_setup: true
+        /* eslint-enable camelcase */
+    }
     configuration:PlainObject
     database:typeof PouchDB
     errorCallbacks:Array<Function> = []
@@ -2865,16 +2870,22 @@ export class DataService {
             constructor and configurations before initializing them.
         */
         await this.tools.timeout()
+        this.installPlugins()
+        await this.initializeConnection()
+    }
+    /**
+     * Initializes database connection and synchronisation if needed.
+     * @returns A promise resolving when initialisation has finished.
+     */
+    async initializeConnection():Promise<void> {
         if (this.configuration.database.hasOwnProperty('publicURL'))
             this.configuration.database.url =
                 this.configuration.database.publicURL
-        for (const plugin of this.configuration.database.plugins)
-            this.database.plugin(plugin)
-        const options:PlainObject = this.extendObject(
-            /* eslint-disable camelcase */
-            true, {skip_setup: true},
-            /* eslint-enable camelcase */
-            this.configuration.database.connector || {})
+        this.extendObject(
+            true,
+            this.connectionOptions, 
+            this.configuration.database.connector || {}
+        )
         const databaseName:string = this.configuration.name || 'generic'
         if (!(
             DataService.skipRemoteConnectionOnServer &&
@@ -2884,13 +2895,14 @@ export class DataService {
         ))
             this.remoteConnection = new this.database(this.stringFormat(
                 this.configuration.database.url, ''
-            ) + `/${databaseName}`, options)
+            ) + `/${databaseName}`, this.connectionOptions)
         if (
             this.configuration.database.local ||
             DataService.skipRemoteConnectionOnServer &&
             isPlatformServer(this.platformID)
         )
-            this.connection = new this.database(databaseName, options)
+            this.connection = new this.database(
+                databaseName, this.connectionOptions)
         else
             this.connection = this.remoteConnection
         this.connection.installValidationMethods()
@@ -3175,6 +3187,14 @@ export class DataService {
                 }
         // endregion
         this.initialized.emit(this.connection)
+    }
+    /**
+     * Installs all configured plugins.
+     * @returns Nothing.
+     */
+    installPlugins():void {
+        for (const plugin of this.configuration.database.plugins)
+            this.database.plugin(plugin)
     }
     /**
      * Creates a database index.
@@ -4545,6 +4565,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
 
     actions:Array<PlainObject> = []
     autoRestartOnError:boolean = true
+    disabled = false
 
     _canceled:boolean = false
     _changesStream:Stream
@@ -4576,7 +4597,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
      * @returns Nothing.
      */
     ngOnInit():void {
-        if (isPlatformServer(this._platformID))
+        if (this.disabled || isPlatformServer(this._platformID))
             return
         const initialize:Function = this._tools.debounce(():void => {
             if (this._changesStream)
@@ -4622,7 +4643,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
                             initialize()
                 })
         }, 3000)
-        initialize()
+        this._tools.timeout(initialize, 3000)
     }
     /**
      * Marks current live data observation as canceled and closes initially
