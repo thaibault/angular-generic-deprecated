@@ -192,8 +192,15 @@ export function render(
         // region prepare environment
         renderScope.virtualConsole = new VirtualConsole()
         for (const name:string of [
-            'assert', 'dir', 'error', 'info', 'log', 'time', 'timeEnd',
-            'trace', 'warn'
+            'assert',
+            'dir',
+            'error',
+            'info',
+            'log',
+            'time',
+            'timeEnd',
+            'trace',
+            'warn'
         ])
             renderScope.virtualConsole.on(name, console[name].bind(console))
         renderScope.dom = (new DOM(data, {

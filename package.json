@@ -265,6 +265,21 @@
           "preRender": "./preRender"
         }
       },
+      "module": {
+        "optimizer": {
+          "babelMinify": {
+            "bundle": {
+              "transform": {
+                "#": "To provide a generic logging mechanism we need this feature to be exported.",
+                "removeConsole": false
+              }
+            },
+            "module": {
+              "removeConsole": false
+            }
+          }
+        }
+      },
       "targetTechnology": "node"
     }
   }
