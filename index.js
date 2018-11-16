@@ -2597,7 +2597,9 @@ export class AlertService {
  * @property static:wrappableMethodNames - Saves a list of method names which
  * can be intercepted.
  *
+ * @property configuration - Holds the configuration service instance.
  * @property connection - The current database connection instance.
+ * @property connectionOptions - The current database connection options.
  * @property database - The entire database constructor.
  * @property errorCallbacks - Holds all registered error callbacks.
  * @property equals - Hilds the equals pipe transformation method.
@@ -2637,13 +2639,13 @@ export class DataService {
         'remove', 'removeAttachment'
     ]
 
+    configuration:PlainObject
     connection:PouchDB
     connectionOptions:PlainObject = {
         /* eslint-disable camelcase */
         skip_setup: true
         /* eslint-enable camelcase */
     }
-    configuration:PlainObject
     database:typeof PouchDB
     errorCallbacks:Array<Function> = []
     equals:Function
