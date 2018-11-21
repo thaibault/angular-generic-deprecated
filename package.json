@@ -197,6 +197,13 @@
       },
       "optimizer": {
         "babelMinify": {
+          "bundle": {
+            "transform": {
+              "mangle": false
+            },
+            "#": "TODO",
+            "mangle": false
+          },
           "#": "This loader expects javascript (not typescript) here.",
           "module": null
         }
