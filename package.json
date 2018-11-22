@@ -282,6 +282,9 @@
               }
             },
             "module": {
+              "#": "Mangeling here results in undefined variable (for injected service in first defined one: \"InitialDataService\") when using the pre-renderer in application specific ones. Example traceback in application's pre-renderer: ReferenceError: e is not defined   at Module.<anonymous> (/build/preRender.js:124780:25463)   at __webpack_require__ (/build/preRender.js:124780:694)   at Object.<anonymous> (/build/preRender.js:124780:3665)   at __webpack_require__ (/build/preRender.js:124780:694)   at module.exports.wrapperApi (/build/preRender.js:124780:2020)   at Object.<anonymous> (/build/preRender.js:124780:2066)   at Object.<anonymous> (/build/preRender.js:125381:30)   at __webpack_require__ (/build/preRender.js:23:30)   at Module.<anonymous> (/build/preRender.js:155089:26)   at __webpack_require__ (/build/preRender.js:23:30)",
+              "mangle": false,
+              "#0": "To provide a generic logging mechanism we need this feature to be exported.",
               "removeConsole": false
             }
           }
