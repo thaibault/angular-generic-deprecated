@@ -33,15 +33,17 @@ import {
 /**
  * Determines pre-renderable paths from given angular routes configuration
  * object.
- * @param basePath - Applications base path.
+ * @param base - Applications base url.
  * @param routes - Routes configuration object to analyze.
  * @param root - Current components root path (usually only needed for
  * recursive function calls).
  * @returns Set of distinct paths and linkes representing redirects.
  */
 export function determinePaths(
-    basePath:string = '/', routes:Routes = [], root:string = ''
+    base:string = '/', routes:Routes = [], root:string = ''
 ):{links:{[key:string]:string};paths:Set<string>} {
+    if (base.endsWith('/') && root.startsWith('/'))
+        root = root.replace(/^\/+/, '')
     const links:{[key:string]:string} = {}
     let paths:Set<string> = new Set()
     let defaultPath:string = ''
@@ -54,16 +56,16 @@ export function determinePaths(
     routes.reverse()
     for (const route:any of routes)
         if (typeof route === 'string')
-            paths.add(path.join(basePath, root, route))
+            paths.add(base + path.join(root, route))
         else if (route.hasOwnProperty('path')) {
             if (route.hasOwnProperty('redirectTo')) {
                 if (route.path === '**')
                     if (route.redirectTo.startsWith('/'))
-                        defaultPath = path.join(basePath, route.redirectTo)
+                        defaultPath = base + route.redirectTo
                     else
-                        defaultPath = path.join(
-                            basePath, root, route.redirectTo)
-                links[path.join(basePath, root, route.path)] = defaultPath
+                        defaultPath = base + path.join(
+                            root, route.redirectTo)
+                links[base + path.join(root, route.path)] = defaultPath
             } else if (route.path.includes(':')) {
                 if (defaultPath)
                     paths.add(defaultPath)
@@ -71,13 +73,13 @@ export function determinePaths(
             } else if (route.path !== '**' && !(route.hasOwnProperty(
                 'children'
             ) && route.children[route.children.length - 1].path === '**'))
-                paths.add(path.join(basePath, root, route.path))
+                paths.add(base + path.join(root, route.path))
             if (route.hasOwnProperty('children')) {
                 const result:{
                     links:{[key:string]:string};
                     paths:Set<string>;
-                } = determinePaths(basePath, route.children, path.join(
-                    root, route.path))
+                } = determinePaths(
+                    base, route.children, path.join(root, route.path))
                 Tools.extendObject(links, result.links)
                 paths = new Set([...paths, ...result.paths])
             }
@@ -85,7 +87,7 @@ export function determinePaths(
             const result:{
                 links:{[key:string]:string};
                 paths:Set<string>;
-            } = determinePaths(basePath, route.children, root)
+            } = determinePaths(base, route.children, root)
             Tools.extendObject(links, result.links)
             paths = new Set([...paths, ...result.paths])
         }
