@@ -81,7 +81,7 @@ export class LocationStub {
 @Injectable()
 /**
  * Mocks the router service.
- * @property events - TODO
+ * @property events - Triggers when events happens.
  * @property location - Location service instance.
  */
 export class RouterStub {
