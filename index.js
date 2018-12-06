@@ -161,6 +161,7 @@ export type Property = {
     nullable?:boolean;
     onCreateExecution?:string;
     onCreateExpression?:string;
+    oldName?:string;
     onUpdateExecution?:string;
     onUpdateExpression?:string;
     regularExpressionPattern?:string;
@@ -394,6 +395,7 @@ export class InitialDataService {
                             '_maximumAggregatedSize',
                         minimumAggregatedSize:
                             '_minimumAggregatedSize',
+                        oldType: '_oldType',
                         revision: '_rev',
                         revisions: '_revisions',
                         revisionsInformation: '_revs_info',
