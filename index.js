@@ -2832,37 +2832,49 @@ export class DataService {
         const specialNames:PlainObject =
             modelConfiguration.property.name.special
         return Object.keys(model).filter((name:string):boolean =>
-            model[name].index || !(
-                modelConfiguration.property.name.reserved.concat(
-                    specialNames.additional,
-                    specialNames.allowedRole,
-                    specialNames.attachment,
-                    specialNames.conflict,
-                    specialNames.constraint.execution,
-                    specialNames.constraint.expression,
-                    specialNames.create.execution,
-                    specialNames.create.expression,
-                    specialNames.deleted,
-                    specialNames.deletedConflict,
-                    specialNames.extend,
-                    specialNames.id,
-                    specialNames.maximumAggregatedSize,
-                    specialNames.minimumAggregatedSize,
-                    specialNames.revision,
-                    specialNames.revisions,
-                    specialNames.revisionsInformation,
-                    specialNames.type,
-                    specialNames.update.execution,
-                    specialNames.update.expression
-                ).includes(name) || model[name].type && (
-                    typeof model[name].type === 'string' &&
-                    model[name].type.endsWith('[]') ||
-                    Array.isArray(model[name].type) &&
-                    model[name].type.length &&
-                    Array.isArray(model[name].type[0]) ||
-                    modelConfiguration.entities.hasOwnProperty(
-                        model[name].type))
-            )).concat(specialNames.id, specialNames.revision)
+            model[name] !== null &&
+            typeof model[name] === 'object' &&
+            (
+                model[name].hasOwnProperty('index') &&
+                model[name].index ||
+                !(
+                    model[name].hasOwnProperty('index') &&
+                    !model[name].index ||
+                    modelConfiguration.property.name.reserved.concat(
+                        specialNames.additional,
+                        specialNames.allowedRole,
+                        specialNames.attachment,
+                        specialNames.conflict,
+                        specialNames.constraint.execution,
+                        specialNames.constraint.expression,
+                        specialNames.create.execution,
+                        specialNames.create.expression,
+                        specialNames.deleted,
+                        specialNames.deletedConflict,
+                        specialNames.extend,
+                        specialNames.id,
+                        specialNames.maximumAggregatedSize,
+                        specialNames.minimumAggregatedSize,
+                        specialNames.revision,
+                        specialNames.revisions,
+                        specialNames.revisionsInformation,
+                        specialNames.type,
+                        specialNames.update.execution,
+                        specialNames.update.expression
+                    ).includes(name) ||
+                    model[name].type &&
+                    (
+                        typeof model[name].type === 'string' &&
+                        model[name].type.endsWith('[]') ||
+                        Array.isArray(model[name].type) &&
+                        model[name].type.length &&
+                        Array.isArray(model[name].type[0]) ||
+                        modelConfiguration.entities.hasOwnProperty(
+                            model[name].type)
+                    )
+                )
+            )
+        ).concat(specialNames.id, specialNames.revision)
     }
     /**
      * Initializes database connection and synchronisation if needed.
