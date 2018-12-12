@@ -70,9 +70,11 @@ export function determinePaths(
                 if (defaultPath)
                     paths.add(defaultPath)
                 continue
-            } else if (route.path !== '**' && !(route.hasOwnProperty(
-                'children'
-            ) && route.children[route.children.length - 1].path === '**'))
+            } else if (
+                route.path !== '**' &&
+                !(route.hasOwnProperty('children') &&
+                route.children[route.children.length - 1].path === '**')
+            )
                 paths.add(base + path.join(root, route.path))
             if (route.hasOwnProperty('children')) {
                 const result:{
