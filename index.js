@@ -3711,7 +3711,8 @@ export class DataScopeService {
                     )
                         result[name].value = this.determineSpecificationObject(
                             this.configuration.database.model.entities[
-                                result[name].type])
+                                result[name].type], null, propertyNamesToIgnore
+                        )
                 }
         return result
     }
