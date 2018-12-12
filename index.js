@@ -2855,6 +2855,7 @@ export class DataService {
                         specialNames.id,
                         specialNames.maximumAggregatedSize,
                         specialNames.minimumAggregatedSize,
+                        specialNames.oldType,
                         specialNames.revision,
                         specialNames.revisions,
                         specialNames.revisionsInformation,
@@ -3575,8 +3576,10 @@ export class DataScopeService {
      * @returns A promise wrapping requested data.
      */
     async determine(
-        modelName:string, id:string|null = null,
-        propertyNames:Array<string>|null = null, revision:string = 'latest',
+        modelName:string,
+        id:string|null = null,
+        propertyNames:Array<string>|null = null,
+        revision:string = 'latest',
         revisionHistory:boolean = false
     ):Promise<PlainObject> {
         let data:PlainObject = {}
@@ -3724,8 +3727,10 @@ export class DataScopeService {
      * @returns The generated scope object.
      */
     generate(
-        modelName:string, propertyNames:Array<string>|null = null,
-        data:PlainObject = {}, propertyNamesToIgnore?:Array<string>
+        modelName:string,
+        propertyNames:Array<string>|null = null,
+        data:PlainObject = {},
+        propertyNamesToIgnore?:Array<string>
     ):PlainObject {
         const entities:PlainObject = this.configuration.database.model.entities
         const modelSpecification:PlainObject = entities[modelName]
@@ -3740,17 +3745,21 @@ export class DataScopeService {
             ] : []
         const reservedNames:Array<string> =
             this.configuration.database.model.property.name.reserved.concat(
+                revisionName,
                 specialNames.conflict,
                 specialNames.deleted,
                 specialNames.deletedConflict,
                 specialNames.localSequence,
-                revisionName,
+                specialNames.oldType,
                 specialNames.revisions,
                 specialNames.revisionsInformation,
-                typeName)
+                typeName
+            )
         const specification:PlainObject = this.determineSpecificationObject(
-            modelSpecification, propertyNames,
-            propertyNamesToIgnore.concat(reservedNames))
+            modelSpecification,
+            propertyNames,
+            propertyNamesToIgnore.concat(reservedNames)
+        )
         if (!propertyNames) {
             propertyNames = Object.keys(specification).filter(
                 (key:string):boolean =>
