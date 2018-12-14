@@ -201,6 +201,7 @@ export type SpecialPropertyNames = {
     localSequence:string;
     maximumAggregatedSize:string;
     minimumAggregatedSize:string;
+    oldType:string;
     revision:string;
     revisions:string;
     revisionsInformation:string;
@@ -1461,7 +1462,7 @@ export class ExtractRawDataPipe implements PipeTransform {
      * @returns Given converted object.
      */
     convertDateToTimestampRecursively(value:any):any {
-        if (typeof value === 'object' && value !== null) {
+        if (value !== null && typeof value === 'object') {
             if (value instanceof Date)
                 return this.numberGetUTCTimestamp(value)
             if (Array.isArray(value)) {
@@ -1493,7 +1494,8 @@ export class ExtractRawDataPipe implements PipeTransform {
      * data wrapped in a promise (to asynchronous compare attachment content).
      */
     async getNotAlreadyExistingAttachmentData(
-        newDocument:PlainObject, oldDocument:PlainObject,
+        newDocument:PlainObject,
+        oldDocument:PlainObject,
         specification:PlainObject
     ):Promise<{payloadExists:boolean;result:PlainObject}> {
         const result:PlainObject = {}
@@ -1701,7 +1703,7 @@ export class ExtractRawDataPipe implements PipeTransform {
             }
             return data
         }
-        if (typeof data === 'object' && data !== null) {
+        if (data !== null && typeof data === 'object') {
             const result:PlainObject = {}
             for (const name in data)
                 if (data.hasOwnProperty(name)) {
@@ -1713,14 +1715,18 @@ export class ExtractRawDataPipe implements PipeTransform {
                                 this.specialNames.additional) &&
                             specification[this.specialNames.additional]
                         ) || {}).emptyEqualsToNull)
-                    if (![undefined, null].includes(data[name]) && !(
-                        emptyEqualsToNull && (
-                            data[name] === '' ||
-                            Array.isArray(data[name]) &&
-                            data[name].length === 0 ||
-                            typeof data[name] === 'object' &&
-                            !(data[name] instanceof Date) &&
-                            Object.keys(data[name]).length === 0))
+                    if (
+                        ![undefined, null].includes(data[name]) &&
+                        !(
+                            emptyEqualsToNull && (
+                                data[name] === '' ||
+                                Array.isArray(data[name]) &&
+                                data[name].length === 0 ||
+                                typeof data[name] === 'object' &&
+                                !(data[name] instanceof Date) &&
+                                Object.keys(data[name]).length === 0
+                            )
+                        )
                     )
                         if (
                             this.modelConfiguration.property.name.reserved
@@ -1778,13 +1784,15 @@ export class ExtractRawDataPipe implements PipeTransform {
                                 this.specialNames.localSequence,
                                 this.specialNames.maximumAggregatedSize,
                                 this.specialNames.minimumAggregatedSize,
+                                this.specialNames.oldType,
                                 this.specialNames.revisions,
                                 this.specialNames.revisionsInformation
                             ].includes(name) && (
                                 !specification ||
                                 specification.hasOwnProperty(name) ||
                                 specification.hasOwnProperty(
-                                    this.specialNames.additional))
+                                    this.specialNames.additional)
+                            )
                         )
                             result[name] = this.removeMetaData(
                                 data[name],
@@ -1829,7 +1837,8 @@ export class ExtractRawDataPipe implements PipeTransform {
                 payloadExists = attachmentDifference.payloadExists
             }
             if (this.removeAlreadyExistingData(
-                result, this.removeMetaData(oldDocument, specification),
+                result,
+                this.removeMetaData(oldDocument, specification),
                 specification
             ).payloadExists)
                 payloadExists = true
@@ -2900,7 +2909,7 @@ export class DataService {
                 this.configuration.database.publicURL
         this.extendObject(
             true,
-            this.connectionOptions, 
+            this.connectionOptions,
             this.configuration.database.connector || {}
         )
         const databaseName:string = this.configuration.name || 'generic'
