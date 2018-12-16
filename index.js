@@ -2580,8 +2580,9 @@ export class AlertService {
         if (typeof data === 'string')
             configuration = {data: {message: data}}
         else if (
-            typeof data !== 'object' || data === null || !data.hasOwnProperty(
-                'data')
+            typeof data !== 'object' ||
+            data === null ||
+            !data.hasOwnProperty('data')
         )
             configuration = {data}
         else
