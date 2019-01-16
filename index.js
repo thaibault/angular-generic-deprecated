@@ -2153,15 +2153,17 @@ export class StringEndsWithPipe implements PipeTransform {
 export class StringHasTimeSuffixPipe implements PipeTransform {
     /**
      * Performs the actual string suffix check.
-     * @param string - To search in.
+     * @param value - To search in.
      * @returns The boolean result.
      */
-    transform(string?:string):boolean {
-        if (typeof string !== 'string')
+    transform(value?:string):boolean {
+        if (typeof value !== 'string')
             return false
-        return string.endsWith('Date') || string.endsWith(
-            'Time'
-        ) || string === 'timestamp'
+        return (
+            value.endsWith('Date') ||
+            value.endsWith('Time') ||
+            value === 'timestamp'
+        )
     }
 }
 // IgnoreTypeCheck
@@ -3945,20 +3947,22 @@ export class DataScopeService {
                             result[name].value = selection.sort()[0]
                     }
                 if (
-                    typeof result[name].value === 'number' &&
                     result[name].hasOwnProperty('type') &&
-                    (
-                        result[name].type.endsWith('Date') ||
-                        result[name].type.endsWith('Time')
-                    )
+                    typeof result[name].type === 'string'
                 )
-                    // NOTE: We interpret given value as an utc timestamp.
-                    result[name].value = new Date(result[name].value * 1000)
-                else if (result[name].hasOwnProperty('type'))
-                    if (entities.hasOwnProperty(result[name].type))
+                    if (
+                        typeof result[name].value === 'number' &&
+                        result[name].type.endsWith('Date')
+                    )
+                        // NOTE: We interpret given value as an utc timestamp.
+                        result[name].value = new Date(result[name].value * 1000)
+                    else if (entities.hasOwnProperty(result[name].type))
                         result[name].value = this.generate(
-                            result[name].type, null, result[name].value || {},
-                            [specialNames.attachment, idName])
+                            result[name].type,
+                            null,
+                            result[name].value || {},
+                            [specialNames.attachment, idName]
+                        )
                     else if (result[name].type.endsWith('[]')) {
                         const type:string = result[name].type.substring(
                             0, result[name].type.length - 2)
@@ -3969,8 +3973,11 @@ export class DataScopeService {
                             let index:number = 0
                             for (const item of result[name].value) {
                                 result[name].value[index] = this.generate(
-                                    type, null, item || {},
-                                    [specialNames.attachment, specialNames.id])
+                                    type,
+                                    null,
+                                    item || {},
+                                    [specialNames.attachment, specialNames.id]
+                                )
                                 index += 1
                             }
                         }
@@ -4523,18 +4530,24 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
      * @returns Nothing.
      */
     onChange(newValue:any, state:Object):any {
-        if (this.model.type === 'integer')
+        const types:Array<string> = [].concat(this.model.type)
+        if (
+            types.includes('integer') &&
+            !types.includes('number') &&
+            !types.includes('string')
+        )
             newValue = parseInt(newValue)
-        else if (this.model.type === 'number')
+        else if (types.includes('number') && !types.includes('string'))
             newValue = parseFloat(newValue)
-        else if (newValue && this.model.type === 'string' && this.model.trim)
+        else if (typeof newValue === 'string' && this.model.trim)
             newValue = newValue.trim()
         const now:Date = new Date()
         const nowUTCTimestamp:number = this._numberGetUTCTimestamp(now)
         const newData:PlainObject = {[this.model.name]: newValue}
         for (const hookType of ['onUpdateExpression', 'onUpdateExecution'])
             if (
-                this.model.hasOwnProperty(hookType) && this.model[hookType] &&
+                this.model.hasOwnProperty(hookType) &&
+                this.model[hookType] &&
                 typeof this.model[hookType] === 'function'
             ) {
                 newValue = this.model[hookType](
@@ -4559,10 +4572,12 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
                     {},
                     newValue
                 )
-                if (!(newValue instanceof Date) && (
-                    this.model.type.endsWith('Date') ||
-                    this.model.type.endsWith('Time')
-                ))
+                if (
+                    !(newValue instanceof Date) &&
+                    types.includes('DateTime') &&
+                    !types.includes('float') &&
+                    !types.includes('integer')
+                )
                     newValue *= 1000
             }
         this.model.state = state
@@ -5316,8 +5331,10 @@ export class DateDirective {
     insert():void {
         let dateTime:Date|number|string = this.options.dateTime
         if (
-            typeof dateTime === 'string' && ['now', ''].includes(dateTime) ||
-            typeof dateTime === 'number' && isNaN(dateTime) ||
+            typeof dateTime === 'string' &&
+            ['now', ''].includes(dateTime) ||
+            typeof dateTime === 'number' &&
+            isNaN(dateTime) ||
             [null, undefined].includes(dateTime)
         )
             dateTime = Date.now()
