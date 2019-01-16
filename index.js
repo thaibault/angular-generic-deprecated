@@ -3828,9 +3828,11 @@ export class DataScopeService {
                             for (const hookType of [
                                 'onCreateExecution', 'onCreateExpression'
                             ])
-                                if (result[name][type].hasOwnProperty(
-                                    hookType
-                                ) && result[name][type][hookType]) {
+                                if (
+                                    result[name][type].hasOwnProperty(
+                                        hookType) &&
+                                    result[name][type][hookType]
+                                ) {
                                     result[name][type].value = (new Function(
                                         ...Object.keys(scope), (
                                             hookType.endsWith(
@@ -3838,9 +3840,10 @@ export class DataScopeService {
                                             ) ? 'return ' : ''
                                         ) + result[name][type][hookType]
                                     ))(...Object.values(scope))
-                                    if (result[name][type].hasOwnProperty(
-                                        'value'
-                                    ) && result[name][type].value === undefined
+                                    if (
+                                        result[name][type].hasOwnProperty(
+                                            'value') &&
+                                        result[name][type].value === undefined
                                     )
                                         delete result[name][type].value
                                 }
@@ -3851,9 +3854,10 @@ export class DataScopeService {
                             ![undefined, null].includes(data[name])
                         )
                             for (const fileName in data[name])
-                                if (result[name].hasOwnProperty(type) && (
-                                    new RegExp(type)
-                                ).test(fileName)) {
+                                if (
+                                    result[name].hasOwnProperty(type) &&
+                                    (new RegExp(type)).test(fileName)
+                                ) {
                                     fileFound = true
                                     result[name][type].value = data[name][
                                         fileName]
@@ -3876,8 +3880,7 @@ export class DataScopeService {
                 if (Object.keys(data).length === 0) {
                     const scope:Object = {
                         attachmentWithPrefixExists:
-                            this.attachmentWithPrefixExists.bind(
-                                data, data),
+                            this.attachmentWithPrefixExists.bind(data, data),
                         getFilenameByPrefix: this.getFilenameByPrefix,
                         idName,
                         model: modelSpecification,
@@ -3893,7 +3896,8 @@ export class DataScopeService {
                         revisionName,
                         securitySettings: {},
                         serialize: (object:Object):string => JSON.stringify(
-                            object, null, 4),
+                            object, null, 4
+                        ),
                         specialNames,
                         typeName,
                         userContext: {}
