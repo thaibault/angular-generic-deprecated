@@ -3736,7 +3736,7 @@ export class DataScopeService {
      * scope for. If "null" is given all properties in given model will be
      * taken into account.
      * @param data - Data to use for given properties.
-     * @param propertyNamesToIgnore - Property names ti skip.
+     * @param propertyNamesToIgnore - Property names to skip.
      * @returns The generated scope object.
      */
     generate(
