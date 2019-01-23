@@ -516,7 +516,7 @@ export const determineInjector:Function = (
             currentInstanceToSearchInjectorFor = null
             if (error === SYMBOL)
                 return injector.get.bind(injector)
-            throw error
+            throw Error(error)
         }
     currentInstanceToSearchInjectorFor = null
     if (InitialDataService.injectors.size === 1) {
@@ -1199,7 +1199,7 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
                             console.warn(
                                 'Given attachments for equality check are ' +
                                 `not valid: ${message}`)
-                            throw error
+                            throw Error(error)
                         } finally {
                             await databaseConnection.destroy()
                         }
@@ -2762,12 +2762,12 @@ export class DataService {
                                 if (error.name === 'not_found')
                                     delete item[revisionName]
                                 else
-                                    throw error
+                                    throw Error(error)
                             }
                     result = await nativeBulkDocs.call(
                         this, firstParameter, ...parameter)
                 } else
-                    throw error
+                    throw Error(error)
             }
             const conflictingIndexes:Array<number> = []
             const conflicts:Array<PlainObject> = []
@@ -2797,17 +2797,13 @@ export class DataService {
                             id: firstParameter[index][idName],
                             ok: true
                         }
-                        try {
-                            result[index].rev =
-                                revisionName in firstParameter[index] &&
-                                !['latest', 'upsert'].includes(
-                                    firstParameter[index][revisionName]
-                                ) ? firstParameter[index][revisionName] : (
-                                    await this.get(result[index].id)
-                                )[revisionName]
-                        } catch (error) {
-                            throw error
-                        }
+                        result[index].rev =
+                            revisionName in firstParameter[index] &&
+                            !['latest', 'upsert'].includes(
+                                firstParameter[index][revisionName]
+                            ) ? firstParameter[index][revisionName] : (
+                                await this.get(result[index].id)
+                            )[revisionName]
                     }
                 index += 1
             }
@@ -3023,19 +3019,15 @@ export class DataService {
                             typeof secondParameter === 'object' &&
                             revisionName in secondParameter
                         ) ? secondParameter[revisionName] : secondParameter
-                        try {
-                            result.rev =
-                                revisionName in firstParameter &&
-                                !['latest', 'upsert'].includes(
-                                    revision
-                                ) ? revision : (await this.get(result.id))[
-                                    revisionName]
-                        } catch (error) {
-                            throw error
-                        }
+                        result.rev =
+                            revisionName in firstParameter &&
+                            !['latest', 'upsert'].includes(
+                                revision
+                            ) ? revision : (await this.get(result.id))[
+                                revisionName]
                         return result
                     }
-                    throw error
+                    throw Error(error)
                 }
             }
         }
@@ -3163,7 +3155,7 @@ export class DataService {
                                                     await wrappedParameter
                                             } catch (error) {
                                                 clear()
-                                                throw error
+                                                throw Error(error)
                                             }
                                         if (Array.isArray(wrappedParameter))
                                             request.wrappedParameter =
@@ -3502,7 +3494,7 @@ export class DataService {
             error.code === 'ETIMEDOUT' ||
             error.status === 0
         ))
-            throw error
+            throw Error(error)
     }
 }
 // IgnoreTypeCheck

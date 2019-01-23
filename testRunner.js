@@ -144,18 +144,14 @@ export function registerAngularTest(
         let platform:Object
         let module:Object
         if (result.length > 1 && result[1]) {
-            try {
-                platform = ((
-                    typeof TARGET_TECHNOLOGY === 'string' &&
-                    TARGET_TECHNOLOGY === 'node'
-                ) ? require('@angular/platform-server').platformDynamicServer :
-                    require(
-                        '@angular/platform-browser-dynamic'
-                    ).platformBrowserDynamic)()
-                module = await platform.bootstrapModule(result[1])
-            } catch (error) {
-                throw error
-            }
+            platform = ((
+                typeof TARGET_TECHNOLOGY === 'string' &&
+                TARGET_TECHNOLOGY === 'node'
+            ) ? require('@angular/platform-server').platformDynamicServer :
+                require(
+                    '@angular/platform-browser-dynamic'
+                ).platformBrowserDynamic)()
+            module = await platform.bootstrapModule(result[1])
             const stableState:Object = module.injector.get(
                 ApplicationReference
             ).isStable
