@@ -46,7 +46,7 @@ export function createFadeAnimation(
 ):AnimationTriggerMetadata {
     if (typeof options === 'string')
         options = {name: options}
-    options = Tools.extendObject(true, {}, defaultOptions, options)
+    options = Tools.extend(true, {}, defaultOptions, options)
     return trigger(options.name, [
         transition(options.enterState, [
             style(options.style.enter.initial),

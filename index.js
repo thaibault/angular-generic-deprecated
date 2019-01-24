@@ -486,7 +486,7 @@ export class InitialDataService {
      * @returns Complete generated data.
      */
     set(...parameter:Array<PlainObject>):InitialDataService {
-        return this.tools.extendObject(true, this, ...parameter)
+        return this.tools.extend(true, this, ...parameter)
     }
 }
 /**
@@ -578,7 +578,7 @@ const methodGroups:PlainObject = {
     '': [
         'convertCircularObjectToJSON',
         'equals',
-        'extendObject',
+        'extend',
         'representObject',
         'sort'
     ],
@@ -639,14 +639,14 @@ export class ConvertCircularObjectToJSONPipe extends AbstractToolsPipe
 export class EqualsPipe extends AbstractToolsPipe implements PipeTransform {
     methodName:string = 'equals'
 }
-@Pipe({name: `genericExtendObject`})
+@Pipe({name: `genericExtend`})
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
-export class ExtendObjectPipe extends AbstractToolsPipe
+export class ExtendPipe extends AbstractToolsPipe
     implements PipeTransform {
-    methodName:string = 'extendObject'
+    methodName:string = 'extend'
 }
 @Pipe({name: `genericRepresentObject`})
 /**
@@ -2406,17 +2406,17 @@ export class StringStartsWithPipe implements PipeTransform {
 @Pipe({name: 'genericStringTemplate'})
 /**
  * Provides angular's template engine as pipe.
- * @property extendObject - Extend object's pipe transform method.
+ * @property extend - Extend object's pipe transform method.
  */
 export class StringTemplatePipe implements PipeTransform {
-    extendObject:Function
+    extend:Function
     /**
      * Sets injected extend object pipe instance as instance property.
-     * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param extendPipe - Injected extend object pipe instance.
      * @returns Nothing.
      */
-    constructor(extendObjectPipe:ExtendObjectPipe) {
-        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+    constructor(extendPipe:ExtendPipe) {
+        this.extend = extendPipe.transform.bind(extendPipe)
     }
     /**
      * Performs the actual indicator method.
@@ -2426,7 +2426,7 @@ export class StringTemplatePipe implements PipeTransform {
      * @returns The rendered result.
      */
     transform(string:string = '', ...scopes:Array<PlainObject>):string {
-        const scope:PlainObject = this.extendObject(true, {}, ...scopes)
+        const scope:PlainObject = this.extend(true, {}, ...scopes)
         const validNames:Array<string> = Object.keys(scope).filter((
             name:string
         ):boolean => {
@@ -2548,22 +2548,21 @@ export class ConfirmComponent {
  * Alert service to trigger a dialog window which can be confirmed.
  * @property dialog - Reference to the dialog component instance.
  * @property dialogReference - Reference to the dialog service instance.
- * @property extendObject - Holds the extend object's pipe transformation
- * method.
+ * @property extend - Holds the extend object's pipe transformation method.
  */
 export class AlertService {
     dialog:MatDialog
     dialogReference:MatDialogRef<ConfirmComponent>
-    extendObject:Function
+    extend:Function
     /**
      * Gets needed component dialog service instance injected.
      * @param dialog - Reference to the dialog component instance.
-     * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param extendPipe - Injected extend object pipe instance.
      * @returns Nothing.
      */
-    constructor(dialog:MatDialog, extendObjectPipe:ExtendObjectPipe) {
+    constructor(dialog:MatDialog, extendPipe:ExtendPipe) {
         this.dialog = dialog
-        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.extend = extendPipe.transform.bind(extendPipe)
     }
     /**
      * Triggers a confirmation dialog to show.
@@ -2590,8 +2589,9 @@ export class AlertService {
         else
             configuration = data
         this.dialogReference = this.dialog.open(
-            ConfirmComponent, this.extendObject(
-                true, configuration, additionalConfiguration))
+            ConfirmComponent,
+            this.extend(true, configuration, additionalConfiguration)
+        )
         return this.dialogReference.afterClosed().toPromise()
     }
 }
@@ -2617,8 +2617,7 @@ export class AlertService {
  * @property database - The entire database constructor.
  * @property errorCallbacks - Holds all registered error callbacks.
  * @property equals - Hilds the equals pipe transformation method.
- * @property extendObject - Holds the extend object's pipe transformation
- * method.
+ * @property extend - Holds the extend object's pipe transformation method.
  * @property initialized - Event emitter triggering when database
  * initialization has finished.
  * @property middlewares - Mapping of post and pre callback arrays to trigger
@@ -2663,7 +2662,7 @@ export class DataService {
     database:typeof PouchDB
     errorCallbacks:Array<Function> = []
     equals:Function
-    extendObject:Function
+    extend:Function
     initialized:EventEmitter<PouchDB> = new EventEmitter()
     middlewares:{
         pre:{[key:string]:Array<Function>};
@@ -2684,7 +2683,7 @@ export class DataService {
      * Creates the database constructor applies all plugins instantiates
      * the connection instance and registers all middlewares.
      * @param equalsPipe - Equals pipe service instance.
-     * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param extendPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
      * @param ngZone - Injected zone service instance.
      * @param platformID - Platform identification string.
@@ -2694,7 +2693,7 @@ export class DataService {
      */
     constructor(
         equalsPipe:EqualsPipe,
-        extendObjectPipe:ExtendObjectPipe,
+        extendPipe:ExtendPipe,
         initialData:InitialDataService,
         ngZone:NgZone,
         @Inject(PLATFORM_ID) platformID:string,
@@ -2704,7 +2703,7 @@ export class DataService {
         this.configuration = initialData.configuration
         this.database = PouchDB
         this.equals = equalsPipe.transform.bind(equalsPipe)
-        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.extend = extendPipe.transform.bind(extendPipe)
         this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.tools = utility.fixed.tools
@@ -2906,7 +2905,7 @@ export class DataService {
         if (this.configuration.database.hasOwnProperty('publicURL'))
             this.configuration.database.url =
                 this.configuration.database.publicURL
-        this.extendObject(
+        this.extend(
             true,
             this.connectionOptions,
             this.configuration.database.connector || {}
@@ -3258,9 +3257,9 @@ export class DataService {
     async find(
         selector:PlainObject, options:PlainObject = {}
     ):Promise<Array<PlainObject>> {
-        return (await this.connection.find(this.extendObject(true, {
-            selector
-        }, options))).docs
+        return (await this.connection.find(this.extend(
+            true, {selector}, options
+        ))).docs
     }
     /**
      * Retrieves a resource by id.
@@ -3505,8 +3504,7 @@ export class DataService {
  * exists pipe transformation method.
  * @property configuration - Holds the configuration service instance.
  * @property data - Holds the data exchange service instance.
- * @property extendObject - Holds the extend object's pipe transformation
- * method.
+ * @property extend - Holds the extend object's pipe transformation method.
  * @property extractData - Holds the xtract object's pipe transformation
  * method.
  * @property getFilenameByPrefix - Holds the get file name by prefix's pipe
@@ -3520,7 +3518,7 @@ export class DataScopeService {
     attachmentWithPrefixExists:Function
     configuration:PlainObject
     data:DataService
-    extendObject:Function
+    extend:Function
     extractData:Function
     getFilenameByPrefix:Function
     numberGetUTCTimestamp:Function
@@ -3531,7 +3529,7 @@ export class DataScopeService {
      * @param attachmentWithPrefixExistsPipe - Attachment by prefix checker
      * pipe instance.
      * @param data - Injected data service instance.
-     * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param extendPipe - Injected extend object pipe instance.
      * @param extractDataPipe - Injected extract data pipe instance.
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
@@ -3545,7 +3543,7 @@ export class DataScopeService {
     constructor(
         attachmentWithPrefixExistsPipe:AttachmentWithPrefixExistsPipe,
         data:DataService,
-        extendObjectPipe:ExtendObjectPipe,
+        extendPipe:ExtendPipe,
         extractDataPipe:ExtractDataPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService,
@@ -3558,7 +3556,7 @@ export class DataScopeService {
                 attachmentWithPrefixExistsPipe)
         this.configuration = initialData.configuration
         this.data = data
-        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.extend = extendPipe.transform.bind(extendPipe)
         this.extractData = extractDataPipe.transform.bind(extractDataPipe)
         this.getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
@@ -3699,16 +3697,23 @@ export class DataScopeService {
                     result[name] = {}
                     for (const fileType in modelSpecification[name])
                         if (modelSpecification[name].hasOwnProperty(fileType))
-                            result[name][fileType] = this.extendObject(
-                                true, this.tools.copy(
-                                    this.configuration.database.model
-                                        .property.defaultSpecification
-                                ), modelSpecification[name][fileType])
+                            result[name][fileType] = this.extend(
+                                true,
+                                this.tools.copy(
+                                    this.configuration.database.model.property
+                                        .defaultSpecification
+                                ),
+                                modelSpecification[name][fileType]
+                            )
                 } else {
-                    result[name] = this.extendObject(true, this.tools.copy(
-                        this.configuration.database.model.property
-                            .defaultSpecification,
-                    ), modelSpecification[name])
+                    result[name] = this.extend(
+                        true,
+                        this.tools.copy(
+                            this.configuration.database.model.property
+                                .defaultSpecification,
+                        ),
+                        modelSpecification[name]
+                    )
                     if (
                         this.configuration.database.model.entities
                             .hasOwnProperty(result[name].type)
@@ -4068,8 +4073,7 @@ export class OfflineState {
  * @property domSanitizer - Dom sanitizer service instance.
  * @property escapeRegularExpressions - Holds the escape regular expressions's
  * pipe transformation method.
- * @property extendObject - Holds the extend object's pipe transformation
- * method.
+ * @property extend - Holds the extend object's pipe transformation method.
  * @property message - Message box service.
  * @property messageConfiguration - Plain message box configuration object.
  * @property modelConfiguration - Saves a mapping from all available model
@@ -4101,7 +4105,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
     databaseURLCache:{[key:string]:SafeResourceUrl} = {}
     domSanitizer:DomSanitizer
     escapeRegularExpressions:Function
-    extendObject:Function
+    extend:Function
     message:Function
     messageConfiguration:PlainObject = new MatSnackBarConfig()
     modelConfiguration:PlainObject
@@ -4139,8 +4143,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
         this.escapeRegularExpressions =
             get(StringEscapeRegularExpressionsPipe).transform.bind(get(
                 StringEscapeRegularExpressionsPipe))
-        this.extendObject = get(ExtendObjectPipe).transform.bind(get(
-            ExtendObjectPipe))
+        this.extend = get(ExtendPipe).transform.bind(get(ExtendPipe))
         this.messageConfiguration.duration = 5 * 1000
         this.message = (message:string):void =>
             get(MatSnackBar).open(message, false, this.messageConfiguration)
@@ -4241,7 +4244,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 }
         }
         return this.data.find(
-            this.extendObject(true, selector, additionalSelector), options)
+            this.extend(true, selector, additionalSelector), options)
     }
     /**
      * Removes given item.
@@ -4310,14 +4313,17 @@ export class AbstractResolver implements Resolve<PlainObject> {
     async update(
         item:PlainObject, data?:PlainObject, message:string = ''
     ):Promise<boolean> {
-        const newData:PlainObject = data ? this.extendObject({
-            [this.specialNames.id]: (
-                typeof item[this.specialNames.id] === 'object'
-            ) ? item[this.specialNames.id].value :
-                item[this.specialNames.id],
-            [this.specialNames.revision]: 'latest',
-            [this.specialNames.type]: item[this.specialNames.type]
-        }, data) : item
+        const newData:PlainObject = data ? this.extend(
+            {
+                [this.specialNames.id]: (
+                    typeof item[this.specialNames.id] === 'object'
+                ) ? item[this.specialNames.id].value :
+                    item[this.specialNames.id],
+                [this.specialNames.revision]: 'latest',
+                [this.specialNames.type]: item[this.specialNames.type]
+            },
+            data
+        ) : item
         try {
             item[this.specialNames.revision] =
                 (await this.data.put(newData)).rev
@@ -4426,7 +4432,7 @@ export class AbstractInputComponent {
  * Generic input component.
  * @property _attachmentWithPrefixExists - Holds the attachment by prefix
  * checker pipe instance
- * @property _extendObject - Holds the extend object's pipe transformation
+ * @property _extend - Holds the extend object's pipe transformation method.
  * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
  * transformation method.
  * @property _modelConfiguration - All model configurations.
@@ -4436,7 +4442,7 @@ export class AbstractInputComponent {
 export class AbstractNativeInputComponent extends AbstractInputComponent
     implements OnInit {
     _attachmentWithPrefixExists:Function
-    _extendObject:Function
+    _extend:Function
     _getFilenameByPrefix:Function
     _modelConfiguration:PlainObject
     _numberGetUTCTimestamp:Function
@@ -4453,8 +4459,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
         this._attachmentWithPrefixExists = get(
             AttachmentWithPrefixExistsPipe
         ).transform.bind(get(AttachmentWithPrefixExistsPipe))
-        this._extendObject = get(ExtendObjectPipe).transform.bind(get(
-            ExtendObjectPipe))
+        this._extend = get(ExtendPipe).transform.bind(get(ExtendPipe))
         this._getFilenameByPrefix = get(
             GetFilenameByPrefixPipe
         ).transform.bind(get(GetFilenameByPrefixPipe))
@@ -4469,19 +4474,22 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
      * @returns Nothing.
      */
     ngOnInit():void {
-        this._extendObject(this.model, this._extendObject({
-            disabled: false,
-            emptyEqualsToNull: true,
-            maximum: Infinity,
-            minimum: 0,
-            maximumLength: Infinity,
-            minimumLength: 0,
-            nullable: true,
-            regularExpressionPattern: '.*',
-            state: {},
-            trim: true,
-            type: 'string'
-        }, this.model))
+        this._extend(this.model, this._extend(
+            {
+                disabled: false,
+                emptyEqualsToNull: true,
+                maximum: Infinity,
+                minimum: 0,
+                maximumLength: Infinity,
+                minimumLength: 0,
+                nullable: true,
+                regularExpressionPattern: '.*',
+                state: {},
+                trim: true,
+                type: 'string'
+            },
+            this.model
+        ))
         if (typeof this.model.value === 'string' && this.model.trim)
             this.model.value === this.model.value.trim()
         for (const hookType of ['onUpdateExpression', 'onUpdateExecution'])
@@ -4592,7 +4600,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
  * service instance.
  * @property _changesStream - Database observation representation.
  * @property _data - Data service instance.
- * @property _extendObject - Extend object pipe's transformation method.
+ * @property _extend - Extend object pipe's transformation method.
  * @property _liveUpdateOptions - Options for database observation.
  * @property _platformID - Platform identification string.
  * @property _stringCapitalize - String capitalize pipe transformation
@@ -4617,7 +4625,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
     _canceled:boolean = false
     _changesStream:Stream
     _data:DataService
-    _extendObject:Function
+    _extend:Function
     _liveUpdateOptions:PlainObject = {}
     _platformID:string
     _stringCapitalize:Function
@@ -4632,8 +4640,7 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
         const get:Function = determineInjector(
             injector, this, this.constructor)
         this._data = get(DataService)
-        this._extendObject = get(ExtendObjectPipe).transform.bind(get(
-            ExtendObjectPipe))
+        this._extend = get(ExtendPipe).transform.bind(get(ExtendPipe))
         this._platformID = get(PLATFORM_ID)
         this._stringCapitalize = get(StringCapitalizePipe).transform.bind(get(
             StringCapitalizePipe))
@@ -4649,11 +4656,13 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
         const initialize:Function = this._tools.debounce(():void => {
             if (this._changesStream)
                 this._changesStream.cancel()
-            this._changesStream = this._data.connection.changes(
-                this._extendObject(
-                    true, {}, {since: LAST_KNOWN_DATA.sequence},
-                    AbstractLiveDataComponent.defaultLiveUpdateOptions,
-                    this._liveUpdateOptions))
+            this._changesStream = this._data.connection.changes(this._extend(
+                true,
+                {},
+                {since: LAST_KNOWN_DATA.sequence},
+                AbstractLiveDataComponent.defaultLiveUpdateOptions,
+                this._liveUpdateOptions
+            ))
             for (const type of ['change', 'complete', 'error'])
                 this._changesStream.on(type, async (
                     action:PlainObject
@@ -5250,7 +5259,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * Displays dates and/or times formated with markup and through angular date
  * pipe.
  * @property dateFormatter - Angular's date pipe transformation method.
- * @property extendObject - Extend object pipe's transform method.
+ * @property extend - Extend object pipe's transform method.
  * @property options - Given formatting and update options.
  * @property platformID - Platform identification string.
  * @property templateReference - Reference to given template.
@@ -5260,7 +5269,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  */
 export class DateDirective {
     dateFormatter:Function
-    extendObject:Function
+    extend:Function
     options:{
         dateTime:Date|number|string;
         format:string;
@@ -5279,7 +5288,7 @@ export class DateDirective {
     /**
      * Saves injected services as instance properties.
      * @param datePipe - Injected date pipe service instance.
-     * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param extendPipe - Injected extend object pipe service instance.
      * @param platformID - Platform specific identifier.
      * @param templateReference - Specified template reference.
      * @param viewContainerReference - Injected view container reference.
@@ -5287,13 +5296,13 @@ export class DateDirective {
      */
     constructor(
         datePipe:DatePipe,
-        extendObjectPipe:ExtendObjectPipe,
+        extendPipe:ExtendPipe,
         @Inject(PLATFORM_ID) platformID:string,
         templateReference:TemplateRef<any>,
         viewContainerReference:ViewContainerRef
     ) {
         this.dateFormatter = datePipe.transform.bind(datePipe)
-        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.extend = extendPipe.transform.bind(extendPipe)
         this.platformID = platformID
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
@@ -5313,7 +5322,7 @@ export class DateDirective {
             options instanceof Date
         )
             options = {dateTime: options}
-        this.extendObject(true, this.options, options)
+        this.extend(true, this.options, options)
     }
     /* eslint-enable flowtype/require-return-type */
     /**
@@ -5382,8 +5391,12 @@ const providers:Array<PlainObject> = [{
     ahead of time compilation.
 
 // IgnoreTypeCheck
-@Directive(UtilityService.tools.extendObject(true, {
-}, DefaultValueAccessor.decorators[0].args[0], {providers}))
+@Directive(UtilityService.tools.extend(
+    true,
+    {},
+    DefaultValueAccessor.decorators[0].args[0],
+    {providers}
+))
 */
 @Directive({
     // TODO: vsavkin replace the above selector with the one below it once
@@ -5740,7 +5753,7 @@ export class IntervalInputComponent {
  * @property modelChange - Event emitter for interval list changes.
  *
  * @property _dataScope - Data scope service instance.
- * @property _extendObject - Holds the extend object pipe instance's transform
+ * @property _extend - Holds the extend object pipe instance's transform
  * method.
  */
 export class IntervalsInputComponent implements OnInit {
@@ -5789,18 +5802,16 @@ export class IntervalsInputComponent implements OnInit {
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
 
     _dataScope:DataScopeService
-    _extendObject:Function
+    _extend:Function
     /**
      * Constructs the interval list component.
      * @param dataScope - Data scope service instance.
-     * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param extendPipe - Injected extend object pipe instance.
      * @returns Nothing.
      */
-    constructor(
-        dataScope:DataScopeService, extendObjectPipe:ExtendObjectPipe
-    ) {
+    constructor(dataScope:DataScopeService, extendPipe:ExtendPipe) {
         this._dataScope = dataScope
-        this._extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this._extend = extendPipe.transform.bind(extendPipe)
     }
     /**
      * Triggers on any change events of any nested input.
@@ -5836,12 +5847,17 @@ export class IntervalsInputComponent implements OnInit {
         const lastEnd:number = this.model.value.length ? (new Date(
             this.model.value[this.model.value.length - 1].end.value
         )).getTime() : 0
-        this.model.value.push(this._extendObject(
-            true, {}, this.additionalObjectData, {
+        this.model.value.push(this._extend(
+            true,
+            {},
+            this.additionalObjectData,
+            {
                 // NOTE: We add one hour in milliseconds as default interval.
                 end: {value: new Date(lastEnd + 60 ** 2 * 1000)},
                 start: {value: new Date(lastEnd)}
-            }, data))
+            },
+            data
+        ))
         this.modelChange.emit(this.model)
     }
     /**
@@ -5863,7 +5879,7 @@ export class IntervalsInputComponent implements OnInit {
 @Directive({selector: '[genericSlider]'})
 /**
  * Directive to automatically switch a list of content elements.
- * @property extendObject - Extend object's pipe transform method.
+ * @property extend - Extend object's pipe transform method.
  * @property index - Index of currently selected content.
  * @property options - Sliding options.
  * @property platformID - Platform identification string.
@@ -5873,7 +5889,7 @@ export class IntervalsInputComponent implements OnInit {
  * instantiated template reference into.
  */
 export class SliderDirective implements OnInit {
-    extendObject:Function
+    extend:Function
     index:number = 0
     options:{
         freeze:boolean;
@@ -5894,19 +5910,19 @@ export class SliderDirective implements OnInit {
     viewContainerReference:ViewContainerRef
     /**
      * Saves injected services as instance properties.
-     * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param extendPipe - Injected extend object pipe service instance.
      * @param platformID - Platform identification string.
      * @param templateReference - Specified template reference.
      * @param viewContainerReference - Injected view container reference.
      * @returns Nothing.
      */
     constructor(
-        extendObjectPipe:ExtendObjectPipe,
+        extendPipe:ExtendPipe,
         @Inject(PLATFORM_ID) platformID:string,
         templateReference:TemplateRef<any>,
         viewContainerReference:ViewContainerRef
     ) {
-        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.extend = extendPipe.transform.bind(extendPipe)
         this.platformID = platformID
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
@@ -5931,7 +5947,7 @@ export class SliderDirective implements OnInit {
     set insertOptions(options:Array<any>|PlainObject) {
         if (Array.isArray(options))
             options = {slides: options}
-        this.extendObject(true, this.options, options)
+        this.extend(true, this.options, options)
     }
     /* eslint-enable flowtype/require-return-type */
     /**
@@ -5995,7 +6011,7 @@ export class SliderDirective implements OnInit {
  * @property contentSetterMethodName - Defines the instance method to set
  * content updates.
  * @property disabled - Indicates inputs disabled state.
- * @property extendObject - Extend object pipe's transform method.
+ * @property extend - Extend object pipe's transform method.
  * @property factory - Current editor constructor.
  * @property hostDomNode - Host textarea dom element to bind editor to.
  * @property instance - Currently active editor instance.
@@ -6012,7 +6028,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
     @Input() configuration:PlainObject = {}
     contentSetterMethodName:string = 'setContent'
     @Input() disabled:boolean|null = null
-    extendObject:Function
+    extend:Function
     factory:any
     factoryName:string = ''
     fixedUtility:typeof UtilityService
@@ -6031,8 +6047,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
         super(injector)
         const get:Function = determineInjector(
             injector, this, this.constructor)
-        this.extendObject = get(ExtendObjectPipe).transform.bind(get(
-            ExtendObjectPipe))
+        this.extend = get(ExtendPipe).transform.bind(get(ExtendPipe))
         this.fixedUtility = get(UtilityService).fixed
     }
     /**
@@ -6191,7 +6206,7 @@ export class CodeEditorComponent extends AbstractEditorComponent
                     await CodeEditorComponent.modesLoad[
                         this.configuration.mode]
                 }
-            const configuration:PlainObject = this.extendObject(
+            const configuration:PlainObject = this.extend(
                 {}, this.configuration, {readOnly: this.disabled})
             delete configuration.path
             this.instance = this.factory.fromTextArea(
@@ -6227,7 +6242,7 @@ export class CodeEditorComponent extends AbstractEditorComponent
  * consumed.
  * @property data -  Data service instance.
  * @property domSanitizer - Sanitizing service instance.
- * @property extendObject - Extend object pipe's transform method.
+ * @property extend - Extend object pipe's transform method.
  * @property lastContent - Caches last content to avoid unneeded re-reading of
  * blob file objects.
  * @property options - Given formatting and update options.
@@ -6239,7 +6254,7 @@ export class RepresentTextFileDirective {
     @Output() change:EventEmitter<string> = new EventEmitter()
     data:DataService
     domSanitizer:DomSanitizer
-    extendObject:Function
+    extend:Function
     lastContent:{input:string;output:any} = {
         input: '',
         output: null
@@ -6259,7 +6274,7 @@ export class RepresentTextFileDirective {
      * Saves injected services as instance properties.
      * @param data - Injected data service instance.
      * @param domSanitizer - Injected dom sanitizer object service instance.
-     * @param extendObjectPipe - Injected extend object pipe service instance.
+     * @param extendPipe - Injected extend object pipe service instance.
      * @param templateReference - Specified template reference.
      * @param viewContainerReference - Injected view container reference.
      * @returns Nothing.
@@ -6267,13 +6282,13 @@ export class RepresentTextFileDirective {
     constructor(
         data:DataService,
         domSanitizer:DomSanitizer,
-        extendObjectPipe:ExtendObjectPipe,
+        extendPipe:ExtendPipe,
         templateReference:TemplateRef<any>,
         viewContainerReference:ViewContainerRef
     ) {
         this.data = data
         this.domSanitizer = domSanitizer
-        this.extendObject = extendObjectPipe.transform.bind(extendObjectPipe)
+        this.extend = extendPipe.transform.bind(extendPipe)
         this.templateReference = templateReference
         this.viewContainerReference = viewContainerReference
     }
@@ -6304,7 +6319,7 @@ export class RepresentTextFileDirective {
                         break
                     } catch (error) {}
                 }
-        this.extendObject(true, this.options, options)
+        this.extend(true, this.options, options)
         const readBinaryDataIntoText = (blob:any):void => {
             this.lastContent.output = blob
             const fileReader:FileReader = new FileReader()
@@ -6462,7 +6477,7 @@ export class TextEditorComponent extends AbstractEditorComponent
             transpiler yet.
         */
         return super.ngAfterViewInit().then(():void => {
-            const configuration:PlainObject = this.extendObject(
+            const configuration:PlainObject = this.extend(
                 {}, this.configuration)
             this.factory.baseURL = configuration.baseURL
             delete configuration.baseURL
@@ -6924,13 +6939,21 @@ export class TextareaComponent extends AbstractNativeInputComponent
                 this.selectableEditor = true
         if (typeof this.editor === 'object' && this.editor !== null)
             if (this.editorType.startsWith('code') || this.editor.indentUnit)
-                this.editor = this._extendObject(
-                    true, {}, CODE_MIRROR_DEFAULT_OPTIONS,
-                    TextareaComponent.defaultEditorOptions.code, this.editor)
+                this.editor = this._extend(
+                    true,
+                    {},
+                    CODE_MIRROR_DEFAULT_OPTIONS,
+                    TextareaComponent.defaultEditorOptions.code,
+                    this.editor
+                )
             else
-                this.editor = this._extendObject(
-                    true, {}, TINYMCE_DEFAULT_OPTIONS,
-                    TextareaComponent.defaultEditorOptions.markup, this.editor)
+                this.editor = this._extend(
+                    true,
+                    {},
+                    TINYMCE_DEFAULT_OPTIONS,
+                    TextareaComponent.defaultEditorOptions.markup,
+                    this.editor
+                )
         else
             this.selectableEditor = false
     }
@@ -7263,7 +7286,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
  *
  * @property _data - Holds the data service instance.
  * @property _domSanitizer - Holds the dom sanitizer service instance.
- * @property _extendObject - Holds the extend object pipe instance's transform
+ * @property _extend - Holds the extend object pipe instance's transform
  * method.
  * @property _getFilenameByPrefix - Holds the file name by prefix getter pipe
  * instance's transform method.
@@ -7356,7 +7379,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
 
     _data:DataService
     _domSanitizer:DomSanitizer
-    _extendObject:Function
+    _extend:Function
     _getFilenameByPrefix:Function
     _idIsObject:boolean = false
     _representObject:Function
@@ -7367,7 +7390,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
      * @param abstractResolver - Injected abstract resolver service instance.
      * @param data - Injected data service instance.
      * @param domSanitizer - Injected dom sanitizer service instance.
-     * @param extendObjectPipe - Injected extend object pipe instance.
+     * @param extendPipe - Injected extend object pipe instance.
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
      * @param initialData - Injected initial data service instance.
@@ -7382,7 +7405,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         abstractResolver:AbstractResolver,
         data:DataService,
         domSanitizer:DomSanitizer,
-        extendObjectPipe:ExtendObjectPipe,
+        extendPipe:ExtendPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService,
         representObjectPipe:RepresentObjectPipe,
@@ -7407,8 +7430,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             this.configuration.database.model.property.name.special.type
         this._data = data
         this._domSanitizer = domSanitizer
-        this._extendObject = extendObjectPipe.transform.bind(
-            extendObjectPipe)
+        this._extend = extendPipe.transform.bind(extendPipe)
         this._getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
         this._representObject = representObjectPipe.transform.bind(
@@ -7797,7 +7819,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                     if (this.synchronizeImmediately.hasOwnProperty(name))
                         data[name] = this.template(
                             this.synchronizeImmediately[name], this.file)
-                this._extendObject(true, newData, data)
+                this._extend(true, newData, data)
             }
             let id:any = this._idIsObject ? this.model[
                 this.idName
@@ -7818,7 +7840,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                 ) {
                     newData[this.deletedName] = true
                     tasks.unshift(newData)
-                    newData = this._extendObject(
+                    newData = this._extend(
                         true, {}, newData, {[this.deletedName]: false})
                 }
                 for (const name of this.mapNameToField) {
@@ -8045,7 +8067,7 @@ export class PaginationComponent {
         // // region object
         ConvertCircularObjectToJSONPipe,
         EqualsPipe,
-        ExtendObjectPipe,
+        ExtendPipe,
         RepresentObjectPipe,
         SortPipe,
         // // endregion
@@ -8171,7 +8193,7 @@ export class PaginationComponent {
         // // region object
         ConvertCircularObjectToJSONPipe,
         EqualsPipe,
-        ExtendObjectPipe,
+        ExtendPipe,
         RepresentObjectPipe,
         SortPipe,
         // // endregion
@@ -8318,7 +8340,7 @@ export class PaginationComponent {
         // // region object
         ConvertCircularObjectToJSONPipe,
         EqualsPipe,
-        ExtendObjectPipe,
+        ExtendPipe,
         RepresentObjectPipe,
         SortPipe,
         // // endregion

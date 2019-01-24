@@ -78,7 +78,7 @@ registerAngularTest(function(
         ConfirmComponent,
         DataScopeService,
         DataService,
-        ExtendObjectPipe,
+        ExtendPipe,
         ExtractDataPipe,
         ExtractRawDataPipe,
         FileInputComponent,
@@ -273,8 +273,7 @@ registerAngularTest(function(
             this.module(`Module.services (${roundType})`)
             const data:DataService = TestBed.get(DataService)
             await data.initialize()
-            const extendObjectPipe:ExtendObjectPipe = TestBed.get(
-                ExtendObjectPipe)
+            const extendPipe:ExtendPipe = TestBed.get(ExtendPipe)
             const initialData:InitialDataService = TestBed.get(
                 InitialDataService)
             const stringEndsWithPipe:StringEndsWithPipe = TestBed.get(
@@ -1474,8 +1473,9 @@ registerAngularTest(function(
                     // region determine
                     assert.deepEqual(
                         await dataScope.determine('Test'),
-                        extendObjectPipe.transform(
-                            true, {},
+                        extendPipe.transform(
+                            true,
+                            {},
                             initialData.configuration.database.model.entities
                                 .Test,
                             {
@@ -1615,7 +1615,7 @@ registerAngularTest(function(
                     ])
                         assert.deepEqual(
                             dataScope.generate(...test[0]),
-                            extendObjectPipe.transform(
+                            extendPipe.transform(
                                 true,
                                 {},
                                 (test[0].length < 2 || test[0][1] === null) ?
@@ -1625,7 +1625,9 @@ registerAngularTest(function(
                                     _metaData: {submitted: false},
                                     [specialNames.type]: 'Test'
                                 },
-                                test[1]))
+                                test[1]
+                            )
+                        )
                     const modelBackup:PlainObject =
                         initialData.configuration.database.model.entities
                     initialData.configuration.database.model.entities = {
@@ -1655,36 +1657,51 @@ registerAngularTest(function(
                             type: 'A'
                         }}
                     }
-                    assert.deepEqual(dataScope.generate(
-                        'Test'
-                    ), extendObjectPipe.transform(true, {
-                        _metaData: {submitted: false},
-                        [specialNames.type]: 'Test',
-                        a: {value: extendObjectPipe.transform(
-                            true, {
-                                [specialNames.type]: 'A',
+                    assert.deepEqual(
+                        dataScope.generate('Test'),
+                        extendPipe.transform(
+                            true,
+                            {
                                 _metaData: {submitted: false},
-                                a: {value: 'a'},
-                                b: {value: 'b'}
+                                [specialNames.type]: 'Test',
+                                a: {value: extendPipe.transform(
+                                    true, {
+                                        [specialNames.type]: 'A',
+                                        _metaData: {submitted: false},
+                                        a: {value: 'a'},
+                                        b: {value: 'b'}
+                                    },
+                                    initialData.configuration.database.model
+                                        .entities.A
+                                )}
                             },
-                            initialData.configuration.database.model.entities.A
-                        )}
-                    }, initialData.configuration.database.model.entities.Test))
-                    assert.deepEqual(dataScope.generate(
-                        'Test', null, {a: {a: 'A', b: 'B'}}
-                    ), extendObjectPipe.transform(true, {
-                        _metaData: {submitted: false},
-                        [specialNames.type]: 'Test',
-                        a: {value: extendObjectPipe.transform(
-                            true, {
-                                [specialNames.type]: 'A',
+                            initialData.configuration.database.model.entities
+                                .Test
+                        )
+                    )
+                    assert.deepEqual(
+                        dataScope.generate(
+                            'Test', null, {a: {a: 'A', b: 'B'}}),
+                        extendPipe.transform(
+                            true,
+                            {
                                 _metaData: {submitted: false},
-                                a: {value: 'A'},
-                                b: {value: 'B'}
+                                [specialNames.type]: 'Test',
+                                a: {value: extendPipe.transform(
+                                    true, {
+                                        [specialNames.type]: 'A',
+                                        _metaData: {submitted: false},
+                                        a: {value: 'A'},
+                                        b: {value: 'B'}
+                                    },
+                                    initialData.configuration.database.model
+                                        .entities.A
+                                )}
                             },
-                            initialData.configuration.database.model.entities.A
-                        )}
-                    }, initialData.configuration.database.model.entities.Test))
+                            initialData.configuration.database.model.entities
+                                .Test
+                        )
+                    )
                     initialData.configuration.database.model.entities = {
                         A: {a: {
                             minimum: 0,
@@ -1700,20 +1717,28 @@ registerAngularTest(function(
                             type: 'A'
                         }}
                     }
-                    assert.deepEqual(dataScope.generate(
-                        'Test'
-                    ), extendObjectPipe.transform(true, {
-                        _metaData: {submitted: false},
-                        [specialNames.type]: 'Test',
-                        a: {value: extendObjectPipe.transform(
-                            true, {
-                                [specialNames.type]: 'A',
+                    assert.deepEqual(
+                        dataScope.generate('Test'),
+                        extendPipe.transform(
+                            true,
+                            {
                                 _metaData: {submitted: false},
-                                a: {value: null}
+                                [specialNames.type]: 'Test',
+                                a: {value: extendPipe.transform(
+                                    true,
+                                    {
+                                        [specialNames.type]: 'A',
+                                        _metaData: {submitted: false},
+                                        a: {value: null}
+                                    },
+                                    initialData.configuration.database.model
+                                        .entities.A
+                                )}
                             },
-                            initialData.configuration.database.model.entities.A
-                        )}
-                    }, initialData.configuration.database.model.entities.Test))
+                            initialData.configuration.database.model.entities
+                                .Test
+                        )
+                    )
                     initialData.configuration.database.model.entities = {
                         A: {a: {
                             minimum: 0,
@@ -1736,33 +1761,40 @@ registerAngularTest(function(
                             type: 'A'
                         }}
                     }
-                    assert.deepEqual(dataScope.generate(
-                        'Test'
-                    ), extendObjectPipe.transform(true, {
-                        _metaData: {submitted: false},
-                        [specialNames.type]: 'Test',
-                        a: {value: extendObjectPipe.transform(
-                            true, {
-                                [specialNames.type]: 'A',
+                    assert.deepEqual(
+                        dataScope.generate('Test'),
+                        extendPipe.transform(
+                            true,
+                            {
                                 _metaData: {submitted: false},
-                                a: {value:
-                                    extendObjectPipe.transform(
-                                        true, {
-                                            [
-                                            specialNames.type
-                                            ]: 'B',
-                                            _metaData: {
-                                                submitted: false
+                                [specialNames.type]: 'Test',
+                                a: {value: extendPipe.transform(
+                                    true, {
+                                        [specialNames.type]: 'A',
+                                        _metaData: {submitted: false},
+                                        a: {value: extendPipe.transform(
+                                            true,
+                                            {
+                                                [
+                                                specialNames.type
+                                                ]: 'B',
+                                                _metaData: {
+                                                    submitted: false
+                                                },
+                                                a: {value: null}
                                             },
-                                            a: {value: null}
-                                        },
-                                        initialData.configuration.database
-                                            .model.entities.B)
-                                }
+                                            initialData.configuration.database
+                                                .model.entities.B)
+                                        }
+                                    },
+                                    initialData.configuration.database.model
+                                        .entities.A
+                                )}
                             },
-                            initialData.configuration.database.model.entities.A
-                        )}
-                    }, initialData.configuration.database.model.entities.Test))
+                            initialData.configuration.database.model.entities
+                                .Test
+                        )
+                    )
                     initialData.configuration.database.model.entities = {
                         A: {a: {
                             minimum: 0,
@@ -1779,24 +1811,29 @@ registerAngularTest(function(
                             type: 'A[]'
                         }}
                     }
-                    assert.deepEqual(dataScope.generate(
-                        'Test'
-                    ), extendObjectPipe.transform(
-                        true, {},
-                        initialData.configuration.database.model.entities.Test,
-                        {
-                            _metaData: {submitted: false},
-                            [specialNames.type]: 'Test',
-                            a: {value: [extendObjectPipe.transform(
-                                true, {
-                                    [specialNames.type]: 'A',
-                                    _metaData: {submitted: false},
-                                    a: {value: 'a'}
-                                },
-                                initialData.configuration.database.model
-                                    .entities.A
-                            )]}
-                        }))
+                    assert.deepEqual(
+                        dataScope.generate('Test'),
+                        extendPipe.transform(
+                            true,
+                            {},
+                            initialData.configuration.database.model.entities
+                                .Test,
+                            {
+                                _metaData: {submitted: false},
+                                [specialNames.type]: 'Test',
+                                a: {value: [extendPipe.transform(
+                                    true,
+                                    {
+                                        [specialNames.type]: 'A',
+                                        _metaData: {submitted: false},
+                                        a: {value: 'a'}
+                                    },
+                                    initialData.configuration.database.model
+                                        .entities.A
+                                )]}
+                            }
+                        )
+                    )
                     initialData.configuration.database.model.entities =
                         modelBackup
                     // endregion
@@ -1948,7 +1985,7 @@ registerAngularTest(function(
                     inputDomNode.dispatchEvent(getNativeEvent('input'))
                     await fixture.whenStable()
                     assert.strictEqual(instance.model.value, 'aa')
-                    instance.model = UtilityService.tools.extendObject(
+                    instance.model = UtilityService.tools.extend(
                         {}, instance.model, {maximumLength: 2})
                     fixture.detectChanges()
                     await fixture.whenStable()
@@ -2000,7 +2037,7 @@ registerAngularTest(function(
                             inputDomNode.dispatchEvent(getNativeEvent('input'))
                             await fixture.whenStable()
                             assert.strictEqual(instance.model.value, 'aa')
-                            instance.model = UtilityService.tools.extendObject(
+                            instance.model = UtilityService.tools.extend(
                                 {}, instance.model, {maximumLength: 2})
                             fixture.detectChanges()
                             await fixture.whenStable()
