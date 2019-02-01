@@ -8090,9 +8090,6 @@ export class PaginationComponent {
         SortPipe,
         // // endregion
         // // region array
-        ArrayMergePipe,
-        ArrayMakePipe,
-        ArrayUniquePipe,
         ArrayAggregatePropertyIfEqualPipe,
         ArrayDeleteEmptyItemsPipe,
         ArrayExtractPipe,
@@ -8101,6 +8098,11 @@ export class PaginationComponent {
         ArrayExtractIfPropertyMatchesPipe,
         ArrayIntersectPipe,
         ArrayMakeRangePipe,
+        ArrayMergePipe,
+        ArrayMakePipe,
+        ArrayPermutatePipe,
+        ArrayPermutateLengthPipe,
+        ArrayUniquePipe,
         ArraySumUpPropertyPipe,
         ArrayAppendAddPipe,
         ArrayRemovePipe,
