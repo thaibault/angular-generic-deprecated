@@ -665,33 +665,6 @@ export class RepresentObjectPipe extends AbstractToolsPipe
 export class SortPipe extends AbstractToolsPipe implements PipeTransform {
     methodName:string = 'sort'
 }
-@Pipe({name: `genericArrayMerge`})
-/**
- * Wrapper pipe for corresponding tools function.
- * @property methodName - Saves the name of wrapped tools function.
- */
-export class ArrayMergePipe extends AbstractToolsPipe
-    implements PipeTransform {
-    methodName:string = 'arrayMerge'
-}
-@Pipe({name: `genericArrayMake`})
-/**
- * Wrapper pipe for corresponding tools function.
- * @property methodName - Saves the name of wrapped tools function.
- */
-export class ArrayMakePipe extends AbstractToolsPipe
-    implements PipeTransform {
-    methodName:string = 'arrayMake'
-}
-@Pipe({name: `genericArrayUnique`})
-/**
- * Wrapper pipe for corresponding tools function.
- * @property methodName - Saves the name of wrapped tools function.
- */
-export class ArrayUniquePipe extends AbstractToolsPipe
-    implements PipeTransform {
-    methodName:string = 'arrayUnique'
-}
 @Pipe({name: `genericArrayAggregatePropertyIfEqual`})
 /**
  * Wrapper pipe for corresponding tools function.
@@ -763,6 +736,51 @@ export class ArrayIntersectPipe extends AbstractToolsPipe
 export class ArrayMakeRangePipe extends AbstractToolsPipe
     implements PipeTransform {
     methodName:string = 'arrayMakeRange'
+}
+@Pipe({name: `genericArrayMerge`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class ArrayMergePipe extends AbstractToolsPipe
+    implements PipeTransform {
+    methodName:string = 'arrayMerge'
+}
+@Pipe({name: `genericArrayMake`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class ArrayMakePipe extends AbstractToolsPipe
+    implements PipeTransform {
+    methodName:string = 'arrayMake'
+}
+@Pipe({name: `genericArrayUnique`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class ArrayUniquePipe extends AbstractToolsPipe
+    implements PipeTransform {
+    methodName:string = 'arrayUnique'
+}
+@Pipe({name: `genericArrayPermutate`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class ArrayPermutatePipe extends AbstractToolsPipe
+    implements PipeTransform {
+    methodName:string = 'arrayPermutate'
+}
+@Pipe({name: `genericArrayPermutateLength`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class ArrayPermutateLengthPipe extends AbstractToolsPipe
+    implements PipeTransform {
+    methodName:string = 'arrayPermutateLength'
 }
 @Pipe({name: `genericArraySumUpProperty`})
 /**
