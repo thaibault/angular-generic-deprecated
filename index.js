@@ -971,6 +971,15 @@ export class StringFormatPipe extends AbstractToolsPipe
     implements PipeTransform {
     methodName:string = 'stringFormat'
 }
+@Pipe({name: `genericStringGetEditDistance`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class StringGetEditDistancePipe extends AbstractToolsPipe
+    implements PipeTransform {
+    methodName:string = 'stringGetEditDistance'
+}
 @Pipe({name: `genericStringGetRegularExpressionValidated`})
 /**
  * Wrapper pipe for corresponding tools function.
