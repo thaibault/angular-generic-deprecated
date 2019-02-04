@@ -3976,10 +3976,11 @@ export class DataScopeService {
                 )
                     if (
                         typeof result[name].value === 'number' &&
-                        result[name].type.endsWith('Date')
+                        result[name].type.endsWith('DateTime')
                     )
                         // NOTE: We interpret given value as an utc timestamp.
-                        result[name].value = new Date(result[name].value * 1000)
+                        result[name].value = new Date(
+                            result[name].value * 1000)
                     else if (entities.hasOwnProperty(result[name].type))
                         result[name].value = this.generate(
                             result[name].type,
@@ -8135,6 +8136,7 @@ export class PaginationComponent {
         StringCapitalizePipe,
         StringDelimitedToCamelCasePipe,
         StringFormatPipe,
+        StringGetEditDistancePipe,
         StringGetRegularExpressionValidatedPipe,
         StringLowerCasePipe,
         StringFindNormalizedMatchRangePipe,
