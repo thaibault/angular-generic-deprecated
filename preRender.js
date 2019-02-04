@@ -285,7 +285,7 @@ export function render(
                                 stats)))
                         } catch (error) {
                             if (error.code !== 'ENOENT')
-                                throw Error(error)
+                                throw error
                         }
                         if (stats && (
                             stats.isSymbolicLink() || stats.isFile()
@@ -442,7 +442,7 @@ export function render(
                         ):void => error ? reject(error) : resolve(stats)))
                     } catch (error) {
                         if (error.code !== 'ENOENT')
-                            throw Error(error)
+                            throw error
                     }
                     if (stats && (stats.isSymbolicLink() || stats.isFile()))
                         await new Promise((

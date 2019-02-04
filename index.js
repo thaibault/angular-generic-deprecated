@@ -516,7 +516,7 @@ export const determineInjector:Function = (
             currentInstanceToSearchInjectorFor = null
             if (error === SYMBOL)
                 return injector.get.bind(injector)
-            throw Error(error)
+            throw error
         }
     currentInstanceToSearchInjectorFor = null
     if (InitialDataService.injectors.size === 1) {
@@ -1226,7 +1226,7 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
                             console.warn(
                                 'Given attachments for equality check are ' +
                                 `not valid: ${message}`)
-                            throw Error(error)
+                            throw error
                         } finally {
                             await databaseConnection.destroy()
                         }
@@ -2788,12 +2788,12 @@ export class DataService {
                                 if (error.name === 'not_found')
                                     delete item[revisionName]
                                 else
-                                    throw Error(error)
+                                    throw error
                             }
                     result = await nativeBulkDocs.call(
                         this, firstParameter, ...parameter)
                 } else
-                    throw Error(error)
+                    throw error
             }
             const conflictingIndexes:Array<number> = []
             const conflicts:Array<PlainObject> = []
@@ -3053,7 +3053,7 @@ export class DataService {
                                 revisionName]
                         return result
                     }
-                    throw Error(error)
+                    throw error
                 }
             }
         }
@@ -3181,7 +3181,7 @@ export class DataService {
                                                     await wrappedParameter
                                             } catch (error) {
                                                 clear()
-                                                throw Error(error)
+                                                throw error
                                             }
                                         if (Array.isArray(wrappedParameter))
                                             request.wrappedParameter =
@@ -3520,7 +3520,7 @@ export class DataService {
             error.code === 'ETIMEDOUT' ||
             error.status === 0
         ))
-            throw Error(error)
+            throw error
     }
 }
 // IgnoreTypeCheck
