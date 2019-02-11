@@ -4188,13 +4188,18 @@ export class AbstractResolver implements Resolve<PlainObject> {
     }
     /**
      * Determines item specific database url by given item data object.
-     * @param item - Given item object.
+     * @param item - Given item to link to.
      * @returns Determined url.
      */
-    getDatabaseURL(item:PlainObject):SafeResourceUrl {
-        const url:string = this.databaseBaseURL + ((
-            typeof item[this.specialNames.id] === 'object'
-        ) ? item[this.specialNames.id].value : item[this.specialNames.id])
+    getDatabaseURL(item:PlainObject|string):SafeResourceUrl {
+        let id:string
+        if (typeof item === 'string')
+            id = item
+        else if (typeof item[this.specialNames.id] === 'object')
+            id = item[this.specialNames.id].value
+        else
+            id = item[this.specialNames.id]
+        const url:string = `${this.databaseBaseURL}${id}`
         // NOTE: We cache sanitized urls to avoid reloads.
         if (!this.databaseURLCache.hasOwnProperty(url))
             this.databaseURLCache[url] =
