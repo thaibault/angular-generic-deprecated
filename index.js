@@ -3622,10 +3622,10 @@ export class DataScopeService {
             if (revision === 'latest') {
                 if (propertyNames && !revisionHistory) {
                     useGet = false
-                    options.selector[
+                    options.selector = {[
                         this.configuration.database.model.property.name.special
                             .id
-                    ] = id
+                    ]: id}
                     options.fields = propertyNames
                 } else {
                     options.latest = true
