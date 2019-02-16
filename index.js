@@ -3685,8 +3685,8 @@ export class DataScopeService {
                 }
             } else
                 try {
-                    data = (await this.data.find(options)).docs
-                    if (docs.length)
+                    data = await this.data.find({}, options)
+                    if (data.length)
                         data = data[0]
                     else
                         throw new Error('Retrieved result is empty.')
