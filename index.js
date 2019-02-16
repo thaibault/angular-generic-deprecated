@@ -3614,60 +3614,89 @@ export class DataScopeService {
         let data:PlainObject = {}
         if (id) {
             const options:PlainObject = {}
+            /*
+                NOTE: We try to prefer "find()" over "get()" to use a
+                pre-calculated index if possible.
+            */
+            let useGet:boolean = true
             if (revision === 'latest') {
-                options.latest = true
-                if (revisionHistory)
-                    /* eslint-disable camelcase */
-                    options.revs_info = true
-                    /* eslint-enable camelcase */
+                if (propertyNames && !revisionHistory) {
+                    useGet = false
+                    options.selector[
+                        this.configuration.database.model.property.name.special
+                            .id
+                    ] = id
+                    options.fields = propertyNames
+                } else {
+                    options.latest = true
+                    if (revisionHistory)
+                        /* eslint-disable camelcase */
+                        options.revs_info = true
+                        /* eslint-enable camelcase */
+                }
             } else
                 options.rev = revision
-            try {
-                data = await this.data.get(id, options)
-            } catch (error) {
-                throw new Error(
-                    `Document with given id "${id}" and revision "` +
-                    `${revision}" isn't available: ` + ((
-                        'message' in error
-                    ) ? error.message : this.representObject(error)))
-            }
-            if (revisionHistory) {
-                const revisionsInformationName:string =
-                    this.configuration.database.model.property.name.special
-                        .revisionsInformation
-                let revisions:Array<PlainObject>
-                let latestData:PlainObject|null = null
-                if (revision !== 'latest') {
-                    delete options.rev
-                    /* eslint-disable camelcase */
-                    options.revs_info = true
-                    /* eslint-enable camelcase */
-                    try {
-                        latestData = await this.data.get(id, options)
-                    } catch (error) {
-                        throw new Error(
-                            `Document with given id "${id}" and revision "` +
-                            `${revision}" isn't available: ` + (
-                                ('message' in error) ? error.message :
-                                this.representObject(error)))
-                    }
-                    revisions = latestData[revisionsInformationName]
-                    delete latestData[revisionsInformationName]
-                } else
-                    revisions = data[revisionsInformationName]
-                data[revisionsInformationName] = {}
-                let first:boolean = true
-                for (const item of revisions)
-                    if (item.status === 'available') {
-                        data[revisionsInformationName][
-                            first ? 'latest' : item.rev
-                        ] = {revision: item.rev}
-                        first = false
-                    }
-                if (latestData)
-                    data[revisionsInformationName].latest.scope =
-                        this.generate(modelName, propertyNames, latestData)
-            }
+            if (useGet) {
+                try {
+                    data = await this.data.get(id, options)
+                } catch (error) {
+                    throw new Error(
+                        `Document with given id "${id}" and revision "` +
+                        `${revision}" isn't available: ` + ((
+                            'message' in error
+                        ) ? error.message : this.representObject(error)))
+                }
+                if (revisionHistory) {
+                    const revisionsInformationName:string =
+                        this.configuration.database.model.property.name.special
+                            .revisionsInformation
+                    let revisions:Array<PlainObject>
+                    let latestData:PlainObject|null = null
+                    if (revision !== 'latest') {
+                        delete options.rev
+                        /* eslint-disable camelcase */
+                        options.revs_info = true
+                        /* eslint-enable camelcase */
+                        try {
+                            latestData = await this.data.get(id, options)
+                        } catch (error) {
+                            throw new Error(
+                                `Document with given id "${id}" and ` +
+                                `revision "${revision}" isn't available: ` + (
+                                    ('message' in error) ? error.message :
+                                    this.representObject(error)))
+                        }
+                        revisions = latestData[revisionsInformationName]
+                        delete latestData[revisionsInformationName]
+                    } else
+                        revisions = data[revisionsInformationName]
+                    data[revisionsInformationName] = {}
+                    let first:boolean = true
+                    for (const item of revisions)
+                        if (item.status === 'available') {
+                            data[revisionsInformationName][
+                                first ? 'latest' : item.rev
+                            ] = {revision: item.rev}
+                            first = false
+                        }
+                    if (latestData)
+                        data[revisionsInformationName].latest.scope =
+                            this.generate(modelName, propertyNames, latestData)
+                }
+            } else
+                try {
+                    data = (await this.data.find(options)).docs
+                    if (docs.length)
+                        data = data[0]
+                    else
+                        throw new Error('Retrieved result is empty.')
+                } catch (error) {
+                    throw new Error(
+                        `Latest document with given id "${id}" and matching ` +
+                        `index isn't available: ` + ((
+                            'message' in error
+                        ) ? error.message : this.representObject(error)))
+                }
         }
         return this.generate(modelName, propertyNames, data)
     }
