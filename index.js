@@ -1692,7 +1692,8 @@ export class ExtractRawDataPipe implements PipeTransform {
                         if (newData.hasOwnProperty(name)) {
                             const result:{newData:any;payloadExists:boolean} =
                                 this.removeAlreadyExistingData(
-                                    newData[name], oldData[name],
+                                    newData[name],
+                                    oldData[name],
                                     this.dataScope.determineNestedSpecifcation(
                                         name, specification))
                             if (result.payloadExists) {
@@ -3701,6 +3702,26 @@ export class DataScopeService {
         return this.generate(modelName, propertyNames, data)
     }
     /**
+     * TODO TEST
+    */
+    determineNestedPropertyNames(names:Array<string>):Array<Array<string>> {
+        const nestedNames:PlainObject = {}
+        const remainingNames:Array<string> = []
+        for (const name of names) {
+            const index:number = name.indexOf('.')
+            if (index > 0) {
+                const key:string = name.substring(0, index)
+                if (!remainingNames.includes(key))
+                    remainingNames.push(key)
+                if (!nestedNames.hasOwnProperty(key))
+                    nestedNames[key] = []
+                nestedNames[key].push(name.substring(index + 1))
+            } else
+                remainingNames.push(name)
+        }
+        return [nestedNames, remainingNames]
+    }
+    /**
      * Determines a nested specification object for given property name and
      * corresponding specification object where given property is bound to.
      * @param name - Property name to search specification for.
@@ -3736,48 +3757,25 @@ export class DataScopeService {
     determineSpecificationObject(
         modelSpecification:PlainObject,
         propertyNames:Array<string>|null = null,
-        propertyNamesToIgnore:Array<string> = []
+        propertyNamesToIgnore:Array<string> = [],
     ):PlainObject {
+        const specialNames:PlainObject =
+            this.configuration.database.model.property.name.special
         if (!propertyNames)
             propertyNames = Object.keys(modelSpecification)
-        const nestedPropertyNames:PlainObject = {}
-        for (const name of propertyNames) {
-            const index:number = name.indexOf('.')
-            if (index > 0) {
-                propertyNames.splice(propertyNames.indexOf(name), 1)
-                const key:string = name.substring(0, index)
-                if (!propertyNames.includes(key))
-                    propertyNames.push(key)
-                if (nestedPropertyNames.hasOwnProperty(key))
-                    nestedPropertyNames[key] = []
-                nestedPropertyNames[key].push(name.substring(index + 1))
-            }
-        }
-        const nestedPropertyNamesToIgnore:PlainObject = {}
-        for (const name of propertyNamesToIgnore) {
-            const index:number = name.indexOf('.')
-            if (index > 0) {
-                propertyNamesToIgnore.splice(
-                    propertyNamesToIgnore.indexOf(name), 1)
-                const key:string = name.substring(0, index)
-                if (!propertyNamesToIgnore.includes(key))
-                    propertyNamesToIgnore.push(key)
-                if (nestedPropertyNamesToIgnore.hasOwnProperty(key))
-                    nestedPropertyNamesToIgnore[key] = []
-                nestedPropertyNamesToIgnore[key].push(
-                    name.substring(index + 1))
-            }
-        }
+        let nestedPropertyNames:PlainObject
+        [nestedPropertyNames, propertyNames] =
+            this.determineNestedPropertyNames(propertyNames)
+        let nestedPropertyNamesToIgnore:PlainObject
+        [nestedPropertyNamesToIgnore, propertyNamesToIgnore] =
+            this.determineNestedPropertyNames(propertyNamesToIgnore)
         const result:PlainObject = {}
         for (const name of propertyNames)
             if (
                 modelSpecification.hasOwnProperty(name) &&
                 !propertyNamesToIgnore.includes(name)
             )
-                if (
-                    name === this.configuration.database.model.property.name
-                        .special.attachment
-                ) {
+                if (name === specialNames.attachment) {
                     result[name] = {}
                     for (const fileType in modelSpecification[name])
                         if (modelSpecification[name].hasOwnProperty(fileType))
@@ -3807,8 +3805,13 @@ export class DataScopeService {
                                 result[name].type],
                             nestedPropertyNames.hasOwnProperty(name) ?
                                 nestedPropertyNames[name] : null,
-                            nestedPropertyNamesToIgnore.hasOwnProperty(name) ?
+                            (nestedPropertyNamesToIgnore.hasOwnProperty(name) ?
                                 nestedPropertyNamesToIgnore[name] : []
+                            ).concat(
+                                specialNames.id,
+                                specialNames.attachment,
+                                specialNames.oldType
+                            )
                         )
                 }
         return result
@@ -3869,6 +3872,12 @@ export class DataScopeService {
             // IgnoreTypeCheck
             ):boolean => !propertyNames.concat(reservedNames).includes(name)))
         }
+        let nestedPropertyNames:PlainObject
+        [nestedPropertyNames, propertyNames] =
+            this.determineNestedPropertyNames(propertyNames)
+        let nestedPropertyNamesToIgnore:PlainObject
+        [nestedPropertyNamesToIgnore, propertyNamesToIgnore] =
+            this.determineNestedPropertyNames(propertyNamesToIgnore)
         const result:PlainObject = {}
         for (const name of propertyNames) {
             if (propertyNamesToIgnore.includes(name))
@@ -3921,7 +3930,8 @@ export class DataScopeService {
                                     result[name][type][hookType]
                                 ) {
                                     result[name][type].value = (new Function(
-                                        ...Object.keys(scope), (
+                                        ...Object.keys(scope),
+                                        (
                                             hookType.endsWith(
                                                 'Expression'
                                             ) ? 'return ' : ''
@@ -4045,9 +4055,16 @@ export class DataScopeService {
                     else if (entities.hasOwnProperty(result[name].type))
                         result[name].value = this.generate(
                             result[name].type,
-                            null,
+                            nestedPropertyNames.hasOwnProperty(name) ?
+                                nestedPropertyNames[name] : null,
                             result[name].value || {},
-                            [specialNames.attachment, idName]
+                            (nestedPropertyNamesToIgnore.hasOwnProperty(name) ?
+                                nestedPropertyNamesToIgnore[name] : []
+                            ).concat(
+                                specialNames.attachment,
+                                idName,
+                                specialNames.oldType
+                            )
                         )
                     else if (result[name].type.endsWith('[]')) {
                         const type:string = result[name].type.substring(
@@ -4062,7 +4079,11 @@ export class DataScopeService {
                                     type,
                                     null,
                                     item || {},
-                                    [specialNames.attachment, specialNames.id]
+                                    [
+                                        specialNames.attachment,
+                                        idName,
+                                        specialNames.oldType
+                                    ]
                                 )
                                 index += 1
                             }
