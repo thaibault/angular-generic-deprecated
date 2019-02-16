@@ -1505,16 +1505,22 @@ registerAngularTest(function(
                     // region determineSpecificationObject
                     for (const test:Array<any> of [
                         [[{}], {}],
-                        [[{a: {}}], {a: {
-                            minimum: 0,
-                            minimumLength: 0,
-                            minimumNumber: 0
-                        }}],
-                        [[{a: {}}, ['a']], {a: {
-                            minimum: 0,
-                            minimumLength: 0,
-                            minimumNumber: 0
-                        }}],
+                        [
+                            [{a: {}}],
+                            {a: {
+                                minimum: 0,
+                                minimumLength: 0,
+                                minimumNumber: 0
+                            }}
+                        ],
+                        [
+                            [{a: {}}, ['a']],
+                            {a: {
+                                minimum: 0,
+                                minimumLength: 0,
+                                minimumNumber: 0
+                            }}
+                        ],
                         [[{a: {}}, ['b']], {}]
                     ])
                         assert.deepEqual(

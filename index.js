@@ -3740,6 +3740,34 @@ export class DataScopeService {
     ):PlainObject {
         if (!propertyNames)
             propertyNames = Object.keys(modelSpecification)
+        const nestedPropertyNames:PlainObject = {}
+        for (const name of propertyNames) {
+            const index:number = name.indexOf('.')
+            if (index > 0) {
+                propertyNames.splice(propertyNames.indexOf(name), 1)
+                const key:string = name.substring(0, index)
+                if (!propertyNames.includes(key))
+                    propertyNames.push(key)
+                if (nestedPropertyNames.hasOwnProperty(key))
+                    nestedPropertyNames[key] = []
+                nestedPropertyNames[key].push(name.substring(index + 1))
+            }
+        }
+        const nestedPropertyNamesToIgnore:PlainObject = {}
+        for (const name of propertyNamesToIgnore) {
+            const index:number = name.indexOf('.')
+            if (index > 0) {
+                propertyNamesToIgnore.splice(
+                    propertyNamesToIgnore.indexOf(name), 1)
+                const key:string = name.substring(0, index)
+                if (!propertyNamesToIgnore.includes(key))
+                    propertyNamesToIgnore.push(key)
+                if (nestedPropertyNamesToIgnore.hasOwnProperty(key))
+                    nestedPropertyNamesToIgnore[key] = []
+                nestedPropertyNamesToIgnore[key].push(
+                    name.substring(index + 1))
+            }
+        }
         const result:PlainObject = {}
         for (const name of propertyNames)
             if (
@@ -3776,7 +3804,11 @@ export class DataScopeService {
                     )
                         result[name].value = this.determineSpecificationObject(
                             this.configuration.database.model.entities[
-                                result[name].type], null, propertyNamesToIgnore
+                                result[name].type],
+                            nestedPropertyNames.hasOwnProperty(name) ?
+                                nestedPropertyNames[name] : null,
+                            nestedPropertyNamesToIgnore.hasOwnProperty(name) ?
+                                nestedPropertyNamesToIgnore[name] : []
                         )
                 }
         return result
