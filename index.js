@@ -4303,7 +4303,10 @@ export class AbstractResolver implements Resolve<PlainObject> {
             InitialDataService.defaultScope.configuration.database.model
                 .property.name.special.id
             ]: 'asc'
-        }], page:number = 1, limit:number = 10, searchTerm:string = '',
+        }],
+        page:number = 1,
+        limit:number = 10,
+        searchTerm:string = '',
         additionalSelector:PlainObject = {}
     ):Promise<Array<PlainObject>> {
         if (!this.relevantSearchKeys) {
