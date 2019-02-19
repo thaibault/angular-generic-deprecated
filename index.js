@@ -67,7 +67,7 @@ import {
 } from '@angular/common/http'
 /*
  * NOTE: "No provider for InjectionToken CompositionEventMode"
- * triggered  if this IME compatible code is activated:
+ * triggered if this IME compatible code is activated:
  */
 import {
     // COMPOSITION_BUFFER_MODE,
@@ -126,6 +126,7 @@ import {debounceTime, distinctUntilChanged, tap} from 'rxjs/operators'
     compiler.
 */
 import {defaultAnimation} from './animation'
+import {CodeEditor, Module as CodeEditorModule} from './animation'
 // endregion
 // region types
 export type AllowedRoles = string|Array<string>|{
@@ -6178,145 +6179,6 @@ export class AbstractEditorComponent extends AbstractValueAccessor
         this.disabled = isDisabled
     }
 }
-@Component({
-    animations,
-    changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
-    // TODO: vsavkin replace the above selector with the one below it once
-    // https://github.com/angular/angular/issues/3011 is implemented
-    // selector: '[ngModel],[formControl],[formControlName]',
-    host: {
-        '(compositionend)': '$any(this).compositionEnd($event.target.value)',
-        '(compositionstart)': '$any(this).compositionStart()',
-        '(blur)': 'onTouchedCallback()',
-        '(input)': '$any(this).handleInput($event.target.value)'
-    },
-    providers: [{
-        multi: true,
-        provide: NG_VALUE_ACCESSOR,
-        useExisting: forwardRef(():typeof CodeEditorComponent =>
-            CodeEditorComponent)
-    }],
-    selector: 'code-editor',
-    template: '<textarea #hostDomNode></textarea>'
-})
-/**
- * Provides a generic code editor.
- * @property static:modesLoad - Mapping from mode to their loading state.
- *
- * @property blur - Blur event emitter.
- * @property focus - Focus event emitter.
- */
-export class CodeEditorComponent extends AbstractEditorComponent
-    implements AfterViewInit {
-    static modesLoad:{[key:string]:Promise<void>|true} = {}
-
-    @Output() blur:EventEmitter<any> = new EventEmitter()
-    @Input() configuration:PlainObject = CODE_MIRROR_DEFAULT_OPTIONS
-    contentSetterMethodName:string = 'setValue'
-    factoryName:string = 'CodeMirror'
-    @Output() focus:EventEmitter<any> = new EventEmitter()
-    /**
-     * Initializes the code mirror resource loading if not available yet.
-     * @param injector - Application specific injector to use instead auto
-     * detected one.
-     * @returns Nothing.
-     */
-    constructor(injector:Injector) {
-        super(injector)
-        if (typeof CodeEditorComponent.applicationInterfaceLoad[
-            this.factoryName
-        ] !== 'object')
-            CodeEditorComponent.applicationInterfaceLoad[
-                this.factoryName
-            ] = Promise.all([
-                new Promise((resolve:Function):$DomNode =>
-                    this.fixedUtility.$(`
-                        <link
-                            href="${CODE_MIRROR_DEFAULT_OPTIONS.path.base}` +
-                            CODE_MIRROR_DEFAULT_OPTIONS.path
-                                .cascadingStyleSheet +
-                            `" rel="stylesheet"
-                            type="text/css"
-                        />
-                    `).appendTo('head').on('load', resolve)),
-                new Promise((resolve:Function, reject:Function):Object =>
-                    this.fixedUtility.$.ajax({
-                        cache: true,
-                        dataType: 'script',
-                        error: reject,
-                        success: ():void => {
-                            this.factory = this.fixedUtility.globalContext[
-                                this.factoryName]
-                            resolve(this.factory)
-                        },
-                        url: CODE_MIRROR_DEFAULT_OPTIONS.path.base +
-                            CODE_MIRROR_DEFAULT_OPTIONS.path.script
-                    }))
-            ])
-    }
-    /**
-     * Initializes the code editor element.
-     * @returns Nothing.
-     */
-    ngAfterViewInit():Promise<void> {
-        /*
-            NOTE: "await super.ngAfterViewInit()" is not supported by
-            transpiler yet.
-        */
-        return super.ngAfterViewInit().then(async ():Promise<void> => {
-            if (this.configuration.mode)
-                if (CodeEditorComponent.modesLoad.hasOwnProperty(
-                    this.configuration.mode
-                )) {
-                    if (CodeEditorComponent.modesLoad[
-                        this.configuration.mode
-                    ] !== true)
-                        await CodeEditorComponent.modesLoad[
-                            this.configuration.mode]
-                } else {
-                    CodeEditorComponent.modesLoad[this.configuration.mode] =
-                        new Promise((
-                            resolve:Function, reject:Function
-                        ):Object => this.fixedUtility.$.ajax({
-                            cache: true,
-                            dataType: 'script',
-                            error: reject,
-                            success: resolve,
-                            url: this.configuration.path.base +
-                                this.configuration.path.mode.replace(
-                                    /{mode}/g, this.configuration.mode)
-                        }))
-                    await CodeEditorComponent.modesLoad[
-                        this.configuration.mode]
-                }
-            const configuration:PlainObject = this.extend(
-                {}, this.configuration, {readOnly: this.disabled})
-            delete configuration.path
-            this.instance = this.factory.fromTextArea(
-                this.hostDomNode.nativeElement, configuration)
-            this.instance[this.contentSetterMethodName](this.model)
-            this.instance.on('blur', (instance:any, event:any):void =>
-                this.blur.emit(event))
-            this.instance.on('change', ():void => {
-                this.onChangeCallback(this.instance.getValue())
-                this.modelChange.emit(this.model)
-            })
-            this.instance.on('focus', (instance:any, event:any):void =>
-                this.focus.emit(event))
-            this.initialized.emit(this.instance)
-        })
-    }
-    /**
-     * Triggers disabled state changes.
-     * @param isDisabled - Indicates disabled state.
-     * @returns Nothing.
-     */
-    setDisabledState(isDisabled:boolean):void {
-        super.setDisabledState(isDisabled)
-        if (this.instance)
-            this.instance.setOption('readOnly', this.disabled)
-    }
-}
 @Directive({selector: '[genericRepresentTextFile]'})
 /**
  * Displays text files.
@@ -8388,6 +8250,7 @@ export class PaginationComponent {
     ],
     imports: [
         BrowserModule.withServerTransition({appId: 'generic-universal'}),
+        CodeEditorModule,
         FormsModule,
         MatButtonModule,
         MatCardModule,
