@@ -322,7 +322,6 @@ export const TINYMCE_DEFAULT_OPTIONS:PlainObject = {
 }
 // endregion
 // region basic services
-// IgnoreTypeCheck
 @Injectable()
 /**
  * Injectable angular service for the tools class.
@@ -343,7 +342,6 @@ export class UtilityService {
     fixed:typeof UtilityService = UtilityService
     tools:Tools = new Tools()
 }
-// IgnoreTypeCheck
 @Injectable()
 /**
  * Serves initial data provided via a global variable.
@@ -1098,7 +1096,6 @@ export class NumberRoundPipe extends AbstractToolsPipe
 }
 // / endregion
 // / region object
-// IgnoreTypeCheck
 @Pipe({name: 'genericAttachmentsAreEqual'})
 /**
  * Determines if given attachments are representing the same data.
@@ -1238,7 +1235,6 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
         return data.first.hash === data.second.hash
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericGetFilenameByPrefix'})
 /**
  * Retrieves a matching filename by given filename prefix.
@@ -1267,7 +1263,15 @@ export class GetFilenameByPrefixPipe implements PipeTransform {
         return null
     }
 }
-// IgnoreTypeCheck
+@Pipe({name: `genericGetSubstructure`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class GetSubstructurePipe extends AbstractToolsPipe
+    implements PipeTransform {
+    methodName:string = 'getSubstructure'
+}
 @Pipe({name: 'genericAttachmentWithPrefixExists'})
 /**
  * Retrieves if a filename with given prefix exists.
@@ -1315,7 +1319,6 @@ export class AttachmentWithPrefixExistsPipe implements PipeTransform {
         return false
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericExtractData'})
 /**
  * Removes all meta data from a document recursively.
@@ -1428,7 +1431,6 @@ export class ExtractDataPipe implements PipeTransform {
         return result
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericExtractRawData'})
 /**
  * Removes all meta data and already existing data (compared to an old
@@ -1894,7 +1896,6 @@ export class ExtractRawDataPipe implements PipeTransform {
         return payloadExists ? result : null
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericIsArray'})
 /**
  * Checks if given reference points to an array.
@@ -1909,7 +1910,6 @@ export class IsArrayPipe implements PipeTransform {
         return Array.isArray(object)
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericIsDefined'})
 /**
  * Checks if given reference is defined.
@@ -1926,7 +1926,6 @@ export class IsDefinedPipe implements PipeTransform {
         return !(object === undefined || nullIsUndefined && object === null)
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericLimitTo'})
 /**
  * Retrieves a matching filename by given filename prefix.
@@ -1963,7 +1962,6 @@ export class LimitToPipe implements PipeTransform {
         return input.slice(Math.max(0, begin + limit), begin)
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericMap'})
 /**
  * Returns a copy of given object where each item was processed through given
@@ -2008,7 +2006,6 @@ export class MapPipe implements PipeTransform {
         return result
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericObjectKeys'})
 /**
  * Retrieves a matching filename by given filename prefix.
@@ -2051,7 +2048,6 @@ export class ObjectKeysPipe implements PipeTransform {
         return []
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericObjectValues'})
 /**
  * Retrieves a matching filename by given filename prefix.
@@ -2094,7 +2090,6 @@ export class ObjectValuesPipe implements PipeTransform {
         return []
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericReverse'})
 /**
  * Reverses a given list.
@@ -2118,7 +2113,6 @@ export class ReversePipe implements PipeTransform {
         return list
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericType'})
 /**
  * Determines type of given object.
@@ -2135,7 +2129,6 @@ export class TypePipe implements PipeTransform {
 }
 // / endregion
 // region array
-// IgnoreTypeCheck
 @Pipe({name: 'genericArrayDependentConcat'})
 /**
  * Dependently concatenate given data to piped data.
@@ -2156,7 +2149,6 @@ export class ArrayDependentConcatPipe/* immplements PipeTransform*/ {
 }
 // endregion
 // region string
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringEndsWith'})
 /**
  * Forwards javaScript's native "stringEndsWith" method.
@@ -2173,7 +2165,6 @@ export class StringEndsWithPipe implements PipeTransform {
             string.endsWith(needle)
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringHasTimeSuffix'})
 /**
  * Determines if given string has a time indicating suffix.
@@ -2194,7 +2185,6 @@ export class StringHasTimeSuffixPipe implements PipeTransform {
         )
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringMatch'})
 /**
  * Tests if given pattern matches against given subject.
@@ -2213,7 +2203,6 @@ export class StringMatchPipe implements PipeTransform {
         return (new RegExp(pattern, modifier)).test(subject)
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringMaximumLength'})
 /**
  * Trims given string if it is longer then given length.
@@ -2242,7 +2231,6 @@ export class StringMaximumLengthPipe implements PipeTransform {
         return ''
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringReplace'})
 /**
  * Provides javascript's native string replacement method as pipe.
@@ -2269,7 +2257,6 @@ export class StringReplacePipe implements PipeTransform {
             replacement)
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringSafeHTML'})
 /**
  * Provides angular dom html sanitizer.
@@ -2286,7 +2273,6 @@ export class StringSafeHTMLPipe implements PipeTransform {
             domSanitizer)
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringSafeResourceURL'})
 /**
  * Provides angular dom html sanitizer.
@@ -2303,7 +2289,6 @@ export class StringSafeResourceURLPipe implements PipeTransform {
             domSanitizer)
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringSafeScript'})
 /**
  * Provides angular dom html sanitizer.
@@ -2320,7 +2305,6 @@ export class StringSafeScriptPipe implements PipeTransform {
             domSanitizer)
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringSafeStyle'})
 /**
  * Provides angular dom html sanitizer.
@@ -2337,7 +2321,6 @@ export class StringSafeStylePipe implements PipeTransform {
             domSanitizer)
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringSafeURL'})
 /**
  * Provides angular dom html sanitizer.
@@ -2354,7 +2337,6 @@ export class StringSafeURLPipe implements PipeTransform {
             domSanitizer)
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringShowIfPatternMatches'})
 /**
  * Returns given string if it matches given pattern.
@@ -2383,7 +2365,6 @@ export class StringShowIfPatternMatchesPipe implements PipeTransform {
         return indicator ? string : ''
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringSliceMatch'})
 /**
  * Returns a matched part of given subject with given pattern. Default is the
@@ -2413,7 +2394,6 @@ export class StringSliceMatchPipe implements PipeTransform {
         return ''
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringStartsWith'})
 /**
  * Forwards javascript's native "stringStartsWith" method.
@@ -2430,7 +2410,6 @@ export class StringStartsWithPipe implements PipeTransform {
             string.startsWith(needle)
     }
 }
-// IgnoreTypeCheck
 @Pipe({name: 'genericStringTemplate'})
 /**
  * Provides angular's template engine as pipe.
@@ -2471,7 +2450,6 @@ export class StringTemplatePipe implements PipeTransform {
 }
 // / endregion
 // / region number
-// IgnoreTypeCheck
 @Pipe({name: 'genericNumberPercent'})
 /**
  * Returns part in percent of all.
@@ -2490,7 +2468,6 @@ export class NumberPercentPipe implements PipeTransform {
 // / endregion
 // endregion
 // region services
-// IgnoreTypeCheck
 @Injectable()
 /**
  * A generic guard which prevents from switching to route if its component's
@@ -2513,7 +2490,6 @@ export class CanDeactivateRouteLeaveGuard implements CanDeactivate<Object> {
     }
 }
 // / region confirm
-// IgnoreTypeCheck
 @Component({
     animations,
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -2558,7 +2534,6 @@ export class ConfirmComponent {
      * @returns Nothing.
      */
     constructor(
-        // IgnoreTypeCheck
         @Optional() @Inject(MAT_DIALOG_DATA) data:any,
         @Optional() dialogReference:MatDialogRef<ConfirmComponent>
     ) {
@@ -2570,7 +2545,6 @@ export class ConfirmComponent {
                     this[key] = data[key]
     }
 }
-// IgnoreTypeCheck
 @Injectable()
 /**
  * Alert service to trigger a dialog window which can be confirmed.
@@ -2624,7 +2598,6 @@ export class AlertService {
     }
 }
 // / endregion
-// IgnoreTypeCheck
 @Injectable()
 /**
  * A generic database connector.
@@ -3524,7 +3497,6 @@ export class DataService {
             throw error
     }
 }
-// IgnoreTypeCheck
 @Injectable()
 /**
  * Auto generates a components scope environment for a specified model.
@@ -4100,7 +4072,6 @@ export class DataScopeService {
         return result
     }
 }
-// IgnoreTypeCheck
 @Injectable()
 /**
  * Registers each request in the data requests list to track number of running
@@ -4167,7 +4138,6 @@ export class OfflineState {
     }
 }
 // / region abstract
-// IgnoreTypeCheck
 @Injectable()
 /**
  * Helper class to extend from to have some basic methods to deal with database
@@ -5371,7 +5341,6 @@ export class AbstractValueAccessor implements ControlValueAccessor {
 }
 // / endregion
 // // region date/time
-// IgnoreTypeCheck
 @Directive({selector: '[genericDate]'})
 /**
  * Displays dates and/or times formated with markup and through angular date
@@ -5508,7 +5477,6 @@ const providers:Array<PlainObject> = [{
     NOTE: This core update resistent version is not compatible with angular's
     ahead of time compilation.
 
-// IgnoreTypeCheck
 @Directive(UtilityService.tools.extend(
     true,
     {},
@@ -5601,7 +5569,6 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
     }
 }
 // // / region interval
-// IgnoreTypeCheck
 @Component({
     animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
@@ -5744,7 +5711,6 @@ export class IntervalInputComponent {
         this.modelChange.emit({value: event, type})
     }
 }
-// IgnoreTypeCheck
 @Component({
     animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
@@ -5993,7 +5959,6 @@ export class IntervalsInputComponent implements OnInit {
 }
 // // / endregion
 // // endregion
-// IgnoreTypeCheck
 @Directive({selector: '[genericSlider]'})
 /**
  * Directive to automatically switch a list of content elements.
@@ -6352,7 +6317,6 @@ export class CodeEditorComponent extends AbstractEditorComponent
             this.instance.setOption('readOnly', this.disabled)
     }
 }
-// IgnoreTypeCheck
 @Directive({selector: '[genericRepresentTextFile]'})
 /**
  * Displays text files.
@@ -6791,7 +6755,6 @@ const inputContent:string = `
     >{{model.value?.length || 0}} / {{model.maximumLength}}</mat-hint>
 `
 /* eslint-enable max-len */
-// IgnoreTypeCheck
 @Component({
     animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
@@ -6836,7 +6799,6 @@ export class InputComponent extends AbstractInputComponent {
     @Input() type:string
 }
 /* eslint-disable max-len */
-// IgnoreTypeCheck
 @Component({
     animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
@@ -6907,7 +6869,6 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
     }
 }
 /* eslint-disable max-len */
-// IgnoreTypeCheck
 @Component({
     animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
@@ -7079,7 +7040,6 @@ export class TextareaComponent extends AbstractNativeInputComponent
 // // endregion
 // / region file input
 /* eslint-disable max-len */
-// IgnoreTypeCheck
 @Component({
     animations,
     changeDetection: ChangeDetectionStrategy[CHANGE_DETECTION_STRATEGY_NAME],
@@ -8048,7 +8008,6 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
 // / endregion
 // / region pagination
 /* eslint-disable max-len */
-// IgnoreTypeCheck
 @Component({
     animations,
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -8173,7 +8132,6 @@ export class PaginationComponent {
 // / endregion
 // endregion
 // region module
-// IgnoreTypeCheck
 @NgModule({
     /*
         NOTE: Running "moduleHelper.determineDeclarations()" is not yet
@@ -8247,6 +8205,7 @@ export class PaginationComponent {
         // / region object
         AttachmentsAreEqualPipe,
         GetFilenameByPrefixPipe,
+        GetSubstructurePipe,
         AttachmentWithPrefixExistsPipe,
         ExtractDataPipe,
         ExtractRawDataPipe,
@@ -8373,6 +8332,7 @@ export class PaginationComponent {
         // / region object
         AttachmentsAreEqualPipe,
         GetFilenameByPrefixPipe,
+        GetSubstructurePipe,
         AttachmentWithPrefixExistsPipe,
         ExtractDataPipe,
         ExtractRawDataPipe,
@@ -8520,6 +8480,7 @@ export class PaginationComponent {
         // / region object
         AttachmentsAreEqualPipe,
         GetFilenameByPrefixPipe,
+        GetSubstructurePipe,
         AttachmentWithPrefixExistsPipe,
         ExtractDataPipe,
         ExtractRawDataPipe,

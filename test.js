@@ -83,6 +83,7 @@ registerAngularTest(function(
         ExtractRawDataPipe,
         FileInputComponent,
         GetFilenameByPrefixPipe,
+        GetSubstructurePipe,
         InitialDataService,
         InputComponent,
         IsArrayPipe,
@@ -473,9 +474,20 @@ registerAngularTest(function(
                     [[{a: 2, b: 3}, 'c'], null]
                 ])
                     assert.strictEqual(
-                        getFilenameByPrefixPipe.transform(
-                            ...test[0]),
+                        getFilenameByPrefixPipe.transform(...test[0]),
                         test[1])
+            })
+            this.test(`GetSubstructurePipe (${roundType})`, (
+                assert:Object
+            ):void => {
+                const getSubstructurePipe:GetSubstructurePipe = TestBed.get(
+                    GetSubstructurePipe)
+                for (const test:Array<any> of [
+                    [[{}, ''], {}],
+                    [[{a: 2}, 'a'], 2]
+                ])
+                    assert.deepEqual(
+                        getSubstructurePipe.transform(...test[0]), test[1])
             })
             this.test(`AttachmentWithPrefixExistsPipe (${roundType})`, (
                 assert:Object
