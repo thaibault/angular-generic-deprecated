@@ -58,27 +58,18 @@ registerAngularTest(function(
     const {ActivatedRoute, Router} = require('@angular/router')
     const {createDefaultAnimation, createFadeAnimation} = require(
         './animation')
-    const Module:Object = require('./index').default
+    const index:Object = require('./index')
     const {
+        // region component
         AbstractItemsComponent,
         AbstractNativeInputComponent,
         FileInputComponent,
         InputComponent,
         PaginationComponent,
         SimpleInputComponent,
-        TextareaComponent
-    } = require('./component')
-    const {
-        ActivatedRouteStub,
-        ComponentWithChildViewContainer,
-        DirectiveWithViewContainer,
-        dummyEvent,
-        getNativeEvent,
-        LocationStub,
-        RouterOutletStubComponent,
-        RouterStub
-    } = require('./mockup')
-    const {
+        TextareaComponent,
+        // endregion
+        // region pipe
         AttachmentsAreEqualPipe,
         AttachmentWithPrefixExistsPipe,
         ExtendPipe,
@@ -103,9 +94,9 @@ registerAngularTest(function(
         StringShowIfPatternMatchesPipe,
         StringSliceMatchPipe,
         StringStartsWithPipe,
-        StringTemplatePipe
-    } = require('./pipe')
-    const {
+        StringTemplatePipe,
+        // endregion
+        // region service
         AbstractResolver,
         AlertService,
         CanDeactivateRouteLeaveGuard,
@@ -114,10 +105,24 @@ registerAngularTest(function(
         DataService,
         InitialDataService,
         UtilityService
-    } = require('./service')
+        // endregion
+    } = index
+    // region mockup
+    const {
+        ActivatedRouteStub,
+        ComponentWithChildViewContainer,
+        DirectiveWithViewContainer,
+        dummyEvent,
+        getNativeEvent,
+        LocationStub,
+        RouterOutletStubComponent,
+        RouterStub
+    } = require('./mockup')
+    // endregion
     AbstractResolver.skipResolving = false
     DataService.skipGenericIndexManagementOnServer = false
     DataService.skipRemoteConnectionOnBrowser = true
+    const Module:Object = index.default
     // endregion
     // region extend abstract components
     /* eslint-disable require-jsdoc */
@@ -178,10 +183,6 @@ registerAngularTest(function(
         total:number = 0
     }
     // endregion
-    console.log(
-        'A',
-        InitialDataService.defaultScope.configuration.database.model.property
-    )
     // region prepare services
     const specialNames:PlainObject =
         InitialDataService.defaultScope.configuration.database.model.property

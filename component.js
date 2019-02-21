@@ -16,6 +16,7 @@
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
+export * from './editor'
 // region imports
 import {blobToBase64String, dataURLToBlob} from 'blob-util'
 import Tools, {PlainObject} from 'clientnode'
@@ -2554,17 +2555,18 @@ export class PaginationComponent {
         the AOT-Compiler.
     */
     exports: [
+        // region components
+        IntervalInputComponent,
+        IntervalsInputComponent,
+        FileInputComponent,
+        PaginationComponent,
+        // endregion
         // region directives
         DateDirective,
         RepresentTextFileDirective,
         SliderDirective,
         // endregion
-        // region components
-        IntervalInputComponent,
-        IntervalsInputComponent,
-        FileInputComponent,
-        PaginationComponent
-        // endregion
+        EditorModule
     ],
     imports: [
         BrowserModule.withServerTransition({

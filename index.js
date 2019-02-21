@@ -16,6 +16,9 @@
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
+export * from './component'
+export * from './pipe'
+export * from './service'
 // region imports
 import {NgModule} from '@angular/core'
 import {BrowserModule} from '@angular/platform-browser'

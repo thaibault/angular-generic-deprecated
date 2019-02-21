@@ -16,15 +16,7 @@
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
-export {
-    animations,
-    applicationDomNodeSelector,
-    determineInjector,
-    globalVariableNameToRetrieveDataFrom,
-    InitialDataService,
-    LAST_KNOWN_DATA,
-    UtilityService
-} from './basicService'
+export * from './basicService'
 // region imports
 import Tools, {PlainObject} from 'clientnode'
 import {
