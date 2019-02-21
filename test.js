@@ -24,7 +24,9 @@ import registerAngularTest from './testRunner'
 // TODO check if all needed tests exists.
 // region tests
 registerAngularTest(function(
-    ApplicationComponent:Object, roundType:string, targetTechnology:?string,
+    ApplicationComponent:Object,
+    roundType:string,
+    targetTechnology:?string,
     $:any
 ):{bootstrap:Function;test:Function} {
     if (typeof localStorage !== 'undefined' && 'clear' in localStorage)
@@ -32,7 +34,7 @@ registerAngularTest(function(
     let bootstrapped:boolean = false
     const now:Date = new Date()
     const nowUTCTimestamp:number = Tools.numberGetUTCTimestamp(now)
-    // region import s
+    // region imports
     const blobToBase64String:Function = typeof Blob === 'undefined' ?
         async (file:Object):Promise<string> => file.toString('base64') :
         require('blob-util').blobToBase64String
@@ -68,24 +70,13 @@ registerAngularTest(function(
         RouterStub
     } = require('./mockup')
     const {
-        AbstractItemsComponent,
-        AbstractNativeInputComponent,
-        AbstractResolver,
-        AlertService,
         AttachmentsAreEqualPipe,
         AttachmentWithPrefixExistsPipe,
-        CanDeactivateRouteLeaveGuard,
-        ConfirmComponent,
-        DataScopeService,
-        DataService,
         ExtendPipe,
         ExtractDataPipe,
         ExtractRawDataPipe,
-        FileInputComponent,
         GetFilenameByPrefixPipe,
         GetSubstructurePipe,
-        InitialDataService,
-        InputComponent,
         IsArrayPipe,
         IsDefinedPipe,
         LimitToPipe,
@@ -93,9 +84,7 @@ registerAngularTest(function(
         NumberPercentPipe,
         ObjectKeysPipe,
         ObjectValuesPipe,
-        PaginationComponent,
         ReversePipe,
-        SimpleInputComponent,
         StringEndsWithPipe,
         StringHasTimeSuffixPipe,
         StringMatchPipe,
@@ -105,10 +94,26 @@ registerAngularTest(function(
         StringShowIfPatternMatchesPipe,
         StringSliceMatchPipe,
         StringStartsWithPipe,
-        StringTemplatePipe,
-        TextareaComponent,
-        UtilityService,
-        TypePipe
+        StringTemplatePipe
+    } = require('./pipe')
+    const {
+        AbstractResolver,
+        AlertService,
+        CanDeactivateRouteLeaveGuard,
+        ConfirmComponent,
+        DataScopeService,
+        DataService,
+        InitialDataService,
+        UtilityService
+    } = require('./service')
+    const {
+        AbstractItemsComponent,
+        AbstractNativeInputComponent,
+        FileInputComponent,
+        InputComponent,
+        PaginationComponent,
+        SimpleInputComponent,
+        TextareaComponent
     } = index
     const Module:Object = index.default
     AbstractResolver.skipResolving = false

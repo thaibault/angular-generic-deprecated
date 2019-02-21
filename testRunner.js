@@ -41,11 +41,15 @@ declare var TARGET_TECHNOLOGY:string
  */
 export function registerAngularTest(
     callback:Function|{bootstrap:Function;test:Function},
-    template:string = '<div></div>', roundTypes:string|Array<string> = 'full',
-    productionMode:boolean = false, ...additionalParameter:Array<any>
+    template:string = '<div></div>',
+    roundTypes:string|Array<string> = 'full',
+    productionMode:boolean = false,
+    ...additionalParameter:Array<any>
 ):any {
     return registerTest(async function(
-        roundType:string, targetTechnology:?string, $:any,
+        roundType:string,
+        targetTechnology:?string,
+        $:any,
         ...extraParameter:Array<any>
     ):Promise<void> {
         // region mocking angular environment
@@ -75,9 +79,10 @@ export function registerAngularTest(
                     if (domNodeSpecification[
                         domNodeName
                     ].attributes.hasOwnProperty(name))
-                        domNode.setAttribute(name, domNodeSpecification[
-                            domNodeName
-                        ].attributes[name])
+                        domNode.setAttribute(
+                            ame,
+                            domNodeSpecification[domNodeName].attributes[name]
+                        )
                 domNodeSpecification[domNodeName].inject.appendChild(domNode)
                 await new Promise((resolve:Function):void =>
                     domNode.addEventListener('load', resolve))
@@ -128,13 +133,23 @@ export function registerAngularTest(
         // endregion
         if (typeof callback === 'function')
             callback = callback.call(
-                this, ApplicationComponent, roundType, targetTechnology, $,
-                ...extraParameter)
+                this,
+                ApplicationComponent,
+                roundType,
+                targetTechnology,
+                $,
+                ...extraParameter
+            )
         if ('then' in callback)
             callback = await callback
         let result:any = callback.bootstrap.call(
-            this, ApplicationComponent, roundType, targetTechnology, $,
-            ...extraParameter)
+            this,
+            ApplicationComponent,
+            roundType,
+            targetTechnology,
+            $,
+            ...extraParameter
+        )
         if ('then' in result)
             result = await result
         result = [].concat(result)
@@ -183,8 +198,13 @@ export function registerAngularTest(
             result[0])
         await TestBed.compileComponents()
         await callback.test.call(
-            this, TestBed, roundType, targetTechnology, $, ...parameter.concat(
-                result.slice(2)))
+            this,
+            TestBed,
+            roundType,
+            targetTechnology,
+            $,
+            ...parameter.concat(result.slice(2))
+        )
         // endregion
     }, roundTypes, ...additionalParameter)
 }
