@@ -79,8 +79,8 @@ export class AbstractValueAccessor implements ControlValueAccessor {
     composing:boolean = false
     compositionMode:boolean = false
     elementReference:ElementRef
-    onChangeCallback:(value:any) => void = () => {}// TODO UtilityService.tools.noop
-    onTouchedCallback:() => void = () => {}//UtilityService.tools.noop
+    onChangeCallback:(value:any) => void = () => UtilityService.tools.noop
+    onTouchedCallback:() => void = () => UtilityService.tools.noop
     renderer:Renderer
     @Input() type:string|null = null
     /**

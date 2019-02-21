@@ -18,10 +18,7 @@
 */
 // region imports
 import {blobToBase64String, dataURLToBlob} from 'blob-util'
-import Tools, {
-    $, $DomNode, DomNode, globalContext, PlainObject
-} from 'clientnode'
-import {AnimationTriggerMetadata} from '@angular/animations'
+import Tools, {PlainObject} from 'clientnode'
 import {
     AfterContentChecked,
     AfterViewInit,
@@ -34,14 +31,12 @@ import {
     ElementRef,
     EventEmitter,
     forwardRef,
-    Injectable,
     /* eslint-disable no-unused-vars */
     Inject,
     /* eslint-enable no-unused-vars */
     Injector,
     Input,
     NgModule,
-    NgZone,
     OnChanges,
     OnDestroy,
     OnInit,
@@ -49,8 +44,6 @@ import {
     Optional,
     /* eslint-enable no-unused-vars */
     Output,
-    Pipe,
-    PipeTransform,
     /* eslint-disable no-unused-vars */
     PLATFORM_ID,
     /* eslint-enable no-unused-vars */
@@ -62,70 +55,31 @@ import {
     ViewContainerRef
 } from '@angular/core'
 import {DatePipe, isPlatformBrowser, isPlatformServer} from '@angular/common'
-import {
-    HttpInterceptor, HTTP_INTERCEPTORS, HttpRequest, HttpHandler, HttpEvent
-} from '@angular/common/http'
-/*
- * NOTE: "No provider for InjectionToken CompositionEventMode"
- * triggered if this IME compatible code is activated:
- */
-import {
-    // COMPOSITION_BUFFER_MODE,
-    ControlValueAccessor,
-    FormsModule,
-    NG_VALUE_ACCESSOR
-} from '@angular/forms'
+import {HTTP_INTERCEPTORS} from '@angular/common/http'
+import {FormsModule, NG_VALUE_ACCESSOR} from '@angular/forms'
 /*
     NOTE: We should not import directly from "@angular/material" to improve
     tree shaking results.
 */
 import {MatButtonModule} from '@angular/material/button'
 import {MatCardModule} from '@angular/material/card'
-import {
-    /* eslint-disable no-unused-vars */
-    MAT_DIALOG_DATA,
-    /* eslint-enable no-unused-vars */
-    MatDialog,
-    MatDialogConfig,
-    MatDialogModule,
-    MatDialogRef
-} from '@angular/material/dialog'
+import {MatDialogModule} from '@angular/material/dialog'
 import {MatInputModule} from '@angular/material/input'
 import {MatSelectModule} from '@angular/material/select'
-import {
-    MatSnackBar, MatSnackBarConfig, MatSnackBarModule
-} from '@angular/material/snack-bar'
+import {MatSnackBarModule} from '@angular/material/snack-bar'
 import {MatTooltipModule} from '@angular/material/tooltip'
-import {
-    BrowserModule,
-    DomSanitizer,
-    SafeScript,
-    SafeHtml,
-    SafeResourceUrl,
-    SafeStyle,
-    SafeUrl
-} from '@angular/platform-browser'
-import {
-    ActivatedRoute,
-    ActivatedRouteSnapshot,
-    CanDeactivate,
-    NavigationEnd,
-    Resolve,
-    Router,
-    RouterStateSnapshot
-} from '@angular/router'
-import PouchDB from 'pouchdb'
-import PouchDBFindPlugin from 'pouchdb-find'
-import PouchDBValidationPlugin from 'pouchdb-validation'
-import {Observable, Subject, Subscription} from 'rxjs'
-import {debounceTime, distinctUntilChanged, tap} from 'rxjs/operators'
-
+import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
+import {ActivatedRoute, NavigationEnd, Router} from '@angular/router'
+import {Subject, Subscription} from 'rxjs'
+import {debounceTime, distinctUntilChanged} from 'rxjs/operators'
 /*
     NOTE: Default import is not yet support for angular's ahead of time
     compiler.
 */
 import {
-    CODE_MIRROR_DEFAULT_OPTIONS, Module as CodeEditorModule
+    AbstractValueAccessor,
+    CODE_MIRROR_DEFAULT_OPTIONS,
+    Module as CodeEditorModule
 } from './editor'
 import {
     // region wrapped
@@ -244,136 +198,14 @@ import {
     isAndroid,
     LAST_KNOWN_DATA,
     OfflineState,
+    Stream,
     RegisterHTTPRequestInterceptor,
     UtilityService
 } from './service'
 // endregion
-// region types
-export type AllowedRoles = string|Array<string>|{
-    read:string|Array<string>;
-    write:string|Array<string>;
-}
-export type Constraint = {
-    description?:string;
-    evaluation:string;
-}
-export type MetaData = {
-    submitted:boolean
-}
-export type Property = {
-    allowedRoles?:AllowedRoles;
-    constraintExecution?:Constraint;
-    constraintExpression?:Constraint;
-    contentTypeRegularExpressionPattern?:string;
-    default?:any;
-    emptyEqualsToNull?:boolean;
-    index?:boolean;
-    invertedContentTypeRegularExpressionPattern?:string;
-    invertedRegularExpressionPattern?:string;
-    maximum?:number;
-    minimum?:number;
-    maximumLength?:number;
-    minimumLength?:number;
-    maximumNumber?:number;
-    minimumNumber?:number;
-    maximumSize?:number;
-    minimumSize?:number;
-    mutable?:boolean;
-    nullable?:boolean;
-    onCreateExecution?:string;
-    onCreateExpression?:string;
-    oldName?:string;
-    onUpdateExecution?:string;
-    onUpdateExpression?:string;
-    regularExpressionPattern?:string;
-    selection?:Array<any>;
-    trim?:boolean;
-    type?:any;
-    value?:any;
-    writable?:boolean;
-}
-export type Model = {
-    _allowedRoles?:AllowedRoles;
-    _extends?:Array<string>;
-    _constraintExpressions?:Array<Constraint>;
-    _constraintExecutions?:Array<Constraint>;
-    _maximumAggregatedSize?:number;
-    _minimumAggregatedSize?:number;
-    // NOTE: ":Property;" break type checks.
-    [key:string]:any;
-}
-export type SpecialPropertyNames = {
-    additional:string;
-    allowedRole:string;
-    attachment:string;
-    conflict:string;
-    constraint:{
-        execution:string;
-        expression:string;
-    };
-    create:{
-        execution:string;
-        expression:string;
-    };
-    deleted:string;
-    deletedConflict:string;
-    extend:string;
-    id:string;
-    localSequence:string;
-    maximumAggregatedSize:string;
-    minimumAggregatedSize:string;
-    oldType:string;
-    revision:string;
-    revisions:string;
-    revisionsInformation:string;
-    strategy:string;
-    type:string;
-    update:{
-        execution:string;
-        expression:string;
-    };
-}
-export type ModelConfiguration = {
-    entities:PlainObject;
-    property:{
-        defaultSpecification:{
-            minimum:number;
-            minimumLength:number;
-            minimumNumber:number;
-        };
-        name:{
-            reserved:Array<string>;
-            special:SpecialPropertyNames;
-            typeRegularExpressionPattern:{
-                private:string;
-                public:string;
-            };
-            validatedDocumentsCache:string;
-        }
-    }
-}
-export type Configuration = {database:{
-    connector:{
-        auto_compaction:boolean;
-        revs_limit:number;
-    },
-    createGenericFlatIndex:boolean;
-    model:ModelConfiguration,
-    plugins:Array<Object>;
-    url:string;
-}}
-export type Stream = {
-    cancel:Function;
-    on:Function;
-}
-// endregion
 if (typeof CHANGE_DETECTION_STRATEGY_NAME === 'undefined')
     /* eslint-disable no-var */
     var CHANGE_DETECTION_STRATEGY_NAME:string = 'Default'
-    /* eslint-enable no-var */
-if (typeof require === 'undefined')
-    /* eslint-disable no-var */
-    var require:Function = Tools.noop
     /* eslint-enable no-var */
 if (typeof UTC_BUILD_TIMESTAMP === 'undefined')
     /* eslint-disable no-var */
@@ -1180,123 +1012,6 @@ export class AbstractOfflineApplicationComponent {
         this.offlineState.changeCallbacks.push(onOfflineStateChange)
         for (const event of this.offlineState.events)
             onOfflineStateChange(...event)
-    }
-}
-/**
- * Generic value accessor with "ngModel" support.
- * @property composing - Indicates whether the user is creating a composition
- * string (IME events).
- * @property compositionMode - Indicates whether composition is active.
- * @property elementReference - Current dom node to handle input for.
- * @property onChangeCallback - Saves current on change callback.
- * @property onTouchedCallback - Saves current on touch callback.
- * @property renderer - Rendering abstraction layer.
- * @property type - Saves current input type.
- */
-export class AbstractValueAccessor implements ControlValueAccessor {
-    composing:boolean = false
-    compositionMode:boolean = false
-    elementReference:ElementRef
-    onChangeCallback:(value:any) => void = UtilityService.tools.noop
-    onTouchedCallback:() => void = UtilityService.tools.noop
-    renderer:Renderer
-    @Input() type:string|null = null
-    /**
-     * Initializes and forwards needed services to the default value accessor
-     * constructor.
-     * @param injector - Application specific injector to use instead auto
-     * detected one.
-     * @returns Nothing.
-     */
-    constructor(injector:Injector) {
-        this.renderer = injector.get(Renderer)
-        this.elementReference = injector.get(ElementRef)
-        /*
-         * NOTE: "No provider for InjectionToken CompositionEventMode"
-         * triggered  if this IME compatible code is activated:
-         * "this.compositionMode = injector.get(COMPOSITION_BUFFER_MODE)"
-         */
-        this.compositionMode = null
-        if ([null, undefined].includes(this.compositionMode))
-            this.compositionMode = !isAndroid()
-    }
-    /**
-     * Indicates the end of composition.
-     * @param value - Current value.
-     * @returns Nothing.
-     */
-    compositionEnd(value:any):void {
-        this.composing = false
-        if (this.compositionMode)
-            this.onChangeCallback(value)
-    }
-    /**
-     * Indicates compositions start event.
-     */
-    compositionStart():void {
-        this.composing = true
-    }
-    /**
-     * Manipulates editable value representation.
-     * @param value - Value to manipulate.
-     * @returns Given and transformed value.
-     */
-    export(value:any):any {
-        return value
-    }
-    /**
-     * This method is triggered on each input.
-     * @param value - Changed value.
-     * @returns Nothing.
-     */
-    handleInput(value:any):void {
-        if (!this.compositionMode || this.compositionMode && !this.composing)
-            this.onChangeCallback(value)
-    }
-    /**
-     * Reads internal value representation.
-     * @param value - Value to convert to its internal representation.
-     * @returns Given and transformed value.
-     */
-    import(value:any):any {
-        return value
-    }
-    /**
-     * Needed implementation for an angular control value accessor.
-     * @param callback - Callback function to register.
-     * @returns What inherited method returns.
-     */
-    registerOnChange(callback:(...parameter:Array<any>) => void):void {
-        this.onChangeCallback = (value:any):void => callback(this.import(
-            value))
-    }
-    /**
-     * Needed implementation for an angular control value accessor.
-     * @param callback - Callback function to register.
-     * @returns What inherited method returns.
-     */
-    registerOnTouched(callback:() => void):void {
-        this.onTouchedCallback = callback
-    }
-    /**
-     * Renders the disabled state into view.
-     * @param isDisabled - Represents the state itself.
-     * @returns Nothing.
-     */
-    setDisabledState(isDisabled:boolean):void {
-        this.renderer.setProperty(
-            this.elementReference.nativeElement, 'disabled', isDisabled)
-    }
-    /**
-     * Overridden inherited function for value export.
-     * @param value - Value to export.
-     * @returns The transformed give value.
-     */
-    writeValue(value:any):void {
-        value = this.export(value)
-        this.renderer.setProperty(
-            this.elementReference.nativeElement, 'value',
-            [null, undefined].includes(value) ? '' : value)
     }
 }
 // / endregion
