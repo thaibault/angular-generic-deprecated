@@ -22,28 +22,46 @@ import {AnimationTriggerMetadata} from '@angular/animations'
 import {
     AfterViewInit,
     Component,
+    Directive,
     ElementRef,
     EventEmitter,
     forwardRef,
     Injector,
     Input,
     NgModule,
+    OnInit,
+    Optional,
     Renderer2 as Renderer,
     OnDestroy,
     Output,
     ViewChild
 } from '@angular/core'
 import {createCustomElement} from '@angular/elements'
-import {ControlValueAccessor, NG_VALUE_ACCESSOR} from '@angular/forms'
+import {
+    ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR
+} from '@angular/forms'
+import {TextFieldModule} from '@angular/cdk/text-field'
+import {MatSelectModule} from '@angular/material/select'
+import {MatTooltipModule} from '@angular/material/tooltip'
 import {ɵgetDOM as getDOM, BrowserModule} from '@angular/platform-browser'
 
 /*
     NOTE: Default import is not yet support for angular's ahead of time
     compiler.
 */
-import {ExtendPipe} from './pipe'
 import {
-    animations, determineInjector, isAndroid, UtilityService
+    AttachmentWithPrefixExistsPipe,
+    ExtendPipe,
+    GetFilenameByPrefixPipe,
+    Module as PipeModule,
+    NumberGetUTCTimestampPipe
+} from './pipe'
+import {
+    animations,
+    determineInjector,
+    InitialDataService,
+    isAndroid,
+    UtilityService
 } from './service'
 // endregion
 // region configuration
@@ -229,6 +247,218 @@ export class AbstractValueAccessor implements ControlValueAccessor {
     }
 }
 /**
+ * Generic input component.
+ * @property declaration - Declaration info text.
+ * @property description - Description to use instead of those coming from
+ * model specification.
+ * @property disabled - Sets disabled state.
+ * @property maximum - Maximum allowed number value.
+ * @property maximumLength - Maximum allowed number of symbols.
+ * @property maximumLengthText - Maximum length validation text.
+ * @property maximumText - Maximum number validation text.
+ * @property minimum - Minimum allowed number.
+ * @property minimumLength - Minimum allowed number of symbols.
+ * @property minimumLengthText - Minimum number validation text.
+ * @property minimumText - Minimum number validation text.
+ * @property model - Holds model informations including actual value and
+ * metadata.
+ * @property modelChange - Model event emitter emitting events on each model
+ * change.
+ * @property pattern - Allowed pattern to match against given input.
+ * @property patternText - Pattern validation text.
+ * @property required - Indicates whether this inputs have to be filled.
+ * @property requiredText - Required validation text.
+ * @property showDeclarationText - Info text to click for more informations.
+ * @property showValidationErrorMessages - Indicates whether validation errors
+ * should be suppressed or be shown automatically. Useful to prevent error
+ * component from showing error messages before the user has submit the form.
+ * @property type - Type of given input.
+ */
+export class AbstractInputComponent {
+    @Input() declaration:string|null = null
+    @Input() description:string|null = null
+    @Input() disabled:boolean|null = null
+    @Input() maximum:number|null = null
+    @Input() maximumLength:number|null = null
+    @Input() maximumLengthText:string =
+        'Please type less or equal than ${maximumLength} symbols.'
+    @Input() maximumText:string =
+        'Please give a number less or equal than ${maximum}.'
+    @Input() minimum:number|null = null
+    @Input() minimumLength:number|null = null
+    @Input() minimumLengthText:string =
+        'Please type at least or equal ${minimumLength} symbols.'
+    @Input() minimumText:string =
+        'Please given a number at least or equal to ${minimum}.'
+    @Input() model:PlainObject = {}
+    @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
+    @Input() pattern:string
+    @Input() patternText:string =
+        'Your string have to match the regular expression: "' +
+        '${regularExpressionPattern}".'
+    @Input() required:boolean|null = null
+    @Input() requiredText:string = 'Please fill this field.'
+    @Input() showDeclarationText:string = 'ℹ'
+    @Input() showValidationErrorMessages:boolean = false
+    @Input() type:string
+}
+/**
+ * Generic input component.
+ * @property _attachmentWithPrefixExists - Holds the attachment by prefix
+ * checker pipe instance
+ * @property _extend - Holds the extend object's pipe transformation method.
+ * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
+ * transformation method.
+ * @property _modelConfiguration - All model configurations.
+ * @property _numberGetUTCTimestamp - Date (and time) to unix timstamp
+ * converter pipe transform method.
+ */
+export class AbstractNativeInputComponent extends AbstractInputComponent
+    implements OnInit {
+    _attachmentWithPrefixExists:Function
+    _extend:Function
+    _getFilenameByPrefix:Function
+    _modelConfiguration:PlainObject
+    _numberGetUTCTimestamp:Function
+    /**
+     * Sets needed services as property values.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
+     * @returns Nothing.
+     */
+    constructor(@Optional() injector:Injector) {
+        super()
+        const get:Function = determineInjector(
+            injector, this, this.constructor)
+        this._attachmentWithPrefixExists = get(
+            AttachmentWithPrefixExistsPipe
+        ).transform.bind(get(AttachmentWithPrefixExistsPipe))
+        this._extend = get(ExtendPipe).transform.bind(get(ExtendPipe))
+        this._getFilenameByPrefix = get(
+            GetFilenameByPrefixPipe
+        ).transform.bind(get(GetFilenameByPrefixPipe))
+        this._modelConfiguration =
+            get(InitialDataService).configuration.database.model
+        this._numberGetUTCTimestamp = get(
+            NumberGetUTCTimestampPipe
+        ).transform.bind(get(NumberGetUTCTimestampPipe))
+    }
+    /**
+     * Triggers after input values have been resolved.
+     * @returns Nothing.
+     */
+    ngOnInit():void {
+        this._extend(this.model, this._extend(
+            {
+                disabled: false,
+                emptyEqualsToNull: true,
+                maximum: Infinity,
+                minimum: 0,
+                maximumLength: Infinity,
+                minimumLength: 0,
+                nullable: true,
+                regularExpressionPattern: '.*',
+                state: {},
+                trim: true,
+                type: 'string'
+            },
+            this.model
+        ))
+        if (typeof this.model.value === 'string' && this.model.trim)
+            this.model.value === this.model.value.trim()
+        for (const hookType of ['onUpdateExpression', 'onUpdateExecution'])
+            if (
+                this.model.hasOwnProperty(hookType) &&
+                this.model[hookType] &&
+                typeof this.model[hookType] !== 'function'
+            )
+                this.model[hookType] = new Function(
+                    'attachmentWithPrefixExists',
+                    'getFilenameByPrefix',
+                    'idName',
+                    'model',
+                    'modelConfiguration',
+                    'modelName',
+                    'models',
+                    'name',
+                    'newDocument',
+                    'now',
+                    'nowUTCTimestamp',
+                    'oldDocument',
+                    'propertySpecification',
+                    'revisionName',
+                    'securitySettings',
+                    'serialize',
+                    'specialNames',
+                    'typeName',
+                    'userContext',
+                    (hookType.endsWith('Expression') ? 'return ' : '') +
+                        this.model[hookType]
+                )
+    }
+    /**
+     * Triggers when ever a change to current model happens inside this
+     * component.
+     * @param newValue - Value to use to update model with.
+     * @param state - Saves the current model state.
+     * @returns Nothing.
+     */
+    onChange(newValue:any, state:Object):any {
+        const types:Array<string> = [].concat(this.model.type)
+        if (
+            types.includes('integer') &&
+            !types.includes('number') &&
+            !types.includes('string')
+        )
+            newValue = parseInt(newValue)
+        else if (types.includes('number') && !types.includes('string'))
+            newValue = parseFloat(newValue)
+        else if (typeof newValue === 'string' && this.model.trim)
+            newValue = newValue.trim()
+        const now:Date = new Date()
+        const nowUTCTimestamp:number = this._numberGetUTCTimestamp(now)
+        const newData:PlainObject = {[this.model.name]: newValue}
+        for (const hookType of ['onUpdateExpression', 'onUpdateExecution'])
+            if (
+                this.model.hasOwnProperty(hookType) &&
+                this.model[hookType] &&
+                typeof this.model[hookType] === 'function'
+            ) {
+                newValue = this.model[hookType](
+                    this._attachmentWithPrefixExists.bind(newData, newData),
+                    this._getFilenameByPrefix,
+                    this._modelConfiguration.property.name.special.id,
+                    {generic: {[this.model.name]: this.model}},
+                    this._modelConfiguration,
+                    'generic',
+                    this._modelConfiguration.entities,
+                    this.model.name,
+                    newData,
+                    now,
+                    nowUTCTimestamp,
+                    null,
+                    this.model,
+                    this._modelConfiguration.property.name.special.revision,
+                    {},
+                    (object:Object):string => JSON.stringify(object, null, 4),
+                    this._modelConfiguration.property.name.special,
+                    this._modelConfiguration.property.name.special.type,
+                    {},
+                    newValue
+                )
+                if (
+                    !(newValue instanceof Date) &&
+                    types.includes('DateTime') &&
+                    !types.includes('float') &&
+                    !types.includes('integer')
+                )
+                    newValue *= 1000
+            }
+        this.model.state = state
+        return newValue
+    }
+}
+/**
  * Provides a generic editor.
  * @property static:applicationInterfaceLoad - Promise which resolves when
  * specific editor factories are fully loaded.
@@ -325,6 +555,107 @@ export class AbstractEditorComponent extends AbstractValueAccessor
 }
 // endregion
 // region components/directives
+const providers:Array<PlainObject> = [{
+    provide: NG_VALUE_ACCESSOR,
+    useExisting: forwardRef(
+        ():typeof DateTimeValueAccessor => DateTimeValueAccessor),
+    multi: true
+}]
+/*
+    NOTE: This core update resistent version is not compatible with angular's
+    ahead of time compilation.
+
+@Directive(UtilityService.tools.extend(
+    true,
+    {},
+    DefaultValueAccessor.decorators[0].args[0],
+    {providers}
+))
+*/
+@Directive({
+    // TODO: vsavkin replace the above selector with the one below it once
+    // https://github.com/angular/angular/issues/3011 is implemented
+    // selector: '[ngModel],[formControl],[formControlName]',
+    host: {
+        '(compositionend)': '$any(this).compositionEnd($event.target.value)',
+        '(compositionstart)': '$any(this).compositionStart()',
+        '(blur)': 'onTouchedCallback()',
+        '(input)': '$any(this).handleInput($event.target.value)'
+    },
+    providers,
+    selector: `
+        input:not([type=checkbox])[formControlName],
+        input:not([type=checkbox])[formControl],
+        input:not([type=checkbox])[ngModel]
+    `
+})
+/**
+ * Time value accessor with "ngModel" support.
+ */
+export class DateTimeValueAccessor extends AbstractValueAccessor {
+    /**
+     * Delegates injected injector service instance to the super constructor.
+     * @param injector - Injected injector service instance.
+     * @returns Nothing.
+     */
+    constructor(injector:Injector) {
+        super(injector)
+    }
+    /**
+     * Manipulates editable value representation.
+     * @param value - Value to manipulate.
+     * @returns Given and transformed value.
+     */
+    export(value:any):any {
+        if (
+            ![undefined, null].includes(value) &&
+            ['date', 'time'].includes(this.type)
+        ) {
+            const date:Date = new Date(value)
+            if (isNaN(date.getDate()))
+                return
+            else if (this.type === 'time') {
+                let hours:string = `${date.getHours()}`
+                if (hours.length === 1)
+                    hours = `0${hours}`
+                let minutes:string = `${date.getMinutes()}`
+                if (minutes.length === 1)
+                    minutes = `0${minutes}`
+                return `${hours}:${minutes}`
+            } else if (this.type === 'date') {
+                let month:string = `${date.getMonth() + 1}`
+                if (month.length === 1)
+                    month = `0${month}`
+                let day:string = `${date.getDate()}`
+                if (day.length === 1)
+                    day = `0${day}`
+                return `${date.getFullYear()}-${month}-${day}`
+            }
+        }
+        return value
+    }
+    /**
+     * Reads internal value representation.
+     * @param value - Value to convert to its internal representation.
+     * @returns Given and transformed value.
+     */
+    import(value:any):any {
+        if (typeof value === 'string')
+            if (this.type === 'time') {
+                const match = /^([0-9]{2}):([0-9]{2})$/.exec(value)
+                if (match)
+                    return new Date(
+                        1970, 0, 1, parseInt(match[1]), parseInt(match[2]))
+            } else if (this.type === 'date') {
+                const match = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(value)
+                if (match)
+                    return new Date(
+                        parseInt(match[1]), parseInt(match[2]) - 1,
+                        parseInt(match[3]))
+            }
+        return value
+    }
+}
 @Component({
     animations,
     // TODO: vsavkin replace the above selector with the one below it once
@@ -1040,11 +1371,16 @@ export class TextareaComponent extends AbstractNativeInputComponent
 // region module
 @NgModule({
     declarations: [
+        // region accessors
+        DateTimeValueAccessor,
+        // endregion
+        // region components
         CodeEditorComponent,
         InputComponent,
         SimpleInputComponent,
         TextareaComponent,
         TextEditorComponent
+        // endregion
     ],
     /* TODO needed for web component export
     entryComponents: [
@@ -1062,9 +1398,16 @@ export class TextareaComponent extends AbstractNativeInputComponent
         TextareaComponent,
         TextEditorComponent
     ],
-    imports: [BrowserModule.withServerTransition({
-        appId: 'generic-editor-universal'
-    })]
+    imports: [
+        BrowserModule.withServerTransition({
+            appId: 'generic-editor-universal'
+        }),
+        FormsModule,
+        MatSelectModule,
+        MatTooltipModule,
+        PipeModule,
+        TextFieldModule
+    ]
 })
 /**
  * Represents the importable angular module.

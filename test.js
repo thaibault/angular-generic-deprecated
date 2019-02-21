@@ -58,7 +58,16 @@ registerAngularTest(function(
     const {ActivatedRoute, Router} = require('@angular/router')
     const {createDefaultAnimation, createFadeAnimation} = require(
         './animation')
-    const index:Object = require('./index')
+    const Module:Object = require('./index').default
+    const {
+        AbstractItemsComponent,
+        AbstractNativeInputComponent,
+        FileInputComponent,
+        InputComponent,
+        PaginationComponent,
+        SimpleInputComponent,
+        TextareaComponent
+    } = require('./component')
     const {
         ActivatedRouteStub,
         ComponentWithChildViewContainer,
@@ -106,16 +115,6 @@ registerAngularTest(function(
         InitialDataService,
         UtilityService
     } = require('./service')
-    const {
-        AbstractItemsComponent,
-        AbstractNativeInputComponent,
-        FileInputComponent,
-        InputComponent,
-        PaginationComponent,
-        SimpleInputComponent,
-        TextareaComponent
-    } = index
-    const Module:Object = index.default
     AbstractResolver.skipResolving = false
     DataService.skipGenericIndexManagementOnServer = false
     DataService.skipRemoteConnectionOnBrowser = true

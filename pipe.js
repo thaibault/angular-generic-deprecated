@@ -18,8 +18,10 @@
 */
 // region imports
 import Tools, {PlainObject} from 'clientnode'
-import {Injector, NgZone, Pipe, PipeTransform} from '@angular/core'
+import {DatePipe} from '@angular/common'
+import {Injector, NgModule, NgZone, Pipe, PipeTransform} from '@angular/core'
 import {
+    BrowserModule,
     DomSanitizer,
     SafeScript,
     SafeHtml,
@@ -1973,6 +1975,334 @@ export class NumberPercentPipe implements PipeTransform {
         return (part / all) * 100
     }
 }
+// endregion
+// region module
+@NgModule({
+    /*
+        NOTE: Running "moduleHelper.determineDeclarations()" is not yet
+        supported by the AOT-Compiler.
+    */
+    declarations: [
+        // region wrapped
+        // / region object
+        ConvertCircularObjectToJSONPipe,
+        EqualsPipe,
+        ExtendPipe,
+        RepresentObjectPipe,
+        SortPipe,
+        // / endregion
+        // / region array
+        ArrayAggregatePropertyIfEqualPipe,
+        ArrayDeleteEmptyItemsPipe,
+        ArrayExtractPipe,
+        ArrayExtractIfMatchesPipe,
+        ArrayExtractIfPropertyExistsPipe,
+        ArrayExtractIfPropertyMatchesPipe,
+        ArrayIntersectPipe,
+        ArrayMakeRangePipe,
+        ArrayMergePipe,
+        ArrayMakePipe,
+        ArrayPermutatePipe,
+        ArrayPermutateLengthPipe,
+        ArrayUniquePipe,
+        ArraySumUpPropertyPipe,
+        ArrayAppendAddPipe,
+        ArrayRemovePipe,
+        ArraySortTopologicalPipe,
+        // / endregion
+        // / region string
+        StringEscapeRegularExpressionsPipe,
+        StringConvertToValidVariableNamePipe,
+        StringEncodeURIComponentPipe,
+        StringAddSeparatorToPathPipe,
+        StringHasPathPrefixPipe,
+        StringGetDomainNamePipe,
+        StringGetPortNumberPipe,
+        StringGetProtocolNamePipe,
+        StringGetURLVariablePipe,
+        StringIsInternalURLPipe,
+        StringNormalizeURLPipe,
+        StringRepresentURLPipe,
+        StringCompressStyleValuePipe,
+        StringCamelCaseToDelimitedPipe,
+        StringCapitalizePipe,
+        StringDelimitedToCamelCasePipe,
+        StringFormatPipe,
+        StringGetEditDistancePipe,
+        StringGetRegularExpressionValidatedPipe,
+        StringLowerCasePipe,
+        StringFindNormalizedMatchRangePipe,
+        StringMarkPipe,
+        StringMD5Pipe,
+        StringNormalizePhoneNumberPipe,
+        StringParseEncodedObjectPipe,
+        StringRepresentPhoneNumberPipe,
+        StringDecodeHTMLEntitiesPipe,
+        StringNormalizeDomNodeSelectorPipe,
+        // / endregion
+        // / region number
+        NumberGetUTCTimestampPipe,
+        NumberIsNotANumberPipe,
+        NumberRoundPipe,
+        // / endregion
+        // endregion
+        // region object
+        AttachmentsAreEqualPipe,
+        GetFilenameByPrefixPipe,
+        GetSubstructurePipe,
+        AttachmentWithPrefixExistsPipe,
+        ExtractDataPipe,
+        ExtractRawDataPipe,
+        IsArrayPipe,
+        IsDefinedPipe,
+        LimitToPipe,
+        MapPipe,
+        ObjectKeysPipe,
+        ObjectValuesPipe,
+        ReversePipe,
+        TypePipe,
+        // endregion
+        // region array
+        ArrayDependentConcatPipe,
+        // endregion
+        // region string
+        StringEndsWithPipe,
+        StringHasTimeSuffixPipe,
+        StringMatchPipe,
+        StringMaximumLengthPipe,
+        StringReplacePipe,
+        StringSafeHTMLPipe,
+        StringSafeResourceURLPipe,
+        StringSafeScriptPipe,
+        StringSafeStylePipe,
+        StringSafeURLPipe,
+        StringShowIfPatternMatchesPipe,
+        StringSliceMatchPipe,
+        StringStartsWithPipe,
+        StringTemplatePipe,
+        // endregion
+        // region number
+        NumberPercentPipe
+        // endregion
+    ],
+    /*
+        NOTE: Running "moduleHelper.determineExports()" is not yet supported by
+        the AOT-Compiler.
+    */
+    exports: [
+        // region wrapped
+        // / region object
+        ConvertCircularObjectToJSONPipe,
+        EqualsPipe,
+        ExtendPipe,
+        RepresentObjectPipe,
+        SortPipe,
+        // / endregion
+        // / region array
+        ArrayMergePipe,
+        ArrayMakePipe,
+        ArrayUniquePipe,
+        ArrayAggregatePropertyIfEqualPipe,
+        ArrayDeleteEmptyItemsPipe,
+        ArrayExtractPipe,
+        ArrayExtractIfMatchesPipe,
+        ArrayExtractIfPropertyExistsPipe,
+        ArrayExtractIfPropertyMatchesPipe,
+        ArrayIntersectPipe,
+        ArrayMakeRangePipe,
+        ArraySumUpPropertyPipe,
+        ArrayAppendAddPipe,
+        ArrayRemovePipe,
+        ArraySortTopologicalPipe,
+        // / endregion
+        // / region string
+        StringEscapeRegularExpressionsPipe,
+        StringConvertToValidVariableNamePipe,
+        StringEncodeURIComponentPipe,
+        StringAddSeparatorToPathPipe,
+        StringHasPathPrefixPipe,
+        StringGetDomainNamePipe,
+        StringGetPortNumberPipe,
+        StringGetProtocolNamePipe,
+        StringGetURLVariablePipe,
+        StringIsInternalURLPipe,
+        StringNormalizeURLPipe,
+        StringRepresentURLPipe,
+        StringCompressStyleValuePipe,
+        StringCamelCaseToDelimitedPipe,
+        StringCapitalizePipe,
+        StringDelimitedToCamelCasePipe,
+        StringFormatPipe,
+        StringGetRegularExpressionValidatedPipe,
+        StringLowerCasePipe,
+        StringFindNormalizedMatchRangePipe,
+        StringMarkPipe,
+        StringMD5Pipe,
+        StringNormalizePhoneNumberPipe,
+        StringParseEncodedObjectPipe,
+        StringRepresentPhoneNumberPipe,
+        StringDecodeHTMLEntitiesPipe,
+        StringNormalizeDomNodeSelectorPipe,
+        // / endregion
+        // / region number
+        NumberGetUTCTimestampPipe,
+        NumberIsNotANumberPipe,
+        NumberRoundPipe,
+        // / endregion
+        // endregion
+        // region object
+        AttachmentsAreEqualPipe,
+        GetFilenameByPrefixPipe,
+        GetSubstructurePipe,
+        AttachmentWithPrefixExistsPipe,
+        ExtractDataPipe,
+        ExtractRawDataPipe,
+        IsArrayPipe,
+        IsDefinedPipe,
+        LimitToPipe,
+        MapPipe,
+        ObjectKeysPipe,
+        ObjectValuesPipe,
+        ReversePipe,
+        TypePipe,
+        // endregion
+        // region array
+        ArrayDependentConcatPipe,
+        // endregion
+        // region string
+        StringEndsWithPipe,
+        StringHasTimeSuffixPipe,
+        StringMatchPipe,
+        StringMaximumLengthPipe,
+        StringReplacePipe,
+        StringSafeHTMLPipe,
+        StringSafeResourceURLPipe,
+        StringSafeScriptPipe,
+        StringSafeStylePipe,
+        StringSafeURLPipe,
+        StringShowIfPatternMatchesPipe,
+        StringSliceMatchPipe,
+        StringStartsWithPipe,
+        StringTemplatePipe,
+        // endregion
+        // region number
+        NumberPercentPipe
+        // endregion
+    ],
+    imports: [
+        BrowserModule.withServerTransition({appId: 'generic-pipe-universal'})
+    ],
+    /*
+        NOTE: Running "moduleHelper.determineProviders()" is not yet supported
+        by the AOT-Compiler.
+    */
+    providers: [
+        // region wrapped
+        // / region object
+        ConvertCircularObjectToJSONPipe,
+        EqualsPipe,
+        ExtendPipe,
+        RepresentObjectPipe,
+        SortPipe,
+        // / endregion
+        // / region array
+        ArrayMergePipe,
+        ArrayMakePipe,
+        ArrayUniquePipe,
+        ArrayAggregatePropertyIfEqualPipe,
+        ArrayDeleteEmptyItemsPipe,
+        ArrayExtractPipe,
+        ArrayExtractIfMatchesPipe,
+        ArrayExtractIfPropertyExistsPipe,
+        ArrayExtractIfPropertyMatchesPipe,
+        ArrayIntersectPipe,
+        ArrayMakeRangePipe,
+        ArraySumUpPropertyPipe,
+        ArrayAppendAddPipe,
+        ArrayRemovePipe,
+        ArraySortTopologicalPipe,
+        // / endregion
+        // / region string
+        StringEscapeRegularExpressionsPipe,
+        StringConvertToValidVariableNamePipe,
+        StringEncodeURIComponentPipe,
+        StringAddSeparatorToPathPipe,
+        StringHasPathPrefixPipe,
+        StringGetDomainNamePipe,
+        StringGetPortNumberPipe,
+        StringGetProtocolNamePipe,
+        StringGetURLVariablePipe,
+        StringIsInternalURLPipe,
+        StringNormalizeURLPipe,
+        StringRepresentURLPipe,
+        StringCompressStyleValuePipe,
+        StringCamelCaseToDelimitedPipe,
+        StringCapitalizePipe,
+        StringDelimitedToCamelCasePipe,
+        StringFormatPipe,
+        StringGetRegularExpressionValidatedPipe,
+        StringLowerCasePipe,
+        StringFindNormalizedMatchRangePipe,
+        StringMarkPipe,
+        StringMD5Pipe,
+        StringNormalizePhoneNumberPipe,
+        StringParseEncodedObjectPipe,
+        StringRepresentPhoneNumberPipe,
+        StringDecodeHTMLEntitiesPipe,
+        StringNormalizeDomNodeSelectorPipe,
+        // / endregion
+        // / region number
+        NumberGetUTCTimestampPipe,
+        NumberIsNotANumberPipe,
+        NumberRoundPipe,
+        // / endregion
+        // endregion
+        // region object
+        AttachmentsAreEqualPipe,
+        GetFilenameByPrefixPipe,
+        GetSubstructurePipe,
+        AttachmentWithPrefixExistsPipe,
+        ExtractDataPipe,
+        ExtractRawDataPipe,
+        IsArrayPipe,
+        IsDefinedPipe,
+        LimitToPipe,
+        MapPipe,
+        ObjectKeysPipe,
+        ObjectValuesPipe,
+        ReversePipe,
+        TypePipe,
+        // endregion
+        // region array
+        ArrayDependentConcatPipe,
+        // endregion
+        // region string
+        StringEndsWithPipe,
+        StringHasTimeSuffixPipe,
+        StringMatchPipe,
+        StringMaximumLengthPipe,
+        StringReplacePipe,
+        StringSafeHTMLPipe,
+        StringSafeResourceURLPipe,
+        StringSafeScriptPipe,
+        StringSafeStylePipe,
+        StringSafeURLPipe,
+        StringShowIfPatternMatchesPipe,
+        StringSliceMatchPipe,
+        StringStartsWithPipe,
+        StringTemplatePipe,
+        // endregion
+        // region number
+        NumberPercentPipe,
+        // endregion
+        DatePipe
+    ]
+})
+/**
+ * Represents the importable angular module.
+ */
+export class Module {}
+export default Module
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

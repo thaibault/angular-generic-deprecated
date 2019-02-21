@@ -20,6 +20,7 @@
 import Tools, {$, DomNode, globalContext, PlainObject} from 'clientnode'
 import {AnimationTriggerMetadata} from '@angular/animations'
 import {
+    APP_INITIALIZER,
     ChangeDetectionStrategy,
     Component,
     EventEmitter,
@@ -29,6 +30,7 @@ import {
     /* eslint-enable no-unused-vars */
     Injector,
     Input,
+    NgModule,
     NgZone,
     /* eslint-disable no-unused-vars */
     Optional,
@@ -37,7 +39,7 @@ import {
 } from '@angular/core'
 import {isPlatformBrowser, isPlatformServer} from '@angular/common'
 import {
-    HttpInterceptor, HttpRequest, HttpHandler, HttpEvent
+    HttpInterceptor, HTTP_INTERCEPTORS, HttpRequest, HttpHandler, HttpEvent
 } from '@angular/common/http'
 import {
     /* eslint-disable no-unused-vars */
@@ -50,7 +52,7 @@ import {
 } from '@angular/material/dialog'
 import {MatSnackBar, MatSnackBarConfig} from '@angular/material/snack-bar'
 import {
-    DomSanitizer, ɵgetDOM as getDOM, SafeResourceUrl
+    BrowserModule, DomSanitizer, ɵgetDOM as getDOM, SafeResourceUrl
 } from '@angular/platform-browser'
 import {
     ActivatedRouteSnapshot, CanDeactivate, Resolve, RouterStateSnapshot
@@ -2405,6 +2407,55 @@ export function isAndroid():boolean {
         getDOM() ? getDOM().getUserAgent() : ''
     ).toLowerCase())
 }
+// endregion
+// region module
+@NgModule({
+    declarations: [ConfirmComponent],
+    entryComponents: [ConfirmComponent],
+    exports: [ConfirmComponent],
+    imports: [
+        BrowserModule.withServerTransition({
+            appId: 'generic-service-universal'
+        }),
+        MatDialogModule
+    ],
+    /*
+        NOTE: Running "moduleHelper.determineProviders()" is not yet supported
+        by the AOT-Compiler.
+    */
+    providers: [
+        // region services
+        AlertService,
+        DataScopeService,
+        DataService,
+        InitialDataService,
+        OfflineState,
+        UtilityService,
+        // / region guards
+        CanDeactivateRouteLeaveGuard,
+        // / endregion
+        // / region resolver
+        AbstractResolver,
+        // / endregion
+        // endregion
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: RegisterHTTPRequestInterceptor,
+            multi: true
+        },
+        {
+            deps: [DataService, InitialDataService, Injector],
+            multi: true,
+            provide: APP_INITIALIZER,
+            useFactory: dataServiceInitializerFactory
+        }
+    ]
+})
+/**
+ * Represents the importable angular module.
+ */
+export class Module {}
+export default Module
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
