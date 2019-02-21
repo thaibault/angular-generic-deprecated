@@ -178,6 +178,10 @@ registerAngularTest(function(
         total:number = 0
     }
     // endregion
+    console.log(
+        'A',
+        InitialDataService.defaultScope.configuration.database.model.property
+    )
     // region prepare services
     const specialNames:PlainObject =
         InitialDataService.defaultScope.configuration.database.model.property

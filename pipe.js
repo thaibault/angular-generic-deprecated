@@ -30,15 +30,12 @@ import {
     SafeUrl
 } from '@angular/platform-browser'
 import PouchDB from 'pouchdb'
-
 import {
-    DataService,
-    DataScopeService,
     InitialDataService,
     ModelConfiguration,
     SpecialPropertyNames,
     UtilityService
-} from './service'
+} from './basicService'
 // endregion
 // region wrapped
 /**
@@ -617,7 +614,8 @@ export class NumberRoundPipe extends AbstractToolsPipe
  * @property zone - Zone service instance.
  */
 export class AttachmentsAreEqualPipe implements PipeTransform {
-    data:DataService
+    // NOTE: Could not be referenced directly to avoid cyclic dependency.
+    data:any
     representObject:Function
     specialNames:PlainObject
     stringMD5:Function
@@ -638,6 +636,7 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
         representObjectPipe:RepresentObjectPipe,
         stringMD5Pipe:StringMD5Pipe
     ) {
+        const {DataService} = require('./service')
         this.data = injector.get(DataService)
         this.representObject = representObjectPipe.transform.bind(
             representObjectPipe)
@@ -958,7 +957,8 @@ export class ExtractDataPipe implements PipeTransform {
  */
 export class ExtractRawDataPipe implements PipeTransform {
     attachmentsAreEqual:Function
-    dataScope:DataScopeService
+    // NOTE: Could not be referenced directly to avoid cyclic dependency.
+    dataScope:any
     equals:Function
     modelConfiguration:ModelConfiguration
     numberGetUTCTimestamp:Function
@@ -986,6 +986,7 @@ export class ExtractRawDataPipe implements PipeTransform {
     ) {
         this.attachmentsAreEqual = attachmentsAreEqualPipe.transform.bind(
             attachmentsAreEqualPipe)
+        const {DataScopeService} = require('./service')
         this.dataScope = injector.get(DataScopeService)
         this.equals = equalsPipe.transform.bind(equalsPipe)
         this.modelConfiguration = initialData.configuration.database.model
