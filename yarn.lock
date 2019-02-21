@@ -2388,9 +2388,9 @@ cli-width@^2.0.0:
   integrity sha1-/xnt6Kml5XkyQUewwR8PvLq+1jk=
 
 clientnode@*:
-  version "3.0.224"
-  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.224.tgz#2987598ff7366e470e4090ae0e5e11c5199a7384"
-  integrity sha512-w6ViD+LS6Y83qoKl5Tw28lhnnG0eaQ71wiZZAEeGbcwaUwBrfrSHateVkyosmpIkMcE2CcUfZ3nLsCSMhmdHjg==
+  version "3.0.225"
+  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.225.tgz#4336f62a746ed8c4483e1010d97495911965ecd1"
+  integrity sha512-ekPTtlW0mqBayEqTMjHxDK7tZrfB5+LfYNGnfj3riMIIOqUiT6vPIrXjUhR66KDuNCndhgkMSCBS82eO9cfP3g==
   dependencies:
     colors "*"
 
@@ -4257,9 +4257,9 @@ home-or-tmp@^2.0.0:
     os-tmpdir "^1.0.1"
 
 homedir-polyfill@^1.0.1:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/homedir-polyfill/-/homedir-polyfill-1.0.2.tgz#0e59a09fcfcb387638f0832f5c27eb22da510fa7"
-  integrity sha512-A0cau1b1F7kmsKG3vHLi7DQ2d13k/BefUGRKRa8+sv7f1Vs+N28f0uv9nnWo3CNH50VsVdLcSKdxtztwn6K3Vg==
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/homedir-polyfill/-/homedir-polyfill-1.0.3.tgz#743298cef4e5af3e194161fbadcc2151d3a058e8"
+  integrity sha512-eSmmWE5bZTK2Nou4g0AI3zZ9rswp7GRKoKXS1BLUkvPviOqs4YTN1djQIqrXy9k5gEtdLPy86JjRwsNM9tnDcA==
   dependencies:
     parse-passwd "^1.0.0"
 
@@ -9118,9 +9118,9 @@ webidl-conversions@^4.0.2:
   integrity sha512-YQ+BmxuTgd6UXZW3+ICGfyqRyHXVlD5GtQr5+qjiNW7bF0cqrzX500HVXPBOvgXb5YnzDd+h0zqyv61KUD7+Sg==
 
 weboptimizer@*:
-  version "2.0.383"
-  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.383.tgz#6b94a72d88f04387c5a570123e852dfc1a76116e"
-  integrity sha512-dcPpq73sK08je6wFxN8sw5w2tlcfkwCcqfGXgY5SNbJi/VrUFDQ8PT4Kc7h23mhTG0Ow5OJiU1D0S5Iyagn91w==
+  version "2.0.385"
+  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.385.tgz#6eb7cb45ec26472fdf85c782aafc126faeec1e8d"
+  integrity sha512-77GMikr2wv6He0jyv7KYGEZZe/ngNOx2iHwfnmY9qPMtEKmHx9q5EY1bJ9ngJHo1hN/T33XRTKPI7JUVu5rsGw==
   dependencies:
     "@babel/core" "*"
     "@babel/plugin-proposal-class-properties" "*"

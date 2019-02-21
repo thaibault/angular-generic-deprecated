@@ -80,7 +80,7 @@ export function registerAngularTest(
                         domNodeName
                     ].attributes.hasOwnProperty(name))
                         domNode.setAttribute(
-                            ame,
+                            name,
                             domNodeSpecification[domNodeName].attributes[name]
                         )
                 domNodeSpecification[domNodeName].inject.appendChild(domNode)

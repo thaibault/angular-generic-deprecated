@@ -95,6 +95,7 @@ registerAngularTest(function(
         StringSliceMatchPipe,
         StringStartsWithPipe,
         StringTemplatePipe,
+        TypePipe,
         // endregion
         // region service
         AbstractResolver,
