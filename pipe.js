@@ -30,12 +30,7 @@ import {
     SafeUrl
 } from '@angular/platform-browser'
 import PouchDB from 'pouchdb'
-import {
-    InitialDataService,
-    ModelConfiguration,
-    SpecialPropertyNames,
-    UtilityService
-} from './basicService'
+import {InitialDataService, UtilityService} from './basicService'
 // endregion
 // region wrapped
 /**
@@ -960,9 +955,11 @@ export class ExtractRawDataPipe implements PipeTransform {
     // NOTE: Could not be referenced directly to avoid cyclic dependency.
     dataScope:any
     equals:Function
-    modelConfiguration:ModelConfiguration
+    // NOTE: Could not be referenced directly to avoid cyclic dependency.
+    modelConfiguration:any
     numberGetUTCTimestamp:Function
-    specialNames:SpecialPropertyNames
+    // NOTE: Could not be referenced directly to avoid cyclic dependency.
+    specialNames:any
     tools:Tools
     /**
      * Gets injected services.
