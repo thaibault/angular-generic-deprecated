@@ -21,8 +21,8 @@
     "animation.compiled.js",
     "animation.js",
     "babelBuildTest.json",
-    "basicService.compiled.js",
-    "basicService.js",
+    "baseService.compiled.js",
+    "baseService.js",
     "editor.compiled.js",
     "editor.js",
     "index.js",
@@ -181,8 +181,8 @@
         "animation": {
           "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './animation'"
         },
-        "basicService": {
-          "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './basicService'"
+        "baseService": {
+          "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './baseService'"
         },
         "component": {
           "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './component'"

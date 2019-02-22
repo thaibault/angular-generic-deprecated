@@ -16,7 +16,7 @@
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
-export * from './basicService'
+export * from './baseService'
 // region imports
 import Tools, {PlainObject} from 'clientnode'
 import {
@@ -86,7 +86,7 @@ import {
     LAST_KNOWN_DATA,
     Module as BasicServiceModule,
     UtilityService
-} from './basicService'
+} from './baseService'
 // endregion
 // region types
 export type AllowedRoles = string|Array<string>|{

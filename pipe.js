@@ -30,7 +30,7 @@ import {
     SafeUrl
 } from '@angular/platform-browser'
 import PouchDB from 'pouchdb'
-import {InitialDataService, UtilityService} from './basicService'
+import {InitialDataService, UtilityService} from './baseService'
 // endregion
 // region wrapped
 /**
