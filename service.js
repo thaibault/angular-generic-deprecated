@@ -74,6 +74,7 @@ import {
     ExtendPipe,
     ExtractDataPipe,
     GetFilenameByPrefixPipe,
+    Module as PipeModule,
     NumberGetUTCTimestampPipe,
     RepresentObjectPipe,
     StringEscapeRegularExpressionsPipe,
@@ -2182,7 +2183,8 @@ export function isAndroid():boolean {
         BrowserModule.withServerTransition({
             appId: 'generic-service-universal'
         }),
-        MatDialogModule
+        MatDialogModule,
+        PipeModule
     ],
     /*
         NOTE: Running "moduleHelper.determineProviders()" is not yet supported
