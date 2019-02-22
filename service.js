@@ -1851,34 +1851,6 @@ export class RegisterHTTPRequestInterceptor implements HttpInterceptor {
         return next.handle(request).pipe(tap(unregister, unregister))
     }
 }
-@Injectable()
-/**
- * Represents current global offline state. Saves buffered offline caching
- * events.
- * @property static:changeCallbacks - List of registered offline state change
- * callbacks.
- * @property static:events - List of triggered events.
- *
- * @property changeCallbacks - List of registered offline state change
- * callbacks.
- * @property events - List of triggered events.
- */
-export class OfflineState {
-    static changeCallbacks:Array<Function> = []
-    static events:Array<Array<any>> = []
-
-    changeCallbacks:Array<Function>
-    events:Array<Array<any>>
-    /**
-     * Sets static properties as instance properties to be compatible with
-     * angulars singleton dependency injection concept.
-     * @returns Nothing.
-     */
-    constructor() {
-        this.changeCallbacks = OfflineState.changeCallbacks
-        this.events = OfflineState.events
-    }
-}
 // / region abstract
 @Injectable()
 /**
@@ -2221,7 +2193,6 @@ export function isAndroid():boolean {
         AlertService,
         DataScopeService,
         DataService,
-        OfflineState,
         // / region guards
         CanDeactivateRouteLeaveGuard,
         // / endregion
