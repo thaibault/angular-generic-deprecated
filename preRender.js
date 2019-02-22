@@ -109,7 +109,7 @@ export function determinePaths(
 export function render(
     module:Object, givenOptions:PlainObject
 ):Promise<Array<string>> {
-    // region determine  options
+    // region determine options
     const options:{
         applicationDomNodeSelector?:string;
         basePath:string|null;
@@ -236,7 +236,8 @@ export function render(
         for (const name:string in renderScope.window)
             if (
                 renderScope.window.hasOwnProperty(name) &&
-                !globalContext.hasOwnProperty(name) && (
+                !globalContext.hasOwnProperty(name) &&
+                (
                     options.globalVariableNamesToInject.length === 0 ||
                     options.globalVariableNamesToInject.includes(name)
                 )

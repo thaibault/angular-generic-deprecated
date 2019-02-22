@@ -36,7 +36,6 @@ import {
     Output,
     ViewChild
 } from '@angular/core'
-import {createCustomElement} from '@angular/elements'
 import {
     ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
@@ -1415,6 +1414,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
 export class Module {
     /* TODO needed for web component export
     constructor(injector:Injector) {
+        const {createCustomElement} = require('@angular/elements')
         customElements.define(
             'generic-code-editor',
             createCustomElement(CodeEditorComponent, {injector})
