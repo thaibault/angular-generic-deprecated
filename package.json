@@ -23,6 +23,8 @@
     "babelBuildTest.json",
     "baseService.compiled.js",
     "baseService.js",
+    "component.compiled.js",
+    "component.js",
     "editor.compiled.js",
     "editor.js",
     "index.js",
