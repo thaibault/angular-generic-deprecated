@@ -39,7 +39,7 @@ import {Module as ServiceModule} from './service'
         PipeModule,
         ServiceModule
     ],
-    exports: [ComponentModule]
+    exports: [ComponentModule, PipeModule, ServiceModule]
 })
 /**
  * Represents the importable angular module.

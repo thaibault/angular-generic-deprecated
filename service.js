@@ -2176,7 +2176,7 @@ export function isAndroid():boolean {
 @NgModule({
     declarations: [ConfirmComponent],
     entryComponents: [ConfirmComponent],
-    exports: [ConfirmComponent],
+    exports: [BasicServiceModule, ConfirmComponent],
     imports: [
         BasicServiceModule,
         BrowserModule.withServerTransition({
