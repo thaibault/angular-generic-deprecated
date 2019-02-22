@@ -18,24 +18,26 @@
     "aheadOfTimeApplicationCompilation.json",
     "aheadOfTimeLibraryCompilation.compiled.json",
     "aheadOfTimePrerenderableModule.ts",
-    "animation.js",
     "animation.compiled.js",
+    "animation.js",
     "babelBuildTest.json",
-    "editor.js",
+    "basicService.compiled.js",
+    "basicService.js",
     "editor.compiled.js",
+    "editor.js",
     "index.js",
-    "mockup.js",
     "mockup.compiled.js",
-    "moduleHelper.js",
+    "mockup.js",
     "moduleHelper.compiled.js",
-    "pipe.js",
+    "moduleHelper.js",
     "pipe.compiled.js",
-    "preRender.js",
+    "pipe.js",
     "preRender.compiled.js",
-    "service.js",
+    "preRender.js",
     "service.compiled.js",
-    "testRunner.js",
-    "testRunner.compiled.js"
+    "service.js",
+    "testRunner.compiled.js",
+    "testRunner.js"
   ],
   "main": "index.compiled.js",
   "main:aheadOfTimeCompiled": "aheadOfTime.compiled/index.js",
@@ -178,6 +180,9 @@
       "internal": {
         "animation": {
           "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './animation'"
+        },
+        "basicService": {
+          "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './basicService'"
         },
         "component": {
           "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './component'"

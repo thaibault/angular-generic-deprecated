@@ -19,7 +19,8 @@
 // region imports
 import Tools, {$, DomNode, globalContext, PlainObject} from 'clientnode'
 import {AnimationTriggerMetadata} from '@angular/animations'
-import {Injectable, Injector} from '@angular/core'
+import {Injectable, Injector, NgModule} from '@angular/core'
+import {BrowserModule} from '@angular/platform-browser'
 
 /*
     NOTE: Default import is not yet support for angular's ahead of time
@@ -241,6 +242,21 @@ export const determineInjector:Function = (
     throw new Error(
         'No unambiguously injector could be determined automatically.')
 }
+// endregion
+// region module
+@NgModule({
+    imports: [
+        BrowserModule.withServerTransition({
+            appId: 'generic-basic-service-universal'
+        })
+    ],
+    providers: [InitialDataService, UtilityService]
+})
+/**
+ * Represents the importable angular module.
+ */
+export class Module {}
+export default Module
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

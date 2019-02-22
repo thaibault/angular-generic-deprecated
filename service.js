@@ -84,6 +84,7 @@ import {
     determineInjector,
     InitialDataService,
     LAST_KNOWN_DATA,
+    Module as BasicServiceModule,
     UtilityService
 } from './basicService'
 // endregion
@@ -2205,6 +2206,7 @@ export function isAndroid():boolean {
     entryComponents: [ConfirmComponent],
     exports: [ConfirmComponent],
     imports: [
+        BasicServiceModule,
         BrowserModule.withServerTransition({
             appId: 'generic-service-universal'
         }),
@@ -2219,9 +2221,7 @@ export function isAndroid():boolean {
         AlertService,
         DataScopeService,
         DataService,
-        InitialDataService,
         OfflineState,
-        UtilityService,
         // / region guards
         CanDeactivateRouteLeaveGuard,
         // / endregion
