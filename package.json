@@ -168,14 +168,24 @@
       }
     },
     "injection": {
+      "chunks": {
+      },
       "external": {
         "implicit": {
           "pattern": {
             "exclude": {
               "__append__": {
                 "__evaluate__": "/^clientnode\\/test(?:\\.compiled)?(?:\\.js)?$/"
+              },
+              "#": "Remove default configuration to in-place local modules.",
+              "__remove__": "__0__"
+            },
+            "include": [
+              "#: Do not in-place local modules.",
+              {
+                "__evaluate__": "/^\\./"
               }
-            }
+            ]
           }
         }
       },
