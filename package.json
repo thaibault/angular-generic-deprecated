@@ -20,7 +20,6 @@
     "aheadOfTimePrerenderableModule.ts",
     "animation.compiled.js",
     "animation.js",
-    "babelBuildTest.json",
     "baseService.compiled.js",
     "baseService.js",
     "component.compiled.js",
@@ -49,13 +48,12 @@
     "url": "https://github.com/thaibault/angularGeneric"
   },
   "scripts": {
-    "build": "yarn build:config && yarn build:aot && yarn build:client && yarn build:pre-renderer && yarn build:test",
+    "build": "yarn build:config && yarn build:client && yarn build:pre-renderer && yarn build:aot",
     "build:aot": "ngc --project aheadOfTimeLibraryCompilation.json",
-    "build:client": "webOptimizer build",
+    "build:client": "webOptimizer build '{__reference__: \"target:standalone\"}' && webOptimizer build '{__reference__: [\"target:single\", \"target:testRunner\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:service\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:pipe\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:editor\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:component\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:main\"]}'",
     "build:config": "sed 's/\"genDir\"\\: *\"/\\0..\\/..\\//' aheadOfTimeLibraryCompilation.json | sed 's/\"outDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"rootDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"index\\.ts\"/\"..\\/..\\/index.ts\"/' >aheadOfTimeLibraryCompilation.compiled.json",
-    "build:export": "yarn build:config && yarn build:aot && webOptimizer build '{__reference__: \"export\"}' && yarn build:pre-renderer && yarn build:test",
-    "build:pre-renderer": "webOptimizer build '{__reference__: \"preRenderer\"}'",
-    "build:test": "babel --config-file ./babelBuildTest.json --out-file testRunner.compiled.js testRunner.js",
+    "build:export": "yarn build:config && webOptimizer build '{__reference__: [\"target:export\", \"target:standalone\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:service\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:pipe\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:editor\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:component\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:main\"]}' && yarn build:pre-renderer && yarn build:aot",
+    "build:pre-renderer": "webOptimizer build '{__reference__: \"target:preRenderer\"}'",
     "build:typescript": "tsc --project aheadOfTimeLibraryCompilation.json",
     "clear": "webOptimizer clear",
     "document": "webOptimizer document",
@@ -65,8 +63,8 @@
     "serve": "webOptimizer serve",
     "start": "yarn serve",
     "test": "nyc yarn test:plain",
-    "test:browser": "webOptimizer test:browser",
-    "test:plain": "webOptimizer test",
+    "test:browser": "webOptimizer test:browser '{__reference__: \"target:main\"}'",
+    "test:plain": "webOptimizer test '{__reference__: \"target:main\"}'",
     "update": "yarn version --patch && yarn publish",
     "update:documentation": "documentationWebsite --log-level info",
     "watch": "webOptimizer build --watch"
@@ -149,46 +147,9 @@
     "zone.js": "*"
   },
   "webOptimizer": {
-    "export": {
-      "module": {
-        "preprocessor": {
-          "javaScript": {
-            "options": {
-              "plugins": {
-                "__remove__": "@babel/plugin-transform-runtime"
-              }
-            }
-          }
-        }
-      }
-    },
     "files": {
       "compose": {
         "cascadingStyleSheet": null
-      }
-    },
-    "injection": {
-      "entry": {
-        "index": {
-          "__evaluate__": "(self.givenCommandLineArguments.length && ['build', 'export'].includes(self.givenCommandLineArguments[2]) ? [] : ['@babel/polyfill', 'reflect-metadata', 'zone.js']).concat(self.givenCommandLineArguments.length && ['serve', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? `webpack-dev-server/client?http${self.development.server.cert ? 's' : ''}://0.0.0.0:${self.development.server.port}` : []).concat(self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? './test' : './index')"
-        },
-        "mockup": {
-          "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './mockup'"
-        },
-        "moduleHelper": {
-          "__evaluate__": "self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? [] : './moduleHelper'"
-        }
-      },
-      "external": {
-        "implicit": {
-          "pattern": {
-            "exclude": {
-              "__append__": {
-                "__evaluate__": "/^clientnode\\/test(?:\\.compiled)?(?:\\.js)?$/"
-              }
-            }
-          }
-        }
       }
     },
     "module": {
@@ -264,17 +225,105 @@
         "__evaluate__": "/(?:^|\\/)(?:(?:@babel\\/polyfill\\/dist\\/polyfill)|(?:hammerjs\\/hammer)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb))(?:\\.min)?\\.js(?:\\?.+|$)/"
       }
     },
-    "preRenderer": {
+    "target:component": {
+      "injection": {
+        "entry": {
+          "component": "./component"
+        },
+        "external": {
+          "implicit": {
+            "pattern": {
+              "exclude": {
+                "__append__": {
+                  "__evaluate__": "/^\\.\\/component/"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "target:editor": {
+      "injection": {
+        "entry": {
+          "editor": "./editor"
+        },
+        "external": {
+          "implicit": {
+            "pattern": {
+              "exclude": {
+                "__append__": {
+                  "__evaluate__": "/^\\.\\/editor/"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "target:export": {
+      "module": {
+        "preprocessor": {
+          "javaScript": {
+            "options": {
+              "plugins": {
+                "__remove__": "@babel/plugin-transform-runtime"
+              }
+            }
+          }
+        }
+      }
+    },
+    "target:main": {
+      "injection": {
+        "entry": {
+          "index": {
+            "__evaluate__": "(self.givenCommandLineArguments.length && ['build', 'export'].includes(self.givenCommandLineArguments[2]) ? [] : ['@babel/polyfill', 'reflect-metadata', 'zone.js']).concat(self.givenCommandLineArguments.length && ['serve', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? `webpack-dev-server/client?http${self.development.server.cert ? 's' : ''}://0.0.0.0:${self.development.server.port}` : []).concat(self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? './test' : './index')"
+          }
+        },
+        "external": {
+          "implicit": {
+            "pattern": {
+              "exclude": {
+                "__append__": [
+                  {
+                    "__evaluate__": "/^clientnode\\/test(?:\\.compiled)?(?:\\.js)?$/"
+                  },
+                  {
+                    "__evaluate__": "/^\\.\\/index/"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "target:pipe": {
+      "injection": {
+        "entry": {
+          "pipe": "./pipe"
+        },
+        "external": {
+          "implicit": {
+            "pattern": {
+              "exclude": {
+                "__append__": {
+                  "__evaluate__": "/^\\.\\/pipe/"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "target:preRenderer": {
       "exportFormat": {
         "external": "commonjs2",
         "self": "commonjs2"
       },
       "injection": {
         "entry": {
-          "animation": [],
-          "index": [],
-          "mockup": [],
-          "moduleHelper": [],
           "preRender": "./preRender"
         }
       },
@@ -297,6 +346,71 @@
         }
       },
       "targetTechnology": "node"
+    },
+    "target:service": {
+      "injection": {
+        "entry": {
+          "service": "./service"
+        },
+        "external": {
+          "implicit": {
+            "pattern": {
+              "exclude": {
+                "__append__": {
+                  "__evaluate__": "/^\\.\\/service/"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "target:standalone": {
+      "injection": {
+        "entry": {
+          "animation": "./animation",
+          "baseService": "./baseService",
+          "mockup": "./mockup",
+          "moduleHelper": "./moduleHelper"
+        }
+      }
+    },
+    "target:single": {
+      "injection": {
+        "external": {
+          "implicit": {
+            "pattern": {
+              "#": "We remove local module references to support effective tree shaking for cases where only parts of this library should be used.",
+              "exclude": {
+                "__remove__": "__0__"
+              },
+              "include": {
+                "__append__": {
+                  "__evaluate__": "/^\\./"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "target:testRunner": {
+      "injection": {
+        "entry": {
+          "testRunner": "./testRunner"
+        },
+        "external": {
+          "implicit": {
+            "pattern": {
+              "exclude": {
+                "__append__": {
+                  "__evaluate__": "/^\\.\\/testRunner/"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

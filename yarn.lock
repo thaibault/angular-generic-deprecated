@@ -2388,9 +2388,9 @@ cli-width@^2.0.0:
   integrity sha1-/xnt6Kml5XkyQUewwR8PvLq+1jk=
 
 clientnode@*:
-  version "3.0.233"
-  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.233.tgz#fae8a6c071a53c451c08cc2d4294b920dee2f381"
-  integrity sha512-+JRjeKAe3+MSBgIuWjDUI6S6zc6wng+IWxjuVGPjSWIbUKTw2cK2/I+FWDY0zjWzDUO3tZDLYiD1Zu47p693xQ==
+  version "3.0.236"
+  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.236.tgz#8fea5080535204d4a065d9744de51893c5a9e559"
+  integrity sha512-qzwWaky6CtpkVThATIENYQiIO7XThZ1qDYuzhS23cX0HpM4f7TqdM26nRDubcldiCOKw+WjDhGtFLCaF4KJe7Q==
   dependencies:
     colors "*"
 
@@ -2474,7 +2474,7 @@ commander@^2.8.1:
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.19.0.tgz#f6198aa84e5b83c46054b94ddedbfed5ee9ff12a"
   integrity sha512-6tvAOO+D6OENvRAh524Dh9jcfKTYDQAqvqezbCW82xj5X0pSrcpxtvRKHLG0yBY6SD7PSDrJaj+0AiOcKVd1Xg==
 
-comment-parser@^0.5.1:
+comment-parser@^0.5.4:
   version "0.5.4"
   resolved "https://registry.yarnpkg.com/comment-parser/-/comment-parser-0.5.4.tgz#089840b9cccacad2b769b231ed43081d501b9487"
   integrity sha512-0h7W6Y1Kb6zKQMJqdX41C5qf9ITCVIsD2qP2RaqDF3GFkXFrmuAuv5zUOuo19YzyC9scjBNpqzuaRQ2Sy5pxMQ==
@@ -3267,11 +3267,11 @@ eslint-plugin-flowtype@*:
     lodash "^4.17.11"
 
 eslint-plugin-jsdoc@*:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-4.1.0.tgz#ed1100a4bef9ab80b78cff9c1512fd9538fea5e8"
-  integrity sha512-XNyl+G2ZtmKXNn/MDGsDVQwgkM81i/hDLwVPc7CPMHrob/0Po0vzKNOvxwIoluBhhigCssvYUg7hg2gN0N2vgw==
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-jsdoc/-/eslint-plugin-jsdoc-4.1.1.tgz#54f33bdc878b21fd43f4d82c92970bb9b062f18d"
+  integrity sha512-ZsMmZbhnJBJDwTY+iNUDW5qV9pmXMC+6LPtthPExIJHQyv+rNHU87xjfeCbVciecJ/oHb8HK1ho4eOQbHZfvag==
   dependencies:
-    comment-parser "^0.5.1"
+    comment-parser "^0.5.4"
     jsdoctypeparser "^2.0.0-alpha-8"
     lodash "^4.17.11"
 
@@ -6432,9 +6432,9 @@ number-is-nan@^1.0.0:
   integrity sha1-CXtgK1NCKlIsGvuHkDGDNpQaAR0=
 
 nwsapi@^2.0.7, nwsapi@^2.0.9:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.1.0.tgz#781065940aed90d9bb01ca5d0ce0fcf81c32712f"
-  integrity sha512-ZG3bLAvdHmhIjaQ/Db1qvBxsGvFMLIRpQszyqbg31VJ53UP++uZX1/gf3Ut96pdwN9AuDwlMqIYLm0UPCdUeHg==
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.1.1.tgz#08d6d75e69fd791bdea31507ffafe8c843b67e9c"
+  integrity sha512-T5GaA1J/d34AC8mkrFD2O0DR17kwJ702ZOtJOsS8RpbsQZVOC2/xYFb1i/cw+xdM54JIlMuojjDOYct8GIWtwg==
 
 nyc@*:
   version "13.3.0"
@@ -9088,9 +9088,9 @@ webidl-conversions@^4.0.2:
   integrity sha512-YQ+BmxuTgd6UXZW3+ICGfyqRyHXVlD5GtQr5+qjiNW7bF0cqrzX500HVXPBOvgXb5YnzDd+h0zqyv61KUD7+Sg==
 
 weboptimizer@*:
-  version "2.0.391"
-  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.391.tgz#cc0fd1e7592a948d7cb97ace53c42b951c175d35"
-  integrity sha512-RTYTaj4kFUu4NaFY19ZibMT/UiG9Za/r5MxUfa2DR0gQRhxBN1PdmsWWu+MK4Q8I8d78ibV1EruSRKCqagZW5A==
+  version "2.0.393"
+  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.393.tgz#b3d632f56142becb1ce4454b0fda3d8efbad2483"
+  integrity sha512-Ne6EXg6EGB0vtkQRO1KGwjEcG3J2GMqvMJxsPTAOn+l2scobgDX25tk+f/mv/ODpz7gW2uWJb16IPP11EozKEw==
   dependencies:
     "@babel/core" "*"
     "@babel/plugin-proposal-class-properties" "*"

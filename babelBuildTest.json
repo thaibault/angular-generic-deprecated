@@ -1,9 +1,0 @@
-{
-  "plugins": [
-    "angular2-annotations",
-    ["@babel/plugin-proposal-decorators", {"legacy": true}],
-    "@babel/plugin-transform-flow-strip-types"
-  ],
-  "presets": ["@babel/preset-env"],
-  "sourceMap": "inline"
-}

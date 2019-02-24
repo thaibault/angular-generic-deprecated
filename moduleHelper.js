@@ -26,9 +26,10 @@ export const determineExports:Function = (module:Object):Array<Object> =>
 export const determineDeclarations:Function = (module:Object):Array<Object> =>
     determineExports(module).concat(Object.keys(module.exports).filter((
         name:string
-    ):boolean => !name.startsWith('Abstract') && ['Accessor'].some(
-        (suffix:string):boolean => name.endsWith(suffix)
-    )).map((name:string):Object => module.exports[name]))
+    ):boolean =>
+        !name.startsWith('Abstract') &&
+        ['Accessor'].some((suffix:string):boolean => name.endsWith(suffix))
+    ).map((name:string):Object => module.exports[name]))
 export const determineProviders:Function = (module:Object):Array<Object> =>
     Object.keys(module.exports).filter((name:string):boolean => [
         'Resolver', 'Pipe', 'Guard', 'Service'
