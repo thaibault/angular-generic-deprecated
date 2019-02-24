@@ -16,6 +16,7 @@
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
+export {animations} from './animation'
 export * from './baseService'
 // region imports
 import Tools, {PlainObject} from 'clientnode'
@@ -67,6 +68,7 @@ import {tap} from 'rxjs/operators'
     NOTE: Default import is not yet support for angular's ahead of time
     compiler.
 */
+import {animations} from './animation'
 import {
     AttachmentWithPrefixExistsPipe,
     ConvertCircularObjectToJSONPipe,
@@ -81,7 +83,6 @@ import {
     StringFormatPipe
 } from './pipe'
 import {
-    animations,
     determineInjector,
     InitialDataService,
     LAST_KNOWN_DATA,

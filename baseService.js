@@ -18,15 +18,7 @@
 */
 // region imports
 import Tools, {$, DomNode, globalContext, PlainObject} from 'clientnode'
-import {AnimationTriggerMetadata} from '@angular/animations'
 import {Injectable, Injector, NgModule} from '@angular/core'
-import {BrowserModule} from '@angular/platform-browser'
-
-/*
-    NOTE: Default import is not yet support for angular's ahead of time
-    compiler.
-*/
-import {defaultAnimation} from './animation'
 // endregion
 export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
@@ -35,7 +27,6 @@ export let currentInstanceToSearchInjectorFor:Object|null = null
 export const globalVariableNameToRetrieveDataFrom:string = 'genericInitialData'
 export const applicationDomNodeSelector:string = 'application, [application]'
 export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
-export const animations:Array<AnimationTriggerMetadata> = [defaultAnimation]
 // region basic services
 @Injectable()
 /**
@@ -273,11 +264,6 @@ export class OfflineState {
 // endregion
 // region module
 @NgModule({
-    imports: [
-        BrowserModule.withServerTransition({
-            appId: 'generic-basic-service-universal'
-        })
-    ],
     providers: [InitialDataService, OfflineState, UtilityService]
 })
 /**
