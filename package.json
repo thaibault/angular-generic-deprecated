@@ -152,6 +152,19 @@
         "cascadingStyleSheet": null
       }
     },
+    "injection": {
+      "external": {
+        "#": "Local references should point to the pre-compiled ones.",
+        "aliases": {
+          "./animation": "./animation.compiled",
+          "./baseService": "./baseService.compiled",
+          "./component": "./component.compiled",
+          "./editor": "./editor.compiled",
+          "./pipe": "./pipe.compiled",
+          "./service": "./service.compiled"
+        }
+      }
+    },
     "module": {
       "aliases": {
         "#": "We need blob-util in node environments only.",
