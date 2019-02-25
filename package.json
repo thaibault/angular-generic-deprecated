@@ -48,11 +48,11 @@
     "url": "https://github.com/thaibault/angularGeneric"
   },
   "scripts": {
-    "build": "yarn build:config && yarn build:client && yarn build:pre-renderer && yarn build:aot",
+    "build": "yarn build:config && yarn build:aot && yarn build:client && yarn build:pre-renderer",
     "build:aot": "ngc --project aheadOfTimeLibraryCompilation.json",
     "build:client": "webOptimizer build '{__reference__: \"target:standalone\"}' && webOptimizer build '{__reference__: [\"target:single\", \"target:testRunner\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:service\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:pipe\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:editor\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:component\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:main\"]}'",
     "build:config": "sed 's/\"genDir\"\\: *\"/\\0..\\/..\\//' aheadOfTimeLibraryCompilation.json | sed 's/\"outDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"rootDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"index\\.ts\"/\"..\\/..\\/index.ts\"/' >aheadOfTimeLibraryCompilation.compiled.json",
-    "build:export": "yarn build:config && webOptimizer build '{__reference__: [\"target:export\", \"target:standalone\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:service\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:pipe\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:editor\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:component\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:main\"]}' && yarn build:pre-renderer && yarn build:aot",
+    "build:export": "yarn build:config && yarn build:aot && webOptimizer build '{__reference__: [\"target:export\", \"target:standalone\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:service\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:pipe\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:editor\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:component\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:main\"]}' && yarn build:pre-renderer",
     "build:pre-renderer": "webOptimizer build '{__reference__: \"target:preRenderer\"}'",
     "build:typescript": "tsc --project aheadOfTimeLibraryCompilation.json",
     "clear": "webOptimizer clear",
@@ -153,6 +153,9 @@
       }
     },
     "injection": {
+      "entry": {
+        "index": []
+      },
       "external": {
         "#": "Local references should point to the pre-compiled ones.",
         "aliases": {
@@ -378,16 +381,6 @@
         }
       }
     },
-    "target:standalone": {
-      "injection": {
-        "entry": {
-          "animation": "./animation",
-          "baseService": "./baseService",
-          "mockup": "./mockup",
-          "moduleHelper": "./moduleHelper"
-        }
-      }
-    },
     "target:single": {
       "injection": {
         "external": {
@@ -404,6 +397,16 @@
               }
             }
           }
+        }
+      }
+    },
+    "target:standalone": {
+      "injection": {
+        "entry": {
+          "animation": "./animation",
+          "baseService": "./baseService",
+          "mockup": "./mockup",
+          "moduleHelper": "./moduleHelper"
         }
       }
     },
