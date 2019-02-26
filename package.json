@@ -159,12 +159,30 @@
       "external": {
         "#": "Local references should point to the pre-compiled ones.",
         "aliases": {
-          "./animation": "./animation.compiled",
-          "./baseService": "./baseService.compiled",
-          "./component": "./component.compiled",
-          "./editor": "./editor.compiled",
-          "./pipe": "./pipe.compiled",
-          "./service": "./service.compiled"
+          "./animation": {
+            "default": "./animation.compiled",
+            "root": "angularGenericAnimation"
+          },
+          "./baseService": {
+            "default": "./baseService.compiled",
+            "root": "angularGenericBaseService"
+          },
+          "./component": {
+            "default": "./component.compiled",
+            "root": "angularGenericComponent"
+          },
+          "./editor": {
+            "default": "./editor.compiled",
+            "root": "angularGenericEditor"
+          },
+          "./pipe": {
+            "default": "./pipe.compiled",
+            "root": "angularGenericPipe"
+          },
+          "./service": {
+            "default": "./service.compiled",
+            "root": "angularGenericService"
+          }
         }
       }
     },
