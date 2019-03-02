@@ -321,9 +321,6 @@
               "exclude": {
                 "__append__": [
                   {
-                    "__evaluate__": "/^clientnode\\/test(?:\\.compiled)?(?:\\.js)?$/"
-                  },
-                  {
                     "__evaluate__": "/^\\.\\/index/"
                   }
                 ]

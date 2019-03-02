@@ -193,291 +193,273 @@ export function render(
         options.globalVariableNamesToInject)
     options.routes = [].concat(options.routes)
     // endregion
-    return new Promise((
-        resolve:Function, reject:Function
-    // IgnoreTypeCheck
-    ):void => fileSystem.readFile(options.htmlFilePath, {
-        encoding: options.encoding
-    }, async (error:?Error, data:string):Promise<void> => {
-        if (error)
-            return reject(error)
-        // region prepare environment
-        renderScope.virtualConsole = new VirtualConsole()
-        for (const name:string of [
-            'assert',
-            'dir',
-            'error',
-            'info',
-            'log',
-            'time',
-            'timeEnd',
-            'trace',
-            'warn'
-        ])
-            renderScope.virtualConsole.on(name, console[name].bind(console))
-        renderScope.dom = (new DOM(data, {
+    const data:string = fileSystem.promises.readFile(
+        options.htmlFilePath, {encoding: options.encoding})
+    // region prepare environment
+    renderScope.virtualConsole = new VirtualConsole()
+    for (const name:string of [
+        'assert',
+        'dir',
+        'error',
+        'info',
+        'log',
+        'time',
+        'timeEnd',
+        'trace',
+        'warn'
+    ])
+        renderScope.virtualConsole.on(name, console[name].bind(console))
+    renderScope.dom = new DOM(
+        data,
+        {
             includeNodeLocations: true,
             referrer: 'https://localhost',
             runScripts: 'dangerously',
             url: 'https://localhost',
             virtualConsole: renderScope.virtualConsole
-        }))
-        renderScope.window = renderScope.dom.window
-        renderScope.applicationDomNode =
-            renderScope.window.document.querySelector(
-                options.applicationDomNodeSelector)
-        renderScope.innerHTMLToReInject = ''
-        if (renderScope.applicationDomNode)
-            renderScope.innerHTMLToReInject =
-                renderScope.applicationDomNode.innerHTML
-        renderScope.basePath = options.basePath ? options.basePath :
+        }
+    )
+    renderScope.window = renderScope.dom.window
+    renderScope.applicationDomNode =
+        renderScope.window.document.querySelector(
+            options.applicationDomNodeSelector)
+    renderScope.innerHTMLToReInject = ''
+    if (renderScope.applicationDomNode)
+        renderScope.innerHTMLToReInject =
+            renderScope.applicationDomNode.innerHTML
+    renderScope.basePath = options.basePath ? options.basePath :
+        // IgnoreTypeCheck
+        renderScope.window.document.getElementsByTagName('base')[0].href
+    for (const name:string in renderScope.window)
+        if (
+            renderScope.window.hasOwnProperty(name) &&
+            !globalContext.hasOwnProperty(name) &&
+            (
+                options.globalVariableNamesToInject.length === 0 ||
+                options.globalVariableNamesToInject.includes(name)
+            )
+        ) {
+            console.info(`Inject variable "${name}".`)
             // IgnoreTypeCheck
-            renderScope.window.document.getElementsByTagName('base')[0].href
-        for (const name:string in renderScope.window)
-            if (
-                renderScope.window.hasOwnProperty(name) &&
-                !globalContext.hasOwnProperty(name) &&
-                (
-                    options.globalVariableNamesToInject.length === 0 ||
-                    options.globalVariableNamesToInject.includes(name)
-                )
-            ) {
-                console.info(`Inject variable "${name}".`)
-                // IgnoreTypeCheck
-                globalContext[name] = renderScope.window[name]
-            }
-        Tools.plainObjectPrototypes = Tools.plainObjectPrototypes.concat(
-            // IgnoreTypeCheck
-            renderScope.window.Object.prototype)
-        Tools.extend(true, globalContext, options.scope)
-        // endregion
-        // region determine pre-renderable paths
-        const links:Array<string> = []
-        let urls:Array<string>
-        if (options.routes.length) {
-            const result:{
-                links:{[key:string]:string};
-                paths:Set<string>;
-            } = determinePaths(renderScope.basePath, options.routes)
-            for (const sourcePath:string in result.links)
-                if (result.links.hasOwnProperty(sourcePath)) {
-                    const realSourcePath:string = path.join(
-                        options.targetDirectoryPath, sourcePath.substring(
-                            renderScope.basePath.length
-                        ).replace(/^\/+(.+)/, '$1'))
-                    links.push(realSourcePath)
-                    const targetPath:string = path.join(
-                        options.targetDirectoryPath,
-                        result.links[sourcePath].substring(
-                            renderScope.basePath.length
-                        ).replace(/^\/+(.+?)\/?$/, '$1')) + '.html'
-                    await makeDirectoryPath(path.dirname(
-                        realSourcePath
-                    ), async (error:?Error):Promise<void> => {
+            globalContext[name] = renderScope.window[name]
+        }
+    Tools.plainObjectPrototypes = Tools.plainObjectPrototypes.concat(
+        // IgnoreTypeCheck
+        renderScope.window.Object.prototype)
+    Tools.extend(true, globalContext, options.scope)
+    // endregion
+    // region determine pre-renderable paths
+    const links:Array<string> = []
+    let urls:Array<string>
+    if (options.routes.length) {
+        const result:{
+            links:{[key:string]:string};
+            paths:Set<string>;
+        } = determinePaths(renderScope.basePath, options.routes)
+        for (const sourcePath:string in result.links)
+            if (result.links.hasOwnProperty(sourcePath)) {
+                const realSourcePath:string = path.join(
+                    options.targetDirectoryPath,
+                    sourcePath.substring(renderScope.basePath.length).replace(
+                        /^\/+(.+)/, '$1'))
+                links.push(realSourcePath)
+                const targetPath:string = path.join(
+                    options.targetDirectoryPath,
+                    result.links[sourcePath].substring(
+                        renderScope.basePath.length
+                    ).replace(/^\/+(.+?)\/?$/, '$1')) + '.html'
+                await makeDirectoryPath(
+                    path.dirname(realSourcePath),
+                    async (error:?Error):Promise<void> => {
                         if (error)
                             return reject(error)
                         let stats:any = null
                         try {
-                            stats = await new Promise((
-                                resolve:Function, reject:Function
-                            ):void => fileSystem.lstat(realSourcePath, (
-                                error:any, stats:any
-                            ):void => error ? reject(error) : resolve(
-                                stats)))
+                            stats = await fileSystem.promises.lstat(
+                                realSourcePath)
                         } catch (error) {
                             if (error.code !== 'ENOENT')
                                 throw error
                         }
-                        if (stats && (
-                            stats.isSymbolicLink() || stats.isFile()
-                        ))
+                        if (
+                            stats &&
+                            (stats.isSymbolicLink() || stats.isFile())
+                        )
                             await new Promise((
                                 resolve:Function, reject:Function
                             ):void => removeDirectoryRecursively(
-                                realSourcePath, (error:?Error):void =>
+                                realSourcePath,
+                                (error:?Error):void =>
                                     error ? reject(error) : resolve()))
-                        // IgnoreTypeCheck
-                        fileSystem.symlink(targetPath, realSourcePath, (
-                            error:?Error
-                        ):void => error ? reject(error) : resolve())
+                        await fileSystem.promises.symlink(
+                            targetPath, realSourcePath)
                     })
+            }
+        urls = Array.from(result.paths).sort()
+    } else
+        urls = [renderScope.basePath]
+    // endregion
+    console.info(
+        `Found ${urls.length} pre-renderable url` +
+        `${urls.length > 1 ? 's' : ''}.`)
+    enableProdMode()
+    // region generate pre-rendered html files
+    const results:Array<string> = []
+    const filePaths:Array<string> = []
+    for (const url:string of urls) {
+        const filePath:string = path.join(options.targetDirectoryPath, (
+            url === renderScope.basePath
+        ) ? '/' : url.substring(renderScope.basePath.length).replace(
+                /^\/+(.+?)\/?$/, '$1'
+            )) + '.html'
+        filePaths.push(filePath)
+        results.push(await new Promise((
+            resolve:Function, reject:Function
+        ):void => makeDirectoryPath(path.dirname(filePath), async (
+            error:?Error
+        ):Promise<void> => {
+            if (error)
+                return reject(error)
+            console.info(`Pre-render url "${url}".`)
+            let result:string = ''
+            // region pre-render
+            if (options.component) {
+                // region create server pre-renderable module
+                /* eslint-disable require-jsdoc */
+                // IgnoreTypeCheck
+                @NgModule({
+                    bootstrap: [options.component],
+                    imports: [module, ServerModule],
+                    providers: [{
+                        provide: APP_BASE_HREF,
+                        useValue: renderScope.basePath
+                    }]
+                })
+                /* eslint-enable require-jsdoc */
+                /**
+                 * Dummy server compatible root application module to
+                 * pre-render.
+                 */
+                class ApplicationServerModule {}
+                // endregion
+                try {
+                    result = await renderModule(
+                        ApplicationServerModule, {document: data, url})
+                } catch (error) {
+                    console.warn(
+                        'Error occurred during dynamic pre-rendering path "' +
+                        `${url}": ${Tools.representObject(error)}`
+                    )
+                    return reject(error)
                 }
-            urls = Array.from(result.paths).sort()
-        } else
-            urls = [renderScope.basePath]
-        // endregion
-        console.info(
-            `Found ${urls.length} pre-renderable url` +
-            `${urls.length > 1 ? 's' : ''}.`)
-        enableProdMode()
-        // region generate pre-rendered html files
-        const results:Array<string> = []
-        const filePaths:Array<string> = []
-        for (const url:string of urls) {
-            const filePath:string = path.join(options.targetDirectoryPath, (
-                url === renderScope.basePath
-            ) ? '/' : url.substring(renderScope.basePath.length).replace(
-                    /^\/+(.+?)\/?$/, '$1'
-                )) + '.html'
-            filePaths.push(filePath)
+            } else
+                try {
+                    result = await renderModuleFactory(
+                        module, {document: data, url})
+                } catch (error) {
+                    console.warn(
+                        'Error occurred during ahead of time ' +
+                        `compiled pre-rendering path "${url}": ` +
+                        Tools.representObject(error))
+                    return reject(error)
+                }
+            // endregion
+            // region re-inject needed initial markup
+            if (options.reInjectInnerHTMLFromInitialDomNode) {
+                /*
+                    NOTE: We have to prevent creating native "style"
+                    dom nodes to prevent jsdom from parsing the entire
+                    cascading style sheet. Which is error prune and
+                    very resource intensive.
+                */
+                const styleContents:Array<string> = []
+                result = result.replace(
+                    /(<style[^>]*>)([\s\S]*?)(<\/style[^>]*>)/gi,
+                    (
+                        match:string,
+                        startTag:string,
+                        content:string,
+                        endTag:string
+                    ):string => {
+                        styleContents.push(content)
+                        return `${startTag}${endTag}`
+                    })
+                const dom:DOM = new DOM(result)
+                const window:Window = dom.window
+                /*
+                    NOTE: We have to re-select the application node
+                    here, because it's embedded in another document
+                    context.
+                */
+                const applicationDomNode:DomNode =
+                    window.document.querySelector(
+                        options.applicationDomNodeSelector)
+                const regularExpression:RegExp = new RegExp(
+                    '<!--{?generic-inject-application-->' +
+                    '(?:[\\s\\S]*?<!--generic-inject-application}' +
+                    '-->)?',
+                    'i')
+                if (regularExpression.test(
+                    renderScope.innerHTMLToReInject
+                ))
+                    applicationDomNode.innerHTML =
+                        renderScope.innerHTMLToReInject.replace(
+                            regularExpression, applicationDomNode.innerHTML)
+                else
+                    applicationDomNode.innerHTML +=
+                        renderScope.innerHTMLToReInject
+                result = dom.serialize().replace(
+                    /(<style[^>]*>)[\s\S]*?(<\/style[^>]*>)/gi,
+                    (match:string, startTag:string, endTag:string):string =>
+                        `${startTag}${styleContents.shift()}${endTag}`)
+            }
+            // endregion
+            if (options.minify)
+                try {
+                    result = require('html-minifier').minify(
+                        result, options.minify)
+                } catch (error) {
+                    console.warn(
+                        `Pre-rendered output could not be minfied: "${error}".`
+                    )
+                }
+            let stats:any = null
             try {
-                results.push(await new Promise((
+                stats = await fileSystem.promises.lstat(filePath)
+            } catch (error) {
+                if (error.code !== 'ENOENT')
+                    throw error
+            }
+            if (stats && (stats.isSymbolicLink() || stats.isFile()))
+                await new Promise((
                     resolve:Function, reject:Function
-                ):void => makeDirectoryPath(path.dirname(filePath), async (
+                ):void => removeDirectoryRecursively(filePath, (
                     error:?Error
-                ):Promise<void> => {
-                    if (error)
-                        return reject(error)
-                    console.info(`Pre-render url "${url}".`)
-                    let result:string = ''
-                    // region pre-render
-                    if (options.component) {
-                        // region create server pre-renderable module
-                        /* eslint-disable require-jsdoc */
-                        // IgnoreTypeCheck
-                        @NgModule({
-                            bootstrap: [options.component],
-                            imports: [module, ServerModule],
-                            providers: [{
-                                provide: APP_BASE_HREF,
-                                useValue: renderScope.basePath
-                            }]
-                        })
-                        /* eslint-enable require-jsdoc */
-                        /**
-                         * Dummy server compatible root application module to
-                         * pre-render.
-                         */
-                        class ApplicationServerModule {}
-                        // endregion
-                        try {
-                            result = await renderModule(
-                                ApplicationServerModule, {document: data, url})
-                        } catch (error) {
-                            console.warn(
-                                'Error occurred during dynamic pre-rendering' +
-                                ` path "${url}": ` +
-                                Tools.representObject(error))
-                            return reject(error)
-                        }
-                    } else
-                        try {
-                            result = await renderModuleFactory(
-                                module, {document: data, url})
-                        } catch (error) {
-                            console.warn(
-                                'Error occurred during ahead of time ' +
-                                `compiled pre-rendering path "${url}": ` +
-                                Tools.representObject(error))
-                            return reject(error)
-                        }
-                    // endregion
-                    // region re-inject needed initial markup
-                    if (options.reInjectInnerHTMLFromInitialDomNode) {
-                        /*
-                            NOTE: We have to prevent creating native "style"
-                            dom nodes to prevent jsdom from parsing the entire
-                            cascading style sheet. Which is error prune and
-                            very resource intensive.
-                        */
-                        const styleContents:Array<string> = []
-                        result = result.replace(
-                            /(<style[^>]*>)([\s\S]*?)(<\/style[^>]*>)/gi, (
-                                match:string,
-                                startTag:string,
-                                content:string,
-                                endTag:string
-                            ):string => {
-                                styleContents.push(content)
-                                return `${startTag}${endTag}`
-                            })
-                        const dom:DOM = new DOM(result)
-                        const window:Window = dom.window
-                        /*
-                            NOTE: We have to re-select the application node
-                            here, because it's embedded in another document
-                            context.
-                        */
-                        const applicationDomNode:DomNode =
-                            window.document.querySelector(
-                                options.applicationDomNodeSelector)
-                        const regularExpression:RegExp = new RegExp(
-                            '<!--{?generic-inject-application-->' +
-                            '(?:[\\s\\S]*?<!--generic-inject-application}' +
-                            '-->)?',
-                            'i')
-                        if (regularExpression.test(
-                            renderScope.innerHTMLToReInject
-                        ))
-                            applicationDomNode.innerHTML =
-                                renderScope.innerHTMLToReInject.replace(
-                                    regularExpression,
-                                    applicationDomNode.innerHTML)
-                        else
-                            applicationDomNode.innerHTML +=
-                                renderScope.innerHTMLToReInject
-                        result = dom.serialize().replace(
-                            /(<style[^>]*>)[\s\S]*?(<\/style[^>]*>)/gi, (
-                                match:string,
-                                startTag:string,
-                                endTag:string
-                            ):string =>
-                                `${startTag}${styleContents.shift()}${endTag}`)
-                    }
-                    // endregion
-                    if (options.minify)
-                        try {
-                            result = require('html-minifier').minify(
-                                result, options.minify)
-                        } catch (error) {
-                            console.warn(
-                                'Pre-rendered output could not be minfied: "' +
-                                `${error}".`)
-                        }
-                    let stats:any = null
-                    try {
-                        stats = await new Promise((
-                            resolve:Function, reject:Function
-                        ):void => fileSystem.lstat(filePath, (
-                            error:any, stats:any
-                        ):void => error ? reject(error) : resolve(stats)))
-                    } catch (error) {
-                        if (error.code !== 'ENOENT')
-                            throw error
-                    }
-                    if (stats && (stats.isSymbolicLink() || stats.isFile()))
-                        await new Promise((
-                            resolve:Function, reject:Function
-                        ):void => removeDirectoryRecursively(filePath, (
-                            error:?Error
-                        ):void => error ? reject(error) : resolve()))
-                    console.info(`Write file "${filePath}".`)
-                    fileSystem.writeFile(filePath, result, ((
-                        error:?Error
-                    ):void => error ? reject(error) : resolve(result)))
-                })))
+                ):void => error ? reject(error) : resolve()))
+            console.info(`Write file "${filePath}".`)
+            try {
+                fileSystem.promises.writeFile(filePath, result
             } catch (error) {
                 reject(error)
-                return
             }
-        }
-        // endregion
-        // region tidy up
-        const files:Array<File> = await Tools.walkDirectoryRecursively(
-            options.targetDirectoryPath)
-        files.reverse()
-        let currentFile:?File = null
-        for (const file:File of files)
-            if (filePaths.includes(file.path) || links.includes(file.path))
-                currentFile = file
-            else if (!(currentFile && currentFile.path.startsWith(file.path)))
-                await new Promise((resolve:Function, reject:Function):void =>
-                    removeDirectoryRecursively(file.path, (
-                        error:?Error
-                    ):void => error ? reject(error) : resolve()))
-        // endregion
-        resolve(results)
-    }))
+        }))))
+    }
+    // endregion
+    // region tidy up
+    const files:Array<File> = await Tools.walkDirectoryRecursively(
+        options.targetDirectoryPath)
+    files.reverse()
+    let currentFile:?File = null
+    for (const file:File of files)
+        if (filePaths.includes(file.path) || links.includes(file.path))
+            currentFile = file
+        else if (!(currentFile && currentFile.path.startsWith(file.path)))
+            await new Promise((resolve:Function, reject:Function):void =>
+                removeDirectoryRecursively(file.path, (
+                    error:?Error
+                ):void => error ? reject(error) : resolve()))
+    // endregion
+    return results
 }
 export default render
 export const renderScope:{
