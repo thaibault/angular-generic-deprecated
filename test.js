@@ -2003,9 +2003,11 @@ registerAngularTest(function(
                     assert.strictEqual(instance.model.disabled, true)
                     fixture.detectChanges()
                     await fixture.whenStable()
-                    assert.strictEqual(fixture.debugElement.query(By.css(
-                        'label'
-                    )).nativeElement.textContent.trim(), 'test')
+                    assert.strictEqual(
+                        fixture.debugElement.query(By.css('label'))
+                            .nativeElement.textContent.trim(),
+                        'test'
+                    )
                     const inputDomNode:DomNode = fixture.debugElement.query(
                         By.css('input, select, textarea')
                     ).nativeElement

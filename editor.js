@@ -40,6 +40,7 @@ import {
     ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
 import {TextFieldModule} from '@angular/cdk/text-field'
+import {MatInputModule} from '@angular/material/input'
 import {MatSelectModule} from '@angular/material/select'
 import {MatTooltipModule} from '@angular/material/tooltip'
 import {ɵgetDOM as getDOM, BrowserModule} from '@angular/platform-browser'
@@ -1402,6 +1403,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
             appId: 'generic-editor-universal'
         }),
         FormsModule,
+        MatInputModule,
         MatSelectModule,
         MatTooltipModule,
         PipeModule,

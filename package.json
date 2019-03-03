@@ -147,11 +147,6 @@
     "zone.js": "*"
   },
   "webOptimizer": {
-    "files": {
-      "compose": {
-        "cascadingStyleSheet": null
-      }
-    },
     "injection": {
       "entry": {
         "index": []
@@ -188,12 +183,12 @@
     },
     "module": {
       "aliases": {
-        "#": "We need blob-util in node environments only.",
+        "#": "We need to process this file dynamically when testing different environments.",
+        "clientnode/test$": "clientnode/test",
+        "#0": "We need blob-util in node environments only.",
         "blob-util$": {
           "__evaluate__": "self.targetTechnology === 'node' ? 'clientnode' : 'blob-util'"
         },
-        "#0": "We want to use the pre-compiled artefact.",
-        "clientnode/test$": "clientnode/test.compiled",
         "#1": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
         "node-fetch$": "node-fetch/lib/index.js",
         "#2": "Avoid using default buggy \"pouchdb-promise/lib/index.es.js\" version.",

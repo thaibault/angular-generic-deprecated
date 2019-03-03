@@ -106,7 +106,7 @@ export function determinePaths(
  * detail.
  * @returns A promise which resolves to a list of pre-rendered html strings.
  */
-export function render(
+export async function render(
     module:Object, givenOptions:PlainObject
 ):Promise<Array<string>> {
     // region determine options
@@ -193,6 +193,7 @@ export function render(
         options.globalVariableNamesToInject)
     options.routes = [].concat(options.routes)
     // endregion
+    // IgnoreTypeCheck
     const data:string = fileSystem.promises.readFile(
         options.htmlFilePath, {encoding: options.encoding})
     // region prepare environment
@@ -268,32 +269,45 @@ export function render(
                     result.links[sourcePath].substring(
                         renderScope.basePath.length
                     ).replace(/^\/+(.+?)\/?$/, '$1')) + '.html'
-                await makeDirectoryPath(
-                    path.dirname(realSourcePath),
-                    async (error:?Error):Promise<void> => {
-                        if (error)
-                            return reject(error)
-                        let stats:any = null
-                        try {
-                            stats = await fileSystem.promises.lstat(
-                                realSourcePath)
-                        } catch (error) {
-                            if (error.code !== 'ENOENT')
-                                throw error
+                await new Promise(async (
+                    resolve:Function, reject:Function
+                ):Promise<void> => {
+                    makeDirectoryPath(
+                        path.dirname(realSourcePath),
+                        async (error:?Error):Promise<void> => {
+                            if (error)
+                                return reject(error)
+                            let stats:any = null
+                            try {
+                                stats = await fileSystem.promises.lstat(
+                                    realSourcePath)
+                            } catch (error) {
+                                if (error.code !== 'ENOENT')
+                                    reject(error)
+                            }
+                            if (
+                                stats &&
+                                (stats.isSymbolicLink() || stats.isFile())
+                            )
+                                try {
+                                    await new Promise((
+                                        resolve:Function, reject:Function
+                                    ):void => removeDirectoryRecursively(
+                                        realSourcePath,
+                                        (error:?Error):void =>
+                                            error ? reject(error) : resolve()))
+                                } catch (error) {
+                                    reject(error)
+                                }
+                            try {
+                                await fileSystem.promises.symlink(
+                                    targetPath, realSourcePath)
+                            } catch (error) {
+                                reject(error)
+                            }
                         }
-                        if (
-                            stats &&
-                            (stats.isSymbolicLink() || stats.isFile())
-                        )
-                            await new Promise((
-                                resolve:Function, reject:Function
-                            ):void => removeDirectoryRecursively(
-                                realSourcePath,
-                                (error:?Error):void =>
-                                    error ? reject(error) : resolve()))
-                        await fileSystem.promises.symlink(
-                            targetPath, realSourcePath)
-                    })
+                    )
+                })
             }
         urls = Array.from(result.paths).sort()
     } else
@@ -438,11 +452,11 @@ export function render(
                 ):void => error ? reject(error) : resolve()))
             console.info(`Write file "${filePath}".`)
             try {
-                fileSystem.promises.writeFile(filePath, result
+                await fileSystem.promises.writeFile(filePath, result)
             } catch (error) {
                 reject(error)
             }
-        }))))
+        })))
     }
     // endregion
     // region tidy up
