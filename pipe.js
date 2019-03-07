@@ -657,7 +657,7 @@ export class ExtractRawDataPipe implements PipeTransform {
 // region module
 @NgModule({
     declarations: [AttachmentsAreEqualPipe, ExtractRawDataPipe],
-    exports: [AttachmentsAreEqualPipe, ExtractRawDataPipe],
+    exports: [AttachmentsAreEqualPipe, BasePipeModule, ExtractRawDataPipe],
     imports: [
         BasePipeModule,
         BrowserModule.withServerTransition({appId: 'generic-pipe-universal'})
