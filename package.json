@@ -20,6 +20,8 @@
     "aheadOfTimePrerenderableModule.ts",
     "animation.compiled.js",
     "animation.js",
+    "basePipe.compiled.js",
+    "basePipe.js",
     "baseService.compiled.js",
     "baseService.js",
     "component.compiled.js",
@@ -50,9 +52,9 @@
   "scripts": {
     "build": "yarn build:config && yarn build:aot && yarn build:client && yarn build:pre-renderer",
     "build:aot": "ngc --project aheadOfTimeLibraryCompilation.json",
-    "build:client": "webOptimizer build '{__reference__: \"target:standalone\"}' && webOptimizer build '{__reference__: [\"target:single\", \"target:testRunner\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:service\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:pipe\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:editor\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:component\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:main\"]}'",
+    "build:client": "webOptimizer build '{__reference__: \"target:standalone\"}' && webOptimizer build '{__reference__: [\"target:single\", \"target:testRunner\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:service\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:basePipe\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:pipe\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:editor\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:component\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:main\"]}'",
     "build:config": "sed 's/\"genDir\"\\: *\"/\\0..\\/..\\//' aheadOfTimeLibraryCompilation.json | sed 's/\"outDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"rootDir\"\\: *\"/\\0..\\/..\\//' | sed 's/\"index\\.ts\"/\"..\\/..\\/index.ts\"/' >aheadOfTimeLibraryCompilation.compiled.json",
-    "build:export": "yarn build:config && yarn build:aot && webOptimizer build '{__reference__: [\"target:export\", \"target:standalone\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:service\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:pipe\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:editor\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:component\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:main\"]}' && yarn build:pre-renderer",
+    "build:export": "yarn build:config && yarn build:aot && webOptimizer build '{__reference__: [\"target:export\", \"target:standalone\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:service\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:basePipe\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:pipe\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:editor\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:component\"]}' && webOptimizer build '{__reference__: [\"target:export\", \"target:single\", \"target:main\"]}' && yarn build:pre-renderer",
     "build:pre-renderer": "webOptimizer build '{__reference__: \"target:preRenderer\"}'",
     "build:typescript": "tsc --project aheadOfTimeLibraryCompilation.json",
     "clear": "webOptimizer clear",
@@ -158,6 +160,10 @@
             "default": "./animation.compiled",
             "root": "angularGenericAnimation"
           },
+          "./basePipe": {
+            "default": "./basePipe.compiled",
+            "root": "angularGenericBasePipe"
+          },
           "./baseService": {
             "default": "./baseService.compiled",
             "root": "angularGenericBaseService"
@@ -252,6 +258,24 @@
       },
       "skipParseRegularExpressions": {
         "__evaluate__": "/(?:^|\\/)(?:(?:@babel\\/polyfill\\/dist\\/polyfill)|(?:hammerjs\\/hammer)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb))(?:\\.min)?\\.js(?:\\?.+|$)/"
+      }
+    },
+    "target:basePipe": {
+      "injection": {
+        "entry": {
+          "basePipe": "./basePipe"
+        },
+        "external": {
+          "implicit": {
+            "pattern": {
+              "exclude": {
+                "__append__": {
+                  "__evaluate__": "/^\\.\\/basePipe/"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "target:component": {

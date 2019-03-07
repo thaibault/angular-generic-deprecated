@@ -45,6 +45,7 @@ import {MatSelectModule} from '@angular/material/select'
 import {MatTooltipModule} from '@angular/material/tooltip'
 import {ɵgetDOM as getDOM, BrowserModule} from '@angular/platform-browser'
 
+import {animations} from './animation'
 /*
     NOTE: Default import is not yet support for angular's ahead of time
     compiler.
@@ -53,16 +54,14 @@ import {
     AttachmentWithPrefixExistsPipe,
     ExtendPipe,
     GetFilenameByPrefixPipe,
-    PipeModule,
+    BasePipeModule,
     NumberGetUTCTimestampPipe
-} from './pipe'
+} from './basePipe'
 import {
-    animations,
     determineInjector,
     InitialDataService,
-    isAndroid,
     UtilityService
-} from './service'
+} from './baseService'
 // endregion
 // region configuration
 // NOTE: Could be set via module bundler environment variables.
@@ -160,12 +159,18 @@ export class AbstractValueAccessor implements ControlValueAccessor {
         this.elementReference = injector.get(ElementRef)
         /*
          * NOTE: "No provider for InjectionToken CompositionEventMode"
-         * triggered  if this IME compatible code is activated:
+         * triggered if this IME compatible code is activated:
          * "this.compositionMode = injector.get(COMPOSITION_BUFFER_MODE)"
          */
         this.compositionMode = null
         if ([null, undefined].includes(this.compositionMode))
-            this.compositionMode = !isAndroid()
+            /*
+                We have to check whether the agent is Android because
+                composition events behave differently between IOS and Android.
+            */
+            this.compositionMode = !(/android (\d+)/.test((
+                getDOM() ? getDOM().getUserAgent() : ''
+            ).toLowerCase()))
     }
     /**
      * Indicates the end of composition.
@@ -1399,6 +1404,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
         TextEditorComponent
     ],
     imports: [
+        BasePipeModule,
         BrowserModule.withServerTransition({
             appId: 'generic-editor-universal'
         }),
@@ -1406,7 +1412,6 @@ export class TextareaComponent extends AbstractNativeInputComponent
         MatInputModule,
         MatSelectModule,
         MatTooltipModule,
-        PipeModule,
         TextFieldModule
     ]
 })

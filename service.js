@@ -51,9 +51,11 @@ import {
     MatDialogModule,
     MatDialogRef
 } from '@angular/material/dialog'
-import {MatSnackBar, MatSnackBarConfig} from '@angular/material/snack-bar'
 import {
-    BrowserModule, DomSanitizer, ɵgetDOM as getDOM, SafeResourceUrl
+    MatSnackBar, MatSnackBarConfig, MatSnackBarModule
+} from '@angular/material/snack-bar'
+import {
+    BrowserModule, DomSanitizer, SafeResourceUrl
 } from '@angular/platform-browser'
 import {
     ActivatedRouteSnapshot, CanDeactivate, Resolve, RouterStateSnapshot
@@ -83,12 +85,12 @@ import {
     ExtendPipe,
     ExtractDataPipe,
     GetFilenameByPrefixPipe,
-    PipeModule,
+    BasePipeModule,
     NumberGetUTCTimestampPipe,
     RepresentObjectPipe,
     StringEscapeRegularExpressionsPipe,
     StringFormatPipe
-} from './pipe'
+} from './basePipe'
 // endregion
 // region types
 export type AllowedRoles = string|Array<string>|{
@@ -2163,16 +2165,6 @@ export function dataServiceInitializerFactory(
         return data.initialize()
     }
 }
-/**
- * We have to check whether the agent is Android because composition events
- * behave differently between IOS and Android.
- * @returns The indicating result.
- */
-export function isAndroid():boolean {
-    return /android (\d+)/.test((
-        getDOM() ? getDOM().getUserAgent() : ''
-    ).toLowerCase())
-}
 // endregion
 // region module
 @NgModule({
@@ -2180,12 +2172,13 @@ export function isAndroid():boolean {
     entryComponents: [ConfirmComponent],
     exports: [BaseServiceModule, ConfirmComponent],
     imports: [
+        BasePipeModule,
         BaseServiceModule,
         BrowserModule.withServerTransition({
             appId: 'generic-service-universal'
         }),
         MatDialogModule,
-        PipeModule
+        MatSnackBarModule
     ],
     /*
         NOTE: Running "moduleHelper.determineProviders()" is not yet supported

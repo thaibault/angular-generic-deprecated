@@ -70,21 +70,22 @@ import {BrowserModule, DomSanitizer} from '@angular/platform-browser'
 import {ActivatedRoute, NavigationEnd, Router} from '@angular/router'
 import {Subject, Subscription} from 'rxjs'
 import {debounceTime, distinctUntilChanged} from 'rxjs/operators'
+
+import {
+    ArrayMakeRangePipe,
+    ExtendPipe,
+    GetFilenameByPrefixPipe,
+    BasePipeModule,
+    RepresentObjectPipe,
+    StringCapitalizePipe,
+    StringFormatPipe,
+    StringTemplatePipe
+} from './basePipe'
 /*
     NOTE: Default import is not yet support for angular's ahead of time
     compiler.
 */
 import {EditorModule} from './editor'
-import {
-    ArrayMakeRangePipe,
-    ExtendPipe,
-    GetFilenameByPrefixPipe,
-    PipeModule,
-    RepresentObjectPipe,
-    StringCapitalizePipe,
-    StringFormatPipe,
-    StringTemplatePipe
-} from './pipe'
 import {
     AbstractResolver,
     AlertService,
@@ -95,7 +96,6 @@ import {
     DataScopeService,
     determineInjector,
     InitialDataService,
-    isAndroid,
     LAST_KNOWN_DATA,
     ServiceModule,
     OfflineState,
@@ -2569,6 +2569,7 @@ export class PaginationComponent {
         EditorModule
     ],
     imports: [
+        BasePipeModule,
         BrowserModule.withServerTransition({
             appId: 'generic-component-universal'
         }),
@@ -2578,8 +2579,7 @@ export class PaginationComponent {
         MatCardModule,
         MatDialogModule,
         MatInputModule,
-        MatTooltipModule,
-        PipeModule
+        MatTooltipModule
     ]
 })
 /**
