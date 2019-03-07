@@ -198,7 +198,7 @@
         "babelMinify": {
           "bundle": {
             "#": "Mangeling here would result in undefined variable (for injected service in first defined injectable). Example traceback in application's pre-renderer: ReferenceError: e is not defined   at Module.<anonymous> (/build/preRender.js:124780:25463)   at __webpack_require__ (/build/preRender.js:124780:694)   at Object.<anonymous> (/build/preRender.js:124780:3665)   at __webpack_require__ (/build/preRender.js:124780:694)   at module.exports.wrapperApi (/build/preRender.js:124780:2020)   at Object.<anonymous> (/build/preRender.js:124780:2066)   at Object.<anonymous> (/build/preRender.js:125381:30)   at __webpack_require__ (/build/preRender.js:23:30)   at Module.<anonymous> (/build/preRender.js:155089:26)   at __webpack_require__ (/build/preRender.js:23:30)",
-            "__evaluate__": "self.debug ? null : {transform: {mangle: false}}"
+            "__evaluate__": "self.debug ? null : {transform: {builtIns: false, mangle: false}}"
           },
           "#": "This loader expects javascript (not typescript) here.",
           "module": null
