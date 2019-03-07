@@ -16,7 +16,7 @@
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
-export {animations} from './animation'
+export * from './animation'
 export * from './baseService'
 // region imports
 import Tools, {PlainObject} from 'clientnode'
@@ -64,11 +64,11 @@ import PouchDBValidationPlugin from 'pouchdb-validation'
 import {Observable, Subject} from 'rxjs'
 import {tap} from 'rxjs/operators'
 
+import {animations} from './animation'
 /*
     NOTE: Default import is not yet support for angular's ahead of time
     compiler.
 */
-import {animations} from './animation'
 import {
     AttachmentWithPrefixExistsPipe,
     ConvertCircularObjectToJSONPipe,
@@ -76,7 +76,7 @@ import {
     ExtendPipe,
     ExtractDataPipe,
     GetFilenameByPrefixPipe,
-    Module as PipeModule,
+    PipeModule,
     NumberGetUTCTimestampPipe,
     RepresentObjectPipe,
     StringEscapeRegularExpressionsPipe,
@@ -86,7 +86,7 @@ import {
     determineInjector,
     InitialDataService,
     LAST_KNOWN_DATA,
-    Module as BasicServiceModule,
+    BaseServiceModule,
     UtilityService
 } from './baseService'
 // endregion
@@ -2178,9 +2178,9 @@ export function isAndroid():boolean {
 @NgModule({
     declarations: [ConfirmComponent],
     entryComponents: [ConfirmComponent],
-    exports: [BasicServiceModule, ConfirmComponent],
+    exports: [BaseServiceModule, ConfirmComponent],
     imports: [
-        BasicServiceModule,
+        BaseServiceModule,
         BrowserModule.withServerTransition({
             appId: 'generic-service-universal'
         }),
@@ -2219,8 +2219,8 @@ export function isAndroid():boolean {
 /**
  * Represents the importable angular module.
  */
-export class Module {}
-export default Module
+export class ServiceModule {}
+export default ServiceModule
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

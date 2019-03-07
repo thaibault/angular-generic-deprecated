@@ -53,7 +53,7 @@ import {
     AttachmentWithPrefixExistsPipe,
     ExtendPipe,
     GetFilenameByPrefixPipe,
-    Module as PipeModule,
+    PipeModule,
     NumberGetUTCTimestampPipe
 } from './pipe'
 import {
@@ -1413,7 +1413,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
 /**
  * Represents the importable angular module.
  */
-export class Module {
+export class EditorModule {
     /* TODO needed for web component export
     constructor(injector:Injector) {
         const {createCustomElement} = require('@angular/elements')
@@ -1424,7 +1424,7 @@ export class Module {
     }
     */
 }
-export default Module
+export default EditorModule
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

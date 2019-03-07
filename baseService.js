@@ -269,8 +269,8 @@ export class OfflineState {
 /**
  * Represents the importable angular module.
  */
-export class Module {}
-export default Module
+export class BaseServiceModule {}
+export default BaseServiceModule
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:

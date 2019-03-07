@@ -257,21 +257,27 @@ registerAngularTest(function(
                 }
             }
             // endregion
-            return [{
-                declarations: [
-                    ComponentWithChildViewContainer,
-                    DirectiveWithViewContainer,
-                    ItemsComponent,
-                    PaginationHostComponent,
-                    RouterOutletStubComponent
-                ],
-                imports: moduleImports,
-                providers: [
-                    {provide: ActivatedRoute, useClass: ActivatedRouteStub},
-                    {provide: Router, useClass: RouterStub},
-                    {provide: Location, useClass: LocationStub}
-                ]
-            }, TestModule]
+            return [
+                {
+                    declarations: [
+                        ComponentWithChildViewContainer,
+                        DirectiveWithViewContainer,
+                        ItemsComponent,
+                        PaginationHostComponent,
+                        RouterOutletStubComponent
+                    ],
+                    imports: moduleImports,
+                    providers: [
+                        {
+                            provide: ActivatedRoute,
+                            useClass: ActivatedRouteStub
+                        },
+                        {provide: Router, useClass: RouterStub},
+                        {provide: Location, useClass: LocationStub}
+                    ]
+                },
+                TestModule
+            ]
         },
         test: async function(
             TestBed:Object, roundType:string, targetTechnology:string, $:Object

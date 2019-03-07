@@ -27,9 +27,9 @@ import {BrowserModule} from '@angular/platform-browser'
     NOTE: Default import is not yet support for angular's ahead of time
     compiler.
 */
-import {Module as ComponentModule} from './component'
-import {Module as PipeModule} from './pipe'
-import {Module as ServiceModule} from './service'
+import {ComponentModule} from './component'
+import {PipeModule} from './pipe'
+import {ServiceModule} from './service'
 // endregion
 // region module
 @NgModule({

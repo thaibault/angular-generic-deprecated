@@ -74,12 +74,12 @@ import {debounceTime, distinctUntilChanged} from 'rxjs/operators'
     NOTE: Default import is not yet support for angular's ahead of time
     compiler.
 */
-import {Module as EditorModule} from './editor'
+import {EditorModule} from './editor'
 import {
     ArrayMakeRangePipe,
     ExtendPipe,
     GetFilenameByPrefixPipe,
-    Module as PipeModule,
+    PipeModule,
     RepresentObjectPipe,
     StringCapitalizePipe,
     StringFormatPipe,
@@ -97,7 +97,7 @@ import {
     InitialDataService,
     isAndroid,
     LAST_KNOWN_DATA,
-    Module as ServiceModule,
+    ServiceModule,
     OfflineState,
     Stream,
     RegisterHTTPRequestInterceptor,
@@ -2585,8 +2585,8 @@ export class PaginationComponent {
 /**
  * Represents the importable angular module.
  */
-export class Module {}
-export default Module
+export class ComponentModule {}
+export default ComponentModule
 // endregion
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
