@@ -70,6 +70,13 @@ import {animations} from './animation'
     compiler.
 */
 import {
+    determineInjector,
+    InitialDataService,
+    LAST_KNOWN_DATA,
+    BaseServiceModule,
+    UtilityService
+} from './baseService'
+import {
     AttachmentWithPrefixExistsPipe,
     ConvertCircularObjectToJSONPipe,
     EqualsPipe,
@@ -82,13 +89,6 @@ import {
     StringEscapeRegularExpressionsPipe,
     StringFormatPipe
 } from './pipe'
-import {
-    determineInjector,
-    InitialDataService,
-    LAST_KNOWN_DATA,
-    BaseServiceModule,
-    UtilityService
-} from './baseService'
 // endregion
 // region types
 export type AllowedRoles = string|Array<string>|{
