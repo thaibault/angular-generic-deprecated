@@ -1058,10 +1058,10 @@ registerAngularTest(function(
                 for (const test:Array<any> of [
                     [{}, null, {}],
                     [{a: 2}, null, {a: 2}],
-                    [{a: ''}, null, {a: ''}],
-                    [{a: []}, null, {a: []}],
-                    [{a: {}}, null, {a: {}}],
-                    [{a: ''}, {a: {emptyEqualsToNull: true}}, {}],
+                    [{a: ''}, {a: {emptyEqualsToNull: false}}, {a: ''}],
+                    [{a: []}, {a: {emptyEqualsToNull: false}}, {a: []}],
+                    [{a: {}}, {a: {emptyEqualsToNull: false}}, {a: {}}],
+                    [{a: ''}, null, {}],
                     [{a: []}, {a: {emptyEqualsToNull: true}}, {}],
                     [
                         {[specialNames.id]: 2, a: 2},

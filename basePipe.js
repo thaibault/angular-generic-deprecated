@@ -711,7 +711,7 @@ export class ExtractDataPipe implements PipeTransform {
             for (const subItem of item)
                 result.push(this.transform(subItem))
             return result
-        } else if (typeof item === 'object' && item !== null) {
+        } else if (item !== null && typeof item === 'object') {
             const specialNames:PlainObject =
                 this.modelConfiguration.property.name.special
             if (item.hasOwnProperty('value')) {

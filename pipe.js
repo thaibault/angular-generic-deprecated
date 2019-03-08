@@ -38,6 +38,7 @@ import {
     DataScopeService, DataService, InitialDataService, UtilityService
 } from './service'
 // endregion
+// region attachments are equal
 @Pipe({name: 'genericAttachmentsAreEqual'})
 /**
  * Determines if given attachments are representing the same data.
@@ -182,10 +183,12 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
         return data.first.hash === data.second.hash
     }
 }
+// endregion
+// region extract raw data
 @Pipe({name: 'genericExtractRawData'})
 /**
- * Removes all meta data and already existing data (compared to an old
- * document) from a document recursively.
+ * Removes all meta or computable data and already existing data (compared to
+ * an old document) from a document recursively.
  * @property attachmentsAreEqual - Attachments are equal pip's transformation
  * method.
  * @property dataScope - Date scope service instance.
@@ -491,21 +494,25 @@ export class ExtractRawDataPipe implements PipeTransform {
             const result:PlainObject = {}
             for (const name in data)
                 if (data.hasOwnProperty(name)) {
-                    const emptyEqualsToNull:boolean = Boolean((
-                        specification &&
-                        (
-                            specification.hasOwnProperty(name) &&
-                            specification[name] ||
+                    let propertySpecification:PlainObject = {
+                        computed: false,
+                        emptyEqualsToNull: true
+                    }
+                    if (specification)
+                        if (specification.hasOwnProperty(name))
+                            propertySpecification = specification[name]
+                        else if (
                             specification.hasOwnProperty(
                                 this.specialNames.additional) &&
                             specification[this.specialNames.additional]
-                        ) ||
-                        {}
-                    ).emptyEqualsToNull)
-                    if (
-                        ![undefined, null].includes(data[name]) &&
-                        !(
-                            emptyEqualsToNull && (
+                        )
+                            propertySpecification =
+                                specification[this.specialNames.additional]
+                    if (!(
+                        propertySpecification.computed ||
+                        [undefined, null].includes(data[name]) ||
+                        (
+                            propertySpecification.emptyEqualsToNull && (
                                 data[name] === '' ||
                                 Array.isArray(data[name]) &&
                                 data[name].length === 0 ||
@@ -514,7 +521,7 @@ export class ExtractRawDataPipe implements PipeTransform {
                                 Object.keys(data[name]).length === 0
                             )
                         )
-                    )
+                    ))
                         if (
                             this.modelConfiguration.property.name.reserved
                                 .concat(
@@ -654,6 +661,7 @@ export class ExtractRawDataPipe implements PipeTransform {
         return payloadExists ? result : null
     }
 }
+// endregion
 // region module
 @NgModule({
     declarations: [AttachmentsAreEqualPipe, ExtractRawDataPipe],
