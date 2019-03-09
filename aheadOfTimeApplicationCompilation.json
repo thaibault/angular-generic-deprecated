@@ -1,7 +1,7 @@
 {
     "angularCompilerOptions": {
         "enableResourceInlining": true,
-        "flatModuleOutFile": true,
+        "flatModuleOutFile": false,
         "fullTemplateTypeCheck": true,
         "genDir": "../../",
         "preserveWhitespaces": false,

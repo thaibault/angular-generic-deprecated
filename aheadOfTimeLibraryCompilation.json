@@ -13,8 +13,7 @@
     },
     "compilerOptions": {
         "allowSyntheticDefaultImports": true,
-        "allowJs": false,
-        "allowSyntheticDefaultImports": false,
+        "baseUrl": ".",
         "allowUnreachableCode": true,
         "allowUnusedLabels": true,
         "alwaysStrict": false,
@@ -45,10 +44,15 @@
         "noStrictGenericChecks": false,
         "noUnusedLocals": false,
         "noUnusedParameters": false,
+        "paths": {
+            "angular-generic/*": [
+                "node_modules/angular-generic/aheadOfTime.compiled/*",
+                "angular-generic/*"
+            ]
+        },
         "preserveConstEnums": false,
         "pretty": true,
         "outDir": "aheadOfTime.compiled",
-        "rootDir": "./",
         "skipLibCheck": true,
         "strictNullChecks": false,
         "suppressImplicitAnyIndexErrors": false,
