@@ -2105,9 +2105,12 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 }
                 return {[name]: type}
             })
-        return this.list(sort, parseInt(
-            route.params.page || 1
-        ), parseInt(route.params.limit || 10), searchTerm)
+        return this.list(
+            sort,
+            parseInt(route.params.page || 1),
+            parseInt(route.params.limit || 10),
+            searchTerm
+        )
     }
     /**
      * Updates given item.

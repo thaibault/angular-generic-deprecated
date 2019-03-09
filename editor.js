@@ -253,10 +253,12 @@ export class AbstractValueAccessor implements ControlValueAccessor {
 }
 /**
  * Generic input component.
+ * @property activeEditorState - Indicates whether current editor is active.
  * @property declaration - Declaration info text.
  * @property description - Description to use instead of those coming from
  * model specification.
  * @property disabled - Sets disabled state.
+ * @property editor - Editor to choose from for an activated editor.
  * @property maximum - Maximum allowed number value.
  * @property maximumLength - Maximum allowed number of symbols.
  * @property maximumLengthText - Maximum length validation text.
@@ -273,6 +275,8 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property patternText - Pattern validation text.
  * @property required - Indicates whether this inputs have to be filled.
  * @property requiredText - Required validation text.
+ * @property selectableEditor - Indicates whether an editor is selectable.
+ * @property showDeclarationState - Represents current declaration show state.
  * @property showDeclarationText - Info text to click for more informations.
  * @property showValidationErrorMessages - Indicates whether validation errors
  * should be suppressed or be shown automatically. Useful to prevent error
@@ -280,9 +284,11 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property type - Type of given input.
  */
 export class AbstractInputComponent {
+    @Input() activeEditorState:boolean|null = null
     @Input() declaration:string|null = null
     @Input() description:string|null = null
     @Input() disabled:boolean|null = null
+    @Input() editor:PlainObject|string|null = null
     @Input() maximum:number|null = null
     @Input() maximumLength:number|null = null
     @Input() maximumLengthText:string =
@@ -303,6 +309,8 @@ export class AbstractInputComponent {
         '${regularExpressionPattern}".'
     @Input() required:boolean|null = null
     @Input() requiredText:string = 'Please fill this field.'
+    @Input() selectableEditor:boolean|null = null
+    @Input() showDeclarationState:boolean = false
     @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
     @Input() type:string
@@ -1037,8 +1045,8 @@ export const propertyContent:PlainObject = {
 export const inputContent:string = `
     <mat-hint align="start" @defaultAnimation matTooltip="info">
         <span
-            [class.active]="showDeclaration"
-            (click)="showDeclaration = !showDeclaration"
+            [class.active]="showDeclarationState"
+            (click)="showDeclarationState = !showDeclarationState"
             *ngIf="declaration || model.declaration"
         >
             <a
@@ -1047,21 +1055,21 @@ export const inputContent:string = `
                 href=""
                 *ngIf="showDeclarationText"
             >{{showDeclarationText}}</a>
-            <span @defaultAnimation *ngIf="showDeclaration">
+            <span @defaultAnimation *ngIf="showDeclarationState">
                 {{declaration || model.declaration}}
             </span>
         </span>
         <span *ngIf="editor && selectableEditor && !model.disabled">
             <span *ngIf="declaration || model.declaration">|</span>
             <a
-                [class.active]="activeEditor"
-                (click)="$event.preventDefault(); $event.stopPropagation(); activeEditor = true"
+                [class.active]="activeEditorState"
+                (click)="$event.preventDefault(); $event.stopPropagation(); activeEditorState = true"
                 href=""
             >editor</a>
             <span>|</span>
             <a
-                [class.active]="!activeEditor"
-                (click)="$event.preventDefault(); $event.stopPropagation(); activeEditor = false"
+                [class.active]="!activeEditorState"
+                (click)="$event.preventDefault(); $event.stopPropagation(); activeEditorState = false"
                 href=""
             >plain</a>
         </span>
@@ -1099,7 +1107,7 @@ export const inputContent:string = `
     template: `
         <generic-textarea
             ${propertyContent.wrapper}
-            [activeEditor]="activeEditor"
+            [activeEditorState]="activeEditorState"
             [editor]="editor"
             [maximumNumberOfRows]="maximumNumberOfRows"
             [minimumNumberOfRows]="minimumNumberOfRows"
@@ -1116,23 +1124,17 @@ export const inputContent:string = `
 /**
  * A generic form input, selection or textarea component with validation,
  * labeling and info description support.
- * @property activeEditor - Indicates whether current editor is active.
- * @property editor - Editor to choose from for an activated editor.
  * @property labels - Defines some selectable value labels.
  * @property maximumNumberOfRows - Maximum resizeable number of rows.
  * @property minimumNumberOfRows - Minimum resizeable number of rows.
  * @property rows - Number of rows to show.
- * @property selectableEditor - Indicates whether an editor is selectable.
  * @property type - Optionally defines an input type explicitly.
  */
 export class InputComponent extends AbstractInputComponent {
-    @Input() activeEditor:boolean|null = null
-    @Input() editor:PlainObject|string|null = null
     @Input() labels:{[key:string]:string} = {}
     @Input() maximumNumberOfRows:string
     @Input() minimumNumberOfRows:string
     @Input() rows:string
-    @Input() selectableEditor:boolean|null = null
     @Input() type:string
 }
 /* eslint-disable max-len */
@@ -1209,7 +1211,7 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
     animations,
     selector: 'generic-textarea',
     template: `
-        <ng-container *ngIf="activeEditor; else plain">
+        <ng-container *ngIf="activeEditorState; else plain">
             <span [class.focused]="focused" class="editor-label">
                 {{
                     description === '' ? null : description ? description : (
@@ -1254,9 +1256,12 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
  * description support.
  * @property static:defaultEditorOptions - Globale default editor options.
  *
- * @property activeEditor - Indicated weather current editor is active or not.
+ * @property activeEditorState - Indicated weather current editor is active or
+ * not.
  * @property editor - Editor options to choose from for an activated editor.
  * @property editorType - Editor type description.
+ * @property focused - Indicates whether the input field is focused.
+ * @property initialized - Indicates whether an editor is initialized.
  * @property maximumNumberOfRows - Maximum resizeable number of rows.
  * @property minimumNumberOfRows - Minimum resizeable number of rows.
  * @property rows - Number of rows to show.
@@ -1269,9 +1274,11 @@ export class TextareaComponent extends AbstractNativeInputComponent
         markup: {}
     }
 
-    @Input() activeEditor:boolean|null = null
+    @Input() activeEditorState:boolean|null = null
     @Input() editor:PlainObject|string|null = null
     editorType:string = 'custom'
+    focused:boolean = false
+    initialized:boolean = false
     @Input() maximumNumberOfRows:string
     @Input() minimumNumberOfRows:string
     @Input() rows:string
@@ -1309,8 +1316,8 @@ export class TextareaComponent extends AbstractNativeInputComponent
             }
             if (this.editor.startsWith('(') && this.editor.endsWith(')'))
                 this.editor = this.editor.substring(1, this.editor.length - 1)
-            else if (this.activeEditor === null)
-                this.activeEditor = true
+            else if (this.activeEditorState === null)
+                this.activeEditorState = true
             this.editorType = this.editor
             if (this.editor.startsWith('code'))
                 if (this.editor.startsWith('code:'))
@@ -1342,10 +1349,10 @@ export class TextareaComponent extends AbstractNativeInputComponent
             else
                 // Advanced editor.
                 this.editor = {}
-        } else if (this.editor === null && this.activeEditor)
+        } else if (this.editor === null && this.activeEditorState)
             this.editor = {}
-        if (this.activeEditor === null)
-            this.activeEditor = false
+        if (this.activeEditorState === null)
+            this.activeEditorState = false
         if (this.selectableEditor === null)
             if (typeof this.model.selectableEditor === 'boolean')
                 this.selectableEditor = this.model.selectableEditor

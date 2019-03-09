@@ -1,10 +1,15 @@
 {
     "angularCompilerOptions": {
+        "enableResourceInlining": false,
+        "flatModuleOutFile": false,
+        "fullTemplateTypeCheck": true,
         "genDir": "aheadOfTime.compiled",
         "preserveWhitespaces": false,
         "skipMetadataEmit" : false,
         "skipTemplateCodegen": false,
-        "strictMetadataEmit": true
+        "strictInjectionParameters": true,
+        "strictMetadataEmit": true,
+        "trace": true
     },
     "compilerOptions": {
         "allowSyntheticDefaultImports": true,

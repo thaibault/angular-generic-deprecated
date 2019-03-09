@@ -1467,17 +1467,17 @@ export class RepresentTextFileDirective {
                     <ng-template #editable>
                         <ng-container *ngIf="synchronizeImmediately; else parent">
                             <mat-form-field
-                                [class.dirty]="editedName && editedName !== file.name"
+                                [class.dirty]="temporaryEditedName && temporaryEditedName !== file.name"
                                 matTooltip="Focus to edit."
                             >
                                 <input
                                     matInput
-                                    [ngModel]="editedName || file.name"
-                                    (ngModelChange)="editedName = $event"
+                                    [ngModel]="temporaryEditedName || file.name"
+                                    (ngModelChange)="temporaryEditedName = $event"
                                 />
                                 <mat-hint
-                                    [class.active]="showDeclaration"
-                                    (click)="showDeclaration = !showDeclaration"
+                                    [class.active]="showDeclarationState"
+                                    (click)="showDeclarationState = !showDeclarationState"
                                     @defaultAnimation
                                     matTooltip="info"
                                     *ngIf="model[attachmentTypeName][internalName]?.declaration"
@@ -1490,7 +1490,7 @@ export class RepresentTextFileDirective {
                                     >{{showDeclarationText}}</a>
                                     <span
                                         @defaultAnimation
-                                        *ngIf="showDeclaration"
+                                        *ngIf="showDeclarationState"
                                     >
                                         {{
                                             model[attachmentTypeName][
@@ -1501,15 +1501,15 @@ export class RepresentTextFileDirective {
                                 </mat-hint>
                             </mat-form-field>
                             <ng-container
-                                *ngIf="editedName && editedName !== file.name"
+                                *ngIf="temporaryEditedName && temporaryEditedName !== file.name"
                             >
                                 <a
-                                    (click)="$event.preventDefault();rename(editedName)"
+                                    (click)="$event.preventDefault(); rename(temporaryEditedName)"
                                     @defaultAnimation
                                     href=""
                                 >{{saveNameText}}</a>
                                 <a
-                                    (click)="$event.preventDefault();editedName = file.name"
+                                    (click)="$event.preventDefault(); temporaryEditedName = file.name"
                                     @defaultAnimation
                                     href=""
                                 >{{resetNameText}}</a>
@@ -1526,8 +1526,8 @@ export class RepresentTextFileDirective {
                                 (ngModelChange)="file.name = $event;modelChange.emit(this.model); fileChange.emit(file)"
                             />
                             <mat-hint
-                                [class.active]="showDeclaration"
-                                (click)="showDeclaration = !showDeclaration"
+                                [class.active]="showDeclarationState"
+                                (click)="showDeclarationState = !showDeclarationState"
                                 @defaultAnimation
                                 matTooltip="info"
                                 *ngIf="model[attachmentTypeName][internalName]?.declaration"
@@ -1540,7 +1540,7 @@ export class RepresentTextFileDirective {
                                 >{{showDeclarationText}}</a>
                                 <span
                                     @defaultAnimation
-                                    *ngIf="showDeclaration"
+                                    *ngIf="showDeclarationState"
                                 >
                                     {{
                                         model[attachmentTypeName][
@@ -1721,7 +1721,6 @@ export class RepresentTextFileDirective {
  * @property attachmentTypeName - Current attachment type name.
  * @property autoMessages - Indicates whether to show messages as file upload
  * results.
- * @property change - File change event emitter.
  * @property configuration - Configuration object.
  * @property delete - Event emitter which triggers its handler when current
  * file should be removed.
@@ -1731,6 +1730,9 @@ export class RepresentTextFileDirective {
  * @property editableName - Indicates whether file name could be edited.
  * @property encoding - Encoding to use to represent given text files.
  * @property file - Holds the current selected file object if present.
+ * @property fileChange - Holds an event emitter triggering on file changes.
+ * @property filter - Holds filter to transform given file name or content
+ * type.
  * @property headerText - Header text to show instead of property description
  * or name.
  * @property idName - Name if id field.
@@ -1748,9 +1750,16 @@ export class RepresentTextFileDirective {
  * @property newButtonText - Text for button to trigger new file upload.
  * @property noFileText - Text to show if now file is selected.
  * @property noPreviewText - Text to show if no preview is available.
+ * @property oneDocumentPerFileMode - Indicates whether there exists a one to
+ * one relation between document and file.
+ * @property resetNameText - Label for button to reset temporary changed file
+ * name.
  * @property requiredText - Required file selection validation text.
  * @property revision - Revision of given model to show.
  * @property revisionName - Name if revision field.
+ * @property saveNameText - Label for button to save temporary changed file
+ * name.
+ * @property showDeclarationState - Represents current declaration show state.
  * @property showDeclarationText - Info text to click for more informations.
  * @property showValidationErrorMessages - Indicates whether validation errors
  * should be displayed. Useful to hide error messages until user tries to
@@ -1759,6 +1768,7 @@ export class RepresentTextFileDirective {
  * done immediately after a file was selected (or synchronously with other
  * model data).
  * @property template - String template pipes transform method.
+ * @property temporaryEditedName - Holds a temporary changed file name.
  * @property typeName - Name of type field.
  * @property typePatternText - File type validation text.
  *
@@ -1820,10 +1830,6 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     @Input() headerText:string|null = null
     idName:string
     @ViewChild('input') input:ElementRef
-    @Input() resetNameText:string = '×'
-    @Input() saveNameText:string = '✓'
-    @Input() showDeclarationText:string = 'ℹ'
-    typeName:string
     internalName:string
     keyCode:{[key:string]:number}
     @Input() mapNameToField:string|Array<string>|null = null
@@ -1845,12 +1851,18 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     @Input() noFileText:string = 'No file selected.'
     @Input() noPreviewText:string = 'No preview available.'
     @Input() oneDocumentPerFileMode:boolean = true
+    @Input() resetNameText:string = '×'
     @Input() requiredText:string = 'Please select a file.'
     @Input() revision:string|null = null
     revisionName:string
+    @Input() saveNameText:string = '✓'
+    @Input() showDeclarationState:boolean = false
+    @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
     @Input() synchronizeImmediately:boolean|PlainObject = false
     template:Function
+    temporaryEditedName:string = ''
+    typeName:string
     @Input() typePatternText:string =
         'Filetype "${file.content_type}" doesn\'t match specified pattern "' +
         '${model.contentTypeRegularExpressionPattern}".'
@@ -1982,9 +1994,11 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     async ngOnChanges(changes:SimpleChanges):Promise<void> {
         if (typeof this.model[this.idName] === 'object')
             this._idIsObject = true
-        if (changes.hasOwnProperty(
-            'mapNameToField'
-        ) && this.mapNameToField && !Array.isArray(this.mapNameToField))
+        if (
+            changes.hasOwnProperty('mapNameToField') &&
+            this.mapNameToField &&
+            !Array.isArray(this.mapNameToField)
+        )
             this.mapNameToField = [this.mapNameToField]
         if (changes.hasOwnProperty('model') || changes.hasOwnProperty(
             'name'
@@ -1992,7 +2006,8 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             this.internalName = this._getFilenameByPrefix(
                 this.model[this.attachmentTypeName], this.name)
             if (
-                this.name && this.internalName &&
+                this.name &&
+                this.internalName &&
                 this.internalName !== this.name
             )
                 this._prefixMatch = true
@@ -2097,9 +2112,13 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                                 this.file[type] = (
                                     filter.hasOwnProperty(type) &&
                                     filter.source.hasOwnProperty(type)
-                                ) ? this.file[type].replace(new RegExp(
-                                        filter.source[type], 'g'
-                                    ), filter.target[type]) :
+                                ) ?
+                                    this.file[type].replace(
+                                        new RegExp(
+                                            filter.source[type], 'g'
+                                        ),
+                                        filter.target[type]
+                                    ) :
                                     filter.target[type]
                 }
                 this.update(this.file ? this.file.name : null)
@@ -2423,7 +2442,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             <li
                 class="page-{{currentPage}}"
                 @defaultAnimation
-                [ngClass]="{current: currentPage === page, previous: currentPage === previousPage, next: currentPage === nextPage, even: even, 'even-page': currentPage % 2 === 0, first: currentPage === firstPage, last: currentPage === lastPage}"
+                [ngClass]="{current: currentPage === page, previous: currentPage === previousPage, next: currentPage === nextPage, even: even, 'even-page': currentPage % 2 === 0, first: currentPage === 1, last: currentPage === lastPage}"
                 *ngFor="let currentPage of pagesRange;let even = even"
             >
                 <a (click)="change($event, currentPage)" href="">
@@ -2489,7 +2508,7 @@ export class PaginationComponent {
     }
     /**
      * Determines the highest page number.
-     * @returns The determines page number.
+     * @returns The determined page number.
      */
     get lastPage():number {
         return Math.ceil(this.total / this.itemsPerPage)

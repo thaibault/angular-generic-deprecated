@@ -1,15 +1,31 @@
 {
     "angularCompilerOptions": {
-        "preserveWhitespaces": false
+        "enableResourceInlining": true,
+        "flatModuleOutFile": true,
+        "fullTemplateTypeCheck": true,
+        "genDir": "../../",
+        "preserveWhitespaces": false,
+        "skipMetadataEmit" : true,
+        "skipTemplateCodegen": true,
+        "strictInjectionParameters": true,
+        "strictMetadataEmit": true,
+        "trace": true
     },
     "compilerOptions": {
         "allowSyntheticDefaultImports": true,
+        "baseUrl": "../../",
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "lib": ["esnext", "dom"],
         "module": "esnext",
         "moduleResolution": "node",
         "noImplicitAny": false,
+        "paths": {
+            "angular-generic/*": [
+                "node_modules/angular-generic/aheadOfTime.compiled/*",
+                "angular-generic/*"
+            ]
+        },
         "sourceMap": false,
         "strict": true,
         "strictPropertyInitialization": false,

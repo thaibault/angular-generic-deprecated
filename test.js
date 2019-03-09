@@ -2361,64 +2361,80 @@ registerAngularTest(function(
                     await fixture.whenStable()
                     assert.strictEqual(
                         fixture.debugElement.query(By.css('*')).query(By.css),
-                        null)
+                        null
+                    )
                     instance.itemsPerPage = 2
                     fixture.detectChanges()
                     await fixture.whenStable()
-                    assert.strictEqual(fixture.debugElement.queryAll(By.css(
-                        'ul li a'
-                    )).length, 7)
+                    assert.strictEqual(
+                        fixture.debugElement.queryAll(By.css(
+                            'ul li a'
+                        )).length,
+                        7
+                    )
                     assert.strictEqual(instance.instance.lastPage, 5)
                     assert.deepEqual(
                         instance.instance.pagesRange, [1, 2, 3, 4, 5])
                     assert.strictEqual(instance.instance.previousPage, 1)
                     assert.strictEqual(instance.instance.nextPage, 2)
-                    assert.deepEqual(fixture.debugElement.query(By.css(
-                        '.current'
-                    )).nativeElement.className.split(' ').filter((
-                        name:string
-                    ):boolean => !name.startsWith('ng-')).sort(),
-                    ['current', 'even', 'page-1', 'previous'])
+                    assert.deepEqual(
+                        fixture.debugElement.query(By.css(
+                            '.current'
+                        )).nativeElement.className.split(' ').filter((
+                            name:string
+                        ):boolean => !name.startsWith('ng-')).sort(),
+                        ['current', 'even', 'first', 'page-1', 'previous']
+                    )
                     instance.instance.change(dummyEvent, 3)
                     assert.strictEqual(instance.instance.previousPage, 2)
                     assert.strictEqual(instance.instance.nextPage, 4)
                     fixture.detectChanges()
                     await fixture.whenStable()
-                    assert.deepEqual(fixture.debugElement.query(By.css(
-                        '.current'
-                    )).nativeElement.className.split(' ').filter((
-                        name:string
-                    ):boolean => !name.startsWith('ng-')).sort(),
-                    ['current', 'even', 'page-3'])
-                    assert.deepEqual(fixture.debugElement.query(By.css(
-                        '.previous'
-                    )).nativeElement.className.split(' ').filter((
-                        name:string
-                    ):boolean => !name.startsWith('ng-')).sort(),
-                    ['even-page', 'page-2', 'previous'])
-                    assert.deepEqual(fixture.debugElement.query(By.css(
-                        '.next'
-                    )).nativeElement.className.split(' ').filter((
-                        name:string
-                    ):boolean => !name.startsWith('ng-')).sort(),
-                    ['even-page', 'next', 'page-4'])
-                    assert.deepEqual(fixture.debugElement.query(By.css(
-                        '.last'
-                    )).nativeElement.className.split(' ').filter((
-                        name:string
-                    ):boolean => !name.startsWith('ng-')).sort(),
-                    ['even', 'last', 'page-5'])
+                    assert.deepEqual(
+                        fixture.debugElement.query(By.css(
+                            '.current'
+                        )).nativeElement.className.split(' ').filter((
+                            name:string
+                        ):boolean => !name.startsWith('ng-')).sort(),
+                        ['current', 'even', 'page-3']
+                    )
+                    assert.deepEqual(
+                        fixture.debugElement.query(By.css(
+                            '.previous'
+                        )).nativeElement.className.split(' ').filter((
+                            name:string
+                        ):boolean => !name.startsWith('ng-')).sort(),
+                        ['even-page', 'page-2', 'previous']
+                    )
+                    assert.deepEqual(
+                        fixture.debugElement.query(By.css(
+                            '.next'
+                        )).nativeElement.className.split(' ').filter((
+                            name:string
+                        ):boolean => !name.startsWith('ng-')).sort(),
+                        ['even-page', 'next', 'page-4']
+                    )
+                    assert.deepEqual(
+                        fixture.debugElement.query(By.css(
+                            '.last'
+                        )).nativeElement.className.split(' ').filter((
+                            name:string
+                        ):boolean => !name.startsWith('ng-')).sort(),
+                        ['even', 'last', 'page-5']
+                    )
                     fixture.debugElement.query(By.css(
                         '.next'
                     )).triggerEventHandler('click', dummyEvent)
                     fixture.detectChanges()
                     await fixture.whenStable()
-                    assert.deepEqual(fixture.debugElement.query(By.css(
-                        '.current'
-                    )).nativeElement.className.split(' ').filter((
-                        name:string
-                    ):boolean => !name.startsWith('ng-')).sort(),
-                    ['current', 'even', 'page-3'])
+                    assert.deepEqual(
+                        fixture.debugElement.query(By.css(
+                            '.current'
+                        )).nativeElement.className.split(' ').filter((
+                            name:string
+                        ):boolean => !name.startsWith('ng-')).sort(),
+                        ['current', 'even', 'page-3']
+                    )
                 } catch (error) {
                     console.warn(error)
                     assert.ok(false)
