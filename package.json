@@ -20,6 +20,7 @@
     "aheadOfTimePreRenderableModule.ts",
     "animation.compiled.js",
     "animation.js",
+    "applicationIndex.js",
     "basePipe.compiled.js",
     "basePipe.js",
     "baseService.compiled.js",
