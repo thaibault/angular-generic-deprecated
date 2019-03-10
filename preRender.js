@@ -377,8 +377,8 @@ export async function render(
                         module, {document: data, url})
                 } catch (error) {
                     console.warn(
-                        'Error occurred during ahead of time ' +
-                        `compiled pre-rendering path "${url}": ` +
+                        'Error occurred during ahead of time compiled ' +
+                        `pre-rendering path "${url}": ` +
                         Tools.representObject(error))
                     return reject(error)
                 }
