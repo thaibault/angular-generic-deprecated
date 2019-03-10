@@ -61,7 +61,8 @@ export function determinePaths(
             if (route.hasOwnProperty('redirectTo')) {
                 if (route.path === '**')
                     if (route.redirectTo.startsWith('/'))
-                        defaultPath = base + route.redirectTo
+                        defaultPath = base + route.redirectTo.replace(
+                            /^\/+/, '')
                     else
                         defaultPath = base + path.join(
                             root, route.redirectTo)
@@ -194,7 +195,7 @@ export async function render(
     options.routes = [].concat(options.routes)
     // endregion
     // IgnoreTypeCheck
-    const data:string = fileSystem.promises.readFile(
+    const data:string = await fileSystem.promises.readFile(
         options.htmlFilePath, {encoding: options.encoding})
     // region prepare environment
     renderScope.virtualConsole = new VirtualConsole()
@@ -268,10 +269,9 @@ export async function render(
                     options.targetDirectoryPath,
                     result.links[sourcePath].substring(
                         renderScope.basePath.length
-                    ).replace(/^\/+(.+?)\/?$/, '$1')) + '.html'
-                await new Promise(async (
-                    resolve:Function, reject:Function
-                ):Promise<void> => {
+                    ).replace(/^\/+(.+?)\/?$/, '$1')
+                ) + '.html'
+                await new Promise((resolve:Function, reject:Function):void =>
                     makeDirectoryPath(
                         path.dirname(realSourcePath),
                         async (error:?Error):Promise<void> => {
@@ -283,7 +283,7 @@ export async function render(
                                     realSourcePath)
                             } catch (error) {
                                 if (error.code !== 'ENOENT')
-                                    reject(error)
+                                    return reject(error)
                             }
                             if (
                                 stats &&
@@ -295,19 +295,21 @@ export async function render(
                                     ):void => removeDirectoryRecursively(
                                         realSourcePath,
                                         (error:?Error):void =>
-                                            error ? reject(error) : resolve()))
+                                            error ? reject(error) : resolve()
+                                    ))
                                 } catch (error) {
-                                    reject(error)
+                                    return reject(error)
                                 }
                             try {
                                 await fileSystem.promises.symlink(
                                     targetPath, realSourcePath)
                             } catch (error) {
-                                reject(error)
+                                return reject(error)
                             }
+                            resolve()
                         }
                     )
-                })
+                )
             }
         urls = Array.from(result.paths).sort()
     } else
@@ -318,16 +320,19 @@ export async function render(
         `${urls.length > 1 ? 's' : ''}.`)
     enableProdMode()
     // region generate pre-rendered html files
-    const results:Array<string> = []
+    const worker:Array<Promise<string>> = []
     const filePaths:Array<string> = []
     for (const url:string of urls) {
-        const filePath:string = path.join(options.targetDirectoryPath, (
-            url === renderScope.basePath
-        ) ? '/' : url.substring(renderScope.basePath.length).replace(
-                /^\/+(.+?)\/?$/, '$1'
-            )) + '.html'
+        const filePath:string = path.join(
+            options.targetDirectoryPath,
+            (url === renderScope.basePath) ?
+                '/' :
+                url.substring(renderScope.basePath.length).replace(
+                    /^\/+(.+?)\/?$/, '$1'
+                )
+        ) + '.html'
         filePaths.push(filePath)
-        results.push(await new Promise((
+        worker.push(new Promise((
             resolve:Function, reject:Function
         ):void => makeDirectoryPath(path.dirname(filePath), async (
             error:?Error
@@ -454,10 +459,12 @@ export async function render(
             try {
                 await fileSystem.promises.writeFile(filePath, result)
             } catch (error) {
-                reject(error)
+                return reject(error)
             }
+            resolve(result)
         })))
     }
+    const results:Array<string> = await Promise.all(worker)
     // endregion
     // region tidy up
     const files:Array<File> = await Tools.walkDirectoryRecursively(

@@ -21,8 +21,12 @@
         "moduleResolution": "node",
         "noImplicitAny": false,
         "paths": {
+            "./module": [
+                "node_modules/angular-generic/aheadOfTimePrerenderableModule"
+            ],
             "angular-generic/*": [
-                "node_modules/angular-generic/aheadOfTime.compiled/*"
+                "node_modules/angular-generic/aheadOfTime.compiled/*",
+                "angular-generic/*"
             ]
         },
         "sourceMap": false,
