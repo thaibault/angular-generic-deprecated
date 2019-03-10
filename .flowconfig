@@ -2,6 +2,7 @@
 [ignore]
 .*/\.git
 .*/_.*\.js
+.*/applicationIndex.js$
 .*/.+\.compiled\(\.js\)?
 .*/broken.json
 .*/preRenderDummy\.js$
