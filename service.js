@@ -212,7 +212,7 @@ export type Stream = {
 }
 // endregion
 // region services
-@Injectable()
+@Injectable({providedIn: 'root'})
 /**
  * A generic guard which prevents from switching to route if its component's
  * "canDeactivate()" method returns "false", a promise or observable wrapping
@@ -229,8 +229,9 @@ export class CanDeactivateRouteLeaveGuard implements CanDeactivate<Object> {
     canDeactivate(
         component:any, ...additionalParameter:Array<any>
     ):Observable<boolean>|Promise<boolean>|boolean {
-        return 'canDeactivate' in component ? component.canDeactivate(
-            ...additionalParameter) : true
+        return 'canDeactivate' in component ?
+            component.canDeactivate(...additionalParameter) :
+            true
     }
 }
 // / region confirm
@@ -342,7 +343,7 @@ export class AlertService {
     }
 }
 // / endregion
-@Injectable()
+@Injectable({providedIn: 'root'})
 /**
  * A generic database connector.
  * @property static:revisionNumberRegularExpression - Compiled regular
@@ -1243,7 +1244,7 @@ export class DataService {
             throw error
     }
 }
-@Injectable()
+@Injectable({providedIn: 'root'})
 /**
  * Auto generates a components scope environment for a specified model.
  * @property attachmentWithPrefixExists - Hold the attachment with prefix
@@ -1818,7 +1819,7 @@ export class DataScopeService {
         return result
     }
 }
-@Injectable()
+@Injectable({providedIn: 'root'})
 /**
  * Registers each request in the data requests list to track number of running
  * transactions.
@@ -1856,7 +1857,7 @@ export class RegisterHTTPRequestInterceptor implements HttpInterceptor {
     }
 }
 // / region abstract
-@Injectable()
+@Injectable({providedIn: 'root'})
 /**
  * Helper class to extend from to have some basic methods to deal with database
  * entities.
