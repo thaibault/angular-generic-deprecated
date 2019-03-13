@@ -290,7 +290,7 @@ export class ConfirmComponent {
                     this[key] = data[key]
     }
 }
-@Injectable()
+@Injectable({providedIn: 'root'})
 /**
  * Alert service to trigger a dialog window which can be confirmed.
  * @property dialog - Reference to the dialog component instance.
@@ -2193,12 +2193,8 @@ export function dataServiceInitializerFactory(
         AlertService,
         DataScopeService,
         DataService,
-        // / region guards
         CanDeactivateRouteLeaveGuard,
-        // / endregion
-        // / region resolver
         AbstractResolver,
-        // / endregion
         // endregion
         {
             provide: HTTP_INTERCEPTORS,
