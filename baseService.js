@@ -28,7 +28,8 @@ export const globalVariableNameToRetrieveDataFrom:string = 'genericInitialData'
 export const applicationDomNodeSelector:string = 'application, [application]'
 export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
 // region basic services
-@Injectable()
+// TODO do it everyhwere
+@Injectable({providedIn: 'root'})
 /**
  * Injectable angular service for the tools class.
  * @property static:$ - Holds an instance of a generic dom abstraction layer
