@@ -95,7 +95,7 @@ export const TINYMCE_DEFAULT_OPTIONS:PlainObject = {
     baseURL: tinymceBasePath,
     scriptPath: `${tinymceBasePath}tinymce.min.js`,
     skin_url: `${tinymceBasePath}skins/lightgray`,
-    theme_url: `${tinymceBasePath}themes/modern/theme.min.js`,
+    theme_url: `${tinymceBasePath}themes/silver/theme.min.js`,
     // endregion
     allow_conditional_comments: false,
     allow_script_urls: false,
