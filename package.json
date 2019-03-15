@@ -192,15 +192,19 @@
     },
     "module": {
       "aliases": {
-        "#": "We need to process this file dynamically when testing different environments.",
-        "clientnode/test$": "clientnode/test",
+        "#": "Using pre-compiled artefacts.",
+        "@babel/polyfill$": "@babel/polyfill/dist/polyfill.min.js",
         "#0": "We need blob-util in node environments only.",
         "blob-util$": {
-          "__evaluate__": "self.targetTechnology === 'node' ? 'clientnode' : 'blob-util'"
+          "__evaluate__": "self.targetTechnology === 'node' ? 'clientnode' : 'blob-util/dist/blob-util.min.js'"
         },
-        "#1": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
+        "#1": "We need to process this file dynamically when testing different environments.",
+        "clientnode/test$": "clientnode/test",
+        "^hammerjs$": "hammerjs/hammer.min.js",
+        "jquery$": "jquery/dist/jquery.min.js",
+        "#2": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
         "node-fetch$": "node-fetch/lib/index.js",
-        "#2": "Avoid using default buggy \"pouchdb-promise/lib/index.es.js\" version.",
+        "#3": "Avoid using default buggy \"pouchdb-promise/lib/index.es.js\" version.",
         "pouchdb-promise$": "pouchdb-promise/lib/index.js"
       },
       "optimizer": {
@@ -248,16 +252,7 @@
               "__evaluate__": "`'${self.path.source.base}'`"
             }
           ]
-        ],
-        "normal": {
-          "#": "Using pre-compiled artefacts.",
-          "^@babel/polyfill$": "@babel/polyfill/dist/polyfill.min.js",
-          "^blob-util$": "blob-util/dist/blob-util.min.js",
-          "^hammerjs$": "hammerjs/hammer.min.js",
-          "^jquery$": {
-            "__evaluate__": "path.resolve('./node_modules/jquery/dist/jquery.min.js')"
-          }
-        }
+        ]
       },
       "skipParseRegularExpressions": {
         "__evaluate__": "/(?:^|\\/)(?:(?:@babel\\/polyfill\\/dist\\/polyfill)|(?:hammerjs\\/hammer)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb))(?:\\.min)?\\.js(?:\\?.+|$)/"
