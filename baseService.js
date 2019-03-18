@@ -139,7 +139,7 @@ export class InitialDataService {
         url: 'generic'
     }}}
     static injectors:Set<Injector> = new Set()
-    static removeFoundData:boolean = true
+    static removeFoundData:boolean = false
 
     configuration:PlainObject
     globalContext:any
