@@ -197,9 +197,11 @@ export class InitialDataService {
         } else
             domNode = domNodeReference
         let result:PlainObject = {}
-        if (domNode && 'getAttribute' in domNode && domNode.getAttribute(
-            attributeName
-        )) {
+        if (
+            domNode &&
+            'getAttribute' in domNode &&
+            domNode.getAttribute(attributeName)
+        ) {
             result = this.set(JSON.parse(domNode.getAttribute(attributeName)))
             if (removeFoundData)
                 domNode.removeAttribute(attributeName)
