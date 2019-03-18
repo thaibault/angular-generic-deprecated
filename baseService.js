@@ -141,12 +141,12 @@ export class InitialDataService {
         this.tools = utility.fixed.tools
         this.set(
             InitialDataService.defaultScope,
-            globalVariableNameToRetrieveDataFrom in utility.fixed.globalContext
-                ?
-                utility.fixed.globalContext[
-                    globalVariableNameToRetrieveDataFrom]
-                :
-                {})
+            globalVariableNameToRetrieveDataFrom in
+                utility.fixed.globalContext ?
+                    utility.fixed.globalContext[
+                        globalVariableNameToRetrieveDataFrom] :
+                    {}
+        )
         if (InitialDataService.removeFoundData)
             delete utility.fixed.globalContext[
                 globalVariableNameToRetrieveDataFrom]
