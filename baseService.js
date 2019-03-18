@@ -18,8 +18,9 @@
 */
 // region imports
 import Tools, {$, DomNode, globalContext, PlainObject} from 'clientnode'
-import {Injectable, Injector, NgModule} from '@angular/core'
+import {APP_INITIALIZER, Injectable, Injector, NgModule} from '@angular/core'
 // endregion
+// region variables
 export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
@@ -27,6 +28,21 @@ export let currentInstanceToSearchInjectorFor:Object|null = null
 export const globalVariableNameToRetrieveDataFrom:string = 'genericInitialData'
 export const applicationDomNodeSelector:string = 'application, [application]'
 export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
+// endregion
+// region provider
+/**
+ * Initialized initial given data.
+ * @param initialData - Injected initial data service instance.
+ * @param utility - Injected utility service instance.
+ * @returns Initializer function.
+ */
+export function initialDataInitializerFactory(
+    initialData:InitialDataService, utility:UtilityService
+):Function {
+    initialData.retrieveFromDomNode(applicationDomNodeSelector)
+    return utility.fixed.tools.noop
+}
+// endregion
 // region basic services
 @Injectable({providedIn: 'root'})
 /**
@@ -264,7 +280,17 @@ export class OfflineState {
 // endregion
 // region module
 @NgModule({
-    providers: [InitialDataService, OfflineState, UtilityService]
+    providers: [
+        InitialDataService,
+        OfflineState,
+        UtilityService,
+        {
+            deps: [InitialDataService, UtilityService],
+            multi: true,
+            provide: APP_INITIALIZER,
+            useFactory: initialDataInitializerFactory
+        }
+    ]
 })
 /**
  * Represents the importable angular module.
