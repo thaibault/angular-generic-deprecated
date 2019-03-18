@@ -18,8 +18,9 @@
 */
 // region imports
 import Tools, {$, DomNode, globalContext, PlainObject} from 'clientnode'
-import {Injectable, Injector, NgModule} from '@angular/core'
+import {APP_INITIALIZER, Injectable, Injector, NgModule} from '@angular/core'
 // endregion
+// region variables
 export let LAST_KNOWN_DATA:{data:PlainObject;sequence:number|string} = {
     data: {}, sequence: 'now'
 }
@@ -27,6 +28,21 @@ export let currentInstanceToSearchInjectorFor:Object|null = null
 export const globalVariableNameToRetrieveDataFrom:string = 'genericInitialData'
 export const applicationDomNodeSelector:string = 'application, [application]'
 export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
+// endregion
+// region provider
+/**
+ * Initialized initial given data.
+ * @param initialData - Injected initial data service instance.
+ * @param utility - Injected utility service instance.
+ * @returns Initializer function.
+ */
+export function initialDataInitializerFactory(
+    initialData:InitialDataService, utility:UtilityService
+):Function {
+    initialData.retrieveFromDomNode(applicationDomNodeSelector)
+    return utility.fixed.tools.noop
+}
+// endregion
 // region basic services
 @Injectable({providedIn: 'root'})
 /**
@@ -123,7 +139,7 @@ export class InitialDataService {
         url: 'generic'
     }}}
     static injectors:Set<Injector> = new Set()
-    static removeFoundData:boolean = true
+    static removeFoundData:boolean = false
 
     configuration:PlainObject
     globalContext:any
@@ -141,12 +157,12 @@ export class InitialDataService {
         this.tools = utility.fixed.tools
         this.set(
             InitialDataService.defaultScope,
-            globalVariableNameToRetrieveDataFrom in utility.fixed.globalContext
-                ?
-                utility.fixed.globalContext[
-                    globalVariableNameToRetrieveDataFrom]
-                :
-                {})
+            globalVariableNameToRetrieveDataFrom in
+                utility.fixed.globalContext ?
+                    utility.fixed.globalContext[
+                        globalVariableNameToRetrieveDataFrom] :
+                    {}
+        )
         if (InitialDataService.removeFoundData)
             delete utility.fixed.globalContext[
                 globalVariableNameToRetrieveDataFrom]
@@ -160,9 +176,16 @@ export class InitialDataService {
      */
     retrieveFromDomNode(
         domNodeReference:DomNode|string = applicationDomNodeSelector,
-        removeFoundData:boolean = InitialDataService.removeFoundData,
+        removeFoundData:boolean|null = null,
         attributeName:string = 'initialData'
     ):PlainObject {
+        /*
+            NOTE: We cannot define this as default parameter since it should be
+            resolved at runtime (to be able to change this value during
+            initialisation).
+        */
+        if (removeFoundData === null)
+            removeFoundData = InitialDataService.removeFoundData
         let domNode:DomNode|null = null
         if (typeof domNodeReference === 'string') {
             if (
@@ -174,9 +197,11 @@ export class InitialDataService {
         } else
             domNode = domNodeReference
         let result:PlainObject = {}
-        if (domNode && 'getAttribute' in domNode && domNode.getAttribute(
-            attributeName
-        )) {
+        if (
+            domNode &&
+            'getAttribute' in domNode &&
+            domNode.getAttribute(attributeName)
+        ) {
             result = this.set(JSON.parse(domNode.getAttribute(attributeName)))
             if (removeFoundData)
                 domNode.removeAttribute(attributeName)
@@ -264,7 +289,17 @@ export class OfflineState {
 // endregion
 // region module
 @NgModule({
-    providers: [InitialDataService, OfflineState, UtilityService]
+    providers: [
+        InitialDataService,
+        OfflineState,
+        UtilityService,
+        {
+            deps: [InitialDataService, UtilityService],
+            multi: true,
+            provide: APP_INITIALIZER,
+            useFactory: initialDataInitializerFactory
+        }
+    ]
 })
 /**
  * Represents the importable angular module.
