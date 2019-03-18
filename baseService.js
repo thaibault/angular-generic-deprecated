@@ -176,9 +176,16 @@ export class InitialDataService {
      */
     retrieveFromDomNode(
         domNodeReference:DomNode|string = applicationDomNodeSelector,
-        removeFoundData:boolean = InitialDataService.removeFoundData,
+        removeFoundData:boolean|null = null,
         attributeName:string = 'initialData'
     ):PlainObject {
+        /*
+            NOTE: We cannot define this as default parameter since it should be
+            resolved at runtime (to be able to change this value during
+            initialisation).
+        */
+        if (removeFoundData === null)
+            removeFoundData = InitialDataService.removeFoundData
         let domNode:DomNode|null = null
         if (typeof domNodeReference === 'string') {
             if (
