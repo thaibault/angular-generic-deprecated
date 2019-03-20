@@ -361,6 +361,8 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
      * @returns Nothing.
      */
     ngOnInit():void {
+        if (typeof this.model === 'string')
+            this.model = (new Function(`return ${this.model}`))()
         this._extend(this.model, this._extend(
             {
                 disabled: false,
@@ -369,6 +371,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
                 minimum: 0,
                 maximumLength: Infinity,
                 minimumLength: 0,
+                name: 'NO_NAME_DEFINED',
                 nullable: true,
                 regularExpressionPattern: '.*',
                 state: {},
