@@ -259,6 +259,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property description - Description to use instead of those coming from
  * model specification.
  * @property disabled - Sets disabled state.
+ * @property domNode - Holds the host dom node.
  * @property editor - Editor to choose from for an activated editor.
  * @property maximum - Maximum allowed number value.
  * @property maximumLength - Maximum allowed number of symbols.
@@ -289,6 +290,7 @@ export class AbstractInputComponent implements OnChanges {
     @Input() declaration:string|null = null
     @Input() description:string|null = null
     @Input() disabled:boolean|null = null
+    domNode:ElementRef
     @Input() editor:PlainObject|string|null = null
     @Input() maximum:number|null = null
     @Input() maximumLength:number|null = null
@@ -315,6 +317,20 @@ export class AbstractInputComponent implements OnChanges {
     @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
     @Input() type:string
+   /**
+     * Sets needed services as property values.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
+     * @returns Nothing.
+     */
+    constructor(@Optional() injector:Injector) {
+        const get:Function = determineInjector(
+            injector, this, this.constructor)
+        this.domNode = get(ElementRef)
+        this.modelChange.subscribe(():void => {
+            this.domNode.nativeElement.value = this.model.value
+        })
+    }
     /**
      * Triggers after first input values have been resolved or changed.
      * @returns Nothing.
@@ -322,6 +338,7 @@ export class AbstractInputComponent implements OnChanges {
     ngOnChanges(...parameter):void {
         if (typeof this.model === 'string')
             this.model = (new Function(`return ${this.model}`))()
+        this.domNode.nativeElement.value = this.model.value
     }
 }
 /**
@@ -349,7 +366,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
      * @returns Nothing.
      */
     constructor(@Optional() injector:Injector) {
-        super()
+        super(injector)
         const get:Function = determineInjector(
             injector, this, this.constructor)
         this._attachmentWithPrefixExists = get(
@@ -1152,6 +1169,14 @@ export class InputComponent extends AbstractInputComponent {
     @Input() minimumNumberOfRows:string
     @Input() rows:string
     @Input() type:string
+    /**
+     * Delegates injected injector service instance to the super constructor.
+     * @param injector - Injected injector service instance.
+     * @returns Nothing.
+     */
+    constructor(injector:Injector) {
+        super(injector)
+    }
 }
 /* eslint-disable max-len */
 @Component({
