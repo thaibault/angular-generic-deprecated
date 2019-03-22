@@ -1152,11 +1152,6 @@ export class InputComponent extends AbstractInputComponent {
     @Input() minimumNumberOfRows:string
     @Input() rows:string
     @Input() type:string
-
-    constructor() {
-        super()
-        this.modelChange.subscribe((e) => console.log('EE TODO', e))
-    }
 }
 /* eslint-disable max-len */
 @Component({
