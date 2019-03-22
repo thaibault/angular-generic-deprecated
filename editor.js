@@ -29,7 +29,7 @@ import {
     Injector,
     Input,
     NgModule,
-    OnInit,
+    OnChanges,
     Optional,
     Renderer2 as Renderer,
     OnDestroy,
@@ -58,6 +58,7 @@ import {
     NumberGetUTCTimestampPipe
 } from './basePipe'
 import {
+    BaseServiceModule,
     determineInjector,
     InitialDataService,
     UtilityService
@@ -327,7 +328,7 @@ export class AbstractInputComponent {
  * converter pipe transform method.
  */
 export class AbstractNativeInputComponent extends AbstractInputComponent
-    implements OnInit {
+    implements OnChanges {
     _attachmentWithPrefixExists:Function
     _extend:Function
     _getFilenameByPrefix:Function
@@ -357,10 +358,10 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
         ).transform.bind(get(NumberGetUTCTimestampPipe))
     }
     /**
-     * Triggers after input values have been resolved.
+     * Triggers after first input values have been resolved or changed.
      * @returns Nothing.
      */
-    ngOnInit():void {
+    ngOnChanges():void {
         if (typeof this.model === 'string')
             this.model = (new Function(`return ${this.model}`))()
         this._extend(this.model, this._extend(
@@ -1037,6 +1038,7 @@ export const propertyContent:PlainObject = {
         [minimumLengthText]="minimumLengthText"
         [minimumText]="minimumText"
         [model]="model"
+        (modelChange)="modelChange.emit(model)"
         [pattern]="pattern"
         [required]="required"
         [requiredText]="requiredText"
@@ -1271,7 +1273,7 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
  * @property selectableEditor - Indicates whether an editor is selectable.
  */
 export class TextareaComponent extends AbstractNativeInputComponent
-    implements OnInit {
+    implements OnChanges {
     static defaultEditorOptions:{code:PlainObject;markup:PlainObject} = {
         code: {},
         markup: {}
@@ -1307,8 +1309,8 @@ export class TextareaComponent extends AbstractNativeInputComponent
      * Triggers after input values have been resolved.
      * @returns Nothing.
      */
-    ngOnInit():void {
-        super.ngOnInit()
+    ngOnChanges():void {
+        super.ngOnChanges()
         if (this.editor === null && this.model.editor)
             this.editor = this.model.editor
         if (typeof this.editor === 'string') {
@@ -1397,15 +1399,6 @@ export class TextareaComponent extends AbstractNativeInputComponent
         TextEditorComponent
         // endregion
     ],
-    /* TODO needed for web component export
-    entryComponents: [
-        CodeEditorComponent,
-        InputComponent,
-        SimpleInputComponent,
-        TextareaComponent,
-        TextEditorComponent
-    ],
-    */
     exports: [
         CodeEditorComponent,
         InputComponent,
@@ -1415,6 +1408,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
     ],
     imports: [
         BasePipeModule,
+        BaseServiceModule,
         BrowserModule.withServerTransition({
             appId: 'generic-editor-universal'
         }),
