@@ -284,7 +284,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * component from showing error messages before the user has submit the form.
  * @property type - Type of given input.
  */
-export class AbstractInputComponent {
+export class AbstractInputComponent implements OnChanges {
     @Input() activeEditorState:boolean|null = null
     @Input() declaration:string|null = null
     @Input() description:string|null = null
@@ -315,6 +315,14 @@ export class AbstractInputComponent {
     @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
     @Input() type:string
+    /**
+     * Triggers after first input values have been resolved or changed.
+     * @returns Nothing.
+     */
+    ngOnChanges():void {
+        if (typeof this.model === 'string')
+            this.model = (new Function(`return ${this.model}`))()
+    }
 }
 /**
  * Generic input component.
@@ -359,11 +367,11 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
     }
     /**
      * Triggers after first input values have been resolved or changed.
+     * @parameter - Given parameter to forward.
      * @returns Nothing.
      */
-    ngOnChanges():void {
-        if (typeof this.model === 'string')
-            this.model = (new Function(`return ${this.model}`))()
+    ngOnChanges(...parameter):void {
+        super.ngOnChanges(...parameter)
         this._extend(this.model, this._extend(
             {
                 disabled: false,
@@ -999,24 +1007,26 @@ export class TextEditorComponent extends AbstractEditorComponent
             this.instance.setMode(this.disabled ? 'readonly' : 'design')
     }
 }
+export const basePropertyContent:string = `
+    [ngModel]="model.value"
+    (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
+    #state="ngModel"
+`
 /* eslint-disable max-len */
 export const propertyContent:PlainObject = {
     editor: `
+        ${basePropertyContent}
         (blur)="focused = false"
         @defaultAnimation
         (focus)="focused = true"
-        [ngModel]="model.value"
-        (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
         [style.visibilty]="initialized ? 'visible' : 'hidden'"
-        #state="ngModel"
     `,
+    // NOTE: A material wrapper got the default animation already here.
     nativ: `
+        ${basePropertyContent}
         [name]="model.name"
-        [ngModel]="model.value"
-        (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
         [placeholder]="description === '' ? null : description ? description : (model.description || model.name)"
         [required]="required === null ? !model.nullable : required"
-        #state="ngModel"
     `,
     nativText: `
         [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
@@ -1141,6 +1151,11 @@ export class InputComponent extends AbstractInputComponent {
     @Input() minimumNumberOfRows:string
     @Input() rows:string
     @Input() type:string
+
+    constructor() {
+        super()
+        this.modelChange.subscribe((e) => console.log('EE TODO', e))
+    }
 }
 /* eslint-disable max-len */
 @Component({
@@ -1307,10 +1322,11 @@ export class TextareaComponent extends AbstractNativeInputComponent
     }
     /**
      * Triggers after input values have been resolved.
+     * @parameter - Given parameter to forward.
      * @returns Nothing.
      */
-    ngOnChanges():void {
-        super.ngOnChanges()
+    ngOnChanges(...parameter):void {
+        super.ngOnChanges(...parameter)
         if (this.editor === null && this.model.editor)
             this.editor = this.model.editor
         if (typeof this.editor === 'string') {
