@@ -319,7 +319,7 @@ export class AbstractInputComponent implements OnChanges {
      * Triggers after first input values have been resolved or changed.
      * @returns Nothing.
      */
-    ngOnChanges():void {
+    ngOnChanges(...parameter):void {
         if (typeof this.model === 'string')
             this.model = (new Function(`return ${this.model}`))()
     }
@@ -367,7 +367,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
     }
     /**
      * Triggers after first input values have been resolved or changed.
-     * @parameter - Given parameter to forward.
+     * @param parameter - Given parameter to forward.
      * @returns Nothing.
      */
     ngOnChanges(...parameter):void {
@@ -990,6 +990,7 @@ export class TextEditorComponent extends AbstractEditorComponent
     }
     /**
      * Frees all tinymce allocated data from memory if there exists some.
+     * @param parameter - Given parameter to forward.
      * @returns Nothing.
      */
     ngOnDestroy():void {
@@ -1322,7 +1323,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
     }
     /**
      * Triggers after input values have been resolved.
-     * @parameter - Given parameter to forward.
+     * @param parameter - Given parameter to forward.
      * @returns Nothing.
      */
     ngOnChanges(...parameter):void {
