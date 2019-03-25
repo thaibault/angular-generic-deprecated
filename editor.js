@@ -338,6 +338,7 @@ export class AbstractInputComponent implements OnChanges {
     ngOnChanges(...parameter):void {
         if (typeof this.model === 'string')
             this.model = (new Function(`return ${this.model}`))()
+        this.domNode.nativeElement.name = this.model.name
         this.domNode.nativeElement.value = this.model.value
     }
 }
