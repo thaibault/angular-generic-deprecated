@@ -356,7 +356,6 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         */
         if (!this.model.state && this.state)
             this.model.state = this.state
-        this.reflectProperties()
     }
     /**
      * Triggers after first input values have been resolved or changed.
