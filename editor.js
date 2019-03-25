@@ -360,6 +360,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     }
     /**
      * Triggers after first input values have been resolved or changed.
+     * @param changes - Object that represents property changes.
      * @returns Nothing.
      */
     ngOnChanges(changes:SimpleChanges):void {
@@ -391,33 +392,27 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
      * @returns Nothing.
      */
     reflectProperties():void {
-        for (const name of this.constructor.reflectableModelPropertyNames)
+        for (const name of this.constructor['reflectableModelPropertyNames'])
             this.domNode.nativeElement[name] = this.model[name]
         if (this.model.state)
-            for (const name of this.constructor.reflectableStatePropertyNames)
+            for (const name of this.constructor['reflectableStatePropertyNames'])
                 this.domNode.nativeElement[name] = this.model.state[name]
         if (
             'getAttribute' in this.domNode.nativeElement &&
             'removeAttribute' in this.domNode.nativeElement &&
             'setAttribute' in this.domNode.nativeElement
         ) {
-            for (const name of this.constructor.reflectableModelPropertyNames)
+            for (const name of this.constructor['reflectableModelPropertyNames'])
                 if (
                     name !== 'value' &&
                     this.domNode.nativeElement.getAttribute(name) !==
                     `${this.model[name]}`
-                ) {
-                    console.log('A', name, this.model[name])
-                    this.setDomNodeAttribute(
-                        name,
-                        this.domNode.nativeElement.getAttribute(name),
-                        this.model[name]
-                    )
-                }
+                )
+                    this.setDomNodeAttribute(name, this.model[name])
             if (this.model.state)
                 for (
                     const name of
-                    this.constructor.reflectableStatePropertyNames
+                    this.constructor['reflectableStatePropertyNames']
                 )
                     if (
                         this.domNode.nativeElement.getAttribute(name) !==
@@ -488,11 +483,11 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
     }
     /**
      * Triggers after first input values have been resolved or changed.
-     * @param parameter - Given parameter to forward.
+     * @param changes - Object that represents property changes.
      * @returns Nothing.
      */
-    ngOnChanges(...parameter):void {
-        super.ngOnChanges(...parameter)
+    ngOnChanges(changes:SimpleChanges):void {
+        super.ngOnChanges(changes)
         this._extend(this.model, this._extend(
             {
                 disabled: false,
@@ -1436,20 +1431,23 @@ export class TextareaComponent extends AbstractNativeInputComponent
      */
     constructor(initialData:InitialDataService, injector:Injector) {
         super(injector)
-        if (initialData.configuration.hasOwnProperty(
-            'defaultEditorOptions'
-        ) && typeof initialData.configuration.defaultEditorOptions ===
-        'object' && initialData.configuration.defaultEditorOptions !== null)
+        if (
+            initialData.configuration.hasOwnProperty(
+                'defaultEditorOptions') &&
+            typeof initialData.configuration.defaultEditorOptions ===
+            'object' &&
+            initialData.configuration.defaultEditorOptions !== null
+        )
             TextareaComponent.defaultEditorOptions =
                 initialData.configuration.defaultEditorOptions
     }
     /**
      * Triggers after input values have been resolved.
-     * @param parameter - Given parameter to forward.
+     * @param changes - Object that represents property changes.
      * @returns Nothing.
      */
-    ngOnChanges(...parameter):void {
-        super.ngOnChanges(...parameter)
+    ngOnChanges(changes:SimpleChanges):void {
+        super.ngOnChanges(changes)
         if (this.editor === null && this.model.editor)
             this.editor = this.model.editor
         if (typeof this.editor === 'string') {
