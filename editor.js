@@ -32,6 +32,7 @@ import {
     OnChanges,
     Optional,
     Renderer2 as Renderer,
+    SimpleChanges,
     OnDestroy,
     Output,
     ViewChild
@@ -253,7 +254,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
     }
 }
 /**
- * Generic input component.
+ * Generic input component. TODO: Test new methods!
  * @property activeEditorState - Indicates whether current editor is active.
  * @property declaration - Declaration info text.
  * @property description - Description to use instead of those coming from
@@ -283,9 +284,11 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property showValidationErrorMessages - Indicates whether validation errors
  * should be suppressed or be shown automatically. Useful to prevent error
  * component from showing error messages before the user has submit the form.
+ * @property state - Reflects nested model state given by angular ng model
+ * value accessor.
  * @property type - Type of given input.
  */
-export class AbstractInputComponent implements OnChanges {
+export class AbstractInputComponent implements AfterViewInit, OnChanges {
     @Input() activeEditorState:boolean|null = null
     @Input() declaration:string|null = null
     @Input() description:string|null = null
@@ -310,14 +313,26 @@ export class AbstractInputComponent implements OnChanges {
     @Input() patternText:string =
         'Your string have to match the regular expression: "' +
         '${regularExpressionPattern}".'
+    static reflectableModelPropertyNames:Array<string> = ['name', 'value']
+    static reflectableStatePropertyNames:Array<string> = [
+        'dirty',
+        'disabled',
+        'enabled',
+        'invalid',
+        'pristine',
+        'touched',
+        'untouched',
+        'valid'
+    ]
     @Input() required:boolean|null = null
     @Input() requiredText:string = 'Please fill this field.'
     @Input() selectableEditor:boolean|null = null
     @Input() showDeclarationState:boolean = false
     @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
+    state:ElementRef
     @Input() type:string
-   /**
+    /**
      * Sets needed services as property values.
      * @param injector - Application specific injector to use instead auto
      * detected one.
@@ -327,19 +342,106 @@ export class AbstractInputComponent implements OnChanges {
         const get:Function = determineInjector(
             injector, this, this.constructor)
         this.domNode = get(ElementRef)
-        this.modelChange.subscribe(():void => {
-            this.domNode.nativeElement.value = this.model.value
-        })
+        this.modelChange.subscribe(this.reflectProperties.bind(this))
+    }
+    /**
+     * Triggers after the view has been initialized and nested states can be
+     * reflected.
+     * @returns Nothing.
+     */
+    ngAfterViewInit():void {
+        /*
+            NOTE: The state property could be set when directly wrapping a
+            native ng model.
+        */
+        if (!this.model.state && this.state)
+            this.model.state = this.state
+        this.reflectProperties()
     }
     /**
      * Triggers after first input values have been resolved or changed.
      * @returns Nothing.
      */
-    ngOnChanges(...parameter):void {
+    ngOnChanges(changes:SimpleChanges):void {
+        /*
+            If state was set backup in local instance to reset it to the model
+            after reinitializing given model configuration.
+        */
+        if (!this.state && this.model.state)
+            this.state = this.model.state
         if (typeof this.model === 'string')
             this.model = (new Function(`return ${this.model}`))()
-        this.domNode.nativeElement.name = this.model.name
-        this.domNode.nativeElement.value = this.model.value
+        /*
+            NOTE: Specific given property values overwrite model configured
+            ones.
+        */
+        for (const name in changes)
+            if (
+                ![null, undefined].includes(changes[name].currentValue) &&
+                name !== 'model' &&
+                !name.endsWith('Text') &&
+                changes[name].currentValue !== changes[name].previousValue
+            )
+                this.model[name] = changes[name].currentValue
+        this.model.state = this.state
+        this.reflectProperties()
+    }
+    /**
+     * Reflect properties to dom node.
+     * @returns Nothing.
+     */
+    reflectProperties():void {
+        for (const name of this.constructor.reflectableModelPropertyNames)
+            this.domNode.nativeElement[name] = this.model[name]
+        if (this.model.state)
+            for (const name of this.constructor.reflectableStatePropertyNames)
+                this.domNode.nativeElement[name] = this.model.state[name]
+        if (
+            'getAttribute' in this.domNode.nativeElement &&
+            'removeAttribute' in this.domNode.nativeElement &&
+            'setAttribute' in this.domNode.nativeElement
+        ) {
+            for (const name of this.constructor.reflectableModelPropertyNames)
+                if (
+                    name !== 'value' &&
+                    this.domNode.nativeElement.getAttribute(name) !==
+                    `${this.model[name]}`
+                ) {
+                    console.log('A', name, this.model[name])
+                    this.setDomNodeAttribute(
+                        name,
+                        this.domNode.nativeElement.getAttribute(name),
+                        this.model[name]
+                    )
+                }
+            if (this.model.state)
+                for (
+                    const name of
+                    this.constructor.reflectableStatePropertyNames
+                )
+                    if (
+                        this.domNode.nativeElement.getAttribute(name) !==
+                        `${this.model.state[name]}`
+                    )
+                        this.setDomNodeAttribute(name, this.model.state[name])
+        }
+    }
+    /**
+     * Reflects given property name to given value on host element.
+     * @param name - Given property name.
+     * @param value - Value to set on host element.
+     * @returns Nothing.
+     */
+    setDomNodeAttribute(name:string, value:any):void {
+        if ([null, undefined].includes(value))
+            this.domNode.nativeElement.removeAttribute(name)
+        else if (typeof value === 'boolean')
+            if (value)
+                this.domNode.nativeElement.setAttribute(name, '')
+            else
+                this.domNode.nativeElement.removeAttribute(name)
+        else
+            this.domNode.nativeElement.setAttribute(name, `${value}`)
     }
 }
 /**
@@ -355,6 +457,7 @@ export class AbstractInputComponent implements OnChanges {
  */
 export class AbstractNativeInputComponent extends AbstractInputComponent
     implements OnChanges {
+    @ViewChild('state') state:ElementRef
     _attachmentWithPrefixExists:Function
     _extend:Function
     _getFilenameByPrefix:Function
@@ -401,7 +504,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
                 name: 'NO_NAME_DEFINED',
                 nullable: true,
                 regularExpressionPattern: '.*',
-                state: {},
+                state: null,
                 trim: true,
                 type: 'string'
             },
@@ -443,10 +546,9 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
      * Triggers when ever a change to current model happens inside this
      * component.
      * @param newValue - Value to use to update model with.
-     * @param state - Saves the current model state.
      * @returns Nothing.
      */
-    onChange(newValue:any, state:Object):any {
+    onChange(newValue:any):any {
         const types:Array<string> = [].concat(this.model.type)
         if (
             types.includes('integer') &&
@@ -497,7 +599,6 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
                 )
                     newValue *= 1000
             }
-        this.model.state = state
         return newValue
     }
 }
@@ -1028,7 +1129,7 @@ export class TextEditorComponent extends AbstractEditorComponent
 }
 export const basePropertyContent:string = `
     [ngModel]="model.value"
-    (ngModelChange)="model.value = onChange($event, state); modelChange.emit(model)"
+    (ngModelChange)="model.value = onChange($event); modelChange.emit(model)"
     #state="ngModel"
 `
 /* eslint-disable max-len */
@@ -1460,17 +1561,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
 /**
  * Represents the importable angular module.
  */
-export class EditorModule {
-    /* TODO needed for web component export
-    constructor(injector:Injector) {
-        const {createCustomElement} = require('@angular/elements')
-        customElements.define(
-            'generic-code-editor',
-            createCustomElement(CodeEditorComponent, {injector})
-        )
-    }
-    */
-}
+export class EditorModule {}
 export default EditorModule
 // endregion
 // region vim modline
