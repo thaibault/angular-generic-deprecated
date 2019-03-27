@@ -44,6 +44,7 @@ export function initialDataInitializerFactory(
         NOTE: If not pre-rendering the generic base service application
         initializer handles initial data retrieving.
     */
+    console.log('A', domNode, initialData, utility)
     if (domNode)
         initialData.retrieveFromDomNode(domNode, false)
     else

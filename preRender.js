@@ -28,7 +28,7 @@ import removeDirectoryRecursively from 'rimraf'
 
 import {
     applicationDomNodeSelector, globalVariableNameToRetrieveDataFrom
-} from './service'
+} from './baseService'
 // endregion
 /**
  * Determines pre-renderable paths from given angular routes configuration

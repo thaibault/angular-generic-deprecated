@@ -17,7 +17,11 @@ export async function render() {
     return []
 }
 export default render
-export const renderScope = {basePath: '', innerHTMLToReInject: ''}
+export const renderScope = {
+    applicationDomNode: null,
+    basePath: '',
+    innerHTMLToReInject: ''
+}
 // region vim modline
 // vim: set tabstop=4 shiftwidth=4 expandtab:
 // vim: foldmethod=marker foldmarker=region,endregion:
