@@ -31,21 +31,25 @@ export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
 // endregion
 // region provider
 /**
- * Initialized initial given data.
- * @param domNode - Pre-renderable dom node when existing.
+ * Initializes initial given data.
+ * @param domNode - Pre-renderable dom node or function returning them
+ * when existing.
  * @param initialData - Injected initial data service instance.
  * @param utility - Injected utility service instance.
  * @returns Initializer function.
  */
 export function initialDataInitializerFactory(
-    domNode:DomNode, initialData:InitialDataService, utility:UtilityService
+    domNode:DomNode|Function,
+    initialData:InitialDataService,
+    utility:UtilityService
 ):Function {
     /*
         NOTE: If not pre-rendering the generic base service application
         initializer handles initial data retrieving.
     */
     if (domNode)
-        initialData.retrieveFromDomNode(domNode, false)
+        initialData.retrieveFromDomNode(
+            (typeof domNode === 'function') ? domNode() : domNode, false)
     else
         initialData.retrieveFromDomNode(applicationDomNodeSelector)
     return utility.fixed.tools.noop

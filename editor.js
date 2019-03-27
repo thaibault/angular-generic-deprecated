@@ -309,6 +309,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         'Please give a number at least or equal to ${minimum}.'
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
+    @Input() name:string
     @Input() pattern:string
     @Input() patternText:string =
         'Your string have to match the regular expression: "' +
@@ -372,6 +373,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
             this.state = this.model.state
         if (typeof this.model === 'string')
             this.model = (new Function(`return ${this.model}`))()
+        this.model.state = this.state
         /*
             NOTE: Specific given property values overwrite model configured
             ones.
@@ -384,7 +386,6 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
                 changes[name].currentValue !== changes[name].previousValue
             )
                 this.model[name] = changes[name].currentValue
-        this.model.state = this.state
         this.reflectPropertiesToAttributes()
     }
     /**
@@ -500,7 +501,6 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
                 minimum: 0,
                 maximumLength: Infinity,
                 minimumLength: 0,
-                name: 'NO_NAME_DEFINED',
                 nullable: true,
                 regularExpressionPattern: '.*',
                 state: null,
@@ -511,7 +511,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
         ))
         if (typeof this.model.value === 'string' && this.model.trim)
             this.model.value === this.model.value.trim()
-        for (const hookType of ['onUpdateExpression', 'onUpdateExecution'])
+        for (const hookType of ['onUpdateExecution', 'onUpdateExpression'])
             if (
                 this.model.hasOwnProperty(hookType) &&
                 this.model[hookType] &&
@@ -1144,7 +1144,7 @@ export const propertyContent:PlainObject = {
     nativ: `
         ${basePropertyContent}
         [name]="model.name"
-        [placeholder]="description === '' ? null : description ? description : (model.description || model.name)"
+        [placeholder]="model.description ? model.description : model.name ? model.name : null"
         [required]="required === null ? !model.nullable : required"
     `,
     nativText: `
@@ -1157,6 +1157,7 @@ export const propertyContent:PlainObject = {
         [declaration]="declaration"
         [description]="description"
         [disabled]="disabled"
+        [showDeclarationState]="showDeclarationState"
         [showDeclarationText]="showDeclarationText"
         [maximum]="maximum"
         [maximumLength]="maximumLength"
@@ -1181,7 +1182,7 @@ export const inputContent:string = `
         <span
             [class.active]="showDeclarationState"
             (click)="showDeclarationState = !showDeclarationState"
-            *ngIf="declaration || model.declaration"
+            *ngIf="model.declaration"
         >
             <a
                 (click)="$event.preventDefault()"
@@ -1190,11 +1191,11 @@ export const inputContent:string = `
                 *ngIf="showDeclarationText"
             >{{showDeclarationText}}</a>
             <span @defaultAnimation *ngIf="showDeclarationState">
-                {{declaration || model.declaration}}
+                {{model.declaration}}
             </span>
         </span>
         <span *ngIf="editor && selectableEditor && !model.disabled">
-            <span *ngIf="declaration || model.declaration">|</span>
+            <span *ngIf="model.declaration">|</span>
             <a
                 [class.active]="activeEditorState"
                 (click)="$event.preventDefault(); $event.stopPropagation(); activeEditorState = true"
@@ -1322,7 +1323,7 @@ export class InputComponent extends AbstractInputComponent {
                 [max]="maximum === null ? (model.type === 'number' ? model.maximum : null) : maximum"
                 matInput
                 [min]="minimum === null ? (model.type === 'number' ? model.minimum : null) : minimum"
-                [type]="type ? type : model.name.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+                [type]="type ? type : model.name?.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
             />
             ${inputContent}
             <ng-content></ng-content>

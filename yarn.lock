@@ -1942,9 +1942,9 @@ big.js@^5.2.2:
   integrity sha512-vyL2OymJxmarO8gxMr0mhChsO9QGwhynfuu4+MHTAW6czfq9humCB7rKpUjDd9YUiDPU4mzpyupFSvOClAwbmQ==
 
 binary-extensions@^1.0.0:
-  version "1.13.0"
-  resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-1.13.0.tgz#9523e001306a32444b907423f1de2164222f6ab1"
-  integrity sha512-EgmjVLMn22z7eGGv3kcnHwSnJXmFHjISTY9E/S5lIcTD3Oxw05QTcBLNkJFzcb3cNueUdF/IN4U+d78V0zO8Hw==
+  version "1.13.1"
+  resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-1.13.1.tgz#598afe54755b2868a5330d2aff9d4ebb53209b65"
+  integrity sha512-Un7MIEDdUC5gNpcGDV97op1Ywk748MpHcFTHoYs6qnj1Z3j7I53VG3nwZhKzoBZmbdRNnb6WRdFlwl7tSDuZGw==
 
 bindings@~1.3.0:
   version "1.3.1"
@@ -9143,9 +9143,9 @@ webidl-conversions@^4.0.2:
   integrity sha512-YQ+BmxuTgd6UXZW3+ICGfyqRyHXVlD5GtQr5+qjiNW7bF0cqrzX500HVXPBOvgXb5YnzDd+h0zqyv61KUD7+Sg==
 
 weboptimizer@*:
-  version "2.0.459"
-  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.459.tgz#1c2a4c0bdb7821bb9ba690dd9ce3b269cde88aee"
-  integrity sha512-ZMrBxFKqAUNgf6/xWKAopIU2XhYd/BRwALHjkJbIS/kn6+bJio3GBz/H+PmluKYQkU/N3UrjsGOzUaE9z4vy5w==
+  version "2.0.460"
+  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.460.tgz#be9e6c563e4670a8cd8b22567ab98d16d8cc7a6d"
+  integrity sha512-eMqNq1Bypy9kY36L2j+WQYAo9FillMD5SH0D8QIH/Ih4SHlBnh05QhFDGnKYuSqH+MZOQRI1IEb0eGYq76GbYg==
   dependencies:
     "@babel/core" "*"
     "@babel/plugin-proposal-class-properties" "*"
