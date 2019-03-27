@@ -16,7 +16,7 @@
     See https://creativecommons.org/licenses/by/3.0/deed.de
     endregion
 */
-// region imports
+// region imports 
 import Tools, {$, DomNode, globalContext, PlainObject} from 'clientnode'
 import {APP_INITIALIZER, Injectable, Injector, NgModule} from '@angular/core'
 // endregion
@@ -32,14 +32,22 @@ export const SYMBOL:string = `${new Date().getTime()}/${Math.random()}`
 // region provider
 /**
  * Initialized initial given data.
+ * @param domNode - Pre-renderable dom node when existing.
  * @param initialData - Injected initial data service instance.
  * @param utility - Injected utility service instance.
  * @returns Initializer function.
  */
 export function initialDataInitializerFactory(
-    initialData:InitialDataService, utility:UtilityService
+    domNode:DomNode, initialData:InitialDataService, utility:UtilityService
 ):Function {
-    initialData.retrieveFromDomNode(applicationDomNodeSelector)
+    /*
+        NOTE: If not pre-rendering the generic base service application
+        initializer handles initial data retrieving.
+    */
+    if (domNode)
+        initialData.retrieveFromDomNode(domNode, false)
+    else
+        initialData.retrieveFromDomNode(applicationDomNodeSelector)
     return utility.fixed.tools.noop
 }
 // endregion
@@ -297,7 +305,7 @@ export class OfflineState {
             deps: [InitialDataService, UtilityService],
             multi: true,
             provide: APP_INITIALIZER,
-            useFactory: initialDataInitializerFactory
+            useFactory: initialDataInitializerFactory.bind(null, null)
         }
     ]
 })
