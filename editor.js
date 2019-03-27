@@ -306,7 +306,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     @Input() minimumLengthText:string =
         'Please type at least or equal ${minimumLength} symbols.'
     @Input() minimumText:string =
-        'Please given a number at least or equal to ${minimum}.'
+        'Please give a number at least or equal to ${minimum}.'
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
     @Input() pattern:string
@@ -342,7 +342,8 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         const get:Function = determineInjector(
             injector, this, this.constructor)
         this.domNode = get(ElementRef)
-        this.modelChange.subscribe(this.reflectProperties.bind(this))
+        this.modelChange.subscribe(this.reflectPropertiesToAttributes.bind(
+            this))
     }
     /**
      * Triggers after the view has been initialized and nested states can be
@@ -384,24 +385,28 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
             )
                 this.model[name] = changes[name].currentValue
         this.model.state = this.state
-        this.reflectProperties()
+        this.reflectPropertiesToAttributes()
     }
     /**
      * Reflect properties to dom node.
      * @returns Nothing.
      */
-    reflectProperties():void {
+    reflectPropertiesToAttributes():void {
         for (const name of this.constructor['reflectableModelPropertyNames'])
             this.domNode.nativeElement[name] = this.model[name]
         if (this.model.state)
-            for (const name of this.constructor['reflectableStatePropertyNames'])
+            for (const name of this.constructor[
+                'reflectableStatePropertyNames'
+            ])
                 this.domNode.nativeElement[name] = this.model.state[name]
         if (
             'getAttribute' in this.domNode.nativeElement &&
             'removeAttribute' in this.domNode.nativeElement &&
             'setAttribute' in this.domNode.nativeElement
         ) {
-            for (const name of this.constructor['reflectableModelPropertyNames'])
+            for (const name of this.constructor[
+                'reflectableModelPropertyNames'
+            ])
                 if (
                     name !== 'value' &&
                     this.domNode.nativeElement.getAttribute(name) !==
