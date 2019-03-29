@@ -41,6 +41,8 @@ import {
     ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
 import {TextFieldModule} from '@angular/cdk/text-field'
+import {MatButtonModule} from '@angular/material/button'
+import {MatIconModule} from '@angular/material/icon'
 import {MatInputModule} from '@angular/material/input'
 import {MatSelectModule} from '@angular/material/select'
 import {MatTooltipModule} from '@angular/material/tooltip'
@@ -129,6 +131,7 @@ export const TINYMCE_DEFAULT_OPTIONS:PlainObject = {
 }
 // / endregion
 // endregion
+// TODO check properties
 // region abstract
 /**
  * Generic value accessor with "ngModel" support.
@@ -255,6 +258,13 @@ export class AbstractValueAccessor implements ControlValueAccessor {
 }
 /**
  * Generic input component. TODO: Test new methods!
+ * @property static:evaluatablePropertyNames - Attribute names which should be
+ * evaluated before to store.
+ * @property static:reflectableModelPropertyNames - Model property names which
+ * should be reflected to the actual dom node.
+ * @property static:reflectableStatePropertyNames - State property names which
+ * should be reflected to the actual dom node.
+ *
  * @property activeEditorState - Indicates whether current editor is active.
  * @property declaration - Declaration info text.
  * @property description - Description to use instead of those coming from
@@ -289,6 +299,19 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property type - Type of given input.
  */
 export class AbstractInputComponent implements AfterViewInit, OnChanges {
+    static evaluatablePropertyNames:Array<string> = ['editor', 'model']
+    static reflectableModelPropertyNames:Array<string> = ['name', 'value']
+    static reflectableStatePropertyNames:Array<string> = [
+        'dirty',
+        'disabled',
+        'enabled',
+        'invalid',
+        'pristine',
+        'touched',
+        'untouched',
+        'valid'
+    ]
+
     @Input() activeEditorState:boolean|null = null
     @Input() declaration:string|null = null
     @Input() description:string|null = null
@@ -314,17 +337,6 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     @Input() patternText:string =
         'Your string have to match the regular expression: "' +
         '${regularExpressionPattern}".'
-    static reflectableModelPropertyNames:Array<string> = ['name', 'value']
-    static reflectableStatePropertyNames:Array<string> = [
-        'dirty',
-        'disabled',
-        'enabled',
-        'invalid',
-        'pristine',
-        'touched',
-        'untouched',
-        'valid'
-    ]
     @Input() required:boolean|null = null
     @Input() requiredText:string = 'Please fill this field.'
     @Input() selectableEditor:boolean|null = null
@@ -354,7 +366,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     ngAfterViewInit():void {
         /*
             NOTE: The state property could be set when directly wrapping a
-            native ng model.
+            native model.
         */
         if (!this.model.state && this.state)
             this.model.state = this.state
@@ -371,8 +383,11 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         */
         if (!this.state && this.model.state)
             this.state = this.model.state
-        if (typeof this.model === 'string')
-            this.model = (new Function(`return ${this.model}`))()
+        for (const name of this.constructor['evaluatablePropertyNames'])
+            if (name in changes && typeof this[name] === 'string')
+                try {
+                    this[name] = (new Function(`return ${this[name]}`))()
+                } catch (error) {}
         this.model.state = this.state
         /*
             NOTE: Specific given property values overwrite model configured
@@ -613,11 +628,11 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
  * content updates.
  * @property disabled - Indicates inputs disabled state.
  * @property extend - Extend object pipe's transform method.
- * @property factory - Current editor constructor.
+ * @property factoryName - Current factory name.
+ * @property fixedUtility - Holds static helper methods.
  * @property hostDomNode - Host textarea dom element to bind editor to.
  * @property instance - Currently active editor instance.
  * @property initialized - Initialized event emitter.
- * @property tools - Tools service instance.
  * @property model - Current editable text string.
  * @property modelChange - Change event emitter.
  */
@@ -630,7 +645,6 @@ export class AbstractEditorComponent extends AbstractValueAccessor
     contentSetterMethodName:string = 'setContent'
     @Input() disabled:boolean|null = null
     extend:Function
-    factory:any
     factoryName:string = ''
     fixedUtility:typeof UtilityService
     @ViewChild('hostDomNode') hostDomNode:ElementRef
@@ -656,25 +670,19 @@ export class AbstractEditorComponent extends AbstractValueAccessor
      * @returns Nothing.
      */
     async ngAfterViewInit():Promise<void> {
-        if (!this.factory)
+        if (!this.constructor['factories'][this.factoryName])
             if (this.fixedUtility.globalContext[this.factoryName])
-                this.factory =
+                this.constructor['factories'][this.factoryName] =
                     this.fixedUtility.globalContext[this.factoryName]
-            else if (AbstractEditorComponent.factories[this.factoryName])
-                this.factory = AbstractEditorComponent.factories[
-                    this.factoryName]
-        if (this.factory) {
-            AbstractEditorComponent.factories[this.factoryName] = this.factory
+        if (this.constructor['factories'][this.factoryName])
             /*
                 NOTE: We have to do a dummy timeout to avoid an event emit in
                 first initializing call stack.
             */
             await this.fixedUtility.tools.timeout()
-        } else {
-            await AbstractEditorComponent.applicationInterfaceLoad[
+        else
+            await this.constructor['applicationInterfaceLoad'][
                 this.factoryName]
-            AbstractEditorComponent.factories[this.factoryName] = this.factory
-        }
     }
     /**
      * Synchronizes given value into internal instance.
@@ -843,10 +851,10 @@ export class CodeEditorComponent extends AbstractEditorComponent
      */
     constructor(injector:Injector) {
         super(injector)
-        if (typeof CodeEditorComponent.applicationInterfaceLoad[
+        if (typeof this.constructor['applicationInterfaceLoad'][
             this.factoryName
         ] !== 'object')
-            CodeEditorComponent.applicationInterfaceLoad[
+            this.constructor['applicationInterfaceLoad'][
                 this.factoryName
             ] = Promise.all([
                 new Promise((resolve:Function):$DomNode =>
@@ -865,9 +873,12 @@ export class CodeEditorComponent extends AbstractEditorComponent
                         dataType: 'script',
                         error: reject,
                         success: ():void => {
-                            this.factory = this.fixedUtility.globalContext[
-                                this.factoryName]
-                            resolve(this.factory)
+                            this.constructor['factories'][this.factoryName] =
+                                this.fixedUtility.globalContext[
+                                    this.factoryName]
+                            resolve(
+                                this.constructor['factories'][this.factoryName]
+                            )
                         },
                         url: CODE_MIRROR_DEFAULT_OPTIONS.path.base +
                             CODE_MIRROR_DEFAULT_OPTIONS.path.script
@@ -912,8 +923,9 @@ export class CodeEditorComponent extends AbstractEditorComponent
             const configuration:PlainObject = this.extend(
                 {}, this.configuration, {readOnly: this.disabled})
             delete configuration.path
-            this.instance = this.factory.fromTextArea(
-                this.hostDomNode.nativeElement, configuration)
+            this.instance = this.constructor['factories'][
+                this.factoryName
+            ].fromTextArea(this.hostDomNode.nativeElement, configuration)
             this.instance[this.contentSetterMethodName](this.model)
             this.instance.on('blur', (instance:any, event:any):void =>
                 this.blur.emit(event))
@@ -1008,10 +1020,10 @@ export class TextEditorComponent extends AbstractEditorComponent
      */
     constructor(injector:Injector) {
         super(injector)
-        if (typeof TextEditorComponent.applicationInterfaceLoad[
+        if (typeof this.constructor['applicationInterfaceLoad'][
             this.factoryName
         ] !== 'object')
-            TextEditorComponent.applicationInterfaceLoad[
+            this.constructor['applicationInterfaceLoad'][
                 this.factoryName
             ] = new Promise((resolve:Function, reject:Function):Object =>
                 this.fixedUtility.$.ajax({
@@ -1019,8 +1031,11 @@ export class TextEditorComponent extends AbstractEditorComponent
                     dataType: 'script',
                     error: reject,
                     success: ():void => {
-                        this.factory = this.fixedUtility.globalContext.tinymce
-                        resolve(this.factory)
+                        this.constructor['factories'][this.factoryName] =
+                            this.fixedUtility.globalContext.tinymce
+                        resolve(
+                            this.constructor['factories'][this.factoryName]
+                        )
                     },
                     url: TINYMCE_DEFAULT_OPTIONS.scriptPath
                 }))
@@ -1037,7 +1052,8 @@ export class TextEditorComponent extends AbstractEditorComponent
         return super.ngAfterViewInit().then(():void => {
             const configuration:PlainObject = this.extend(
                 {}, this.configuration)
-            this.factory.baseURL = configuration.baseURL
+            this.constructor['factories'][this.factoryName].baseURL =
+                configuration.baseURL
             delete configuration.baseURL
             delete configuration.scriptPath
             configuration.target = this.hostDomNode.nativeElement
@@ -1103,7 +1119,7 @@ export class TextEditorComponent extends AbstractEditorComponent
             }
             configuration.setup = (instance:any):void => instance.on('Init', (
             ):void => this.initialized.emit(instance))
-            this.factory.init(configuration)
+            this.constructor['factories'][this.factoryName].init(configuration)
         })
     }
     /**
@@ -1113,7 +1129,8 @@ export class TextEditorComponent extends AbstractEditorComponent
      */
     ngOnDestroy():void {
         if (this.instance)
-            this.factory.remove(this.instance)
+            this.constructor['factories'][this.factoryName].remove(
+                this.instance)
     }
     /**
      * Triggers disabled state changes.
@@ -1157,6 +1174,7 @@ export const propertyContent:PlainObject = {
         [declaration]="declaration"
         [description]="description"
         [disabled]="disabled"
+        [editor]="editor"
         [showDeclarationState]="showDeclarationState"
         [showDeclarationText]="showDeclarationText"
         [maximum]="maximum"
@@ -1246,7 +1264,7 @@ export const inputContent:string = `
             [editor]="editor"
             [maximumNumberOfRows]="maximumNumberOfRows"
             [minimumNumberOfRows]="minimumNumberOfRows"
-            *ngIf="editor || model.editor; else simpleInput"
+            *ngIf="model.editor; else simpleInput"
             [rows]="rows"
             [selectableEditor]="selectableEditor"
         ><ng-content></ng-content></generic-textarea>
@@ -1323,8 +1341,20 @@ export class InputComponent extends AbstractInputComponent {
                 [max]="maximum === null ? (model.type === 'number' ? model.maximum : null) : maximum"
                 matInput
                 [min]="minimum === null ? (model.type === 'number' ? model.minimum : null) : minimum"
-                [type]="type ? type : model.name?.startsWith('password') ? 'password' : model.type === 'string' ? 'text' : 'number'"
+                [type]="determineType()"
             />
+            <button
+                [attr.aria-label]="hidden ? showPasswordText : hidePasswordText"
+                [attr.aria-pressed]="hidden"
+                (click)="hidden = !hidden"
+                mat-icon-button
+                matSuffix
+                *ngIf="determineType(true) === 'password'"
+            >
+                <mat-icon>
+                    {{hidden ? 'visibility' : 'visibility_off'}}
+                </mat-icon>
+            </button>
             ${inputContent}
             <ng-content></ng-content>
         </mat-form-field></ng-template>
@@ -1335,10 +1365,15 @@ export class InputComponent extends AbstractInputComponent {
  * A generic form input or select component with validation, labeling and info
  * description support.
  * @property labels - Defines some selectable value labels.
+ * @property hidden - Defines whether current given password should be shown as
+ * plain text.
  * @property type - Optionally defines an input type explicitly.
  */
 export class SimpleInputComponent extends AbstractNativeInputComponent {
     @Input() labels:{[key:string]:string} = {}
+    @Input() hidden:boolean = true
+    @Input() hidePasswordText:string = 'Hide password'
+    @Input() showPasswordText:string = 'Show password'
     @Input() type:string
     /**
      * Delegates injected injector service instance to the super constructor.
@@ -1347,6 +1382,24 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
      */
     constructor(injector:Injector) {
         super(injector)
+    }
+    /**
+     * Determines input type.
+     * @param persistent - Indicates whether a persistent or current state is
+     * requested.
+     * @returns Input type.
+     */
+    determineType(persistent:boolean = false):string {
+        let type:string = 'text'
+        if (this.type)
+             type = this.type
+        else if (this.model.name && this.model.name.startsWith('password'))
+             type = 'password'
+        else if (this.model.type !== 'string')
+            type = 'number'
+        if (type === 'password' && !persistent)
+            return this.hidden ? 'password' : 'text'
+        return type
     }
 }
 /* eslint-disable max-len */
@@ -1555,6 +1608,8 @@ export class TextareaComponent extends AbstractNativeInputComponent
             appId: 'generic-editor-universal'
         }),
         FormsModule,
+        MatButtonModule,
+        MatIconModule,
         MatInputModule,
         MatSelectModule,
         MatTooltipModule,

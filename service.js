@@ -431,20 +431,20 @@ export class DataService {
      * @param equalsPipe - Equals pipe service instance.
      * @param extendPipe - Injected extend object pipe instance.
      * @param initialData - Injected initial data service instance.
-     * @param ngZone - Injected zone service instance.
      * @param platformID - Platform identification string.
      * @param stringFormatPipe - Injected string format pipe instance.
      * @param utility - Injected utility service instance.
+     * @param zone - Injected zone service instance.
      * @returns Nothing.
      */
     constructor(
         equalsPipe:EqualsPipe,
         extendPipe:ExtendPipe,
         initialData:InitialDataService,
-        ngZone:NgZone,
         @Inject(PLATFORM_ID) platformID:string,
         stringFormatPipe:StringFormatPipe,
-        utility:UtilityService
+        utility:UtilityService,
+        zone:NgZone
     ) {
         this.configuration = initialData.configuration
         this.database = PouchDB
@@ -453,7 +453,7 @@ export class DataService {
         this.platformID = platformID
         this.stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
         this.tools = utility.fixed.tools
-        this.zone = ngZone
+        this.zone = zone
         const nativeBulkDocs:Function = this.database.prototype.bulkDocs
         const self:DataService = this
         this.database.plugin({bulkDocs: async function(
