@@ -131,7 +131,6 @@ export const TINYMCE_DEFAULT_OPTIONS:PlainObject = {
 }
 // / endregion
 // endregion
-// TODO check properties
 // region abstract
 /**
  * Generic value accessor with "ngModel" support.
@@ -265,25 +264,20 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property static:reflectableStatePropertyNames - State property names which
  * should be reflected to the actual dom node.
  *
- * @property activeEditorState - Indicates whether current editor is active.
  * @property declaration - Declaration info text.
  * @property description - Description to use instead of those coming from
  * model specification.
  * @property disabled - Sets disabled state.
  * @property domNode - Holds the host dom node.
- * @property editor - Editor to choose from for an activated editor.
- * @property maximum - Maximum allowed number value.
  * @property maximumLength - Maximum allowed number of symbols.
  * @property maximumLengthText - Maximum length validation text.
- * @property maximumText - Maximum number validation text.
- * @property minimum - Minimum allowed number.
  * @property minimumLength - Minimum allowed number of symbols.
  * @property minimumLengthText - Minimum number validation text.
- * @property minimumText - Minimum number validation text.
  * @property model - Holds model informations including actual value and
  * metadata.
  * @property modelChange - Model event emitter emitting events on each model
  * change.
+ * @property name - Model's field name.
  * @property pattern - Allowed pattern to match against given input.
  * @property patternText - Pattern validation text.
  * @property required - Indicates whether this inputs have to be filled.
@@ -296,10 +290,13 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * component from showing error messages before the user has submit the form.
  * @property state - Reflects nested model state given by angular ng model
  * value accessor.
- * @property type - Type of given input.
  */
 export class AbstractInputComponent implements AfterViewInit, OnChanges {
-    static evaluatablePropertyNames:Array<string> = ['editor', 'model']
+    /*
+        NOTE: Not all possible properties are listet here. Concrete
+        implementations may provide more specific additional properties.
+    */
+    static evaluatablePropertyNames:Array<string> = ['model']
     static reflectableModelPropertyNames:Array<string> = ['name', 'value']
     static reflectableStatePropertyNames:Array<string> = [
         'dirty',
@@ -312,24 +309,16 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         'valid'
     ]
 
-    @Input() activeEditorState:boolean|null = null
     @Input() declaration:string|null = null
     @Input() description:string|null = null
     @Input() disabled:boolean|null = null
     domNode:ElementRef
-    @Input() editor:PlainObject|string|null = null
-    @Input() maximum:number|null = null
     @Input() maximumLength:number|null = null
     @Input() maximumLengthText:string =
         'Please type less or equal than ${maximumLength} symbols.'
-    @Input() maximumText:string =
-        'Please give a number less or equal than ${maximum}.'
-    @Input() minimum:number|null = null
     @Input() minimumLength:number|null = null
     @Input() minimumLengthText:string =
         'Please type at least or equal ${minimumLength} symbols.'
-    @Input() minimumText:string =
-        'Please give a number at least or equal to ${minimum}.'
     @Input() model:PlainObject = {}
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
     @Input() name:string
@@ -344,7 +333,6 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
     state:ElementRef
-    @Input() type:string
     /**
      * Sets needed services as property values.
      * @param injector - Application specific injector to use instead auto
@@ -401,6 +389,8 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
                 changes[name].currentValue !== changes[name].previousValue
             )
                 this.model[name] = changes[name].currentValue
+        if (Boolean(this.required) === this.required)
+            this.model.nullable = !this.required
         this.reflectPropertiesToAttributes()
     }
     /**
@@ -410,6 +400,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     reflectPropertiesToAttributes():void {
         for (const name of this.constructor['reflectableModelPropertyNames'])
             this.domNode.nativeElement[name] = this.model[name]
+        this.domNode.nativeElement.required = !this.model.nullable
         if (this.model.state)
             for (const name of this.constructor[
                 'reflectableStatePropertyNames'
@@ -429,6 +420,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
                     `${this.model[name]}`
                 )
                     this.setDomNodeAttribute(name, this.model[name])
+            this.setDomNodeAttribute('required', !this.model.nullable)
             if (this.model.state)
                 for (
                     const name of
@@ -1162,7 +1154,7 @@ export const propertyContent:PlainObject = {
         ${basePropertyContent}
         [name]="model.name"
         [placeholder]="model.description ? model.description : model.name ? model.name : null"
-        [required]="required === null ? !model.nullable : required"
+        [required]="!model.nullable"
     `,
     nativText: `
         [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
@@ -1174,17 +1166,12 @@ export const propertyContent:PlainObject = {
         [declaration]="declaration"
         [description]="description"
         [disabled]="disabled"
-        [editor]="editor"
         [showDeclarationState]="showDeclarationState"
         [showDeclarationText]="showDeclarationText"
-        [maximum]="maximum"
         [maximumLength]="maximumLength"
         [maximumLengthText]="maximumLengthText"
-        [maximumText]="maximumText"
-        [minimum]="minimum"
         [minimumLength]="minimumLength"
         [minimumLengthText]="minimumLengthText"
-        [minimumText]="minimumText"
         [model]="model"
         (modelChange)="modelChange.emit(model)"
         [pattern]="pattern"
@@ -1192,7 +1179,6 @@ export const propertyContent:PlainObject = {
         [requiredText]="requiredText"
         [patternText]="patternText"
         [showValidationErrorMessages]="showValidationErrorMessages"
-        [type]="type"
     `
 }
 export const inputContent:string = `
@@ -1271,23 +1257,59 @@ export const inputContent:string = `
         <ng-template #simpleInput><generic-simple-input
             ${propertyContent.wrapper}
             [labels]="labels"
+            [maximum]="maximum"
+            [maximumText]="maximumText"
+            [minimum]="minimum"
+            [minimumText]="minimumText"
+            [type]="type"
         ><ng-content></ng-content></generic-simple-input></ng-template>
     `
 })
 /**
  * A generic form input, selection or textarea component with validation,
  * labeling and info description support.
+ * NOTE: Note there is currently no way to de-duplicate the redundancies
+ * between this and "SimpleInputComponent" class .
+ * @property static:evaluatablePropertyNames - Attribute names which should be
+ * evaluated before to store.
+ *
+ * @property activeEditorState - Indicates whether current editor is active.
+ * @property editor - Editor to choose from for an activated editor.
+ * @property hidden - Defines whether current given password should be shown as
+ * plain text.
+ * @property hidePasswordText - Text to show during focusing password hide
+ * button.
  * @property labels - Defines some selectable value labels.
+ * @property maximum - Maximum allowed number value.
  * @property maximumNumberOfRows - Maximum resizeable number of rows.
+ * @property maximumText - Maximum number validation text.
+ * @property minimum - Minimum allowed number.
  * @property minimumNumberOfRows - Minimum resizeable number of rows.
+ * @property minimumText - Minimum number validation text.
  * @property rows - Number of rows to show.
+ * @property showPasswordText - Text to show during focusing password show
+ * button.
  * @property type - Optionally defines an input type explicitly.
  */
 export class InputComponent extends AbstractInputComponent {
+    static evaluatablePropertyNames:Array<string> =
+        AbstractInputComponent.evaluatablePropertyNames.concat('editor')
+
+    @Input() activeEditorState:boolean|null = null
+    @Input() editor:PlainObject|string|null = null
+    @Input() hidden:boolean = true
+    @Input() hidePasswordText:string = 'Hide password'
     @Input() labels:{[key:string]:string} = {}
+    @Input() maximum:number|null = null
     @Input() maximumNumberOfRows:string
-    @Input() minimumNumberOfRows:string
+    @Input() maximumText:string =
+        'Please give a number less or equal than ${maximum}.'
+    @Input() minimum:number|null = null
+    @Input() minimumNumberOfRows:number
+    @Input() minimumText:string =
+        'Please give a number at least or equal to ${minimum}.'
     @Input() rows:string
+    @Input() showPasswordText:string = 'Show password.'
     @Input() type:string
     /**
      * Delegates injected injector service instance to the super constructor.
@@ -1364,16 +1386,32 @@ export class InputComponent extends AbstractInputComponent {
 /**
  * A generic form input or select component with validation, labeling and info
  * description support.
- * @property labels - Defines some selectable value labels.
+ * NOTE: Note there is currently no way to deduplicate the redundancies
+ * between this and "InputComponent" class.
  * @property hidden - Defines whether current given password should be shown as
  * plain text.
+ * @property hidePasswordText - Text to show during focusing password hide
+ * button.
+ * @property labels - Defines some selectable value labels.
+ * @property maximum - Maximum allowed number value.
+ * @property maximumText - Maximum number validation text.
+ * @property minimum - Minimum allowed number.
+ * @property minimumText - Minimum number validation text.
+ * @property showPasswordText - Text to show during focusing password show
+ * button.
  * @property type - Optionally defines an input type explicitly.
  */
 export class SimpleInputComponent extends AbstractNativeInputComponent {
-    @Input() labels:{[key:string]:string} = {}
     @Input() hidden:boolean = true
     @Input() hidePasswordText:string = 'Hide password'
-    @Input() showPasswordText:string = 'Show password'
+    @Input() labels:{[key:string]:string} = {}
+    @Input() maximum:number|null = null
+    @Input() maximumText:string =
+        'Please give a number less or equal than ${maximum}.'
+    @Input() minimum:number|null = null
+    @Input() minimumText:string =
+        'Please give a number at least or equal to ${minimum}.'
+    @Input() showPasswordText:string = 'Show password.'
     @Input() type:string
     /**
      * Delegates injected injector service instance to the super constructor.
@@ -1475,8 +1513,8 @@ export class TextareaComponent extends AbstractNativeInputComponent
     editorType:string = 'custom'
     focused:boolean = false
     initialized:boolean = false
-    @Input() maximumNumberOfRows:string
-    @Input() minimumNumberOfRows:string
+    @Input() maximumNumberOfRows:number
+    @Input() minimumNumberOfRows:number
     @Input() rows:string
     @Input() selectableEditor:boolean|null = null
     /**

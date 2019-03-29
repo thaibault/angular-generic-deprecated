@@ -2055,9 +2055,10 @@ registerAngularTest(function(
                                     `typeof newDocument[name] === 'string' ?` +
                                     ` newDocument[name].replace('c', 'C') : ` +
                                     'newDocument[name]',
+                                required: true,
                                 trim: true
                             }
-                            instance.ngOnInit()
+                            instance.ngOnChanges({})
                             assert.strictEqual(instance.model.disabled, true)
                             assert.ok(
                                 instance.model.hasOwnProperty('type'), true)
@@ -2085,14 +2086,15 @@ registerAngularTest(function(
                             ):void => {
                                 eventGivenModel = model
                             })
-                            const state:PlainObject = {errors: {
-                                required: true
-                            }}
-                            instance.onChange(null, state)
+                            instance.onChange(null)
                             instance.modelChange.emit(instance.model)
-                            assert.deepEqual(instance.model.state, state)
+                            assert.ok(instance.model.state.control)
                             assert.deepEqual(eventGivenModel, instance.model)
                             instance.showValidationErrorMessages = true
+                            inputDomNode.value = ''
+                            instance.model.state = {errors: {
+                                required: true
+                            }}
                             fixture.detectChanges()
                             await fixture.whenStable()
                             assert.strictEqual(fixture.debugElement.query(
