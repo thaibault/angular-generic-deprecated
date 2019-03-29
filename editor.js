@@ -1386,8 +1386,14 @@ export class InputComponent extends AbstractInputComponent {
 /**
  * A generic form input or select component with validation, labeling and info
  * description support.
- * NOTE: Note there is currently no way to deduplicate the redundancies
+ * NOTE: Note there is currently no way to de-duplicate the redundancies
  * between this and "InputComponent" class.
+ * @property activeEditorState - Indicator which editor should be used: Always
+ * "false" in this component (makes it possible to share same markup with
+ * advanced inputs).
+ * @property editor - Indicator which editor should be used: Always "false"
+ * in this component (makes it possible to share same markup with advanced
+ * inputs).
  * @property hidden - Defines whether current given password should be shown as
  * plain text.
  * @property hidePasswordText - Text to show during focusing password hide
@@ -1399,9 +1405,14 @@ export class InputComponent extends AbstractInputComponent {
  * @property minimumText - Minimum number validation text.
  * @property showPasswordText - Text to show during focusing password show
  * button.
+ * @property selectableEditor - Indicator which editor should be used: Always
+ * "false" in this component (makes it possible to share same markup with
+ * advanced inputs).
  * @property type - Optionally defines an input type explicitly.
  */
 export class SimpleInputComponent extends AbstractNativeInputComponent {
+    activeEditorState:boolean = false
+    editor:false = false
     @Input() hidden:boolean = true
     @Input() hidePasswordText:string = 'Hide password.'
     @Input() labels:{[key:string]:string} = {}
@@ -1411,6 +1422,7 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
     @Input() minimum:number|null = null
     @Input() minimumText:string =
         'Please give a number at least or equal to ${minimum}.'
+    selectableEditor:false = false
     @Input() showPasswordText:string = 'Show password.'
     @Input() type:string
     /**
@@ -1497,7 +1509,13 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
  * @property focused - Indicates whether the input field is focused.
  * @property initialized - Indicates whether an editor is initialized.
  * @property maximumNumberOfRows - Maximum resizeable number of rows.
+ * @property maximumText - Text to show for number validation but could not be
+ * shown in this component (exists to be able to share markup with simple
+ * input components).
  * @property minimumNumberOfRows - Minimum resizeable number of rows.
+ * @property minimumText - Text to show for number validation but could not be
+ * shown in this component (exists to be able to share markup with simple
+ * input components).
  * @property rows - Number of rows to show.
  * @property selectableEditor - Indicates whether an editor is selectable.
  */
@@ -1514,7 +1532,9 @@ export class TextareaComponent extends AbstractNativeInputComponent
     focused:boolean = false
     initialized:boolean = false
     @Input() maximumNumberOfRows:number
+    maximumText:string = ''
     @Input() minimumNumberOfRows:number
+    minimumText:string = ''
     @Input() rows:string
     @Input() selectableEditor:boolean|null = null
     /**
