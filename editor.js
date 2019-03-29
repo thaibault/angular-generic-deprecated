@@ -1298,7 +1298,7 @@ export class InputComponent extends AbstractInputComponent {
     @Input() activeEditorState:boolean|null = null
     @Input() editor:PlainObject|string|null = null
     @Input() hidden:boolean = true
-    @Input() hidePasswordText:string = 'Hide password'
+    @Input() hidePasswordText:string = 'Hide password.'
     @Input() labels:{[key:string]:string} = {}
     @Input() maximum:number|null = null
     @Input() maximumNumberOfRows:string
@@ -1360,9 +1360,9 @@ export class InputComponent extends AbstractInputComponent {
             <input
                 ${propertyContent.nativ}
                 ${propertyContent.nativText}
-                [max]="maximum === null ? (model.type === 'number' ? model.maximum : null) : maximum"
+                [max]="model.type === 'number' ? model.maximum : null"
                 matInput
-                [min]="minimum === null ? (model.type === 'number' ? model.minimum : null) : minimum"
+                [min]="model.type === 'number' ? model.minimum : null"
                 [type]="determineType()"
             />
             <button
@@ -1403,7 +1403,7 @@ export class InputComponent extends AbstractInputComponent {
  */
 export class SimpleInputComponent extends AbstractNativeInputComponent {
     @Input() hidden:boolean = true
-    @Input() hidePasswordText:string = 'Hide password'
+    @Input() hidePasswordText:string = 'Hide password.'
     @Input() labels:{[key:string]:string} = {}
     @Input() maximum:number|null = null
     @Input() maximumText:string =
