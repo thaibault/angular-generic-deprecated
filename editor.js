@@ -380,6 +380,8 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         /*
             NOTE: Specific given property values overwrite model configured
             ones.
+            TODO specify which specific values are needed! Now we forward too
+            much.
         */
         for (const name in changes)
             if (
@@ -389,6 +391,15 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
                 changes[name].currentValue !== changes[name].previousValue
             )
                 this.model[name] = changes[name].currentValue
+        // Apply instance specific existing properties to model configuration.
+        if (
+            'model' in changes &&
+            ![null, undefined].includes(changes.model.currentValue)
+        )
+            // TODO see above
+            for (const name in this.model)
+                if (name in this && )
+                    this.model[name] = this[name]
         if (Boolean(this.required) === this.required)
             this.model.nullable = !this.required
         this.reflectPropertiesToAttributes()
