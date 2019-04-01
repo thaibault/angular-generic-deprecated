@@ -2064,12 +2064,16 @@ registerAngularTest(function(
                                 instance.model.hasOwnProperty('type'), true)
                             fixture.detectChanges()
                             await fixture.whenStable()
-                            assert.strictEqual(fixture.debugElement.query(
-                                By.css('label')
-                            ).nativeElement.textContent.trim(), 'test')
+                            assert.strictEqual(
+                                fixture.debugElement.query(By.css(
+                                    'label'
+                                )).nativeElement.textContent.trim(),
+                                'test *'
+                            )
                             const inputDomNode:DomNode =
                                 fixture.debugElement.query(By.css(
-                                    'input, select, textarea')).nativeElement
+                                    'input, select, textarea'
+                                )).nativeElement
                             inputDomNode.value = 'aa'
                             inputDomNode.dispatchEvent(getNativeEvent('input'))
                             await fixture.whenStable()

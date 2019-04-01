@@ -137,7 +137,7 @@ export const TINYMCE_DEFAULT_OPTIONS:PlainObject = {
  * @property composing - Indicates whether the user is creating a composition
  * string (IME events).
  * @property compositionMode - Indicates whether composition is active.
- * @property elementReference - Current dom node to handle input for.
+ * @property domNode - Current dom node to handle input for.
  * @property onChangeCallback - Saves current on change callback.
  * @property onTouchedCallback - Saves current on touch callback.
  * @property renderer - Rendering abstraction layer.
@@ -146,7 +146,7 @@ export const TINYMCE_DEFAULT_OPTIONS:PlainObject = {
 export class AbstractValueAccessor implements ControlValueAccessor {
     composing:boolean = false
     compositionMode:boolean = false
-    elementReference:ElementRef
+    domNode:ElementRef
     onChangeCallback:(value:any) => void = () => UtilityService.tools.noop
     onTouchedCallback:() => void = () => UtilityService.tools.noop
     renderer:Renderer
@@ -160,7 +160,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
      */
     constructor(injector:Injector) {
         this.renderer = injector.get(Renderer)
-        this.elementReference = injector.get(ElementRef)
+        this.domNode = injector.get(ElementRef)
         /*
          * NOTE: "No provider for InjectionToken CompositionEventMode"
          * triggered if this IME compatible code is activated:
@@ -241,7 +241,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
      */
     setDisabledState(isDisabled:boolean):void {
         this.renderer.setProperty(
-            this.elementReference.nativeElement, 'disabled', isDisabled)
+            this.domNode.nativeElement, 'disabled', isDisabled)
     }
     /**
      * Overridden inherited function for value export.
@@ -251,8 +251,10 @@ export class AbstractValueAccessor implements ControlValueAccessor {
     writeValue(value:any):void {
         value = this.export(value)
         this.renderer.setProperty(
-            this.elementReference.nativeElement, 'value',
-            [null, undefined].includes(value) ? '' : value)
+            this.domNode.nativeElement,
+            'value',
+            [null, undefined].includes(value) ? '' : value
+        )
     }
 }
 /**
@@ -270,6 +272,8 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * model specification.
  * @property disabled - Sets disabled state.
  * @property domNode - Holds the host dom node.
+ * @property emptyEqualsToNull - Defines how to handle empty type specific
+ * values.
  * @property maximumLength - Maximum allowed number of symbols.
  * @property maximumLengthText - Maximum length validation text.
  * @property minimumLength - Minimum allowed number of symbols.
@@ -284,7 +288,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property required - Indicates whether this inputs have to be filled.
  * @property requiredText - Required validation text.
  * @property selectableEditor - Indicates whether an editor is selectable.
- * @property showDeclarationState - Represents current declaration show state.
+ * @property showDeclaration - Represents current declaration show state.
  * @property showDeclarationText - Info text to click for more informations.
  * @property showValidationErrorMessages - Indicates whether validation errors
  * should be suppressed or be shown automatically. Useful to prevent error
@@ -294,17 +298,24 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  */
 export class AbstractInputComponent implements AfterViewInit, OnChanges {
     static defaultModel:PlainObject = {
-        disabled: false,
+        declaration: null,
+        default: null,
+        description: null,
+        editor: null,
         emptyEqualsToNull: true,
         maximum: Infinity,
         minimum: 0,
         maximumLength: Infinity,
         minimumLength: 0,
+        mutable: true,
+        name: 'NO_NAME_DEFINED',
         nullable: true,
         regularExpressionPattern: '.*',
+        selection: null,
         state: null,
         trim: true,
-        type: 'string'
+        type: 'string',
+        writable: true
     }
     /*
         NOTE: Not all possible properties are listet here. Concrete
@@ -323,30 +334,34 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         'valid'
     ]
 
-    @Input() declaration:string|null = null
-    @Input() description:string|null = null
-    @Input() disabled:boolean|null = null
+    @Input() declaration:string
+    @Input() default:any
+    @Input() description:string
+    @Input() disabled:boolean
     domNode:ElementRef
-    @Input() maximumLength:number|null = null
+    @Input() emtyEqualsToNull:boolean
+    @Input() maximumLength:number
     @Input() maximumLengthText:string =
         'Please type less or equal than ${maximumLength} symbols.'
-    @Input() minimumLength:number|null = null
+    @Input() minimumLength:number
     @Input() minimumLengthText:string =
         'Please type at least or equal ${minimumLength} symbols.'
-    @Input() model:PlainObject = {}
+    @Input() model:PlainObject = Tools.copy(
+        AbstractInputComponent.defaultModel)
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
     @Input() name:string
     @Input() pattern:string
     @Input() patternText:string =
         'Your string have to match the regular expression: "' +
         '${regularExpressionPattern}".'
-    @Input() required:boolean|null = null
+    renderer:Renderer
+    @Input() required:boolean
     @Input() requiredText:string = 'Please fill this field.'
-    @Input() selectableEditor:boolean|null = null
-    @Input() showDeclarationState:boolean = false
+    @Input() selectableEditor:boolean
+    @Input() showDeclaration:boolean = false
     @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
-    state:ElementRef
+    state:Object
     /**
      * Sets needed services as property values.
      * @param injector - Application specific injector to use instead auto
@@ -357,6 +372,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         const get:Function = determineInjector(
             injector, this, this.constructor)
         this.domNode = get(ElementRef)
+        this.renderer = get(Renderer)
         this.modelChange.subscribe(this.reflectPropertiesToAttributes.bind(
             this))
     }
@@ -411,131 +427,46 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
             ![null, undefined].includes(changes.model.currentValue)
         )
             for (const name in this.constructor['defaultModel'])
-                if (
-                    this.constructor['defaultModel'].hasOwnProperty(name) &&
-                    name in this &&
-                    (
-                        !this.model.hasOwnProperty(name) ||
-                        this.model[name] ===
-                            this.constructor['defaultModel'][name]
-                    )
-                )
-                    this.model[name] = this[name]
-        if (Boolean(this.required) === this.required)
-            this.model.nullable = !this.required
-        this.reflectPropertiesToAttributes()
-    }
-    /**
-     * Reflect properties to dom node.
-     * @returns Nothing.
-     */
-    reflectPropertiesToAttributes():void {
-        for (const name of this.constructor['reflectableModelPropertyNames'])
-            this.domNode.nativeElement[name] = this.model[name]
-        this.domNode.nativeElement.required = !this.model.nullable
-        if (this.model.state)
-            for (const name of this.constructor[
-                'reflectableStatePropertyNames'
-            ])
-                this.domNode.nativeElement[name] = this.model.state[name]
-        if (
-            'getAttribute' in this.domNode.nativeElement &&
-            'removeAttribute' in this.domNode.nativeElement &&
-            'setAttribute' in this.domNode.nativeElement
-        ) {
-            for (const name of this.constructor[
-                'reflectableModelPropertyNames'
-            ])
-                if (
-                    name !== 'value' &&
-                    this.domNode.nativeElement.getAttribute(name) !==
-                    `${this.model[name]}`
-                )
-                    this.setDomNodeAttribute(name, this.model[name])
-            this.setDomNodeAttribute('required', !this.model.nullable)
-            if (this.model.state)
-                for (
-                    const name of
-                    this.constructor['reflectableStatePropertyNames']
-                )
+                if (this.constructor['defaultModel'].hasOwnProperty(name)) {
                     if (
-                        this.domNode.nativeElement.getAttribute(name) !==
-                        `${this.model.state[name]}`
+                        name in this &&
+                        this.name !== undefined &&
+                        !['nullable', 'type'].includes(name) &&
+                        (
+                            !this.model.hasOwnProperty(name) ||
+                            this.model[name] ===
+                                this.constructor['defaultModel'][name]
+                        )
                     )
-                        this.setDomNodeAttribute(name, this.model.state[name])
-        }
-    }
-    /**
-     * Reflects given property name to given value on host element.
-     * @param name - Given property name.
-     * @param value - Value to set on host element.
-     * @returns Nothing.
-     */
-    setDomNodeAttribute(name:string, value:any):void {
-        if ([null, undefined].includes(value))
-            this.domNode.nativeElement.removeAttribute(name)
-        else if (typeof value === 'boolean')
-            if (value)
-                this.domNode.nativeElement.setAttribute(name, '')
-            else
-                this.domNode.nativeElement.removeAttribute(name)
-        else
-            this.domNode.nativeElement.setAttribute(name, `${value}`)
-    }
-}
-/**
- * Generic input component.
- * @property _attachmentWithPrefixExists - Holds the attachment by prefix
- * checker pipe instance
- * @property _extend - Holds the extend object's pipe transformation method.
- * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
- * transformation method.
- * @property _modelConfiguration - All model configurations.
- * @property _numberGetUTCTimestamp - Date (and time) to unix timstamp
- * converter pipe transform method.
- */
-export class AbstractNativeInputComponent extends AbstractInputComponent
-    implements OnChanges {
-    @ViewChild('state') state:ElementRef
-    _attachmentWithPrefixExists:Function
-    _extend:Function
-    _getFilenameByPrefix:Function
-    _modelConfiguration:PlainObject
-    _numberGetUTCTimestamp:Function
-    /**
-     * Sets needed services as property values.
-     * @param injector - Application specific injector to use instead auto
-     * detected one.
-     * @returns Nothing.
-     */
-    constructor(@Optional() injector:Injector) {
-        super(injector)
-        const get:Function = determineInjector(
-            injector, this, this.constructor)
-        this._attachmentWithPrefixExists = get(
-            AttachmentWithPrefixExistsPipe
-        ).transform.bind(get(AttachmentWithPrefixExistsPipe))
-        this._extend = get(ExtendPipe).transform.bind(get(ExtendPipe))
-        this._getFilenameByPrefix = get(
-            GetFilenameByPrefixPipe
-        ).transform.bind(get(GetFilenameByPrefixPipe))
-        this._modelConfiguration =
-            get(InitialDataService).configuration.database.model
-        this._numberGetUTCTimestamp = get(
-            NumberGetUTCTimestampPipe
-        ).transform.bind(get(NumberGetUTCTimestampPipe))
-    }
-    /**
-     * Triggers after first input values have been resolved or changed.
-     * @param changes - Object that represents property changes.
-     * @returns Nothing.
-     */
-    ngOnChanges(changes:SimpleChanges):void {
-        super.ngOnChanges(changes)
-        this._extend(
-            this.model,
-            this._extend(this.constructor['defaultModel'], this.model)
+                        this.model[name] = this[name]
+                    else if (!this.model.hasOwnProperty(name))
+                        this.model[name] =
+                            this.constructor['defaultModel'][name]
+                }
+        if (
+            'disabled' in changes &&
+            changes.disabled.previousValue !== changes.disabled.currentValue &&
+            Boolean(this.disabled) === this.disabled
         )
+            this.model.writable = !this.disabled
+        if (
+            'pattern' in changes &&
+            changes.pattern.previousValue !== changes.pattern.currentValue &&
+            typeof this.pattern === 'string'
+        )
+            this.model.regularExpressionPattern = this.pattern
+        if (
+            'required' in changes &&
+            changes.required.previousValue !== changes.required.currentValue &&
+            Boolean(this.required) === this.required
+        )
+            this.model.nullable = !this.required
+        // region apply configured transformations
+        if (!(
+            this.model.hasOwnProperty('value') ||
+            [null, undefined].includes(this.model.default)
+        ))
+            this.model.value = this.model.default
         if (typeof this.model.value === 'string' && this.model.trim)
             this.model.value === this.model.value.trim()
         for (const hookType of ['onUpdateExecution', 'onUpdateExpression'])
@@ -567,6 +498,113 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
                     (hookType.endsWith('Expression') ? 'return ' : '') +
                         this.model[hookType]
                 )
+        // endregion
+        this.reflectPropertiesToAttributes()
+    }
+    /**
+     * Reflect properties to dom node.
+     * @returns Nothing.
+     */
+    reflectPropertiesToAttributes():void {
+        for (const name of this.constructor['reflectableModelPropertyNames'])
+            this.domNode.nativeElement[name] = this.model[name]
+        this.domNode.nativeElement.pattern =
+            this.model.regularExpressionPattern
+        this.domNode.nativeElement.required = !this.model.nullable
+        if (this.model.state)
+            for (const name of this.constructor[
+                'reflectableStatePropertyNames'
+            ])
+                this.domNode.nativeElement[name] = this.model.state[name]
+        if ('getAttribute' in this.domNode.nativeElement) {
+            for (const name of this.constructor[
+                'reflectableModelPropertyNames'
+            ])
+                if (
+                    name !== 'value' &&
+                    this.domNode.nativeElement.getAttribute(name) !==
+                        `${this.model[name]}`
+                )
+                    this.setDomNodeAttribute(name, this.model[name])
+            /*
+            TODO
+            this.setDomNodeAttribute('required', !this.model.nullable)
+            this.setDomNodeAttribute(
+                'pattern', this.model.regularExpressionPattern)
+            */
+            if (this.model.state)
+                for (
+                    const name of
+                    this.constructor['reflectableStatePropertyNames']
+                )
+                    if (
+                        this.domNode.nativeElement.getAttribute(name) !==
+                        `${this.model.state[name]}`
+                    )
+                        this.setDomNodeAttribute(name, this.model.state[name])
+        }
+    }
+    /**
+     * Reflects given property name to given value on host element.
+     * @param name - Given property name.
+     * @param value - Value to set on host element.
+     * @returns Nothing.
+     */
+    setDomNodeAttribute(name:string, value:any):void {
+        if ([null, undefined].includes(value))
+            this.renderer.removeAttribute(this.domNode.nativeElement, name)
+        else if (typeof value === 'boolean')
+            if (value)
+                this.renderer.setAttribute(
+                    this.domNode.nativeElement, name, '')
+            else
+                this.renderer.removeAttribute(this.domNode.nativeElement, name)
+        else
+            this.renderer.setAttribute(
+                this.domNode.nativeElement, name, `${value}`)
+    }
+}
+/**
+ * Generic input component.
+ * @property state - Represents current model state (validation, focused ...).
+ * @property _attachmentWithPrefixExists - Holds the attachment by prefix
+ * checker pipe instance
+ * @property _extend - Holds the extend object's pipe transformation method.
+ * @property _getFilenameByPrefix - Holds the get file name by prefix's pipe
+ * transformation method.
+ * @property _modelConfiguration - All model configurations.
+ * @property _numberGetUTCTimestamp - Date (and time) to unix timstamp
+ * converter pipe transform method.
+ */
+export class AbstractNativeInputComponent extends AbstractInputComponent {
+    @ViewChild('state') state:Object
+    _attachmentWithPrefixExists:Function
+    _extend:Function
+    _getFilenameByPrefix:Function
+    _modelConfiguration:PlainObject
+    _numberGetUTCTimestamp:Function
+    /**
+     * Sets needed services as property values.
+     * @param injector - Application specific injector to use instead auto
+     * detected one.
+     * @returns Nothing.
+     */
+    constructor(@Optional() injector:Injector) {
+        super(injector)
+        const get:Function = determineInjector(
+            injector, this, this.constructor)
+        this._attachmentWithPrefixExists = get(
+            AttachmentWithPrefixExistsPipe
+        ).transform.bind(get(AttachmentWithPrefixExistsPipe))
+        this._extend = get(ExtendPipe).transform.bind(get(ExtendPipe))
+        this._getFilenameByPrefix = get(
+            GetFilenameByPrefixPipe
+        ).transform.bind(get(GetFilenameByPrefixPipe))
+        this._modelConfiguration =
+            get(InitialDataService).configuration.database.model
+        this._numberGetUTCTimestamp = get(
+            NumberGetUTCTimestampPipe
+        ).transform.bind(get(NumberGetUTCTimestampPipe))
     }
     /**
      * Triggers when ever a change to current model happens inside this
@@ -655,7 +693,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
 
     @Input() configuration:PlainObject = {}
     contentSetterMethodName:string = 'setContent'
-    @Input() disabled:boolean|null = null
+    @Input() disabled:boolean
     extend:Function
     factoryName:string = ''
     fixedUtility:typeof UtilityService
@@ -1177,25 +1215,20 @@ export const propertyContent:PlainObject = {
         [required]="!model.nullable"
     `,
     nativText: `
-        [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
-        [maxlength]="maximumLength === null ? (model.type === 'string' ? model.maximumLength : null) : maximumLength"
-        [minlength]="minimumLength === null ? (model.type === 'string' ? model.minimumLength : null) : minimumLength"
-        [pattern]="pattern === null ? (model.type === 'string' ? model.regularExpressionPattern : null) : pattern"
+        [disabled]="model.mutable === false || model.writable === false"
+        [maxlength]="model.type === 'string' ? model.maximumLength : null"
+        [minlength]="model.type === 'string' ? model.minimumLength : null"
+        [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
     `,
     wrapper: `
         [declaration]="declaration"
         [description]="description"
-        [disabled]="disabled"
-        [showDeclarationState]="showDeclarationState"
+        [showDeclaration]="showDeclaration"
         [showDeclarationText]="showDeclarationText"
-        [maximumLength]="maximumLength"
         [maximumLengthText]="maximumLengthText"
-        [minimumLength]="minimumLength"
         [minimumLengthText]="minimumLengthText"
         [model]="model"
         (modelChange)="modelChange.emit(model)"
-        [pattern]="pattern"
-        [required]="required"
         [requiredText]="requiredText"
         [patternText]="patternText"
         [showValidationErrorMessages]="showValidationErrorMessages"
@@ -1204,8 +1237,8 @@ export const propertyContent:PlainObject = {
 export const inputContent:string = `
     <mat-hint align="start" @defaultAnimation matTooltip="info">
         <span
-            [class.active]="showDeclarationState"
-            (click)="showDeclarationState = !showDeclarationState"
+            [class.active]="showDeclaration"
+            (click)="showDeclaration = !showDeclaration"
             *ngIf="model.declaration"
         >
             <a
@@ -1214,11 +1247,11 @@ export const inputContent:string = `
                 href=""
                 *ngIf="showDeclarationText"
             >{{showDeclarationText}}</a>
-            <span @defaultAnimation *ngIf="showDeclarationState">
+            <span @defaultAnimation *ngIf="showDeclaration">
                 {{model.declaration}}
             </span>
         </span>
-        <span *ngIf="editor && selectableEditor && !model.disabled">
+        <span *ngIf="editor && selectableEditor && this.model.writable">
             <span *ngIf="model.declaration">|</span>
             <a
                 [class.active]="activeEditorState"
@@ -1233,23 +1266,23 @@ export const inputContent:string = `
             >plain</a>
         </span>
     </mat-hint>
-    <span generic-error *ngIf="showValidationErrorMessages">
-        <p @defaultAnimation *ngIf="model.state?.errors?.maxlength">
+    <span generic-error *ngIf="showValidationErrorMessages && model.state">
+        <p @defaultAnimation *ngIf="model.state.errors?.maxlength">
             {{maximumLengthText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state?.errors?.max">
+        <p @defaultAnimation *ngIf="model.state.errors?.max">
             {{maximumText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state?.errors?.minlength">
+        <p @defaultAnimation *ngIf="model.state.errors?.minlength">
             {{minimumLengthText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state?.errors?.min">
+        <p @defaultAnimation *ngIf="model.state.errors?.min">
             {{minimumText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state?.errors?.pattern">
+        <p @defaultAnimation *ngIf="model.state.errors?.pattern">
             {{patternText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state?.errors?.required">
+        <p @defaultAnimation *ngIf="model.state.errors?.required">
             {{requiredText | genericStringTemplate:model}}
         </p>
     </span>
@@ -1270,7 +1303,7 @@ export const inputContent:string = `
             [editor]="editor"
             [maximumNumberOfRows]="maximumNumberOfRows"
             [minimumNumberOfRows]="minimumNumberOfRows"
-            *ngIf="model.editor; else simpleInput"
+            *ngIf="model.editor ? true : false; else simpleInput"
             [rows]="rows"
             [selectableEditor]="selectableEditor"
         ><ng-content></ng-content></generic-textarea>
@@ -1315,16 +1348,16 @@ export class InputComponent extends AbstractInputComponent {
     static evaluatablePropertyNames:Array<string> =
         AbstractInputComponent.evaluatablePropertyNames.concat('editor')
 
-    @Input() activeEditorState:boolean|null = null
-    @Input() editor:PlainObject|string|null = null
+    @Input() activeEditorState:boolean
+    @Input() editor:PlainObject|string
     @Input() hidden:boolean = true
     @Input() hidePasswordText:string = 'Hide password.'
     @Input() labels:{[key:string]:string} = {}
-    @Input() maximum:number|null = null
+    @Input() maximum:number
     @Input() maximumNumberOfRows:string
     @Input() maximumText:string =
         'Please give a number less or equal than ${maximum}.'
-    @Input() minimum:number|null = null
+    @Input() minimum:number
     @Input() minimumNumberOfRows:number
     @Input() minimumText:string =
         'Please give a number at least or equal to ${minimum}.'
@@ -1436,10 +1469,10 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
     @Input() hidden:boolean = true
     @Input() hidePasswordText:string = 'Hide password.'
     @Input() labels:{[key:string]:string} = {}
-    @Input() maximum:number|null = null
+    @Input() maximum:number
     @Input() maximumText:string =
         'Please give a number less or equal than ${maximum}.'
-    @Input() minimum:number|null = null
+    @Input() minimum:number
     @Input() minimumText:string =
         'Please give a number at least or equal to ${minimum}.'
     selectableEditor:false = false
@@ -1488,14 +1521,14 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
             <code-editor
                 ${propertyContent.editor}
                 [configuration]="editor"
-                [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
+                [disabled]="model.mutable === false || model.writable === false"
                 (initialized)="initialized = true"
                 *ngIf="editorType === 'code' || editor.indentUnit; else tinymce"
             ></code-editor>
             <ng-template #tinymce><text-editor
                 ${propertyContent.editor}
                 [configuration]="editor"
-                [disabled]="disabled === null ? (model.disabled || model.mutable === false || model.writable === false) : disabled"
+                [disabled]="model.mutable === false || model.writable === false"
                 (initialized)="initialized = true"
             ></text-editor></ng-template>
             ${inputContent}
@@ -1546,8 +1579,8 @@ export class TextareaComponent extends AbstractNativeInputComponent
         markup: {}
     }
 
-    @Input() activeEditorState:boolean|null = null
-    @Input() editor:PlainObject|string|null = null
+    @Input() activeEditorState:boolean
+    @Input() editor:PlainObject|string
     editorType:string = 'custom'
     focused:boolean = false
     initialized:boolean = false
@@ -1555,8 +1588,8 @@ export class TextareaComponent extends AbstractNativeInputComponent
     maximumText:string = ''
     @Input() minimumNumberOfRows:number
     minimumText:string = ''
-    @Input() rows:string
-    @Input() selectableEditor:boolean|null = null
+    @Input() rows:number
+    @Input() selectableEditor:boolean
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
