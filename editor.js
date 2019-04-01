@@ -257,6 +257,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
 }
 /**
  * Generic input component. TODO: Test new methods!
+ * @property static:defaultModel - Provides a static default model object.
  * @property static:evaluatablePropertyNames - Attribute names which should be
  * evaluated before to store.
  * @property static:reflectableModelPropertyNames - Model property names which
@@ -292,6 +293,19 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * value accessor.
  */
 export class AbstractInputComponent implements AfterViewInit, OnChanges {
+    static defaultModel:PlainObject = {
+        disabled: false,
+        emptyEqualsToNull: true,
+        maximum: Infinity,
+        minimum: 0,
+        maximumLength: Infinity,
+        minimumLength: 0,
+        nullable: true,
+        regularExpressionPattern: '.*',
+        state: null,
+        trim: true,
+        type: 'string'
+    }
     /*
         NOTE: Not all possible properties are listet here. Concrete
         implementations may provide more specific additional properties.
@@ -380,25 +394,32 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         /*
             NOTE: Specific given property values overwrite model configured
             ones.
-            TODO specify which specific values are needed! Now we forward too
-            much.
         */
         for (const name in changes)
             if (
-                ![null, undefined].includes(changes[name].currentValue) &&
-                name !== 'model' &&
-                !name.endsWith('Text') &&
+                this.constructor['defaultModel'].hasOwnProperty(name) &&
                 changes[name].currentValue !== changes[name].previousValue
             )
                 this.model[name] = changes[name].currentValue
-        // Apply instance specific existing properties to model configuration.
+        /*
+            Apply instance specific existing properties to newly given
+            configuration, when the model's representation equals to their
+            default version but corresponding instance version not.
+        */
         if (
             'model' in changes &&
             ![null, undefined].includes(changes.model.currentValue)
         )
-            // TODO see above
-            for (const name in this.model)
-                if (name in this && )
+            for (const name in this.constructor['defaultModel'])
+                if (
+                    this.constructor['defaultModel'].hasOwnProperty(name) &&
+                    name in this &&
+                    (
+                        !this.model.hasOwnProperty(name) ||
+                        this.model[name] ===
+                            this.constructor['defaultModel'][name]
+                    )
+                )
                     this.model[name] = this[name]
         if (Boolean(this.required) === this.required)
             this.model.nullable = !this.required
@@ -511,22 +532,10 @@ export class AbstractNativeInputComponent extends AbstractInputComponent
      */
     ngOnChanges(changes:SimpleChanges):void {
         super.ngOnChanges(changes)
-        this._extend(this.model, this._extend(
-            {
-                disabled: false,
-                emptyEqualsToNull: true,
-                maximum: Infinity,
-                minimum: 0,
-                maximumLength: Infinity,
-                minimumLength: 0,
-                nullable: true,
-                regularExpressionPattern: '.*',
-                state: null,
-                trim: true,
-                type: 'string'
-            },
-            this.model
-        ))
+        this._extend(
+            this.model,
+            this._extend(this.constructor['defaultModel'], this.model)
+        )
         if (typeof this.model.value === 'string' && this.model.trim)
             this.model.value === this.model.value.trim()
         for (const hookType of ['onUpdateExecution', 'onUpdateExpression'])
