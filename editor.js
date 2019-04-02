@@ -508,9 +508,16 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     reflectPropertiesToAttributes():void {
         for (const name of this.constructor['reflectableModelPropertyNames'])
             this.domNode.nativeElement[name] = this.model[name]
+        if (this.model.writable)
+            delete this.domNode.nativeElement.disabled
+        else
+            this.domNode.nativeElement.disabled = true
         this.domNode.nativeElement.pattern =
             this.model.regularExpressionPattern
-        this.domNode.nativeElement.required = !this.model.nullable
+        if (this.model.nullable)
+            delete this.domNode.nativeElement.required
+        else
+            this.domNode.nativeElement.required = true
         if (this.model.state)
             for (const name of this.constructor[
                 'reflectableStatePropertyNames'
@@ -528,9 +535,10 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
                     this.setDomNodeAttribute(name, this.model[name])
             /*
             TODO
-            this.setDomNodeAttribute('required', !this.model.nullable)
+            this.setDomNodeAttribute('disabled', !this.model.writable)
             this.setDomNodeAttribute(
                 'pattern', this.model.regularExpressionPattern)
+            this.setDomNodeAttribute('required', !this.model.nullable)
             */
             if (this.model.state)
                 for (
@@ -1208,18 +1216,24 @@ export const propertyContent:PlainObject = {
         [style.visibilty]="initialized ? 'visible' : 'hidden'"
     `,
     // NOTE: A material wrapper got the default animation already here.
-    nativ: `
-        ${basePropertyContent}
-        [name]="model.name"
-        [placeholder]="model.description ? model.description : model.name ? model.name : null"
-        [required]="!model.nullable"
-    `,
-    nativText: `
-        [disabled]="model.mutable === false || model.writable === false"
-        [maxlength]="model.type === 'string' ? model.maximumLength : null"
-        [minlength]="model.type === 'string' ? model.minimumLength : null"
-        [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
-    `,
+    nativ: {
+        base: `
+            ${basePropertyContent}
+            [disabled]="model.mutable === false || model.writable === false"
+            [name]="model.name"
+            [required]="!model.nullable"
+        `,
+        text: {
+            base: `
+                [placeholder]="model.description ? model.description : model.name ? model.name : null"
+            `,
+            input: `
+                [maxlength]="model.type === 'string' ? model.maximumLength : null"
+                [minlength]="model.type === 'string' ? model.minimumLength : null"
+                [pattern]="model.type === 'string' ? model.regularExpressionPattern : null"
+            `
+        }
+    },
     wrapper: `
         [declaration]="declaration"
         [description]="description"
@@ -1387,8 +1401,8 @@ export class InputComponent extends AbstractInputComponent {
             >
                 <mat-form-field>
                     <mat-select
-                        [(ngModel)]="model.value"
-                        ${propertyContent.nativ}
+                        ${propertyContent.nativ.base}
+                        ${propertyContent.nativ.text.base}
                     ><mat-option
                         *ngFor="let value of model.selection" [value]="value"
                     >
@@ -1399,7 +1413,10 @@ export class InputComponent extends AbstractInputComponent {
                 </mat-form-field>
             </ng-container>
             <ng-template #labeledSelect><mat-form-field>
-                <mat-select [(ngModel)]="model.value" ${propertyContent.nativ}>
+                <mat-select
+                    ${propertyContent.nativ.base}
+                    ${propertyContent.nativ.text.base}
+                >
                     <mat-option
                         *ngFor="let key of model.selection | genericObjectKeys:true"
                         [value]="model.selection[key]"
@@ -1411,10 +1428,11 @@ export class InputComponent extends AbstractInputComponent {
         </ng-container>
         <ng-template #textInput><mat-form-field>
             <input
-                ${propertyContent.nativ}
-                ${propertyContent.nativText}
-                [max]="model.type === 'number' ? model.maximum : null"
+                ${propertyContent.nativ.base}
+                ${propertyContent.nativ.text.base}
+                ${propertyContent.nativ.text.input}
                 matInput
+                [max]="model.type === 'number' ? model.maximum : null"
                 [min]="model.type === 'number' ? model.minimum : null"
                 [type]="determineType()"
             />
@@ -1536,8 +1554,9 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
         </ng-container>
         <ng-template #plain><mat-form-field @defaultAnimation>
             <textarea
-                ${propertyContent.nativ}
-                ${propertyContent.nativText}
+                ${propertyContent.nativ.base}
+                ${propertyContent.nativ.text.base}
+                ${propertyContent.nativ.text.input}
                 [cdkAutosizeMaxRows]="maximumNumberOfRows"
                 [cdkAutosizeMinRows]="minimumNumberOfRows"
                 matInput
