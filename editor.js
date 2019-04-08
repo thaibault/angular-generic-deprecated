@@ -351,7 +351,13 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         AbstractInputComponent.defaultModel)
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
     @Input() name:string
-    @Input() pattern:string
+    /*
+        NOTE: Name mapped values (which aren't evaluated) have to be
+        initialized as their model field pendant ("regularExpressionPattern"
+        here) to avoid an additional sync between both of them.
+    */
+    @Input() pattern:string =
+        AbstractInputComponent.defaultModel.regularExpressionPattern
     @Input() patternText:string =
         'Your string have to match the regular expression: "' +
         '${regularExpressionPattern}".'
