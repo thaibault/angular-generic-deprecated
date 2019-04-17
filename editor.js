@@ -267,6 +267,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property static:reflectableStatePropertyNames - State property names which
  * should be reflected to the actual dom node.
  *
+ * @property appearance - Input representation type.
  * @property declaration - Declaration info text.
  * @property description - Description to use instead of those coming from
  * model specification.
@@ -335,6 +336,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         'valid'
     ]
 
+    @Input() appearance:string = 'standard'
     @Input() declaration:string
     @Input() default:any
     @Input() description:string
@@ -581,7 +583,6 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
 }
 /**
  * Generic input component.
- * @property appearance - Input representation type.
  * @property state - Represents current model state (validation, focused ...).
  * @property _attachmentWithPrefixExists - Holds the attachment by prefix
  * checker pipe instance
@@ -593,7 +594,6 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
  * converter pipe transform method.
  */
 export class AbstractNativeInputComponent extends AbstractInputComponent {
-    @Input() appearance:string = 'standard'
     @ViewChild('state') state:Object
     _attachmentWithPrefixExists:Function
     _extend:Function
