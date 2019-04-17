@@ -489,6 +489,15 @@ export class StringGetEditDistancePipe extends AbstractToolsPipe
     implements PipeTransform {
     methodName:string = 'stringGetEditDistance'
 }
+@Pipe({name: `genericStringInterpretDateTime`})
+/**
+ * Wrapper pipe for corresponding tools function.
+ * @property methodName - Saves the name of wrapped tools function.
+ */
+export class StringInterpretDateTimePipe extends AbstractToolsPipe
+    implements PipeTransform {
+    methodName:string = 'stringInterpretDateTime'
+}
 @Pipe({name: `genericStringGetRegularExpressionValidated`})
 /**
  * Wrapper pipe for corresponding tools function.
@@ -1436,6 +1445,7 @@ export class NumberPercentPipe implements PipeTransform {
         StringFormatPipe,
         StringGetEditDistancePipe,
         StringGetRegularExpressionValidatedPipe,
+        StringInterpretDateTimePipe,
         StringLowerCasePipe,
         StringFindNormalizedMatchRangePipe,
         StringMarkPipe,
@@ -1538,6 +1548,7 @@ export class NumberPercentPipe implements PipeTransform {
         StringDelimitedToCamelCasePipe,
         StringFormatPipe,
         StringGetRegularExpressionValidatedPipe,
+        StringInterpretDateTimePipe,
         StringLowerCasePipe,
         StringFindNormalizedMatchRangePipe,
         StringMarkPipe,
@@ -1643,6 +1654,7 @@ export class NumberPercentPipe implements PipeTransform {
         StringDelimitedToCamelCasePipe,
         StringFormatPipe,
         StringGetRegularExpressionValidatedPipe,
+        StringInterpretDateTimePipe,
         StringLowerCasePipe,
         StringFindNormalizedMatchRangePipe,
         StringMarkPipe,

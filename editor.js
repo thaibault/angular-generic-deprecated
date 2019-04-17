@@ -437,8 +437,8 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
                 if (this.constructor['defaultModel'].hasOwnProperty(name)) {
                     if (
                         name in this &&
-                        this.name !== undefined &&
-                        !['nullable', 'type'].includes(name) &&
+                        this[name] !== undefined &&
+                        name !== 'type' &&
                         (
                             !this.model.hasOwnProperty(name) ||
                             this.model[name] ===
@@ -469,10 +469,10 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         )
             this.model.nullable = !this.required
         // region apply configured transformations
-        if (!(
-            this.model.hasOwnProperty('value') ||
-            [null, undefined].includes(this.model.default)
-        ))
+        if (
+            (!this.state || this.state.pristine) &&
+            ![null, undefined].includes(this.model.default)
+        )
             this.model.value = this.model.default
         if (typeof this.model.value === 'string' && this.model.trim)
             this.model.value === this.model.value.trim()
