@@ -581,6 +581,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
 }
 /**
  * Generic input component.
+ * @property appearance - Input representation type.
  * @property state - Represents current model state (validation, focused ...).
  * @property _attachmentWithPrefixExists - Holds the attachment by prefix
  * checker pipe instance
@@ -592,6 +593,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
  * converter pipe transform method.
  */
 export class AbstractNativeInputComponent extends AbstractInputComponent {
+    @Input() appearance:string = 'standard'
     @ViewChild('state') state:Object
     _attachmentWithPrefixExists:Function
     _extend:Function
@@ -1242,6 +1244,7 @@ export const propertyContent:PlainObject = {
         }
     },
     wrapper: `
+        [appearance]="appearance"
         [declaration]="declaration"
         [description]="description"
         [showDeclaration]="showDeclaration"
@@ -1406,7 +1409,7 @@ export class InputComponent extends AbstractInputComponent {
                 @defaultAnimation
                 *ngIf="model.selection | genericIsArray; else labeledSelect"
             >
-                <mat-form-field>
+                <mat-form-field [appearance]="appearance">
                     <mat-select
                         ${propertyContent.nativ.base}
                         ${propertyContent.nativ.text.base}
@@ -1419,45 +1422,49 @@ export class InputComponent extends AbstractInputComponent {
                     <ng-content></ng-content>
                 </mat-form-field>
             </ng-container>
-            <ng-template #labeledSelect><mat-form-field>
-                <mat-select
+            <ng-template #labeledSelect>
+                <mat-form-field [appearance]="appearance">
+                    <mat-select
+                        ${propertyContent.nativ.base}
+                        ${propertyContent.nativ.text.base}
+                    >
+                        <mat-option
+                            *ngFor="let key of model.selection | genericObjectKeys:true"
+                            [value]="model.selection[key]"
+                        >{{key}}</mat-option>
+                    </mat-select>
+                    ${inputContent}
+                    <ng-content></ng-content>
+                </mat-form-field>
+            </ng-template>
+        </ng-container>
+        <ng-template #textInput>
+            <mat-form-field [appearance]="appearance">
+                <input
                     ${propertyContent.nativ.base}
                     ${propertyContent.nativ.text.base}
+                    ${propertyContent.nativ.text.input}
+                    matInput
+                    [max]="model.type === 'number' ? model.maximum : null"
+                    [min]="model.type === 'number' ? model.minimum : null"
+                    [type]="determineType()"
+                />
+                <button
+                    [attr.aria-label]="hidden ? showPasswordText : hidePasswordText"
+                    [attr.aria-pressed]="hidden"
+                    (click)="hidden = !hidden"
+                    mat-icon-button
+                    matSuffix
+                    *ngIf="determineType(true) === 'password'"
                 >
-                    <mat-option
-                        *ngFor="let key of model.selection | genericObjectKeys:true"
-                        [value]="model.selection[key]"
-                    >{{key}}</mat-option>
-                </mat-select>
+                    <mat-icon>
+                        {{hidden ? 'visibility' : 'visibility_off'}}
+                    </mat-icon>
+                </button>
                 ${inputContent}
                 <ng-content></ng-content>
-            </mat-form-field></ng-template>
-        </ng-container>
-        <ng-template #textInput><mat-form-field>
-            <input
-                ${propertyContent.nativ.base}
-                ${propertyContent.nativ.text.base}
-                ${propertyContent.nativ.text.input}
-                matInput
-                [max]="model.type === 'number' ? model.maximum : null"
-                [min]="model.type === 'number' ? model.minimum : null"
-                [type]="determineType()"
-            />
-            <button
-                [attr.aria-label]="hidden ? showPasswordText : hidePasswordText"
-                [attr.aria-pressed]="hidden"
-                (click)="hidden = !hidden"
-                mat-icon-button
-                matSuffix
-                *ngIf="determineType(true) === 'password'"
-            >
-                <mat-icon>
-                    {{hidden ? 'visibility' : 'visibility_off'}}
-                </mat-icon>
-            </button>
-            ${inputContent}
-            <ng-content></ng-content>
-        </mat-form-field></ng-template>
+            </mat-form-field>
+        </ng-template>
     `
 })
 /* eslint-enable max-len */
@@ -1559,20 +1566,22 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
-        <ng-template #plain><mat-form-field @defaultAnimation>
-            <textarea
-                ${propertyContent.nativ.base}
-                ${propertyContent.nativ.text.base}
-                ${propertyContent.nativ.text.input}
-                [cdkAutosizeMaxRows]="maximumNumberOfRows"
-                [cdkAutosizeMinRows]="minimumNumberOfRows"
-                matInput
-                cdkTextareaAutosize
-                [rows]="rows"
-            ></textarea>
-            ${inputContent}
-            <ng-content></ng-content>
-        </mat-form-field></ng-template>
+        <ng-template #plain>
+            <mat-form-field [appearance]="appearance" @defaultAnimation>
+                <textarea
+                    ${propertyContent.nativ.base}
+                    ${propertyContent.nativ.text.base}
+                    ${propertyContent.nativ.text.input}
+                    [cdkAutosizeMaxRows]="maximumNumberOfRows"
+                    [cdkAutosizeMinRows]="minimumNumberOfRows"
+                    matInput
+                    cdkTextareaAutosize
+                    [rows]="rows"
+                ></textarea>
+                ${inputContent}
+                <ng-content></ng-content>
+            </mat-form-field>
+        </ng-template>
     `
 })
 /* eslint-enable max-len */
