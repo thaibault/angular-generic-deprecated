@@ -284,6 +284,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property modelChange - Model event emitter emitting events on each model
  * change.
  * @property name - Model's field name.
+ * @property placeholder - Sets a dummy value.
  * @property pattern - Allowed pattern to match against given input.
  * @property patternText - Pattern validation text.
  * @property required - Indicates whether this inputs have to be filled.
@@ -311,6 +312,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         mutable: true,
         name: 'NO_NAME_DEFINED',
         nullable: true,
+        placeholder: null,
         regularExpressionPattern: '.*',
         selection: null,
         state: null,
@@ -353,6 +355,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         AbstractInputComponent.defaultModel)
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
     @Input() name:string
+    @Input() placeholder:string
     /*
         NOTE: Name mapped values (which aren't evaluated) have to be
         initialized as their model field pendant ("regularExpressionPattern"
@@ -1234,7 +1237,7 @@ export const propertyContent:PlainObject = {
         `,
         text: {
             base: `
-                [placeholder]="model.description ? model.description : model.name ? model.name : null"
+                [placeholder]="model.placeholder ? model.placeholder : model.name ? model.name : null"
             `,
             input: `
                 [maxlength]="model.type === 'string' ? model.maximumLength : null"
@@ -1253,6 +1256,7 @@ export const propertyContent:PlainObject = {
         [minimumLengthText]="minimumLengthText"
         [model]="model"
         (modelChange)="modelChange.emit(model)"
+        [placeholder]="placeholder"
         [requiredText]="requiredText"
         [patternText]="patternText"
         [showValidationErrorMessages]="showValidationErrorMessages"
@@ -1440,6 +1444,9 @@ export class InputComponent extends AbstractInputComponent {
         </ng-container>
         <ng-template #textInput>
             <mat-form-field [appearance]="appearance">
+                <mat-label *ngIf="model.description">
+                    {{model.description}}
+                </mat-label>
                 <input
                     ${propertyContent.nativ.base}
                     ${propertyContent.nativ.text.base}
