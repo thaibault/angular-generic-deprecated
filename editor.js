@@ -368,7 +368,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     @Input() showDeclaration:boolean = false
     @Input() showDeclarationText:string = 'ℹ'
     @Input() showValidationErrorMessages:boolean = false
-    state:Object
+    state:any
     /**
      * Sets needed services as property values.
      * @param injector - Application specific injector to use instead auto
