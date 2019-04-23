@@ -1414,6 +1414,9 @@ export class InputComponent extends AbstractInputComponent {
                 *ngIf="model.selection | genericIsArray; else labeledSelect"
             >
                 <mat-form-field [appearance]="appearance">
+                    <mat-label *ngIf="model.description">
+                        {{model.description}}
+                    </mat-label>
                     <mat-select
                         ${propertyContent.nativ.base}
                         ${propertyContent.nativ.text.base}
@@ -1428,6 +1431,9 @@ export class InputComponent extends AbstractInputComponent {
             </ng-container>
             <ng-template #labeledSelect>
                 <mat-form-field [appearance]="appearance">
+                    <mat-label *ngIf="model.description">
+                        {{model.description}}
+                    </mat-label>
                     <mat-select
                         ${propertyContent.nativ.base}
                         ${propertyContent.nativ.text.base}
@@ -1575,6 +1581,9 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
         </ng-container>
         <ng-template #plain>
             <mat-form-field [appearance]="appearance" @defaultAnimation>
+                <mat-label *ngIf="model.description">
+                    {{model.description}}
+                </mat-label>
                 <textarea
                     ${propertyContent.nativ.base}
                     ${propertyContent.nativ.text.base}
