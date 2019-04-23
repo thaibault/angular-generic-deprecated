@@ -371,7 +371,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     @Input() requiredText:string = 'Please fill this field.'
     @Input() selectableEditor:boolean
     @Input() showDeclaration:boolean = false
-    @Input() showDeclarationText:string = 'ℹ'
+    @Input() showDeclarationText:string = 'help_outline'
     @Input() showValidationErrorMessages:boolean = false
     state:any
     /**
@@ -1274,7 +1274,7 @@ export const inputContent:string = `
                 @defaultAnimation
                 href=""
                 *ngIf="showDeclarationText"
-            >{{showDeclarationText}}</a>
+            ><mat-icon>{{showDeclarationText}}</mat-icon></a>
             <span @defaultAnimation *ngIf="showDeclaration">
                 {{model.declaration}}
             </span>
