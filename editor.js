@@ -405,8 +405,6 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
      * @returns Nothing.
      */
     ngOnChanges(changes:SimpleChanges):void {
-        if (this.name && this.name.includes('crefo'))
-            console.log('A', this.name, this.domNode.nativeElement.tagName, this.disabled, changes.disabled)
         /*
             If state was set backup in local instance to reset it to the model
             after reinitializing given model configuration.
@@ -455,24 +453,30 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
                         this.model[name] =
                             this.constructor['defaultModel'][name]
                 }
-        if (
-            'disabled' in changes &&
-            changes.disabled.previousValue !== changes.disabled.currentValue &&
-            Boolean(this.disabled) === this.disabled
-        )
-            this.model.writable = !this.disabled
+        const nameMapping:{[key:string]:string} = {
+            disabled: 'writable', required: 'nullable'}
+        for (const name:string in nameMapping)
+            if (
+                nameMapping.hasOwnProperty(name) &&
+                name in changes &&
+                changes[name].previousValue !== changes[name].currentValue &&
+                Boolean(this[name]) === this[name]
+            )
+                this.model[nameMapping[name]] = !this[name]
+            else if (
+                'hasAttribute' in this.domNode.nativeElement &&
+                this.domNode.nativeElement.hasAttribute(name) &&
+                'getAttribute' in this.domNode.nativeElement &&
+                this.domNode.nativeElement.getAttribute(name).trim() !==
+                    'false'
+            )
+                this.model[nameMapping[name]] = false
         if (
             'pattern' in changes &&
             changes.pattern.previousValue !== changes.pattern.currentValue &&
             typeof this.pattern === 'string'
         )
             this.model.regularExpressionPattern = this.pattern
-        if (
-            'required' in changes &&
-            changes.required.previousValue !== changes.required.currentValue &&
-            Boolean(this.required) === this.required
-        )
-            this.model.nullable = !this.required
         // region apply configured transformations
         if (
             (!this.state || this.state.pristine) &&
@@ -1699,8 +1703,8 @@ export class TextareaComponent extends AbstractNativeInputComponent
                 this.editor = {
                     /* eslint-disable max-len */
                     toolbar1: 'cut copy paste | undo redo removeformat | bold italic underline strikethrough subscript superscript | fullscreen',
-                    toolbar2: false
                     /* eslint-enable max-len */
+                    toolbar2: false
                 }
             else if (this.editor === 'normal')
                 this.editor = {
