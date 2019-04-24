@@ -455,7 +455,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
                 }
         const nameMapping:{[key:string]:string} = {
             disabled: 'writable', required: 'nullable'}
-        for (const name:string in nameMapping)
+        for (const name in nameMapping)
             if (
                 nameMapping.hasOwnProperty(name) &&
                 name in changes &&
