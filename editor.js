@@ -329,8 +329,6 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     static reflectableModelPropertyNames:Array<string> = ['name', 'value']
     static reflectableStatePropertyNames:Array<string> = [
         'dirty',
-        'disabled',
-        'enabled',
         'invalid',
         'pristine',
         'touched',
@@ -407,6 +405,8 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
      * @returns Nothing.
      */
     ngOnChanges(changes:SimpleChanges):void {
+        if (this.name && this.name.includes('crefo'))
+            console.log('A', this.name, this.domNode.nativeElement.tagName, this.disabled, changes.disabled)
         /*
             If state was set backup in local instance to reset it to the model
             after reinitializing given model configuration.
