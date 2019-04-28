@@ -480,6 +480,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         // region apply configured transformations
         if (
             (!this.state || this.state.pristine) &&
+            [null, undefined].includes(this.model.value) &&
             ![null, undefined].includes(this.model.default)
         )
             this.model.value = this.model.default
@@ -1241,7 +1242,7 @@ export const propertyContent:PlainObject = {
         `,
         text: {
             base: `
-                [placeholder]="model.placeholder ? model.placeholder : model.name ? model.name : null"
+                [placeholder]="model.placeholder"
             `,
             input: `
                 [maxlength]="model.type === 'string' ? model.maximumLength : null"
