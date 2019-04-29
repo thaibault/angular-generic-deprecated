@@ -1379,7 +1379,8 @@ export const inputContent:string = `
  */
 export class InputComponent extends AbstractInputComponent {
     static evaluatablePropertyNames:Array<string> =
-        AbstractInputComponent.evaluatablePropertyNames.concat('editor')
+        AbstractInputComponent.evaluatablePropertyNames.concat(
+            'editor', 'labels')
 
     @Input() activeEditorState:boolean
     @Input() editor:PlainObject|string
