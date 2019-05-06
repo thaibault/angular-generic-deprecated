@@ -31,7 +31,7 @@ import {
     BasePipeModule,
     EqualsPipe,
     NumberGetUTCTimestampPipe,
-    RepresentObjectPipe,
+    RepresentPipe,
     StringMD5Pipe
 } from './basePipe'
 import {
@@ -43,7 +43,7 @@ import {
 /**
  * Determines if given attachments are representing the same data.
  * @property data - Database service instance.
- * @property representObject - Represent object pipe's method.
+ * @property represent - Represent pipe's method.
  * @property specialNames - A mapping to database specific special property
  * names.
  * @property stringMD5 - String md5 pipe's instance transform method.
@@ -51,7 +51,7 @@ import {
  */
 export class AttachmentsAreEqualPipe implements PipeTransform {
     data:DataService
-    representObject:Function
+    represent:Function
     specialNames:PlainObject
     stringMD5:Function
     zone:NgZone
@@ -61,7 +61,7 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
      * @param initialData - Injected initial data service instance.
      * @param injector - Application specific injector instance.
      * @param ngZone - Injected zone service instance.
-     * @param representObjectPipe - Represent object pipe instance.
+     * @param representPipe - Represent object pipe instance.
      * @param stringMD5Pipe - Injected string md5 pipe instance.
      * @returns Nothing.
      */
@@ -70,12 +70,11 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
         initialData:InitialDataService,
         injector:Injector,
         ngZone:NgZone,
-        representObjectPipe:RepresentObjectPipe,
+        representPipe:RepresentPipe,
         stringMD5Pipe:StringMD5Pipe
     ) {
         this.data = data
-        this.representObject = representObjectPipe.transform.bind(
-            representObjectPipe)
+        this.represent = representPipe.transform.bind(representPipe)
         this.specialNames =
             initialData.configuration.database.model.property.name.special
         this.stringMD5 = stringMD5Pipe.transform.bind(stringMD5Pipe)
@@ -166,7 +165,7 @@ export class AttachmentsAreEqualPipe implements PipeTransform {
                         } catch (error) {
                             let message:string = 'unknown'
                             try {
-                                message = this.representObject(error)
+                                message = this.represent(error)
                             } catch (error) {}
                             console.warn(
                                 'Given attachments for equality check are ' +

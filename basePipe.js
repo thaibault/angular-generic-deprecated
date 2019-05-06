@@ -80,7 +80,7 @@ const methodGroups:PlainObject = {
         'convertCircularObjectToJSON',
         'equals',
         'extend',
-        'representObject',
+        'represent',
         'sort'
     ],
     array: '*',
@@ -157,14 +157,13 @@ export class GetSubstructurePipe extends AbstractToolsPipe
     implements PipeTransform {
     methodName:string = 'getSubstructure'
 }
-@Pipe({name: `genericRepresentObject`})
+@Pipe({name: `genericRepresent`})
 /**
  * Wrapper pipe for corresponding tools function.
  * @property methodName - Saves the name of wrapped tools function.
  */
-export class RepresentObjectPipe extends AbstractToolsPipe
-    implements PipeTransform {
-    methodName:string = 'representObject'
+export class RepresentPipe extends AbstractToolsPipe implements PipeTransform {
+    methodName:string = 'represent'
 }
 @Pipe({name: `genericSort`})
 /**
@@ -1403,7 +1402,7 @@ export class NumberPercentPipe implements PipeTransform {
         ConvertCircularObjectToJSONPipe,
         EqualsPipe,
         ExtendPipe,
-        RepresentObjectPipe,
+        RepresentPipe,
         SortPipe,
         // / endregion
         // / region array
@@ -1509,7 +1508,7 @@ export class NumberPercentPipe implements PipeTransform {
         ConvertCircularObjectToJSONPipe,
         EqualsPipe,
         ExtendPipe,
-        RepresentObjectPipe,
+        RepresentPipe,
         SortPipe,
         // / endregion
         // / region array
@@ -1615,7 +1614,7 @@ export class NumberPercentPipe implements PipeTransform {
         ConvertCircularObjectToJSONPipe,
         EqualsPipe,
         ExtendPipe,
-        RepresentObjectPipe,
+        RepresentPipe,
         SortPipe,
         // / endregion
         // / region array

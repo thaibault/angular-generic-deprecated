@@ -367,7 +367,7 @@ export async function render(
                 } catch (error) {
                     console.warn(
                         'Error occurred during dynamic pre-rendering path "' +
-                        `${url}": ${Tools.representObject(error)}`
+                        `${url}": ${Tools.represent(error)}`
                     )
                     return reject(error)
                 }
@@ -379,7 +379,8 @@ export async function render(
                     console.warn(
                         'Error occurred during ahead of time compiled ' +
                         `pre-rendering path "${url}": ` +
-                        Tools.representObject(error))
+                        Tools.represent(error)
+                    )
                     return reject(error)
                 }
             // endregion

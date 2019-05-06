@@ -899,9 +899,10 @@ registerAngularTest(function(
                     assert.ok(equal)
                     if (!equal)
                         console.warn(
-                            utility.fixed.tools.representObject(result),
+                            utility.fixed.tools.represent(result),
                             '!=',
-                            utility.fixed.tools.representObject(test[3]))
+                            utility.fixed.tools.represent(test[3])
+                        )
                 }
                 // endregion
                 // region removeAlreadyExistingData

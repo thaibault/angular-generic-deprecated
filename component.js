@@ -76,7 +76,7 @@ import {
     ExtendPipe,
     GetFilenameByPrefixPipe,
     BasePipeModule,
-    RepresentObjectPipe,
+    RepresentPipe,
     StringCapitalizePipe,
     StringFormatPipe,
     StringTemplatePipe
@@ -1780,8 +1780,8 @@ export class RepresentTextFileDirective {
  * instance's transform method.
  * @property _idIsObject - Indicates whether the model document specific id is
  * provided as object and "value" named property or directly.
- * @property _representObject - Holds the represent object pipe instance's
- * transform method.
+ * @property _represent - Holds the represent object pipe instance's transform
+ * method.
  * @property _stringFormat - Saves the string formatting pip's transformation
  * function.
  * @property _prefixMatch - Holds the prefix match pipe instance's transform
@@ -1872,7 +1872,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     _extend:Function
     _getFilenameByPrefix:Function
     _idIsObject:boolean = false
-    _representObject:Function
+    _represent:Function
     _stringFormat:Function
     _prefixMatch:boolean = false
     /**
@@ -1884,8 +1884,8 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
      * @param getFilenameByPrefixPipe - Saves the file name by prefix retriever
      * pipe instance.
      * @param initialData - Injected initial data service instance.
-     * @param representObjectPipe - Saves the object to string representation
-     * pipe instance.
+     * @param representPipe - Saves the object to string representation pipe
+     * instance.
      * @param stringFormatPipe - Saves the string formation pipe instance.
      * @param stringTemplatePipe - Injected sString template pipe instance.
      * @param utility - Utility service instance.
@@ -1898,7 +1898,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         extendPipe:ExtendPipe,
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService,
-        representObjectPipe:RepresentObjectPipe,
+        representPipe:RepresentPipe,
         stringFormatPipe:StringFormatPipe,
         stringTemplatePipe:StringTemplatePipe,
         utility:UtilityService
@@ -1923,8 +1923,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         this._extend = extendPipe.transform.bind(extendPipe)
         this._getFilenameByPrefix = getFilenameByPrefixPipe.transform.bind(
             getFilenameByPrefixPipe)
-        this._representObject = representObjectPipe.transform.bind(
-            representObjectPipe)
+        this._represent = representPipe.transform.bind(representPipe)
         this._stringFormat = stringFormatPipe.transform.bind(stringFormatPipe)
     }
     /**
@@ -2052,7 +2051,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
                         } catch (error) {
                             this.updateErrorState({database: (
                                 'message' in error
-                            ) ? error.message : this._representObject(error)})
+                            ) ? error.message : this._represent(error)})
                             this.modelChange.emit(this.model)
                             return
                         }
@@ -2154,7 +2153,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             } catch (error) {
                 this.updateErrorState({database: (
                     'message' in error
-                ) ? error.message : this._representObject(error)})
+                ) ? error.message : this._represent(error)})
                 this.modelChange.emit(this.model)
                 return
             }
@@ -2196,7 +2195,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             } catch (error) {
                 this.updateErrorState({database: (
                     'message' in error
-                ) ? error.message : this._representObject(error)})
+                ) ? error.message : this._represent(error)})
                 this.modelChange.emit(this.model)
                 return
             }
@@ -2362,7 +2361,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             } catch (error) {
                 this.updateErrorState({database: (
                     'message' in error
-                ) ? error.message : this._representObject(error)})
+                ) ? error.message : this._represent(error)})
                 if (this.autoMessages)
                     this.abstractResolver.message(
                         'Database has encountered an error during uploading ' +

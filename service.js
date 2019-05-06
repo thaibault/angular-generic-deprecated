@@ -87,7 +87,7 @@ import {
     GetFilenameByPrefixPipe,
     BasePipeModule,
     NumberGetUTCTimestampPipe,
-    RepresentObjectPipe,
+    RepresentPipe,
     StringEscapeRegularExpressionsPipe,
     StringFormatPipe
 } from './basePipe'
@@ -1258,7 +1258,7 @@ export class DataService {
  * transformation method.
  * @property numberGetUTCTimestamp - Holds a date (and time) to unix timestamp
  * converter pipe transform method.
- * @property representObject - Represent object pipe's method.
+ * @property represent - Represent object pipe's service transformation method.
  * @property tools - Holds the tools class from the tools service.
  */
 export class DataScopeService {
@@ -1269,7 +1269,7 @@ export class DataScopeService {
     extractData:Function
     getFilenameByPrefix:Function
     numberGetUTCTimestamp:Function
-    representObject:Function
+    represent:Function
     tools:typeof Tools
     /**
      * Saves alle needed services as property values.
@@ -1283,7 +1283,7 @@ export class DataScopeService {
      * @param initialData - Injected initial data service instance.
      * @param numberGetUTCTimestampPipe - Date (and time) to unix timestamp
      * converter pipe instance.
-     * @param representObjectPipe - Represent object pipe instance.
+     * @param representPipe - Represent object pipe instance.
      * @param utility - Injected utility service instance.
      * @returns Nothing.
      */
@@ -1295,7 +1295,7 @@ export class DataScopeService {
         getFilenameByPrefixPipe:GetFilenameByPrefixPipe,
         initialData:InitialDataService,
         numberGetUTCTimestampPipe:NumberGetUTCTimestampPipe,
-        representObjectPipe:RepresentObjectPipe,
+        representPipe:RepresentPipe,
         utility:UtilityService
     ) {
         this.attachmentWithPrefixExists =
@@ -1309,8 +1309,7 @@ export class DataScopeService {
             getFilenameByPrefixPipe)
         this.numberGetUTCTimestamp = numberGetUTCTimestampPipe.transform.bind(
             numberGetUTCTimestampPipe)
-        this.representObject = representObjectPipe.transform.bind(
-            representObjectPipe)
+        this.represent = representPipe.transform.bind(representPipe)
         this.tools = utility.fixed.tools
     }
     /**
@@ -1362,9 +1361,13 @@ export class DataScopeService {
                 } catch (error) {
                     throw new Error(
                         `Document with given id "${id}" and revision "` +
-                        `${revision}" isn't available: ` + ((
-                            'message' in error
-                        ) ? error.message : this.representObject(error)))
+                        `${revision}" isn't available: ` +
+                        (
+                            ('message' in error) ?
+                                error.message :
+                                this.represent(error)
+                        )
+                    )
                 }
                 if (revisionHistory) {
                     const revisionsInformationName:string =
@@ -1382,9 +1385,13 @@ export class DataScopeService {
                         } catch (error) {
                             throw new Error(
                                 `Document with given id "${id}" and ` +
-                                `revision "${revision}" isn't available: ` + (
-                                    ('message' in error) ? error.message :
-                                    this.representObject(error)))
+                                `revision "${revision}" isn't available: ` +
+                                (
+                                    ('message' in error) ?
+                                        error.message :
+                                        this.represent(error)
+                                )
+                            )
                         }
                         revisions = latestData[revisionsInformationName]
                         delete latestData[revisionsInformationName]
@@ -1413,9 +1420,13 @@ export class DataScopeService {
                 } catch (error) {
                     throw new Error(
                         `Latest document with given id "${id}" and matching ` +
-                        `index isn't available: ` + ((
-                            'message' in error
-                        ) ? error.message : this.representObject(error)))
+                        `index isn't available: ` +
+                        (
+                            ('message' in error) ?
+                                error.message :
+                                this.represent(error)
+                        )
+                    )
                 }
         }
         return this.generate(modelName, propertyNames, data)
@@ -1882,7 +1893,7 @@ export class RegisterHTTPRequestInterceptor implements HttpInterceptor {
  * account during resolving.
  * @property relevantSearchKeys - Saves a list of relevant key names to take
  * into during searching.
- * @property representObject - Represent object pipe transformation function.
+ * @property represent - Represent object pipe transformation function.
  * @property specialNames - mapping of special database field names.
  * @property tools - Tools service instance.
  * @property type - Model name to handle. Should be overwritten in concrete
@@ -1911,7 +1922,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
     platformID:string
     relevantKeys:Array<string>|null = null
     relevantSearchKeys:Array<string>|null = null
-    representObject:Function
+    represent:Function
     specialNames:{[key:string]:string}
     tools:Tools
     type:string = 'Item'
@@ -1950,8 +1961,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
             InitialDataService
         ).configuration.database.model
         this.platformID = get(PLATFORM_ID)
-        this.representObject = get(RepresentObjectPipe).transform.bind(get(
-            RepresentObjectPipe))
+        this.represent = get(RepresentPipe).transform.bind(get(RepresentPipe))
         this.specialNames = get(
             InitialDataService
         ).configuration.database.model.property.name.special
@@ -2139,8 +2149,7 @@ export class AbstractResolver implements Resolve<PlainObject> {
                 (await this.data.put(newData)).rev
         } catch (error) {
             this.message(
-                'message' in error ? error.message : this.representObject(
-                    error))
+                'message' in error ? error.message : this.represent(error))
             return false
         }
         if (message)
