@@ -325,7 +325,8 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         implementations may provide more specific additional properties.
     */
     static evaluatablePropertyNames:Array<string> = [
-        'disabled', 'model', 'required']
+        'disabled', 'model', 'required', 'showValidationErrorMessages'
+    ]
     static reflectableModelPropertyNames:Array<string> = ['name', 'value']
     static reflectableStatePropertyNames:Array<string> = [
         'dirty',
