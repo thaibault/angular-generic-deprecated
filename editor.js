@@ -29,6 +29,7 @@ import {
     Injector,
     Input,
     NgModule,
+    NgZone,
     OnChanges,
     Optional,
     Renderer2 as Renderer,
@@ -275,6 +276,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property domNode - Holds the host dom node.
  * @property emptyEqualsToNull - Defines how to handle empty type specific
  * values.
+ * @property fixedUtility - Holds static helper methods.
  * @property maximumLength - Maximum allowed number of symbols.
  * @property maximumLengthText - Maximum length validation text.
  * @property minimumLength - Minimum allowed number of symbols.
@@ -297,6 +299,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * component from showing error messages before the user has submit the form.
  * @property state - Reflects nested model state given by angular ng model
  * value accessor.
+ * @property zone - Zone service instance.
  */
 export class AbstractInputComponent implements AfterViewInit, OnChanges {
     static defaultModel:PlainObject = {
@@ -344,6 +347,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     @Input() disabled:boolean
     domNode:ElementRef
     @Input() emtyEqualsToNull:boolean
+    fixedUtility:typeof UtilityService
     @Input() maximumLength:number
     @Input() maximumLengthText:string =
         'Please type less or equal than ${maximumLength} symbols.'
@@ -383,9 +387,22 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         const get:Function = determineInjector(
             injector, this, this.constructor)
         this.domNode = get(ElementRef)
+        this.fixedUtility = get(UtilityService).fixed
         this.renderer = get(Renderer)
-        this.modelChange.subscribe(this.reflectPropertiesToAttributes.bind(
-            this))
+        /*
+            NOTE: Since we possibly wrap a nested input an additional digest
+            loop should be provided to resolve nested state specific changes
+            before reflecting them.
+        */
+        this.modelChange.subscribe(this.fixedUtility.tools.timeout.bind(
+            this, this.reflectPropertiesToAttributes.bind(this)
+        ))
+        // NOTE: We have to provide a way to focus inner input node.
+        this.domNode.nativeElement.delegateFocus = (
+            selector:string = 'input, mat-select, textarea'
+        ) => get(NgZone).run(() =>
+            this.domNode.nativeElement.querySelector(selector).focus()
+        )
     }
     /**
      * Triggers after the view has been initialized and nested states can be
@@ -454,8 +471,20 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
                         this.model[name] =
                             this.constructor['defaultModel'][name]
                 }
+        if (
+            !this.showValidationErrorMessages &&
+            'hasAttribute' in this.domNode.nativeElement &&
+            this.domNode.nativeElement.hasAttribute(
+                'show-validation-error-messages') &&
+            'getAttribute' in this.domNode.nativeElement &&
+            this.domNode.nativeElement.getAttribute(
+                'show-validation-error-messages'
+            ).trim() !== 'false'
+        )
+            this.showValidationErrorMessages = true
         const nameMapping:{[key:string]:string} = {
-            disabled: 'writable', required: 'nullable'}
+            disabled: 'writable', required: 'nullable'
+        }
         for (const name in nameMapping)
             if (
                 nameMapping.hasOwnProperty(name) &&
@@ -517,7 +546,13 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
                         this.model[hookType]
                 )
         // endregion
-        this.reflectPropertiesToAttributes()
+        /*
+            NOTE: Since we possibly wrap a nested input an additional digest
+            loop should be provided to resolve nested state specific changes
+            before reflecting them.
+        */
+        this.fixedUtility.tools.timeout(
+            this.reflectPropertiesToAttributes.bind(this))
     }
     /**
      * Reflect properties to dom node.
@@ -745,7 +780,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
      * Initializes the code editor element.
      * @returns Nothing.
      */
-    async ngAfterViewInit():Promise<void> {
+    ngAfterViewInit():Promise<void> {
         if (!this.constructor['factories'][this.factoryName])
             if (this.fixedUtility.globalContext[this.factoryName])
                 this.constructor['factories'][this.factoryName] =
@@ -755,10 +790,8 @@ export class AbstractEditorComponent extends AbstractValueAccessor
                 NOTE: We have to do a dummy timeout to avoid an event emit in
                 first initializing call stack.
             */
-            await this.fixedUtility.tools.timeout()
-        else
-            await this.constructor['applicationInterfaceLoad'][
-                this.factoryName]
+            return this.fixedUtility.tools.timeout()
+        return this.constructor['applicationInterfaceLoad'][this.factoryName]
     }
     /**
      * Synchronizes given value into internal instance.
@@ -1300,7 +1333,7 @@ export const inputContent:string = `
             >plain</a>
         </span>
     </mat-hint>
-    <span generic-error *ngIf="showValidationErrorMessages && model.state">
+    <mat-error *ngIf="showValidationErrorMessages && model.state">
         <p @defaultAnimation *ngIf="model.state.errors?.maxlength">
             {{maximumLengthText | genericStringTemplate:model}}
         </p>
@@ -1319,7 +1352,7 @@ export const inputContent:string = `
         <p @defaultAnimation *ngIf="model.state.errors?.required">
             {{requiredText | genericStringTemplate:model}}
         </p>
-    </span>
+    </mat-error>
     <mat-hint
         align="end"
         @defaultAnimation
