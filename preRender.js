@@ -19,7 +19,7 @@ import {
     renderModule, renderModuleFactory, ServerModule
 } from '@angular/platform-server'
 import {Routes} from '@angular/router'
-import fileSystem from 'fs'
+import {promises as fileSystem} from 'fs'
 import {JSDOM as DOM, VirtualConsole} from 'jsdom'
 import makeDirectoryPath from 'mkdirp'
 import path from 'path'
@@ -195,7 +195,7 @@ export async function render(
     options.routes = [].concat(options.routes)
     // endregion
     // IgnoreTypeCheck
-    const data:string = await fileSystem.promises.readFile(
+    const data:string = await fileSystem.readFile(
         options.htmlFilePath, {encoding: options.encoding})
     // region prepare environment
     renderScope.virtualConsole = new VirtualConsole()
@@ -279,8 +279,7 @@ export async function render(
                                 return reject(error)
                             let stats:any = null
                             try {
-                                stats = await fileSystem.promises.lstat(
-                                    realSourcePath)
+                                stats = await fileSystem.lstat(realSourcePath)
                             } catch (error) {
                                 if (error.code !== 'ENOENT')
                                     return reject(error)
@@ -301,7 +300,7 @@ export async function render(
                                     return reject(error)
                                 }
                             try {
-                                await fileSystem.promises.symlink(
+                                await fileSystem.symlink(
                                     targetPath, realSourcePath)
                             } catch (error) {
                                 return reject(error)
@@ -445,7 +444,7 @@ export async function render(
                 }
             let stats:any = null
             try {
-                stats = await fileSystem.promises.lstat(filePath)
+                stats = await fileSystem.lstat(filePath)
             } catch (error) {
                 if (error.code !== 'ENOENT')
                     throw error
@@ -458,7 +457,7 @@ export async function render(
                 ):void => error ? reject(error) : resolve()))
             console.info(`Write file "${filePath}".`)
             try {
-                await fileSystem.promises.writeFile(filePath, result)
+                await fileSystem.writeFile(filePath, result)
             } catch (error) {
                 return reject(error)
             }

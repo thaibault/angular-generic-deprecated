@@ -21,6 +21,7 @@ import Tools, {$DomNode, PlainObject} from 'clientnode'
 import {AnimationTriggerMetadata} from '@angular/animations'
 import {
     AfterViewInit,
+    ChangeDetectorRef,
     Component,
     Directive,
     ElementRef,
@@ -131,6 +132,17 @@ export const TINYMCE_DEFAULT_OPTIONS:PlainObject = {
     /* eslint-enable camelcase */
 }
 // / endregion
+/*
+    NOTE: Provide a fallback default host binding where automatic change
+    detection does not work.
+*/
+export const hostBinding:PlainObject = {
+    '(blur)': 'detectChanges()',
+    '(click)': 'detectChanges()',
+    '(focus)': 'detectChanges()',
+    '(focusout)': 'detectChanges()',
+    '(keyup)': 'detectChanges()'
+}
 // endregion
 // region abstract
 /**
@@ -272,6 +284,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property declaration - Declaration info text.
  * @property description - Description to use instead of those coming from
  * model specification.
+ * @property detectChanges - Function to detect component specific changes.
  * @property disabled - Sets disabled state.
  * @property domNode - Holds the host dom node.
  * @property emptyEqualsToNull - Defines how to handle empty type specific
@@ -344,6 +357,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     @Input() declaration:string
     @Input() default:any
     @Input() description:string
+    detectChanges:Function
     @Input() disabled:boolean
     domNode:ElementRef
     @Input() emtyEqualsToNull:boolean
@@ -389,6 +403,17 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         this.domNode = get(ElementRef)
         this.fixedUtility = get(UtilityService).fixed
         this.renderer = get(Renderer)
+        const changeDetectorReference:ChangeDetectorRef = get(
+            ChangeDetectorRef)
+        /*
+            NOTE: We have to easily provide this method to allow explicitly
+            trigger change detection via host binding (especially needed for
+            custom web components and their events.)
+        */
+        this.detectChanges = this.fixedUtility.tools.timeout.bind(
+            this,
+            changeDetectorReference.detectChanges.bind(changeDetectorReference)
+        )
         /*
             NOTE: Since we possibly wrap a nested input an additional digest
             loop should be provided to resolve nested state specific changes
@@ -1362,6 +1387,7 @@ export const inputContent:string = `
 /* eslint-enable max-len */
 @Component({
     animations,
+    host: hostBinding,
     selector: 'generic-input',
     template: `
         <generic-textarea
