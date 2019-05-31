@@ -1056,7 +1056,7 @@ export class IntervalInputComponent {
  */
 export class IntervalsInputComponent implements OnInit {
     @Input() additionalObjectData:PlainObject
-    @ContentChild(TemplateRef) contentTemplate:TemplateRef<any>
+    @ContentChild(TemplateRef, {static: true}) contentTemplate:TemplateRef<any>
     @Input() description:string|null = null
 
     @Input() endDeclaration:string|null = null
@@ -1829,7 +1829,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     }> = []
     @Input() headerText:string|null = null
     idName:string
-    @ViewChild('input') input:ElementRef
+    @ViewChild('input', {static: true}) input:ElementRef
     internalName:string
     keyCode:{[key:string]:number}
     @Input() mapNameToField:string|Array<string>|null = null

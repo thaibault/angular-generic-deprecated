@@ -132,17 +132,6 @@ export const TINYMCE_DEFAULT_OPTIONS:PlainObject = {
     /* eslint-enable camelcase */
 }
 // / endregion
-/*
-    NOTE: Provide a fallback default host binding where automatic change
-    detection does not work.
-*/
-export const hostBinding:PlainObject = {
-    '(blur)': 'detectChanges()',
-    '(click)': 'detectChanges()',
-    '(focus)': 'detectChanges()',
-    '(focusout)': 'detectChanges()',
-    '(keyup)': 'detectChanges()'
-}
 // endregion
 // region abstract
 /**
@@ -663,7 +652,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
  * converter pipe transform method.
  */
 export class AbstractNativeInputComponent extends AbstractInputComponent {
-    @ViewChild('state') state:Object
+    @ViewChild('state', {static: true}) state:Object
     _attachmentWithPrefixExists:Function
     _extend:Function
     _getFilenameByPrefix:Function
@@ -783,7 +772,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
     extend:Function
     factoryName:string = ''
     fixedUtility:typeof UtilityService
-    @ViewChild('hostDomNode') hostDomNode:ElementRef
+    @ViewChild('hostDomNode', {static: true}) hostDomNode:ElementRef
     instance:any = null
     @Output() initialized:EventEmitter<any> = new EventEmitter()
     @Input() model:string = ''
@@ -1387,7 +1376,6 @@ export const inputContent:string = `
 /* eslint-enable max-len */
 @Component({
     animations,
-    host: hostBinding,
     selector: 'generic-input',
     template: `
         <generic-textarea
