@@ -1,0 +1,36 @@
+{
+    "angularCompilerOptions": {
+        "enableResourceInlining": false,
+        "flatModuleOutFile": false,
+        "fullTemplateTypeCheck": false,
+        "genDir": "../../",
+        "preserveWhitespaces": false,
+        "skipMetadataEmit" : true,
+        "skipTemplateCodegen": false,
+        "strictInjectionParameters": true,
+        "strictMetadataEmit": true,
+        "trace": true
+    },
+    "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "baseUrl": "../../",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "lib": ["esnext", "dom"],
+        "module": "esnext",
+        "moduleResolution": "node",
+        "noImplicitAny": false,
+        "paths": {
+            "angular-generic/*": [
+                "node_modules/angular-generic/aheadOfTime.compiled/*"
+            ]
+        },
+        "sourceMap": false,
+        "strict": true,
+        "strictPropertyInitialization": false,
+        "suppressImplicitAnyIndexErrors": true,
+        "target": "es5",
+        "types": ["node"]
+    },
+    "files": ["../../source/index.ts"]
+}
