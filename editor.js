@@ -277,7 +277,6 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property domNode - Holds the host dom node.
  * @property emptyEqualsToNull - Defines how to handle empty type specific
  * values.
- * @property fixedUtility - Holds static helper methods.
  * @property maximumLength - Maximum allowed number of symbols.
  * @property maximumLengthText - Maximum length validation text.
  * @property minimumLength - Minimum allowed number of symbols.
@@ -348,7 +347,6 @@ export class AbstractInputComponent implements OnChanges {
     @Input() disabled:boolean
     domNode:ElementRef
     @Input() emtyEqualsToNull:boolean
-    fixedUtility:typeof UtilityService
     @Input() maximumLength:number
     @Input() maximumLengthText:string =
         'Please type less or equal than ${maximumLength} symbols.'
@@ -387,7 +385,6 @@ export class AbstractInputComponent implements OnChanges {
         const get:Function = determineInjector(
             injector, this, this.constructor)
         this.domNode = get(ElementRef)
-        this.fixedUtility = get(UtilityService).fixed
         this.renderer = get(Renderer)
         // NOTE: We have to provide a way to focus inner input node.
         this.domNode.nativeElement.delegateFocus = (
@@ -525,13 +522,7 @@ export class AbstractInputComponent implements OnChanges {
                         this.model[hookType]
                 )
         // endregion
-        /*
-            NOTE: Since we possibly wrap a nested input an additional digest
-            loop should be provided to resolve nested state specific changes
-            before reflecting them.
-        */
-        this.fixedUtility.tools.timeout(
-            this.reflectPropertiesToAttributes.bind(this))
+        this.reflectPropertiesToAttributes()
     }
     /**
      * Reflect properties to dom node.
@@ -629,6 +620,8 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
      */
     @ViewChild('state', {static: false}) set state(value:any) {
         this.model.state = value
+        // TODO on state updates we need an additional change detection.
+        this.reflectPropertiesToAttributes()
         this._changeDetectorReference.detectChanges()
     }
     /**
@@ -719,13 +712,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
                 )
                     newValue *= 1000
             }
-        /*
-            NOTE: Since we possibly wrap a nested input an additional digest
-            loop should be provided to resolve nested state specific changes
-            before reflecting them.
-        */
-        this.fixedUtility.tools.timeout(
-            this.reflectPropertiesToAttributes.bind(this))
+        this.reflectPropertiesToAttributes()
         return newValue
     }
 }
