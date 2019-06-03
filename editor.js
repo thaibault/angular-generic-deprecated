@@ -379,7 +379,6 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     @Input() showDeclaration:boolean = false
     @Input() showDeclarationText:string = 'help_outline'
     @Input() showValidationErrorMessages:boolean = false
-    state:any
     /**
      * Sets needed services as property values.
      * @param injector - Application specific injector to use instead auto
@@ -403,33 +402,12 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
             this,
             changeDetectorReference.detectChanges.bind(changeDetectorReference)
         )
-        /*
-            NOTE: Since we possibly wrap a nested input an additional digest
-            loop should be provided to resolve nested state specific changes
-            before reflecting them.
-        */
-        this.modelChange.subscribe(this.fixedUtility.tools.timeout.bind(
-            this, this.reflectPropertiesToAttributes.bind(this)
-        ))
         // NOTE: We have to provide a way to focus inner input node.
         this.domNode.nativeElement.delegateFocus = (
             selector:string = 'input, mat-select, textarea'
         ) => get(NgZone).run(() =>
             this.domNode.nativeElement.querySelector(selector).focus()
         )
-    }
-    /**
-     * Triggers after the view has been initialized and nested states can be
-     * reflected.
-     * @returns Nothing.
-     */
-    ngAfterViewInit():void {
-        /*
-            NOTE: The state property could be set when directly wrapping a
-            native model.
-        */
-        if (!this.model.state && this.state)
-            this.model.state = this.state
     }
     /**
      * Triggers after first input values have been resolved or changed.
@@ -441,15 +419,13 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
             If state was set backup in local instance to reset it to the model
             after reinitializing given model configuration.
         */
-        if (!this.state && this.model.state)
-            this.state = this.model.state
+        const state:any = this.model.state
         for (const name of this.constructor['evaluatablePropertyNames'])
             if (name in changes && typeof this[name] === 'string')
                 try {
                     this[name] = (new Function(`return ${this[name]}`))()
                 } catch (error) {}
-        this.model.state = this.state
-        console.log('TODO', this.domNode.nativeElement.tagName, this.model.state)
+        this.model.state = state
         /*
             NOTE: Specific given property values overwrite model configured
             ones.
@@ -522,9 +498,10 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
             typeof this.pattern === 'string'
         )
             this.model.regularExpressionPattern = this.pattern
+        // TODO remove redundancy from abstract native input
         // region apply configured transformations
         if (
-            (!this.state || this.state.pristine) &&
+            (!this.model.state || this.model.state.pristine) &&
             [null, undefined].includes(this.model.value) &&
             ![null, undefined].includes(this.model.default)
         )
@@ -642,7 +619,6 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
 }
 /**
  * Generic input component.
- * @property state - Represents current model state (validation, focused ...).
  * @property _attachmentWithPrefixExists - Holds the attachment by prefix
  * checker pipe instance
  * @property _extend - Holds the extend object's pipe transformation method.
@@ -653,12 +629,26 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
  * converter pipe transform method.
  */
 export class AbstractNativeInputComponent extends AbstractInputComponent {
-    @ViewChild('state', {static: false}) state:Object
     _attachmentWithPrefixExists:Function
     _extend:Function
     _getFilenameByPrefix:Function
     _modelConfiguration:PlainObject
     _numberGetUTCTimestamp:Function
+    /**
+     * Setter to synchronize model state value.
+     * @param value - Value to set.
+     * @returns Nothing.
+     */
+    @ViewChild('state', {static: false}) set state(value:any):void {
+        this.model.state = value
+    }
+    /**
+     * Getter to nested model state.
+     * @returns State object.
+     */
+    get state():any {
+        return this.model.state
+    }
     /**
      * Sets needed services as property values.
      * @param injector - Application specific injector to use instead auto
@@ -739,6 +729,13 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
                 )
                     newValue *= 1000
             }
+        /*
+            NOTE: Since we possibly wrap a nested input an additional digest
+            loop should be provided to resolve nested state specific changes
+            before reflecting them.
+        */
+        this.fixedUtility.tools.timeout(
+            this.reflectPropertiesToAttributes.bind(this))
         return newValue
     }
 }
