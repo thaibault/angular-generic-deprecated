@@ -302,7 +302,7 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * value accessor.
  * @property zone - Zone service instance.
  */
-export class AbstractInputComponent implements AfterViewInit, OnChanges {
+export class AbstractInputComponent implements OnChanges {
     static defaultModel:PlainObject = {
         declaration: null,
         default: null,
@@ -627,7 +627,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
      * @param value - Value to set.
      * @returns Nothing.
      */
-    @ViewChild('state', {static: false}) set state(value:any):void {
+    @ViewChild('state', {static: false}) set state(value:any) {
         this.model.state = value
         this._changeDetectorReference.detectChanges()
     }
