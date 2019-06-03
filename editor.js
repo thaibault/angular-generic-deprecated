@@ -449,6 +449,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
                     this[name] = (new Function(`return ${this[name]}`))()
                 } catch (error) {}
         this.model.state = this.state
+        console.log('TODO', this.domNode.nativeElement.tagName, this.model.state)
         /*
             NOTE: Specific given property values overwrite model configured
             ones.
@@ -652,7 +653,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
  * converter pipe transform method.
  */
 export class AbstractNativeInputComponent extends AbstractInputComponent {
-    @ViewChild('state', {static: true}) state:Object
+    @ViewChild('state', {static: false}) state:Object
     _attachmentWithPrefixExists:Function
     _extend:Function
     _getFilenameByPrefix:Function
@@ -772,7 +773,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
     extend:Function
     factoryName:string = ''
     fixedUtility:typeof UtilityService
-    @ViewChild('hostDomNode', {static: true}) hostDomNode:ElementRef
+    @ViewChild('hostDomNode', {static: false}) hostDomNode:ElementRef
     instance:any = null
     @Output() initialized:EventEmitter<any> = new EventEmitter()
     @Input() model:string = ''
