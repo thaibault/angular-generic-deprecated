@@ -273,7 +273,6 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property declaration - Declaration info text.
  * @property description - Description to use instead of those coming from
  * model specification.
- * @property detectChanges - Function to detect component specific changes.
  * @property disabled - Sets disabled state.
  * @property domNode - Holds the host dom node.
  * @property emptyEqualsToNull - Defines how to handle empty type specific
@@ -346,7 +345,6 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
     @Input() declaration:string
     @Input() default:any
     @Input() description:string
-    detectChanges:Function
     @Input() disabled:boolean
     domNode:ElementRef
     @Input() emtyEqualsToNull:boolean
@@ -391,20 +389,9 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
         this.domNode = get(ElementRef)
         this.fixedUtility = get(UtilityService).fixed
         this.renderer = get(Renderer)
-        const changeDetectorReference:ChangeDetectorRef = get(
-            ChangeDetectorRef)
-        /*
-            NOTE: We have to easily provide this method to allow explicitly
-            trigger change detection via host binding (especially needed for
-            custom web components and their events.)
-        */
-        this.detectChanges = this.fixedUtility.tools.timeout.bind(
-            this,
-            changeDetectorReference.detectChanges.bind(changeDetectorReference)
-        )
         // NOTE: We have to provide a way to focus inner input node.
         this.domNode.nativeElement.delegateFocus = (
-            selector:string = 'input, mat-select, textarea'
+            selector:string = '.ng-model'
         ) => get(NgZone).run(() =>
             this.domNode.nativeElement.querySelector(selector).focus()
         )
@@ -630,6 +617,7 @@ export class AbstractInputComponent implements AfterViewInit, OnChanges {
  */
 export class AbstractNativeInputComponent extends AbstractInputComponent {
     _attachmentWithPrefixExists:Function
+    _changeDetectorReference:ChangeDetectorRef
     _extend:Function
     _getFilenameByPrefix:Function
     _modelConfiguration:PlainObject
@@ -641,6 +629,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
      */
     @ViewChild('state', {static: false}) set state(value:any):void {
         this.model.state = value
+        this._changeDetectorReference.detectChanges()
     }
     /**
      * Getter to nested model state.
@@ -662,6 +651,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
         this._attachmentWithPrefixExists = get(
             AttachmentWithPrefixExistsPipe
         ).transform.bind(get(AttachmentWithPrefixExistsPipe))
+        this._changeDetectorReference = get(ChangeDetectorRef)
         this._extend = get(ExtendPipe).transform.bind(get(ExtendPipe))
         this._getFilenameByPrefix = get(
             GetFilenameByPrefixPipe
@@ -1265,6 +1255,7 @@ export class TextEditorComponent extends AbstractEditorComponent
     }
 }
 export const basePropertyContent:string = `
+    class="ng-model"
     [ngModel]="model.value"
     (ngModelChange)="model.value = onChange($event); modelChange.emit(model)"
     #state="ngModel"
