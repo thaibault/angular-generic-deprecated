@@ -270,6 +270,8 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * should be reflected to the actual dom node.
  *
  * @property appearance - Input representation type.
+ * @property changeDetectorReference - Change detector reference service
+ * instance.
  * @property changeTrigger - Trigger property to indicate change detection for
  * explicitly update internal state.
  * @property declaration - Declaration info text.
@@ -343,6 +345,7 @@ export class AbstractInputComponent implements OnChanges {
     ]
 
     @Input() appearance:string = 'standard'
+    changeDetectorReference:ChangeDetectorRef
     @Input() changeTrigger:boolean = false
     @Input() declaration:string
     @Input() default:any
@@ -544,11 +547,14 @@ export class AbstractInputComponent implements OnChanges {
     }
     /**
      * Triggered when model state changes occur. Updates dom node attributes.
-     * @returns Nothing.
+     * @param event - Event object containing model, state and changed value
+     * informations.
+     * @returns Given potentially modified event.
      */
-    onStateChange():void {
+    onStateChange(event:Object):Object {
         this.reflectPropertiesToAttributes()
         this.changeDetectorReference.detectChanges()
+        return event
     }
     /**
      * Reflect properties to dom node.
@@ -631,8 +637,7 @@ export class AbstractInputComponent implements OnChanges {
  * @property _numberGetUTCTimestamp - Date (and time) to unix timstamp
  * converter pipe transform method.
  */
-export class AbstractNativeInputComponent extends AbstractInputComponent
-    implements AfterViewInit {
+export class AbstractNativeInputComponent extends AbstractInputComponent {
     _attachmentWithPrefixExists:Function
     _extend:Function
     _getFilenameByPrefix:Function
@@ -1319,7 +1324,7 @@ export const propertyContent:PlainObject = {
         [minimumLengthText]="minimumLengthText"
         [model]="model"
         (modelChange)="modelChange.emit(model)"
-        (stateChange)="onStateChange($event); stateChange.emit($event)"
+        (stateChange)="stateChange.emit(onStateChange($event))"
         [placeholder]="placeholder"
         [requiredText]="requiredText"
         [patternText]="patternText"
