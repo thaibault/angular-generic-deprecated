@@ -270,6 +270,8 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * should be reflected to the actual dom node.
  *
  * @property appearance - Input representation type.
+ * @property changeTrigger - Trigger property to indicate change detection for
+ * explicitly update internal state.
  * @property declaration - Declaration info text.
  * @property description - Description to use instead of those coming from
  * model specification.
@@ -297,9 +299,9 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property showValidationErrorMessages - Indicates whether validation errors
  * should be suppressed or be shown automatically. Useful to prevent error
  * component from showing error messages before the user has submit the form.
- * @property state - Reflects nested model state given by angular ng model
- * value accessor.
- * @property zone - Zone service instance.
+ * @property stateChange - Event emitter for tracking model meta data state
+ * changes.
+ *
  */
 export class AbstractInputComponent implements OnChanges {
     static defaultModel:PlainObject = {
@@ -341,6 +343,7 @@ export class AbstractInputComponent implements OnChanges {
     ]
 
     @Input() appearance:string = 'standard'
+    @Input() changeTrigger:boolean = false
     @Input() declaration:string
     @Input() default:any
     @Input() description:string
@@ -375,6 +378,7 @@ export class AbstractInputComponent implements OnChanges {
     @Input() showDeclaration:boolean = false
     @Input() showDeclarationText:string = 'help_outline'
     @Input() showValidationErrorMessages:boolean = false
+    @Output() stateChange:EventEmitter<Object> = new EventEmitter()
     /**
      * Sets needed services as property values.
      * @param injector - Application specific injector to use instead auto
@@ -384,6 +388,7 @@ export class AbstractInputComponent implements OnChanges {
     constructor(@Optional() injector:Injector) {
         const get:Function = determineInjector(
             injector, this, this.constructor)
+        this.changeDetectorReference = get(ChangeDetectorRef)
         this.domNode = get(ElementRef)
         this.renderer = get(Renderer)
         // NOTE: We have to provide a way to focus inner input node.
@@ -410,42 +415,6 @@ export class AbstractInputComponent implements OnChanges {
                     this[name] = (new Function(`return ${this[name]}`))()
                 } catch (error) {}
         this.model.state = state
-        /*
-            NOTE: Specific given property values overwrite model configured
-            ones.
-        */
-        for (const name in changes)
-            if (
-                this.constructor['defaultModel'].hasOwnProperty(name) &&
-                changes[name].currentValue !== changes[name].previousValue
-            )
-                this.model[name] = changes[name].currentValue
-        /*
-            Apply instance specific existing properties to newly given
-            configuration, when the model's representation equals to their
-            default version but corresponding instance version not.
-        */
-        if (
-            'model' in changes &&
-            ![null, undefined].includes(changes.model.currentValue)
-        )
-            for (const name in this.constructor['defaultModel'])
-                if (this.constructor['defaultModel'].hasOwnProperty(name)) {
-                    if (
-                        name in this &&
-                        this[name] !== undefined &&
-                        name !== 'type' &&
-                        (
-                            !this.model.hasOwnProperty(name) ||
-                            this.model[name] ===
-                                this.constructor['defaultModel'][name]
-                        )
-                    )
-                        this.model[name] = this[name]
-                    else if (!this.model.hasOwnProperty(name))
-                        this.model[name] =
-                            this.constructor['defaultModel'][name]
-                }
         if (
             !this.showValidationErrorMessages &&
             'hasAttribute' in this.domNode.nativeElement &&
@@ -457,33 +426,16 @@ export class AbstractInputComponent implements OnChanges {
             ).trim() !== 'false'
         )
             this.showValidationErrorMessages = true
-        const nameMapping:{[key:string]:string} = {
-            disabled: 'writable', required: 'nullable'
-        }
-        for (const name in nameMapping)
-            if (
-                nameMapping.hasOwnProperty(name) &&
-                name in changes &&
-                changes[name].previousValue !== changes[name].currentValue &&
-                Boolean(this[name]) === this[name]
-            )
-                this.model[nameMapping[name]] = !this[name]
-            else if (
-                'hasAttribute' in this.domNode.nativeElement &&
-                this.domNode.nativeElement.hasAttribute(name) &&
-                'getAttribute' in this.domNode.nativeElement &&
-                this.domNode.nativeElement.getAttribute(name).trim() !==
-                    'false'
-            )
-                this.model[nameMapping[name]] = false
-        if (
-            'pattern' in changes &&
-            changes.pattern.previousValue !== changes.pattern.currentValue &&
-            typeof this.pattern === 'string'
-        )
-            this.model.regularExpressionPattern = this.pattern
-        // TODO remove redundancy from abstract native input
-        // region apply configured transformations
+        this.reflectPropertiesToModel(changes)
+        this.prepareModelTransformations()
+        this.reflectPropertiesToAttributes()
+    }
+    /**
+     * Initializes model (if not done yet) and pre compiles specified model
+     * transformations.
+     * @returns Nothing.
+     */
+    prepareModelTransformations():void {
         if (
             (!this.model.state || this.model.state.pristine) &&
             [null, undefined].includes(this.model.value) &&
@@ -521,8 +473,82 @@ export class AbstractInputComponent implements OnChanges {
                     (hookType.endsWith('Expression') ? 'return ' : '') +
                         this.model[hookType]
                 )
-        // endregion
+    }
+    /**
+     * Applies given dom node properties changes to the model configuration.
+     * @param changes - Object that represents property changes.
+     * @returns Nothing.
+     */
+    reflectPropertiesToModel(changes:SimpleChanges):void {
+        /*
+            NOTE: Specific given property values overwrite model configured
+            ones.
+        */
+        for (const name in changes)
+            if (
+                this.constructor['defaultModel'].hasOwnProperty(name) &&
+                changes[name].currentValue !== changes[name].previousValue
+            )
+                this.model[name] = changes[name].currentValue
+        /*
+            Apply instance specific existing properties to newly given
+            configuration, when the model's representation equals to their
+            default version but corresponding instance version not.
+        */
+        if (
+            'model' in changes &&
+            ![null, undefined].includes(changes.model.currentValue)
+        )
+            for (const name in this.constructor['defaultModel'])
+                if (this.constructor['defaultModel'].hasOwnProperty(name)) {
+                    if (
+                        name in this &&
+                        this[name] !== undefined &&
+                        name !== 'type' &&
+                        (
+                            !this.model.hasOwnProperty(name) ||
+                            this.model[name] ===
+                                this.constructor['defaultModel'][name]
+                        )
+                    )
+                        this.model[name] = this[name]
+                    else if (!this.model.hasOwnProperty(name))
+                        this.model[name] =
+                            this.constructor['defaultModel'][name]
+                }
+        const nameMapping:{[key:string]:string} = {
+            disabled: 'writable', required: 'nullable'
+        }
+        for (const name in nameMapping)
+            if (
+                nameMapping.hasOwnProperty(name) &&
+                name in changes &&
+                changes[name].previousValue !== changes[name].currentValue &&
+                Boolean(this[name]) === this[name]
+            )
+                this.model[nameMapping[name]] = !this[name]
+            else if (
+                'hasAttribute' in this.domNode.nativeElement &&
+                this.domNode.nativeElement.hasAttribute(name) &&
+                'getAttribute' in this.domNode.nativeElement &&
+                this.domNode.nativeElement.getAttribute(name).trim() !==
+                    'false'
+            )
+                this.model[nameMapping[name]] = false
+        if (
+            'pattern' in changes &&
+            changes.pattern.previousValue !== changes.pattern.currentValue &&
+            typeof this.pattern === 'string'
+        )
+            this.model.regularExpressionPattern = this.pattern
+    }
+    /**
+     * Triggered when model state changes occur. Updates dom node attributes.
+     * @returns Nothing.
+     */
+    onStateChange():void {
         this.reflectPropertiesToAttributes()
+        this.changeDetectorReference.detectChanges()
     }
     /**
      * Reflect properties to dom node.
@@ -556,19 +582,17 @@ export class AbstractInputComponent implements OnChanges {
                         `${this.model[name]}`
                 )
                     this.setDomNodeAttribute(name, this.model[name])
-            /*
-            TODO
             this.setDomNodeAttribute('disabled', !this.model.writable)
             this.setDomNodeAttribute(
                 'pattern', this.model.regularExpressionPattern)
             this.setDomNodeAttribute('required', !this.model.nullable)
-            */
             if (this.model.state)
                 for (
                     const name of
                     this.constructor['reflectableStatePropertyNames']
                 )
                     if (
+                        name in this.model.state &&
                         this.domNode.nativeElement.getAttribute(name) !==
                         `${this.model.state[name]}`
                     )
@@ -582,15 +606,16 @@ export class AbstractInputComponent implements OnChanges {
      * @returns Nothing.
      */
     setDomNodeAttribute(name:string, value:any):void {
-        if ([null, undefined].includes(value))
+        if (
+            [false, null, undefined].includes(value) &&
+            this.domNode.nativeElement.hasAttribute(name)
+        )
             this.renderer.removeAttribute(this.domNode.nativeElement, name)
-        else if (typeof value === 'boolean')
-            if (value)
+        else if (typeof value === 'boolean') {
+            if (value && this.domNode.nativeElement.getAttribute(name) !== '')
                 this.renderer.setAttribute(
                     this.domNode.nativeElement, name, '')
-            else
-                this.renderer.removeAttribute(this.domNode.nativeElement, name)
-        else
+        } else if (this.domNode.nativeElement.getAttribute(name) !== `${value}`)
             this.renderer.setAttribute(
                 this.domNode.nativeElement, name, `${value}`)
     }
@@ -606,9 +631,9 @@ export class AbstractInputComponent implements OnChanges {
  * @property _numberGetUTCTimestamp - Date (and time) to unix timstamp
  * converter pipe transform method.
  */
-export class AbstractNativeInputComponent extends AbstractInputComponent {
+export class AbstractNativeInputComponent extends AbstractInputComponent
+    implements AfterViewInit {
     _attachmentWithPrefixExists:Function
-    _changeDetectorReference:ChangeDetectorRef
     _extend:Function
     _getFilenameByPrefix:Function
     _modelConfiguration:PlainObject
@@ -620,9 +645,19 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
      */
     @ViewChild('state', {static: false}) set state(value:any) {
         this.model.state = value
-        // TODO on state updates we need an additional change detection.
+        this.model.state.update.subscribe((
+            changedPropertyName:string
+        ):void => {
+            this.reflectPropertiesToAttributes()
+            this.stateChange.emit({
+                changedPropertyName,
+                model: this.model,
+                state: this.model.state
+            })
+            this.changeDetectorReference.detectChanges()
+        })
         this.reflectPropertiesToAttributes()
-        this._changeDetectorReference.detectChanges()
+        this.changeDetectorReference.detectChanges()
     }
     /**
      * Getter to nested model state.
@@ -644,7 +679,6 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
         this._attachmentWithPrefixExists = get(
             AttachmentWithPrefixExistsPipe
         ).transform.bind(get(AttachmentWithPrefixExistsPipe))
-        this._changeDetectorReference = get(ChangeDetectorRef)
         this._extend = get(ExtendPipe).transform.bind(get(ExtendPipe))
         this._getFilenameByPrefix = get(
             GetFilenameByPrefixPipe
@@ -767,7 +801,7 @@ export class AbstractEditorComponent extends AbstractValueAccessor
     }
     /**
      * Initializes the code editor element.
-     * @returns Nothing.
+     * @returns Promise resolving to nothing.
      */
     ngAfterViewInit():Promise<void> {
         if (!this.constructor['factories'][this.factoryName])
@@ -1285,6 +1319,7 @@ export const propertyContent:PlainObject = {
         [minimumLengthText]="minimumLengthText"
         [model]="model"
         (modelChange)="modelChange.emit(model)"
+        (stateChange)="onStateChange($event); stateChange.emit($event)"
         [placeholder]="placeholder"
         [requiredText]="requiredText"
         [patternText]="patternText"
