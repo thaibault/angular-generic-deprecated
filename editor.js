@@ -432,7 +432,7 @@ export class AbstractInputComponent implements OnChanges {
             this.showValidationErrorMessages = true
         this.reflectPropertiesToModel(changes)
         this.prepareModelTransformations()
-        this.reflectPropertiesToAttributes()
+        this.reflectPropertiesToDomNode()
     }
     /**
      * Initializes model (if not done yet) and pre compiles specified model
@@ -553,7 +553,7 @@ export class AbstractInputComponent implements OnChanges {
      * @returns Given potentially modified event.
      */
     onStateChange(event:Object):Object {
-        this.reflectPropertiesToAttributes()
+        this.reflectPropertiesToDomNode()
         this.changeDetectorReference.detectChanges()
         return event
     }
@@ -561,7 +561,15 @@ export class AbstractInputComponent implements OnChanges {
      * Reflect properties to dom node.
      * @returns Nothing.
      */
-    reflectPropertiesToAttributes():void {
+    reflectPropertiesToDomNode():void {
+        this.reflectPropertiesToDomNodeProperties()
+        this.reflectPropertiesToDomNodeAttributes()
+    }
+    /**
+     * Reflect properties to dom node properties.
+     * @returns Nothing.
+     */
+    reflectPropertiesToDomNodeProperties():void {
         for (const name of this.constructor['reflectableModelPropertyNames'])
             this.domNode.nativeElement[name] = this.model[name]
         if (this.model.writable)
@@ -579,6 +587,12 @@ export class AbstractInputComponent implements OnChanges {
                 'reflectableStatePropertyNames'
             ])
                 this.domNode.nativeElement[name] = this.model.state[name]
+    }
+    /**
+     * Reflect properties to dom node attributes.
+     * @returns Nothing.
+     */
+    reflectPropertiesToDomNodeAttributes():void {
         if ('getAttribute' in this.domNode.nativeElement) {
             for (const name of this.constructor[
                 'reflectableModelPropertyNames'
@@ -654,7 +668,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
         this.model.state.update.subscribe((
             changedPropertyName:string
         ):void => {
-            this.reflectPropertiesToAttributes()
+            this.reflectPropertiesToDomNode()
             this.stateChange.emit({
                 changedPropertyName,
                 model: this.model,
@@ -662,7 +676,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
             })
             this.changeDetectorReference.detectChanges()
         })
-        this.reflectPropertiesToAttributes()
+        this.reflectPropertiesToDomNode()
         this.changeDetectorReference.detectChanges()
     }
     /**
@@ -752,7 +766,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
                 )
                     newValue *= 1000
             }
-        this.reflectPropertiesToAttributes()
+        this.reflectPropertiesToDomNode()
         return newValue
     }
 }
