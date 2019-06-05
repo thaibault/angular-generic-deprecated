@@ -353,6 +353,7 @@ export class AbstractInputComponent implements OnChanges {
     @Input() disabled:boolean
     domNode:ElementRef
     @Input() emtyEqualsToNull:boolean
+    @Input() infoTooltipDescriptionText:string = 'info'
     @Input() maximumLength:number
     @Input() maximumLengthText:string =
         'Please type less or equal than ${maximumLength} symbols.'
@@ -1318,6 +1319,7 @@ export const propertyContent:PlainObject = {
         [appearance]="appearance"
         [declaration]="declaration"
         [description]="description"
+        [infoTooltipDescriptionText]="infoTooltipDescriptionText"
         [showDeclaration]="showDeclaration"
         [showDeclarationText]="showDeclarationText"
         [maximumLengthText]="maximumLengthText"
@@ -1332,7 +1334,11 @@ export const propertyContent:PlainObject = {
     `
 }
 export const inputContent:string = `
-    <mat-hint align="start" @defaultAnimation matTooltip="info">
+    <mat-hint
+        align="start"
+        @defaultAnimation
+        [matTooltip]="infoTooltipDescriptionText ? infoTooltipDescriptionText : null"
+    >
         <span
             [class.active]="showDeclaration"
             (click)="showDeclaration = !showDeclaration"
