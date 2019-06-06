@@ -1368,8 +1368,11 @@ export class StringTemplatePipe implements PipeTransform {
             }
             return true
         })
-        return new Function('scope', ...validNames, `return \`${string}\``)(
-            scope, ...validNames.map((name:string):any => scope[name]))
+        return new Function(
+            'scope',
+            ...validNames,
+            `return ${string.includes('\n') ? `\`${string}\`` : `'${string}'`}`
+        )(scope, ...validNames.map((name:string):any => scope[name]))
     }
 }
 // / endregion
