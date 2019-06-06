@@ -1662,10 +1662,11 @@ export class DataScopeService {
                                     result[name][type].value = (new Function(
                                         ...Object.keys(scope),
                                         (
-                                            hookType.endsWith(
-                                                'Expression'
-                                            ) ? 'return ' : ''
-                                        ) + result[name][type][hookType]
+                                            hookType.endsWith('Expression') ?
+                                                'return ' :
+                                                ''
+                                        ) +
+                                        result[name][type][hookType]
                                     ))(...Object.values(scope))
                                     if (
                                         result[name][type].hasOwnProperty(
@@ -1737,10 +1738,13 @@ export class DataScopeService {
                             result[name][type]
                         ) {
                             result[name].value = (new Function(
-                                ...Object.keys(scope), (
-                                    type.endsWith('Expression') ? 'return ' :
-                                    ''
-                                ) + result[name][type]
+                                ...Object.keys(scope),
+                                (
+                                    type.endsWith('Expression') ?
+                                        'return ' :
+                                        ''
+                                ) +
+                                result[name][type]
                             ))(...Object.values(scope))
                             if (result[name].value === undefined)
                                 result[name].value = null
