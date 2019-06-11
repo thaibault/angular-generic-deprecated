@@ -125,7 +125,6 @@
     "@angular/router": "*",
     "@babel/cli": "*",
     "@babel/plugin-proposal-decorators": "*",
-    "@babel/polyfill": "*",
     "@types/node": "*",
     "babel-eslint": "*",
     "babel-plugin-angular2-annotations": "*",
@@ -193,19 +192,17 @@
     },
     "module": {
       "aliases": {
-        "#": "Using pre-compiled artefacts.",
-        "@babel/polyfill$": "@babel/polyfill/dist/polyfill.min.js",
-        "#0": "We need blob-util in node environments only.",
+        "#": "We need blob-util in node environments only.",
         "blob-util$": {
           "__evaluate__": "self.targetTechnology === 'node' ? 'clientnode' : 'blob-util/dist/blob-util.min.js'"
         },
-        "#1": "We need to process this file dynamically when testing different environments.",
+        "#0": "We need to process this file dynamically when testing different environments.",
         "clientnode/test$": "clientnode/test",
         "^hammerjs$": "hammerjs/hammer.min.js",
         "jquery$": "jquery/dist/jquery.min.js",
-        "#2": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
+        "#1": "Standard import is \"node-fetch/lib/index.mjs\" which has import declarations which aren't allowed for javascript module files.",
         "node-fetch$": "node-fetch/lib/index.js",
-        "#3": "Avoid using default buggy \"pouchdb-promise/lib/index.es.js\" version.",
+        "#2": "Avoid using default buggy \"pouchdb-promise/lib/index.es.js\" version.",
         "pouchdb-promise$": "pouchdb-promise/lib/index.js"
       },
       "optimizer": {
@@ -256,7 +253,7 @@
         ]
       },
       "skipParseRegularExpressions": {
-        "__evaluate__": "/(?:^|\\/)(?:(?:@babel\\/polyfill\\/dist\\/polyfill)|(?:hammerjs\\/hammer)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb))(?:\\.min)?\\.js(?:\\?.+|$)/"
+        "__evaluate__": "/(?:^|\\/)(?:(?:hammerjs\\/hammer)|(?:jquery\\/dist\\/jquery)|(?:pouchdb\\/dist\\/pouchdb))(?:\\.min)?\\.js(?:\\?.+|$)/"
       }
     },
     "target:basePipe": {
@@ -330,7 +327,7 @@
       "injection": {
         "entry": {
           "index": {
-            "__evaluate__": "(self.givenCommandLineArguments.length && ['build', 'export'].includes(self.givenCommandLineArguments[2]) ? [] : ['@babel/polyfill', 'reflect-metadata', 'zone.js']).concat(self.givenCommandLineArguments.length && ['serve', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? `webpack-dev-server/client?http${self.development.server.cert ? 's' : ''}://0.0.0.0:${self.development.server.port}` : []).concat(self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? './test' : './index')"
+            "__evaluate__": "(self.givenCommandLineArguments.length && ['build', 'export'].includes(self.givenCommandLineArguments[2]) ? [] : []).concat(self.debug ? 'reflect-metadata' : [], 'zone.js', self.givenCommandLineArguments.length && ['serve', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? `webpack-dev-server/client?http${self.development.server.cert ? 's' : ''}://0.0.0.0:${self.development.server.port}` : [], self.givenCommandLineArguments.length && ['test', 'test:browser'].includes(self.givenCommandLineArguments[2]) ? './test' : './index')"
           }
         },
         "external": {
