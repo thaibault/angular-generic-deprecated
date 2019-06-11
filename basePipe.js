@@ -1337,17 +1337,13 @@ export class StringStartsWithPipe implements PipeTransform {
 @Pipe({name: 'genericStringTemplate'})
 /**
  * Provides angular's template engine as pipe.
+ * @property templateSupport:static - Indicates whether template strings are
+ * supported or not.
+ *
  * @property extend - Extend object's pipe transform method.
  */
 export class StringTemplatePipe implements PipeTransform {
-    static templateSupport:boolean = (function():boolean {
-        try {
-            new Function('return `${1 + 1}`')()
-        } catch (error) {
-            return false
-        }
-        return false
-    })()
+    static templateSupport:boolean = true
     extend:Function
     /**
      * Sets injected extend object pipe instance as instance property.
@@ -1388,6 +1384,13 @@ export class StringTemplatePipe implements PipeTransform {
         )(scope, ...validNames.map((name:string):any => scope[name]))
     }
 }
+StringTemplatePipe.templateSupport = (function():boolean {
+    try {
+        return new Function('return `${true}`')()
+    } catch (error) {
+        return false
+    }
+})()
 // / endregion
 // region number
 @Pipe({name: 'genericNumberPercent'})
