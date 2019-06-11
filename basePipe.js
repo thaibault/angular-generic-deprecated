@@ -1340,6 +1340,14 @@ export class StringStartsWithPipe implements PipeTransform {
  * @property extend - Extend object's pipe transform method.
  */
 export class StringTemplatePipe implements PipeTransform {
+    static templateSupport:boolean = (function():boolean {
+        try {
+            new Function('return `${1 + 1}`')()
+        } catch (error) {
+            return false
+        }
+        return false
+    })()
     extend:Function
     /**
      * Sets injected extend object pipe instance as instance property.
@@ -1371,7 +1379,12 @@ export class StringTemplatePipe implements PipeTransform {
         return new Function(
             'scope',
             ...validNames,
-            `return ${string.includes('\n') ? `\`${string}\`` : `'${string}'`}`
+            'return ' +
+            (this.constructor['templateSupport'] ?
+                `\`${string}\`` :
+                // NOTE: Fallback does not respect escaped "$", "{", "}" yet.
+                `'${string.replace(/\$\{/g, "' + (").replace(/\}/g, ") + '")}'`
+            )
         )(scope, ...validNames.map((name:string):any => scope[name]))
     }
 }
