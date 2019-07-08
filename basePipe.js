@@ -1340,18 +1340,22 @@ export class StringStartsWithPipe implements PipeTransform {
  * @property templateSupport:static - Indicates whether template strings are
  * supported or not.
  *
- * @property extend - Extend object's pipe transform method.
+ * @property extend - Extend pipe transform method.
+ * @property represent - Represent pipe transform method.
  */
 export class StringTemplatePipe implements PipeTransform {
     static templateSupport:boolean = true
     extend:Function
+    represent:Function
     /**
      * Sets injected extend object pipe instance as instance property.
-     * @param extendPipe - Injected extend object pipe instance.
+     * @param extendPipe - Injected extend pipe instance.
+     * @param representPipe - Injected represent pipe instance.
      * @returns Nothing.
      */
-    constructor(extendPipe:ExtendPipe) {
+    constructor(extendPipe:ExtendPipe, representPipe:RepresentPipe) {
         this.extend = extendPipe.transform.bind(extendPipe)
+        this.represent = representPipe.transform.bind(representPipe)
     }
     /**
      * Performs the actual indicator method.
@@ -1372,16 +1376,42 @@ export class StringTemplatePipe implements PipeTransform {
             }
             return true
         })
-        return new Function(
-            'scope',
-            ...validNames,
-            'return ' +
-            (this.constructor['templateSupport'] ?
-                `\`${string}\`` :
-                // NOTE: Fallback does not respect escaped "$", "{", "}" yet.
-                `'${string.replace(/\$\{/g, "' + (").replace(/\}/g, ") + '")}'`
+        let templateFunction:Function
+        try {
+            templateFunction = new Function(
+                'scope',
+                ...validNames,
+                'return ' +
+                (this.constructor['templateSupport'] ?
+                    `\`${string}\`` :
+                    /*
+                        NOTE: Fallback does not respect escaped "$", "{", "}"
+                        yet.
+                    */
+                    "'" +
+                    string.replace(/\$\{/g, "' + (").replace(/\}/g, ") + '") +
+                    "'"
+                )
             )
-        )(scope, ...validNames.map((name:string):any => scope[name]))
+        } catch (error) {
+            console.warn(
+                `Template pipe could not compile given expression (returning` +
+                ` plain string) "${string}": ${this.represent(error)}.`
+            )
+            return string
+        }
+        let result:string
+        try {
+            return templateFunction(
+                scope, ...validNames.map((name:string):any => scope[name]))
+        } catch (error) {
+            console.warn(
+                `Template pipe could not evaluate given expression (returning` +
+                ` plain string) "${string}" with given scope names "` +
+                `${validNames.join('", "')}": ${this.represent(error)}.`
+            )
+            return string
+        }
     }
 }
 StringTemplatePipe.templateSupport = (function():boolean {
