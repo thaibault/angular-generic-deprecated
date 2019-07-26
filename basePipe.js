@@ -1403,7 +1403,8 @@ export class StringTemplatePipe implements PipeTransform {
         let result:string
         try {
             return templateFunction(
-                scope, ...validNames.map((name:string):any => scope[name]))
+                scope, ...validNames.map((name:string):any => scope[name])
+            )
         } catch (error) {
             console.warn(
                 `Template pipe could not evaluate given expression (returning` +

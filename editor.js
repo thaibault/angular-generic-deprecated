@@ -1351,8 +1351,8 @@ export const inputContent:string = `
     <mat-hint
         align="start"
         @defaultAnimation
+        [matTooltip]="infoTooltipDescriptionText ? infoTooltipDescriptionText : null"
     >
-        <!--[matTooltip]="infoTooltipDescriptionText ? infoTooltipDescriptionText : null"-->
         <span
             [class.active]="showDeclaration"
             (click)="showDeclaration = !showDeclaration"
@@ -1383,23 +1383,23 @@ export const inputContent:string = `
             >plain</a>
         </span>
     </mat-hint>
-    <mat-error *ngIf="showValidationErrorMessages && model.state">
-        <p @defaultAnimation *ngIf="model.state.errors?.maxlength">
+    <mat-error *ngIf="showValidationErrorMessages && model.state?.errors">
+        <p @defaultAnimation *ngIf="model.state.errors.maxlength">
             {{maximumLengthText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state.errors?.max">
+        <p @defaultAnimation *ngIf="model.state.errors.max">
             {{maximumText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state.errors?.minlength">
+        <p @defaultAnimation *ngIf="model.state.errors.minlength">
             {{minimumLengthText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state.errors?.min">
+        <p @defaultAnimation *ngIf="model.state.errors.min">
             {{minimumText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state.errors?.pattern">
+        <p @defaultAnimation *ngIf="model.state.errors.pattern">
             {{patternText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state.errors?.required">
+        <p @defaultAnimation *ngIf="model.state.errors.required">
             {{requiredText | genericStringTemplate:model}}
         </p>
     </mat-error>
