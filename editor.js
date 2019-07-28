@@ -615,7 +615,7 @@ export class AbstractInputComponent implements OnChanges {
                     if (
                         name in this.model.state &&
                         this.domNode.nativeElement.getAttribute(name) !==
-                        `${this.model.state[name]}`
+                            `${this.model.state[name]}`
                     )
                         this.setDomNodeAttribute(name, this.model.state[name])
         }
