@@ -664,20 +664,18 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
      * @returns Nothing.
      */
     @ViewChild('state', {static: false}) set state(value:any) {
-        this.model.state = value
-        this.model.state.update.subscribe((
-            changedPropertyName:string
-        ):void => {
+        const update:Function = (newValue:any):void => {
+            this.model.state = value
             this.reflectPropertiesToDomNode()
             this.stateChange.emit({
-                changedPropertyName,
+                newValue,
                 model: this.model,
                 state: this.model.state
             })
             this.changeDetectorReference.detectChanges()
-        })
-        this.reflectPropertiesToDomNode()
-        this.changeDetectorReference.detectChanges()
+        }
+        value.update.subscribe(update)
+        update(this.model.value)
     }
     /**
      * Getter to nested model state.
