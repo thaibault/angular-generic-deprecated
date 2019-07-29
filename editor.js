@@ -322,7 +322,14 @@ export class AbstractInputComponent implements OnChanges {
         placeholder: null,
         regularExpressionPattern: '.*',
         selection: null,
-        state: null,
+        state: {
+            dirty: true,
+            invalid: false,
+            pristine: true,
+            touched: false,
+            untouched: true,
+            valid: true
+        },
         trim: true,
         type: 'string',
         writable: true
@@ -401,6 +408,26 @@ export class AbstractInputComponent implements OnChanges {
         ) => get(NgZone).run(() =>
             this.domNode.nativeElement.querySelector(selector).focus()
         )
+        this.initializeModel()
+    }
+    /*
+     * Initialize model by reading from dom node.
+     * @returns Nothing.
+     */
+    initializeModel():void {
+        const changes:any = {}
+        for (const name in this.model)
+            if (
+                this.model.hasOwnProperty(name) &&
+                name in this.domNode.nativeElement
+            ) {
+                this[name] = this.domNode.nativeElement[name]
+                changes[name] = {
+                    currentValue: this[name],
+                    previousValue: this.model[name]
+                }
+            }
+        this.reflectPropertiesToModel(changes)
     }
     /**
      * Triggers after first input values have been resolved or changed.
@@ -412,13 +439,16 @@ export class AbstractInputComponent implements OnChanges {
             If state was set backup in local instance to reset it to the model
             after reinitializing given model configuration.
         */
-        const state:any = this.model.state
+        let state:any = null
+        if ('state' in this.model)
+            state = this.model.state
         for (const name of this.constructor['evaluatablePropertyNames'])
             if (name in changes && typeof this[name] === 'string')
                 try {
                     this[name] = (new Function(`return ${this[name]}`))()
                 } catch (error) {}
-        this.model.state = state
+        if (state !== null)
+            this.model.state = state
         if (
             !this.showValidationErrorMessages &&
             'hasAttribute' in this.domNode.nativeElement &&
@@ -430,6 +460,12 @@ export class AbstractInputComponent implements OnChanges {
             ).trim() !== 'false'
         )
             this.showValidationErrorMessages = true
+        if ('model' in changes)
+            for (const name of this.constructor[
+                'reflectableModelPropertyNames'
+            ])
+                if (!(name in changes) && this.model.hasOwnProperty(name))
+                    this[name] = this.model[name]
         this.reflectPropertiesToModel(changes)
         this.prepareModelTransformations()
         this.reflectPropertiesToDomNode()
@@ -508,6 +544,10 @@ export class AbstractInputComponent implements OnChanges {
                     if (
                         name in this &&
                         this[name] !== undefined &&
+                        /*
+                            NOTE: "type" attribute has another meaning in html
+                            context.
+                        */
                         name !== 'type' &&
                         (
                             !this.model.hasOwnProperty(name) ||
