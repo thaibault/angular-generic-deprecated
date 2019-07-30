@@ -17,7 +17,7 @@
     endregion
 */
 // region imports
-import Tools, {$DomNode, PlainObject} from 'clientnode'
+import Tools, {DomNode, PlainObject, $DomNode} from 'clientnode'
 import {AnimationTriggerMetadata} from '@angular/animations'
 import {
     AfterViewInit,
@@ -406,23 +406,16 @@ export class AbstractInputComponent implements OnChanges {
         this.domNode.nativeElement.delegateFocus = (
             selector:string = '.ng-model'
         ) => get(NgZone).run(() => {
-            // TODO
-            console.log('A', this.domNode.nativeElement)
-            this.domNode.nativeElement.querySelector(selector).focus()
-            console.log('B')
-            this.domNode.nativeElement.changeTrigger = !this.domNode.nativeElement.changeTrigger
-            console.log('C')
-            this.changeDetectorReference.detectChanges()
-            console.log('c')
-            this.domNode.nativeElement.changeTrigger = !this.domNode.nativeElement.changeTrigger
-            console.log('D')
-            Tools.timeout().then(() => {
-                this.changeDetectorReference.detectChanges()
-                this.domNode.nativeElement.changeTrigger = !this.domNode.nativeElement.changeTrigger
-                console.log('E')
-                this.changeDetectorReference.detectChanges()
-                console.log('F')
-            })
+            /*
+                NOTE: We have to focus, blur and focus again to ensure final
+                state will be renderer by angular.
+                It's a workaround.
+            */
+            const domNode:DomNode =
+                this.domNode.nativeElement.querySelector(selector)
+            domNode.focus()
+            domNode.blur()
+            domNode.focus()
         })
         this.initializeModel()
     }
