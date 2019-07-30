@@ -405,9 +405,25 @@ export class AbstractInputComponent implements OnChanges {
         // NOTE: We have to provide a way to focus inner input node.
         this.domNode.nativeElement.delegateFocus = (
             selector:string = '.ng-model'
-        ) => get(NgZone).run(() =>
+        ) => get(NgZone).run(() => {
+            // TODO
+            console.log('A', this.domNode.nativeElement)
             this.domNode.nativeElement.querySelector(selector).focus()
-        )
+            console.log('B')
+            this.domNode.nativeElement.changeTrigger = !this.domNode.nativeElement.changeTrigger
+            console.log('C')
+            this.changeDetectorReference.detectChanges()
+            console.log('c')
+            this.domNode.nativeElement.changeTrigger = !this.domNode.nativeElement.changeTrigger
+            console.log('D')
+            Tools.timeout().then(() => {
+                this.changeDetectorReference.detectChanges()
+                this.domNode.nativeElement.changeTrigger = !this.domNode.nativeElement.changeTrigger
+                console.log('E')
+                this.changeDetectorReference.detectChanges()
+                console.log('F')
+            })
+        })
         this.initializeModel()
     }
     /*
@@ -593,7 +609,7 @@ export class AbstractInputComponent implements OnChanges {
      * @returns Given potentially modified event.
      */
     onStateChange(event:Object):Object {
-        this.reflectPropertiesToDomNode()
+        this.reflectStatePropertiesToDomNode()
         this.changeDetectorReference.detectChanges()
         return event
     }
@@ -604,6 +620,15 @@ export class AbstractInputComponent implements OnChanges {
     reflectPropertiesToDomNode():void {
         this.reflectPropertiesToDomNodeProperties()
         this.reflectPropertiesToDomNodeAttributes()
+        this.reflectStatePropertiesToDomNode()
+    }
+    /**
+     * Reflect state properties to dom node.
+     * @returns Nothing.
+     */
+    reflectStatePropertiesToDomNode():void {
+        this.reflectStatePropertiesToDomNodeProperties()
+        this.reflectStatePropertiesToDomNodeAttributes()
     }
     /**
      * Reflect properties to dom node properties.
@@ -622,6 +647,12 @@ export class AbstractInputComponent implements OnChanges {
             delete this.domNode.nativeElement.required
         else
             this.domNode.nativeElement.required = true
+    }
+    /**
+     * Reflect state properties to dom node properties.
+     * @returns Nothing.
+     */
+    reflectStatePropertiesToDomNodeProperties():void {
         if (this.model.state)
             for (const name of this.constructor[
                 'reflectableStatePropertyNames'
@@ -647,6 +678,14 @@ export class AbstractInputComponent implements OnChanges {
             this.setDomNodeAttribute(
                 'pattern', this.model.regularExpressionPattern)
             this.setDomNodeAttribute('required', !this.model.nullable)
+        }
+    }
+    /**
+     * Reflect state properties to dom node attributes.
+     * @returns Nothing.
+     */
+    reflectStatePropertiesToDomNodeAttributes():void {
+        if ('getAttribute' in this.domNode.nativeElement) {
             if (this.model.state)
                 for (
                     const name of
@@ -704,17 +743,21 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
      * @returns Nothing.
      */
     @ViewChild('state', {static: false}) set state(value:any) {
+        let lastValue:any
         const update:Function = (newValue:any):void => {
-            this.model.state = value
-            this.reflectPropertiesToDomNode()
-            this.stateChange.emit({
-                newValue,
-                model: this.model,
-                state: this.model.state
-            })
+            if (newValue === lastValue)
+                return
+            lastValue = newValue
+            if (this.model.state !== value)
+                this.model.state = value
+            this.reflectStatePropertiesToDomNode()
+            this.stateChange.emit({model: this.model, newValue})
             this.changeDetectorReference.detectChanges()
         }
+        value.statusChanges.subscribe(update)
         value.update.subscribe(update)
+        // NOTE: Maybe needed also?
+        // value.valueChanges.subscribe(update)
         update(this.model.value)
     }
     /**
