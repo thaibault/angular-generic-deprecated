@@ -159,12 +159,18 @@ export class GenericErrorStateMatcher implements ErrorStateMatcher {
      * @returns Boolean indicating to represent error state or not.
      */
     isErrorState(control:any, form:any):boolean {
+        if (
+            this.reference &&
+            this.constructor['indicatorPropertyName'] in this.reference &&
+            ![null, undefined].includes(
+                this.reference[this.constructor['indicatorPropertyName']]
+            )
+        )
+            return this.reference[this.constructor['indicatorPropertyName']]
         return Boolean(
             control &&
             control.invalid &&
-            (control.dirty || control.touched || form && form.submitted) ||
-            this.reference &&
-            this.reference[this.constructor['indicatorPropertyName']]
+            (control.dirty || control.touched || form && form.submitted)
         )
     }
 }
@@ -423,7 +429,7 @@ export class AbstractInputComponent implements OnChanges {
     @Input() selectableEditor:boolean
     @Input() showDeclaration:boolean = false
     @Input() showDeclarationText:string = 'help_outline'
-    @Input() showValidationState:boolean = false
+    @Input() showValidationState:boolean|null = null
     @Output() stateChange:EventEmitter<Object> = new EventEmitter()
     /**
      * Sets needed services as property values.
@@ -1499,7 +1505,7 @@ export const inputContent:string = `
             >plain</a>
         </span>
     </mat-hint>
-    <mat-error *ngIf="showValidationState && model.state?.errors">
+    <mat-error *ngIf="showValidationState !== false && model.state?.errors">
         <p @defaultAnimation *ngIf="model.state.errors.maxlength">
             {{maximumLengthText | genericStringTemplate:model}}
         </p>
