@@ -43,6 +43,7 @@ import {
     ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR
 } from '@angular/forms'
 import {TextFieldModule} from '@angular/cdk/text-field'
+import {ErrorStateMatcher} from '@angular/material/core'
 import {MatButtonModule} from '@angular/material/button'
 import {MatIconModule} from '@angular/material/icon'
 import {MatInputModule} from '@angular/material/input'
@@ -63,10 +64,7 @@ import {
     NumberGetUTCTimestampPipe
 } from './basePipe'
 import {
-    BaseServiceModule,
-    determineInjector,
-    InitialDataService,
-    UtilityService
+    BaseServiceModule, determineInjector, InitialDataService, UtilityService
 } from './baseService'
 // endregion
 // region configuration
@@ -133,6 +131,43 @@ export const TINYMCE_DEFAULT_OPTIONS:PlainObject = {
 }
 // / endregion
 // endregion
+/**
+ * Represents error state when current form is submitted or given reference
+ * has a corresponding indicator.
+ * @property static:indicatorPropertyName - Holds the name of the indicator
+ * property name of referenced component.
+ *
+ * @property reference - Optionally holds a components instance with indicator
+ * property.
+ */
+export class GenericErrorStateMatcher implements ErrorStateMatcher {
+    static indicatorPropertyName:string = 'showValidationState'
+
+    reference:any
+
+    /**
+     * Saves a reference pointing to corresponding component with indicator
+     * property.
+     * @returns Nothing.
+     */
+    constructor(reference:any) {
+        this.reference = reference
+    }
+    /**
+     * @param control - 
+     * @param form -
+     * @returns Boolean indicating to represent error state or not.
+     */
+    isErrorState(control:any, form:any):boolean {
+        return Boolean(
+            control &&
+            control.invalid &&
+            (control.dirty || control.touched || form && form.submitted) ||
+            this.reference &&
+            this.reference[this.constructor['indicatorPropertyName']]
+        )
+    }
+}
 // region abstract
 /**
  * Generic value accessor with "ngModel" support.
@@ -298,9 +333,9 @@ export class AbstractValueAccessor implements ControlValueAccessor {
  * @property selectableEditor - Indicates whether an editor is selectable.
  * @property showDeclaration - Represents current declaration show state.
  * @property showDeclarationText - Info text to click for more informations.
- * @property showValidationErrorMessages - Indicates whether validation errors
- * should be suppressed or be shown automatically. Useful to prevent error
- * component from showing error messages before the user has submit the form.
+ * @property showValidationState - Indicates whether validation errors or valid
+ * states should be suppressed. Useful to prevent error component from showing
+ * error states before the user has submit the form.
  * @property stateChange - Event emitter for tracking model meta data state
  * changes.
  *
@@ -339,7 +374,7 @@ export class AbstractInputComponent implements OnChanges {
         implementations may provide more specific additional properties.
     */
     static evaluatablePropertyNames:Array<string> = [
-        'disabled', 'model', 'required', 'showValidationErrorMessages'
+        'disabled', 'model', 'required', 'showValidationState'
     ]
     static reflectableModelPropertyNames:Array<string> = ['name', 'value']
     static reflectableStatePropertyNames:Array<string> = [
@@ -388,7 +423,7 @@ export class AbstractInputComponent implements OnChanges {
     @Input() selectableEditor:boolean
     @Input() showDeclaration:boolean = false
     @Input() showDeclarationText:string = 'help_outline'
-    @Input() showValidationErrorMessages:boolean = false
+    @Input() showValidationState:boolean = false
     @Output() stateChange:EventEmitter<Object> = new EventEmitter()
     /**
      * Sets needed services as property values.
@@ -459,16 +494,15 @@ export class AbstractInputComponent implements OnChanges {
         if (state !== null)
             this.model.state = state
         if (
-            !this.showValidationErrorMessages &&
+            !this.showValidationState &&
             'hasAttribute' in this.domNode.nativeElement &&
-            this.domNode.nativeElement.hasAttribute(
-                'show-validation-error-messages') &&
+            this.domNode.nativeElement.hasAttribute('show-validation-state') &&
             'getAttribute' in this.domNode.nativeElement &&
             this.domNode.nativeElement.getAttribute(
-                'show-validation-error-messages'
+                'show-validation-state'
             ).trim() !== 'false'
         )
-            this.showValidationErrorMessages = true
+            this.showValidationState = true
         if ('model' in changes)
             for (const name of this.constructor[
                 'reflectableModelPropertyNames'
@@ -715,6 +749,9 @@ export class AbstractInputComponent implements OnChanges {
 }
 /**
  * Generic input component.
+ * @property errorStateMatcher - Instance to indicate whether current error
+ * state should be shown.
+ *
  * @property _attachmentWithPrefixExists - Holds the attachment by prefix
  * checker pipe instance
  * @property _extend - Holds the extend object's pipe transformation method.
@@ -725,6 +762,8 @@ export class AbstractInputComponent implements OnChanges {
  * converter pipe transform method.
  */
 export class AbstractNativeInputComponent extends AbstractInputComponent {
+    @Input() errorStateMatcher:ErrorStateMatcher
+
     _attachmentWithPrefixExists:Function
     _extend:Function
     _getFilenameByPrefix:Function
@@ -770,6 +809,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
         super(injector)
         const get:Function = determineInjector(
             injector, this, this.constructor)
+        this.errorStateMatcher = new GenericErrorStateMatcher(this)
         this._attachmentWithPrefixExists = get(
             AttachmentWithPrefixExistsPipe
         ).transform.bind(get(AttachmentWithPrefixExistsPipe))
@@ -1369,7 +1409,7 @@ export class TextEditorComponent extends AbstractEditorComponent
             this.instance.setMode(this.disabled ? 'readonly' : 'design')
     }
 }
-export const basePropertyContent:string = `
+const basePropertyContent:string = `
     class="ng-model"
     [ngModel]="model.value"
     (ngModelChange)="model.value = onChange($event); modelChange.emit(model)"
@@ -1377,6 +1417,7 @@ export const basePropertyContent:string = `
 `
 /* eslint-disable max-len */
 export const propertyContent:PlainObject = {
+    base: basePropertyContent,
     editor: `
         ${basePropertyContent}
         (blur)="focused = false"
@@ -1389,6 +1430,7 @@ export const propertyContent:PlainObject = {
         base: `
             ${basePropertyContent}
             [disabled]="model.mutable === false || model.writable === false"
+            [errorStateMatcher]="errorStateMatcher"
             [name]="model.name"
             [required]="!model.nullable"
         `,
@@ -1418,7 +1460,7 @@ export const propertyContent:PlainObject = {
         [placeholder]="placeholder"
         [requiredText]="requiredText"
         [patternText]="patternText"
-        [showValidationErrorMessages]="showValidationErrorMessages"
+        [showValidationState]="showValidationState"
     `
 }
 export const inputContent:string = `
@@ -1457,7 +1499,7 @@ export const inputContent:string = `
             >plain</a>
         </span>
     </mat-hint>
-    <mat-error *ngIf="showValidationErrorMessages && model.state?.errors">
+    <mat-error *ngIf="showValidationState && model.state?.errors">
         <p @defaultAnimation *ngIf="model.state.errors.maxlength">
             {{maximumLengthText | genericStringTemplate:model}}
         </p>

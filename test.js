@@ -2095,7 +2095,7 @@ registerAngularTest(function(
                             instance.modelChange.emit(instance.model)
                             assert.ok(instance.model.state.control)
                             assert.deepEqual(eventGivenModel, instance.model)
-                            instance.showValidationErrorMessages = true
+                            instance.showValidationState = true
                             inputDomNode.value = ''
                             instance.model.state = {errors: {
                                 required: true
@@ -2274,7 +2274,7 @@ registerAngularTest(function(
                 const instance:Object = fixture.componentInstance
                 try {
                     instance.mapNameToField = [specialNames.id, 'name']
-                    instance.showValidationErrorMessages = true
+                    instance.showValidationState = true
                     instance.model = {
                         [specialNames.id]: 'id',
                         [specialNames.attachment]: {name: {

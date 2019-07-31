@@ -802,7 +802,7 @@ export class DateDirective {
             [minimumText]="startMinimumText"
             [model]="model.start"
             (model)="change($event, 'start')"
-            [showValidationErrorMessages]="startShowValidationErrorMessages"
+            [showValidationState]="startShowValidationState"
             type="time"
         ></generic-input>
         <ng-content></ng-content>
@@ -819,7 +819,7 @@ export class DateDirective {
             [minimumText]="endMinimumText"
             [model]="model.end"
             (model)="change($event, 'end')"
-            [showValidationErrorMessages]="endShowValidationErrorMessages"
+            [showValidationState]="endShowValidationState"
             type="time"
         ></generic-input>
     `
@@ -863,10 +863,10 @@ export class DateDirective {
  * @property startShowDeclarationText - Info text to click for more
  * start input informations.
  *
- * @property endShowValidationErrorMessages - Indicates whether validation
- * errors should be suppressed or be shown automatically for end input.
- * @property startShowValidationErrorMessages - Indicates whether validation
- * errors should be suppressed or be shown automatically for start input.
+ * @property endShowValidationState - Indicates whether validation errors
+ * should be suppressed or be shown automatically for end input.
+ * @property startShowValidationState - Indicates whether validation errors
+ * should be suppressed or be shown automatically for start input.
  *
  * @property model - Object that saves start and end time as unix timestamp in
  * milliseconds.*
@@ -908,8 +908,8 @@ export class IntervalInputComponent {
     @Input() endShowDeclarationText:string = 'ℹ'
     @Input() startShowDeclarationText:string = 'ℹ'
 
-    @Input() endShowValidationErrorMessages:boolean = false
-    @Input() startShowValidationErrorMessages:boolean = false
+    @Input() endShowValidationState:boolean = false
+    @Input() startShowValidationState:boolean = false
 
     @Input() model:{end:any;start:any} = {
         end: {value: new Date(1970, 0, 1)},
@@ -972,8 +972,8 @@ export class IntervalInputComponent {
                 [endDeclaration]="endDeclaration"
                 [startDeclaration]="startDeclaration"
 
-                [endShowValidationErrorMessages]="endShowValidationErrorMessages"
-                [startShowValidationErrorMessages]="startShowValidationErrorMessages"
+                [endShowValidationState]="endShowValidationState"
+                [startShowValidationState]="startShowValidationState"
             >
                 <ng-container *ngIf="contentTemplate; else fallback">
                     <ng-container
@@ -1042,10 +1042,10 @@ export class IntervalInputComponent {
  * @property startShowDeclarationText - Info text to click for more
  * start input informations.
  *
- * @property endShowValidationErrorMessages - Indicates whether validation
- * errors should be suppressed or be shown automatically for end input.
- * @property startShowValidationErrorMessages - Indicates whether validation
- * errors should be suppressed or be shown automatically for start input.
+ * @property endShowValidationState - Indicates whether validation errors
+ * should be suppressed or be shown automatically for end input.
+ * @property startShowValidationState - Indicates whether validation errors
+ * should be suppressed or be shown automatically for start input.
  *
  * @property model - Saves current list of intervals.
  * @property modelChange - Event emitter for interval list changes.
@@ -1093,8 +1093,8 @@ export class IntervalsInputComponent implements OnInit {
     @Input() endShowDeclarationText:string = 'ℹ'
     @Input() startShowDeclarationText:string = 'ℹ'
 
-    @Input() endShowValidationErrorMessages:boolean = false
-    @Input() startShowValidationErrorMessages:boolean = false
+    @Input() endShowValidationState:boolean = false
+    @Input() startShowValidationState:boolean = false
 
     @Input() model:PlainObject = {value: []}
     @Output() modelChange:EventEmitter<PlainObject> = new EventEmitter()
@@ -1603,7 +1603,7 @@ export class RepresentTextFileDirective {
                 <div
                     @defaultAnimation
                     generic-error
-                    *ngIf="showValidationErrorMessages && model[attachmentTypeName][internalName]?.state?.errors"
+                    *ngIf="showValidationState && model[attachmentTypeName][internalName]?.state?.errors"
                 >
                     <p
                         @defaultAnimation
@@ -1761,9 +1761,9 @@ export class RepresentTextFileDirective {
  * name.
  * @property showDeclarationState - Represents current declaration show state.
  * @property showDeclarationText - Info text to click for more informations.
- * @property showValidationErrorMessages - Indicates whether validation errors
- * should be displayed. Useful to hide error messages until user tries to
- * submit a form.
+ * @property showValidationState - Indicates whether validation errors should
+ * be displayed. Useful to hide error messages until user tries to submit a
+ * form.
  * @property synchronizeImmediately - Indicates whether file upload should be
  * done immediately after a file was selected (or synchronously with other
  * model data).
@@ -1858,7 +1858,7 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     @Input() saveNameText:string = '✓'
     @Input() showDeclarationState:boolean = false
     @Input() showDeclarationText:string = 'ℹ'
-    @Input() showValidationErrorMessages:boolean = false
+    @Input() showValidationState:boolean = false
     @Input() synchronizeImmediately:boolean|PlainObject = false
     template:Function
     temporaryEditedName:string = ''
