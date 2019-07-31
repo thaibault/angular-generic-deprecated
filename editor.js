@@ -159,19 +159,23 @@ export class GenericErrorStateMatcher implements ErrorStateMatcher {
      * @returns Boolean indicating to represent error state or not.
      */
     isErrorState(control:any, form:any):boolean {
-        if (
-            this.reference &&
-            this.constructor['indicatorPropertyName'] in this.reference &&
-            ![null, undefined].includes(
-                this.reference[this.constructor['indicatorPropertyName']]
+        const invalid:boolean = control && control.invalid
+        if (invalid) {
+            if (
+                this.reference &&
+                this.constructor['indicatorPropertyName'] in this.reference &&
+                ![null, undefined].includes(
+                    this.reference[this.constructor['indicatorPropertyName']]
+                )
             )
-        )
-            return this.reference[this.constructor['indicatorPropertyName']]
-        return Boolean(
-            control &&
-            control.invalid &&
-            (control.dirty || control.touched || form && form.submitted)
-        )
+                return this.reference[this.constructor[
+                    'indicatorPropertyName'
+                ]]
+            return Boolean(
+                control.dirty || control.touched || form && form.submitted
+            )
+        }
+        return false
     }
 }
 // region abstract
