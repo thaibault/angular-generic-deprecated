@@ -640,6 +640,16 @@ export class AbstractInputComponent implements OnChanges {
             this.model.regularExpressionPattern = this.pattern
     }
     /**
+     * Triggers when ever a change to current model happens inside this
+     * component.
+     * @param newModel - Update model object.
+     * @returns Updated model object.
+     */
+    onModelChange(newModel):any {
+        this.reflectModelPropertiesToDomNode()
+        return newModel
+    }
+    /**
      * Triggered when model state changes occur. Updates dom node attributes.
      * @param event - Event object containing model, state and changed value
      * informations.
@@ -655,9 +665,17 @@ export class AbstractInputComponent implements OnChanges {
      * @returns Nothing.
      */
     reflectPropertiesToDomNode():void {
-        this.reflectPropertiesToDomNodeProperties()
-        this.reflectPropertiesToDomNodeAttributes()
+        this.reflectModelPropertiesToDomNodeProperties()
+        this.reflectModelPropertiesToDomNodeAttributes()
         this.reflectStatePropertiesToDomNode()
+    }
+    /**
+     * Reflect properties to dom node.
+     * @returns Nothing.
+     */
+    reflectModelPropertiesToDomNode():void {
+        this.reflectModelPropertiesToDomNodeProperties()
+        this.reflectModelPropertiesToDomNodeAttributes()
     }
     /**
      * Reflect state properties to dom node.
@@ -671,7 +689,7 @@ export class AbstractInputComponent implements OnChanges {
      * Reflect properties to dom node properties.
      * @returns Nothing.
      */
-    reflectPropertiesToDomNodeProperties():void {
+    reflectModelPropertiesToDomNodeProperties():void {
         for (const name of this.constructor['reflectableModelPropertyNames'])
             this.domNode.nativeElement[name] = this.model[name]
         if (this.model.writable)
@@ -700,7 +718,7 @@ export class AbstractInputComponent implements OnChanges {
      * Reflect properties to dom node attributes.
      * @returns Nothing.
      */
-    reflectPropertiesToDomNodeAttributes():void {
+    reflectModelPropertiesToDomNodeAttributes():void {
         if ('getAttribute' in this.domNode.nativeElement) {
             for (const name of this.constructor[
                 'reflectableModelPropertyNames'
@@ -837,7 +855,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
      * Triggers when ever a change to current model happens inside this
      * component.
      * @param newValue - Value to use to update model with.
-     * @returns Nothing.
+     * @returns Updated value.
      */
     onChange(newValue:any):any {
         const types:Array<string> = [].concat(this.model.type)
@@ -890,7 +908,8 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
                 )
                     newValue *= 1000
             }
-        this.reflectPropertiesToDomNode()
+        this.model.value = newValue
+        this.reflectModelPropertiesToDomNode()
         return newValue
     }
 }
@@ -1422,7 +1441,7 @@ export class TextEditorComponent extends AbstractEditorComponent
 const basePropertyContent:string = `
     class="ng-model"
     [ngModel]="model.value"
-    (ngModelChange)="model.value = onChange($event); modelChange.emit(model)"
+    (ngModelChange)="onChange($event); modelChange.emit(model)"
     #state="ngModel"
 `
 /* eslint-disable max-len */
@@ -1465,7 +1484,7 @@ export const propertyContent:PlainObject = {
         [maximumLengthText]="maximumLengthText"
         [minimumLengthText]="minimumLengthText"
         [model]="model"
-        (modelChange)="modelChange.emit(model)"
+        (modelChange)="modelChange.emit(onModelChange(model))"
         (stateChange)="stateChange.emit(onStateChange($event))"
         [placeholder]="placeholder"
         [requiredText]="requiredText"
