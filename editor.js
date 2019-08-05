@@ -154,8 +154,9 @@ export class GenericErrorStateMatcher implements ErrorStateMatcher {
         this.reference = reference
     }
     /**
-     * @param control - 
-     * @param form -
+     * TODO
+     * @param control - TODO
+     * @param form - TODO
      * @returns Boolean indicating to represent error state or not.
      */
     isErrorState(control:any, form:any):boolean {
@@ -513,7 +514,7 @@ export class AbstractInputComponent implements OnChanges {
             ).trim() !== 'false'
         )
             this.showValidationState = true
-        if ('model' in changes || 'changeTrigger' in changes)
+        if ('model' in changes/* TODO || 'changeTrigger' in changes*/)
             for (const name of this.constructor[
                 'reflectableModelPropertyNames'
             ])
@@ -589,8 +590,8 @@ export class AbstractInputComponent implements OnChanges {
             default version but corresponding instance version not.
         */
         if (
-            ('model' in changes || 'changeTrigger' in changes) &&
-            ![null, undefined].includes(changes.model.currentValue)
+            ('model' in changes/* TODO || 'changeTrigger' in changes*/) &&
+            ![null, undefined].includes(this.model.currentValue)
         )
             for (const name in this.constructor['defaultModel'])
                 if (this.constructor['defaultModel'].hasOwnProperty(name)) {
@@ -665,8 +666,7 @@ export class AbstractInputComponent implements OnChanges {
      * @returns Nothing.
      */
     reflectPropertiesToDomNode():void {
-        this.reflectModelPropertiesToDomNodeProperties()
-        this.reflectModelPropertiesToDomNodeAttributes()
+        this.reflectModelPropertiesToDomNode()
         this.reflectStatePropertiesToDomNode()
     }
     /**
