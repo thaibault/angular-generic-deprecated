@@ -143,7 +143,7 @@
     "reflect-metadata": "*",
     "rxjs": "^6.4.x",
     "tinymce": "*",
-    "typescript": "3.4.*",
+    "typescript": "3.5.*",
     "weboptimizer": "*",
     "webpack": "*",
     "webpack-cli": "*",
