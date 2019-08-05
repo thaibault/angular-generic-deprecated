@@ -514,7 +514,7 @@ export class AbstractInputComponent implements OnChanges {
             ).trim() !== 'false'
         )
             this.showValidationState = true
-        if ('model' in changes/* TODO || 'changeTrigger' in changes*/)
+        if ('model' in changes || 'changeTrigger' in changes)
             for (const name of this.constructor[
                 'reflectableModelPropertyNames'
             ])
@@ -590,7 +590,7 @@ export class AbstractInputComponent implements OnChanges {
             default version but corresponding instance version not.
         */
         if (
-            ('model' in changes/* TODO || 'changeTrigger' in changes*/) &&
+            ('model' in changes || 'changeTrigger' in changes) &&
             ![null, undefined].includes(this.model.currentValue)
         )
             for (const name in this.constructor['defaultModel'])
