@@ -1507,11 +1507,10 @@ export const inputContent:string = `
         >
             <a
                 (click)="$event.preventDefault()"
-                @defaultAnimation
                 href=""
                 *ngIf="showDeclarationText"
             ><mat-icon>{{showDeclarationText}}</mat-icon></a>
-            <span @defaultAnimation *ngIf="showDeclaration">
+            <span *ngIf="showDeclaration">
                 {{model.declaration}}
             </span>
         </span>
@@ -1531,22 +1530,22 @@ export const inputContent:string = `
         </span>
     </mat-hint>
     <mat-error *ngIf="showValidationState !== false && model.state?.errors">
-        <p @defaultAnimation *ngIf="model.state.errors.maxlength">
+        <p *ngIf="model.state.errors.maxlength">
             {{maximumLengthText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state.errors.max">
+        <p *ngIf="model.state.errors.max">
             {{maximumText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state.errors.minlength">
+        <p *ngIf="model.state.errors.minlength">
             {{minimumLengthText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state.errors.min">
+        <p *ngIf="model.state.errors.min">
             {{minimumText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state.errors.pattern">
+        <p *ngIf="model.state.errors.pattern">
             {{patternText | genericStringTemplate:model}}
         </p>
-        <p @defaultAnimation *ngIf="model.state.errors.required">
+        <p *ngIf="model.state.errors.required">
             {{requiredText | genericStringTemplate:model}}
         </p>
     </mat-error>
