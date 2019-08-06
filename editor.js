@@ -474,7 +474,9 @@ export class AbstractInputComponent implements OnChanges {
         for (const name in this.model)
             if (
                 this.model.hasOwnProperty(name) &&
-                name in this.domNode.nativeElement
+                name in this.domNode.nativeElement &&
+                // NOTE: "type" attribute has another meaning in html context.
+                name !== 'type'
             ) {
                 this[name] = this.domNode.nativeElement[name]
                 changes[name] = {
@@ -495,7 +497,7 @@ export class AbstractInputComponent implements OnChanges {
             after reinitializing given model configuration.
         */
         let state:any = null
-        if ('state' in this.model)
+        if (typeof this.model === 'object' && 'state' in this.model)
             state = this.model.state
         for (const name of this.constructor['evaluatablePropertyNames'])
             if (name in changes && typeof this[name] === 'string')
@@ -523,6 +525,7 @@ export class AbstractInputComponent implements OnChanges {
         this.reflectPropertiesToModel(changes)
         this.prepareModelTransformations()
         this.reflectPropertiesToDomNode()
+        console.log('TODO', this.name, this.model.name, this.domNode.nativeElement.tagName, this.model)
     }
     /**
      * Initializes model (if not done yet) and pre compiles specified model
@@ -589,10 +592,7 @@ export class AbstractInputComponent implements OnChanges {
             configuration, when the model's representation equals to their
             default version but corresponding instance version not.
         */
-        if (
-            ('model' in changes || 'changeTrigger' in changes) &&
-            ![null, undefined].includes(this.model.currentValue)
-        )
+        if ('changeTrigger' in changes || 'model' in changes)
             for (const name in this.constructor['defaultModel'])
                 if (this.constructor['defaultModel'].hasOwnProperty(name)) {
                     if (
@@ -610,7 +610,10 @@ export class AbstractInputComponent implements OnChanges {
                         )
                     )
                         this.model[name] = this[name]
-                    else if (!this.model.hasOwnProperty(name))
+                    else if (
+                        !this.model.hasOwnProperty(name) ||
+                        this.model[name] === undefined
+                    )
                         this.model[name] =
                             this.constructor['defaultModel'][name]
                 }
@@ -1495,7 +1498,6 @@ export const propertyContent:PlainObject = {
 export const inputContent:string = `
     <mat-hint
         align="start"
-        @defaultAnimation
         [matTooltip]="infoTooltipDescriptionText ? infoTooltipDescriptionText : null"
     >
         <span
@@ -1550,7 +1552,6 @@ export const inputContent:string = `
     </mat-error>
     <mat-hint
         align="end"
-        @defaultAnimation
         *ngIf="!model.selection && model.type === 'string' && model.maximumLength !== null && model.maximumLength < 100"
     >{{model.value?.length || 0}} / {{model.maximumLength}}</mat-hint>
 `
