@@ -103,10 +103,10 @@
     "@babel/runtime": "*",
     "codemirror": "*",
     "html-minifier": "*",
-    "reflect-metadata": "*",
-    "rxjs": "6.4.x",
+    "reflect-metadata": "^0.1.2",
+    "rxjs": "^6.4.0",
     "tinymce": "*",
-    "zone.js": "0.9.x"
+    "zone.js": "~0.9.1"
   },
   "devDependencies": {
     "@angular/animations": "*",
@@ -140,15 +140,15 @@
     "jsdoc": "*",
     "nyc": "*",
     "qunit": "*",
-    "reflect-metadata": "*",
-    "rxjs": "6.4.x",
+    "reflect-metadata": "^0.1.2",
+    "rxjs": "^6.4.0",
     "tinymce": "*",
-    "typescript": "3.5.*",
+    "typescript": ">=3.4 <3.6",
     "weboptimizer": "*",
     "webpack": "*",
     "webpack-cli": "*",
     "webpack-dev-server": "*",
-    "zone.js": "0.9.x"
+    "zone.js": "~0.9.1"
   },
   "sideEffects": false,
   "webOptimizer": {
