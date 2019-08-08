@@ -366,7 +366,7 @@ export class AbstractInputComponent implements OnChanges {
         name: 'NO_NAME_DEFINED',
         nullable: true,
         placeholder: null,
-        regularExpressionPattern: '.*',
+        regularExpressionPattern: '[\\S\\s]',
         selection: null,
         state: {
             dirty: true,
