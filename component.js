@@ -272,7 +272,6 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
  * are checked via select all selector.
  * @property idName - Document property id name.
  * @property items - Current list of visible items.
- * @property keyCode - Mapping from key names to their key codes.
  * @property limit - Maximal number of visible items.
  * @property page - Current page number of each item list part.#
  * @property preventedDataUpdate - Saves null or arguments to a prevented data
@@ -301,7 +300,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
     debouncedUpdate:Function
     idName:string
     items:Array<PlainObject>
-    keyCode:{[key:string]:number}
     limit:number
     navigateAway:boolean = false
     page:number
@@ -339,7 +337,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
         this.revisionName = get(
             InitialDataService
         ).configuration.database.model.property.name.special.revision
-        this.keyCode = this._tools.keyCode
         this._route = get(ActivatedRoute)
         this._router = get(Router)
         // IgnoreTypeCheck
@@ -1738,7 +1735,6 @@ export class RepresentTextFileDirective {
  * @property idName - Name if id field.
  * @property input - Virtual file input dom node.
  * @property internalName - Technical regular expression style file type.
- * @property keyCode - Mapping from key code to their description.
  * @property mapNameToField - Indicates whether current file name should be
  * mapped to a specific model property.
  * @property maximumSizeText - Maximum file size validation text.
@@ -1831,7 +1827,6 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
     idName:string
     @ViewChild('input', {static: true}) input:ElementRef
     internalName:string
-    keyCode:{[key:string]:number}
     @Input() mapNameToField:string|Array<string>|null = null
     @Input() maximumSizeText:string =
         'Filesize (${file.length} byte) is more than specified maximum of ' +
@@ -1907,7 +1902,6 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
         this.configuration = initialData.configuration
         this.attachmentTypeName =
             this.configuration.database.model.property.name.special.attachment
-        this.keyCode = utility.fixed.tools.keyCode
         this.deletedName =
             this.configuration.database.model.property.name.special.deleted
         this.idName =

@@ -1819,12 +1819,17 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
                 <mat-label *ngIf="model.description">
                     {{model.description}}
                 </mat-label>
+                <!--
+                    Enter key down events a stopped from propagation here to
+                    avoid triggering an unwanted form submit.
+                -->
                 <textarea
                     ${propertyContent.nativ.base}
                     ${propertyContent.nativ.text.base}
                     ${propertyContent.nativ.text.input}
                     [cdkAutosizeMaxRows]="maximumNumberOfRows"
                     [cdkAutosizeMinRows]="minimumNumberOfRows"
+                    (keydown)="$event.keyCode === keyCode.ENTER ? $event.stopPropagation() : null"
                     matInput
                     cdkTextareaAutosize
                     [rows]="rows"
@@ -1847,6 +1852,7 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
  * @property editorType - Editor type description.
  * @property focused - Indicates whether the input field is focused.
  * @property initialized - Indicates whether an editor is initialized.
+ * @property keyCode - Mapping from key names to their key codes.
  * @property maximumNumberOfRows - Maximum resizeable number of rows.
  * @property maximumText - Text to show for number validation but could not be
  * shown in this component (exists to be able to share markup with simple
@@ -1870,6 +1876,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
     editorType:string = 'custom'
     focused:boolean = false
     initialized:boolean = false
+    keyCode:{[key:string]:number}
     @Input() maximumNumberOfRows:number
     maximumText:string = ''
     @Input() minimumNumberOfRows:number
@@ -1890,11 +1897,14 @@ export class TextareaComponent extends AbstractNativeInputComponent
             initialData.configuration.hasOwnProperty(
                 'defaultEditorOptions') &&
             typeof initialData.configuration.defaultEditorOptions ===
-            'object' &&
+                'object' &&
             initialData.configuration.defaultEditorOptions !== null
         )
             TextareaComponent.defaultEditorOptions =
                 initialData.configuration.defaultEditorOptions
+        this.keyCode = determineInjector(injector, this, this.constructor)(
+            UtilityService
+        ).fixed.tools.keyCode
     }
     /**
      * Triggers after input values have been resolved.
