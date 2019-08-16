@@ -154,9 +154,9 @@ export class GenericErrorStateMatcher implements ErrorStateMatcher {
         this.reference = reference
     }
     /**
-     * TODO
-     * @param control - TODO
-     * @param form - TODO
+     * Indicates given form controls validation state.
+     * @param control - Input controller instance.
+     * @param form - Form controller instance if one exists.
      * @returns Boolean indicating to represent error state or not.
      */
     isErrorState(control:any, form:any):boolean {
@@ -525,7 +525,6 @@ export class AbstractInputComponent implements OnChanges {
         this.reflectPropertiesToModel(changes)
         this.prepareModelTransformations()
         this.reflectPropertiesToDomNode()
-        console.log('TODO', this.name, this.model.name, this.domNode.nativeElement.tagName, this.model)
     }
     /**
      * Initializes model (if not done yet) and pre compiles specified model
