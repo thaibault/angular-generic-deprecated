@@ -115,6 +115,7 @@ import {
  * @property actions - Array if actions which have happen.
  * @property autoRestartOnError - Indicates whether we should re-initialize
  * the changes stream on errors.
+ * @property disabled - Indicates whether changes should be observed.
  *
  * @property _canceled - Indicates whether current view has been destroyed and
  * data observation should bee canceled.
