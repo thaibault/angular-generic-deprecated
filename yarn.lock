@@ -2427,9 +2427,9 @@ cli-width@^2.0.0:
   integrity sha1-/xnt6Kml5XkyQUewwR8PvLq+1jk=
 
 clientnode@*:
-  version "3.0.368"
-  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.368.tgz#7f7f621822cf1e6b64760581a774edd96bcdaebe"
-  integrity sha512-D4KUs52l0oIF2Qn/y8Z1h8hdc6qyDy8cUgDwTyj5oopPGxAK/N8ptKCoy4v7XPCdZbmwxuTkhttXUoZXgbPQkQ==
+  version "3.0.372"
+  resolved "https://registry.yarnpkg.com/clientnode/-/clientnode-3.0.372.tgz#6c1ae75c089a9c89a354c8a4626fdb2d6e57d000"
+  integrity sha512-DqkQP9U/D5lKNNx92EJV99RPjLcF9MH8GtDmueSC2ifBCv25Wx3xCwoh8Nlvfm01fzzwUZwaVtutt+E+KaHDwg==
   dependencies:
     colors "*"
 
@@ -9202,9 +9202,9 @@ webidl-conversions@^4.0.2:
   integrity sha512-YQ+BmxuTgd6UXZW3+ICGfyqRyHXVlD5GtQr5+qjiNW7bF0cqrzX500HVXPBOvgXb5YnzDd+h0zqyv61KUD7+Sg==
 
 weboptimizer@*:
-  version "2.0.544"
-  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.544.tgz#309811ca82245b5c8ab1997f24f3ddd7d8cb7e59"
-  integrity sha512-PidG8x/IDl97FffdEyOIhWmVJajvGU1hmZapFS09dcXfboxk2Aq1JXHCfoDMfkc5FSV0Zqv8h2jVxQFt1uzdlw==
+  version "2.0.546"
+  resolved "https://registry.yarnpkg.com/weboptimizer/-/weboptimizer-2.0.546.tgz#9744e74e96eaa2c22c517196069a5511a00f82c1"
+  integrity sha512-N9EpP4ksUQGNzVBjAap70IyfyTbJA1uetdZdgcqm0Ic7e+N1gQCsQyjpQ6MEQBPwYLvdgVH7juIbIQh/xStIDw==
   dependencies:
     "@babel/core" "*"
     "@babel/plugin-proposal-class-properties" "*"
