@@ -431,7 +431,7 @@ export class AbstractInputComponent implements OnChanges {
     renderer:Renderer
     @Input() required:boolean
     @Input() requiredText:string = 'Please fill this field.'
-    @Input() selectableEditor:boolean
+    @Input() selectableEditor:boolean|null = null
     @Input() showDeclaration:boolean = false
     @Input() showDeclarationText:string = 'help_outline'
     @Input() showValidationState:boolean|null = null
@@ -1501,6 +1501,7 @@ export const inputContent:string = `
     >
         <span
             [class.active]="showDeclaration"
+            @defaultAnimation
             (click)="showDeclaration = !showDeclaration"
             *ngIf="model.declaration"
         >
@@ -1509,11 +1510,14 @@ export const inputContent:string = `
                 href=""
                 *ngIf="showDeclarationText"
             ><mat-icon>{{showDeclarationText}}</mat-icon></a>
-            <span *ngIf="showDeclaration">
+            <span @defaultAnimation *ngIf="showDeclaration">
                 {{model.declaration}}
             </span>
         </span>
-        <span *ngIf="editor && selectableEditor && this.model.writable">
+        <span
+            @defaultAnimation
+            *ngIf="editor && selectableEditor && this.model.writable"
+        >
             <span *ngIf="model.declaration">|</span>
             <a
                 [class.active]="activeEditorState"
@@ -1550,6 +1554,7 @@ export const inputContent:string = `
     </mat-error>
     <mat-hint
         align="end"
+        @defaultAnimation
         *ngIf="!model.selection && model.type === 'string' && model.maximumLength !== null && model.maximumLength < 100"
     >{{model.value?.length || 0}} / {{model.maximumLength}}</mat-hint>
 `
@@ -1610,8 +1615,8 @@ export class InputComponent extends AbstractInputComponent {
         AbstractInputComponent.evaluatablePropertyNames.concat(
             'editor', 'labels')
 
-    @Input() activeEditorState:boolean
-    @Input() editor:PlainObject|string
+    @Input() activeEditorState:boolean|null = null
+    @Input() editor:null|PlainObject|string = null
     @Input() hidden:boolean = true
     @Input() hidePasswordText:string = 'Hide password.'
     @Input() labels:{[key:string]:string} = {}
@@ -1654,11 +1659,14 @@ export class InputComponent extends AbstractInputComponent {
                     <mat-select
                         ${propertyContent.nativ.base}
                         ${propertyContent.nativ.text.base}
-                    ><mat-option
-                        *ngFor="let value of model.selection" [value]="value"
                     >
-                        {{labels.hasOwnProperty(value) ? labels[value] : value}}
-                    </mat-option></mat-select>
+                        <mat-option
+                            *ngFor="let value of model.selection"
+                            [value]="value"
+                        >
+                            {{labels.hasOwnProperty(value) ? labels[value] : value}}
+                        </mat-option>
+                    </mat-select>
                     ${inputContent}
                     <ng-content></ng-content>
                 </mat-form-field>
@@ -1744,7 +1752,7 @@ export class InputComponent extends AbstractInputComponent {
  */
 export class SimpleInputComponent extends AbstractNativeInputComponent {
     activeEditorState:boolean = false
-    editor:false = false
+    editor:boolean = false
     @Input() hidden:boolean = true
     @Input() hidePasswordText:string = 'Hide password.'
     @Input() labels:{[key:string]:string} = {}
@@ -1754,7 +1762,7 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
     @Input() minimum:number
     @Input() minimumText:string =
         'Please give a number at least or equal to ${minimum}.'
-    selectableEditor:false = false
+    selectableEditor:boolean = false
     @Input() showPasswordText:string = 'Show password.'
     @Input() type:string
     /**
@@ -1792,9 +1800,11 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
         <ng-container *ngIf="activeEditorState; else plain">
             <span [class.focused]="focused" class="editor-label">
                 {{
-                    description === '' ? null : description ? description : (
-                        model.description || model.name
-                    )
+                    description === '' ?
+                        null :
+                        description ?
+                            description :
+                            (model.description || model.name)
                 }}
             </span>
             <code-editor
@@ -1804,12 +1814,14 @@ export class SimpleInputComponent extends AbstractNativeInputComponent {
                 (initialized)="initialized = true"
                 *ngIf="editorType === 'code' || editor.indentUnit; else tinymce"
             ></code-editor>
-            <ng-template #tinymce><text-editor
-                ${propertyContent.editor}
-                [configuration]="editor"
-                [disabled]="model.mutable === false || model.writable === false"
-                (initialized)="initialized = true"
-            ></text-editor></ng-template>
+            <ng-template #tinymce>
+                <text-editor
+                    ${propertyContent.editor}
+                    [configuration]="editor"
+                    [disabled]="model.mutable === false || model.writable === false"
+                    (initialized)="initialized = true"
+                ></text-editor>
+            </ng-template>
             ${inputContent}
             <ng-content></ng-content>
         </ng-container>
@@ -1870,8 +1882,8 @@ export class TextareaComponent extends AbstractNativeInputComponent
         markup: {}
     }
 
-    @Input() activeEditorState:boolean
-    @Input() editor:PlainObject|string
+    @Input() activeEditorState:boolean|null = null
+    @Input() editor:null|PlainObject|string = null
     editorType:string = 'custom'
     focused:boolean = false
     initialized:boolean = false
@@ -1881,7 +1893,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
     @Input() minimumNumberOfRows:number
     minimumText:string = ''
     @Input() rows:number
-    @Input() selectableEditor:boolean
+    @Input() selectableEditor:boolean|null = null
     /**
      * Forwards injected service instances to the abstract input component's
      * constructor.
