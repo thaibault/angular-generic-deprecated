@@ -42,6 +42,7 @@ import {isPlatformBrowser, isPlatformServer} from '@angular/common'
 import {
     HttpInterceptor, HTTP_INTERCEPTORS, HttpRequest, HttpHandler, HttpEvent
 } from '@angular/common/http'
+import {MatButtonModule} from '@angular/material/button'
 import {
     /* eslint-disable no-unused-vars */
     MAT_DIALOG_DATA,
@@ -245,12 +246,12 @@ export class CanDeactivateRouteLeaveGuard implements CanDeactivate<Object> {
             {{message}}
         </mat-dialog-content>
         <mat-dialog-actions>
-            <button (click)="dialogReference.close(true)" mat-raised-button>
-                {{okText}}
+            <button
+                cdkFocusInitial [mat-dialog-close]="true" mat-raised-button
+            >
+                {{okText}} (JAU)
             </button>
-            <button (click)="dialogReference.close(false)" mat-raised-button>
-                {{cancelText}}
-            </button>
+            <button mat-dialog-close mat-raised-button>{{cancelText}}</button>
         </mat-dialog-actions>
     `
 })
@@ -2194,6 +2195,7 @@ export function dataServiceInitializerFactory(
         BrowserModule.withServerTransition({
             appId: 'generic-service-universal'
         }),
+        MatButtonModule,
         MatDialogModule,
         MatSnackBarModule
     ],
