@@ -1187,7 +1187,7 @@ export class CodeEditorComponent extends AbstractEditorComponent
             else
                 this.constructor['applicationInterfaceLoad'][
                     this.factoryName
-                ] = new Promise()
+                ] = new Promise(this.fixedUtility.tools.noop)
     }
     /**
      * Initializes the code editor element.

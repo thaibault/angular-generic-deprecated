@@ -249,7 +249,7 @@ export class CanDeactivateRouteLeaveGuard implements CanDeactivate<Object> {
             <button
                 cdkFocusInitial [mat-dialog-close]="true" mat-raised-button
             >
-                {{okText}} (JAU)
+                {{okText}}
             </button>
             <button mat-dialog-close mat-raised-button>{{cancelText}}</button>
         </mat-dialog-actions>
