@@ -1148,39 +1148,46 @@ export class CodeEditorComponent extends AbstractEditorComponent
      */
     constructor(injector:Injector) {
         super(injector)
-        if (typeof this.constructor['applicationInterfaceLoad'][
-            this.factoryName
-        ] !== 'object')
-            this.constructor['applicationInterfaceLoad'][
+        if (
+            typeof this.constructor['applicationInterfaceLoad'][
                 this.factoryName
-            ] = Promise.all([
-                new Promise((resolve:Function):$DomNode =>
-                    this.fixedUtility.$(`
-                        <link
-                            href="${CODE_MIRROR_DEFAULT_OPTIONS.path.base}` +
-                            CODE_MIRROR_DEFAULT_OPTIONS.path
-                                .cascadingStyleSheet +
-                            `" rel="stylesheet"
-                            type="text/css"
-                        />
-                    `).appendTo('head').on('load', resolve)),
-                new Promise((resolve:Function, reject:Function):Object =>
-                    this.fixedUtility.$.ajax({
-                        cache: true,
-                        dataType: 'script',
-                        error: reject,
-                        success: ():void => {
-                            this.constructor['factories'][this.factoryName] =
-                                this.fixedUtility.globalContext[
-                                    this.factoryName]
-                            resolve(
-                                this.constructor['factories'][this.factoryName]
-                            )
-                        },
-                        url: CODE_MIRROR_DEFAULT_OPTIONS.path.base +
-                            CODE_MIRROR_DEFAULT_OPTIONS.path.script
-                    }))
-            ])
+            ] !== 'object'
+        )
+            if (this.fixedUtility.$.fn.jquery)
+                this.constructor['applicationInterfaceLoad'][
+                    this.factoryName
+                ] = Promise.all([
+                    new Promise((resolve:Function):$DomNode =>
+                        this.fixedUtility.$(`
+                            <link
+                                href="${CODE_MIRROR_DEFAULT_OPTIONS.path.base}` +
+                                CODE_MIRROR_DEFAULT_OPTIONS.path
+                                    .cascadingStyleSheet +
+                                `" rel="stylesheet"
+                                type="text/css"
+                            />
+                        `).appendTo('head').on('load', resolve)),
+                    new Promise((resolve:Function, reject:Function):Object =>
+                        this.fixedUtility.$.ajax({
+                            cache: true,
+                            dataType: 'script',
+                            error: reject,
+                            success: ():void => {
+                                this.constructor['factories'][this.factoryName] =
+                                    this.fixedUtility.globalContext[
+                                        this.factoryName]
+                                resolve(
+                                    this.constructor['factories'][this.factoryName]
+                                )
+                            },
+                            url: CODE_MIRROR_DEFAULT_OPTIONS.path.base +
+                                CODE_MIRROR_DEFAULT_OPTIONS.path.script
+                        }))
+                ])
+            else
+                this.constructor['applicationInterfaceLoad'][
+                    this.factoryName
+                ] = new Promise()
     }
     /**
      * Initializes the code editor element.
@@ -1201,7 +1208,7 @@ export class CodeEditorComponent extends AbstractEditorComponent
                     ] !== true)
                         await CodeEditorComponent.modesLoad[
                             this.configuration.mode]
-                } else {
+                } else if (this.fixedUtility.$.fn.jquery) {
                     CodeEditorComponent.modesLoad[this.configuration.mode] =
                         new Promise((
                             resolve:Function, reject:Function
