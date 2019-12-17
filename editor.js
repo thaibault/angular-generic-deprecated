@@ -1616,7 +1616,12 @@ export class InputComponent extends AbstractInputComponent {
             'editor', 'labels')
 
     @Input() activeEditorState:boolean|null = null
-    @Input() editor:null|PlainObject|string = null
+    /*
+        NOTE: Since this is a model property also we have to avoid setting it
+        to null to distinguish from explicitly disabling initial state to its
+        uninitialized pendant.
+    */
+    @Input() editor:PlainObject|string
     @Input() hidden:boolean = true
     @Input() hidePasswordText:string = 'Hide password.'
     @Input() labels:{[key:string]:string} = {}
@@ -1883,7 +1888,12 @@ export class TextareaComponent extends AbstractNativeInputComponent
     }
 
     @Input() activeEditorState:boolean|null = null
-    @Input() editor:null|PlainObject|string = null
+    /*
+        NOTE: Since this is a model property also we have to avoid setting it
+        to null to distinguish from explicitly disabling initial state to its
+        uninitialized pendant.
+    */
+    @Input() editor:PlainObject|string
     editorType:string = 'custom'
     focused:boolean = false
     initialized:boolean = false
@@ -1924,7 +1934,7 @@ export class TextareaComponent extends AbstractNativeInputComponent
      */
     ngOnChanges(changes:SimpleChanges):void {
         super.ngOnChanges(changes)
-        if (this.editor === null && this.model.editor)
+        if ([null, undefined].includes(this.editor) && this.model.editor)
             this.editor = this.model.editor
         if (typeof this.editor === 'string') {
             if (this.editor.startsWith('!')) {
@@ -1967,7 +1977,9 @@ export class TextareaComponent extends AbstractNativeInputComponent
             else
                 // Advanced editor.
                 this.editor = {}
-        } else if (this.editor === null && this.activeEditorState)
+        } else if (
+            [null, undefined].includes(this.editor) && this.activeEditorState
+        )
             this.editor = {}
         if (this.activeEditorState === null)
             this.activeEditorState = false
