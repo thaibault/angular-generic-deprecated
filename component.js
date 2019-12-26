@@ -350,8 +350,8 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
             data:PlainObject
         ):void => {
             this._currentParameter = data
-            this.limit = parseInt(this._currentParameter.limit)
-            this.page = parseInt(this._currentParameter.page)
+            this.limit = parseInt(this._currentParameter.limit, 10)
+            this.page = parseInt(this._currentParameter.page, 10)
             const match:Array<string> = /(regex|exact)-(.*)/.exec(
                 this._currentParameter.searchTerm)
             if (match) {
@@ -466,7 +466,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
         */
         if (
             this.selectedItems.size ||
-            ![0, 1].includes(parseInt(this._currentParameter.page))
+            ![0, 1].includes(parseInt(this._currentParameter.page, 10))
         )
             this.preventedDataUpdate = parameter
         else {
@@ -525,7 +525,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
         await this._toolsInstance.acquireLock(`${this.constructor.name}Update`)
         if (!this.navigateAway) {
             this.applyPageConstraints()
-            if (reload && parseInt(this._currentParameter.page) !== 0)
+            if (reload && parseInt(this._currentParameter.page, 10) !== 0)
                 /*
                     NOTE: Will be normalised to "1" after route reload (hack to
                     enforce route reloading).
@@ -547,7 +547,7 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
                 encodeURIComponent(this.searchTerm)
             ], {
                 preserveFragment: true,
-                replaceUrl: parseInt(this._currentParameter.page) === 0,
+                replaceUrl: parseInt(this._currentParameter.page, 10) === 0,
                 skipLocationChange: this.page === 0
             })
             if (result)

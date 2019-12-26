@@ -866,7 +866,7 @@ export class AbstractNativeInputComponent extends AbstractInputComponent {
             !types.includes('number') &&
             !types.includes('string')
         )
-            newValue = parseInt(newValue)
+            newValue = parseInt(newValue, 10)
         else if (types.includes('number') && !types.includes('string'))
             newValue = parseFloat(newValue)
         else if (typeof newValue === 'string' && this.model.trim)
@@ -1093,13 +1093,20 @@ export class DateTimeValueAccessor extends AbstractValueAccessor {
                 const match = /^([0-9]{2}):([0-9]{2})$/.exec(value)
                 if (match)
                     return new Date(
-                        1970, 0, 1, parseInt(match[1]), parseInt(match[2]))
+                        1970,
+                        0,
+                        1,
+                        parseInt(match[1], 10),
+                        parseInt(match[2], 10)
+                    )
             } else if (this.type === 'date') {
                 const match = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(value)
                 if (match)
                     return new Date(
-                        parseInt(match[1]), parseInt(match[2]) - 1,
-                        parseInt(match[3]))
+                        parseInt(match[1], 10),
+                        parseInt(match[2], 10) - 1,
+                        parseInt(match[3])
+                    )
             }
         return value
     }

@@ -1029,12 +1029,17 @@ export class DataService {
                 this.equals(parameter[1], {latest: true}) ||
                 this.equals(parameter[1], {latest: true, rev: 'latest'})
             ) &&
-            parseInt(result[revisionName].match(
-                DataService.revisionNumberRegularExpression
-            )[1]) < parseInt(
+            parseInt(
+                result[revisionName].match(
+                    DataService.revisionNumberRegularExpression
+                )[1],
+                10
+            ) < parseInt(
                 LAST_KNOWN_DATA.data[result[idName]][revisionName].match(
                     DataService.revisionNumberRegularExpression
-                )[1])
+                )[1],
+                10
+            )
         )
             return LAST_KNOWN_DATA.data[result[idName]]
         return result
@@ -2123,8 +2128,8 @@ export class AbstractResolver implements Resolve<PlainObject> {
             })
         return this.list(
             sort,
-            parseInt(route.params.page || 1),
-            parseInt(route.params.limit || 10),
+            parseInt(route.params.page || 1, 10),
+            parseInt(route.params.limit || 10, 10),
             searchTerm
         )
     }

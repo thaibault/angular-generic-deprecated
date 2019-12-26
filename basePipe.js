@@ -850,9 +850,9 @@ export class LimitToPipe implements PipeTransform {
      * @returns Copy of given sliced object.
      */
     transform(input:any, limit:any, begin:any):any {
-        limit = Math.abs(Number(limit)) === Infinity ? Number(
-            limit
-        ) : parseInt(limit)
+        limit = Math.abs(Number(limit)) === Infinity ?
+            Number(limit) :
+            parseInt(limit, 10)
         if (isNaN(limit))
             return input
         if (typeof input === 'number')
@@ -865,7 +865,7 @@ export class LimitToPipe implements PipeTransform {
             input = Object.keys(input).sort()
         if (!(Array.isArray(input) || typeof input === 'string'))
             return input
-        begin = !begin || isNaN(begin) ? 0 : parseInt(begin)
+        begin = !begin || isNaN(begin) ? 0 : parseInt(begin, 10)
         if (begin < 0)
             begin = Math.max(0, input.length + begin)
         if (limit >= 0)
@@ -945,8 +945,8 @@ export class ObjectKeysPipe implements PipeTransform {
             if (sort) {
                 if (!Array.isArray(sort))
                     sort = asNumber ? [(first:any, second:any):number => {
-                        first = parseInt(first)
-                        second = parseInt(second)
+                        first = parseInt(first, 10)
+                        second = parseInt(second, 10)
                         if (isNaN(first))
                             return isNaN(second) ? 0 : +1
                         else if (isNaN(second))
@@ -989,8 +989,8 @@ export class ObjectValuesPipe implements PipeTransform {
             if (sort) {
                 if (!Array.isArray(sort))
                     sort = asNumber ? [(first:any, second:any):number => {
-                        first = parseInt(first)
-                        second = parseInt(second)
+                        first = parseInt(first, 10)
+                        second = parseInt(second, 10)
                         if (isNaN(first))
                             return isNaN(second) ? 0 : +1
                         else if (isNaN(second))
