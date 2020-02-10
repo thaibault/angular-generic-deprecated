@@ -60,7 +60,7 @@ export class LocationStub {
      * @param path - New path to set.
      * @returns The current path if used as getter.
      */
-    path(path:string|null|true = null):?string {
+    path(path:string|null|true = null):string|void {
         if (path) {
             if (path === true)
                 return this._path
@@ -101,7 +101,7 @@ export class RouterStub {
      * @param _extras - Defines new route meta data.
      * @returns Nothing.
      */
-    navigate(commands:Array<any>, _extras:?NavigationExtras):void {
+    navigate(commands:Array<any>, _extras:NavigationExtras|null = null):void {
         this.location._path = commands.join('/')
     }
     /**
@@ -176,7 +176,7 @@ export class ActivatedRouteStub {
  */
 export class RouterLinkStubDirective {
     @Input('routerLink') linkParameter:Array<string>
-    navigatedTo:?Array<string> = null
+    navigatedTo:Array<string>|null = null
     /**
      * Mocks the click event on route links.
      * @returns Nothing.

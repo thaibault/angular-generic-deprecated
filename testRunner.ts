@@ -48,7 +48,7 @@ export function registerAngularTest(
     // TODO
     return registerTest(async function(
         roundType:string,
-        targetTechnology:?string,
+        targetTechnology:string,
         $:any,
         ...extraParameter:Array<any>
     ):Promise<void> {
