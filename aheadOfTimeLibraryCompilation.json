@@ -44,12 +44,6 @@
         "noStrictGenericChecks": false,
         "noUnusedLocals": false,
         "noUnusedParameters": false,
-        "paths": {
-            "angular-generic/*": [
-                "node_modules/angular-generic/aheadOfTime.compiled/*",
-                "angular-generic/*"
-            ]
-        },
         "preserveConstEnums": false,
         "pretty": true,
         "outDir": "aheadOfTime.compiled",

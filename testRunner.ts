@@ -16,9 +16,8 @@
 */
 // region imports
 /* eslint-disable no-unused-vars */
-import type {DomNode, PlainObject} from 'clientnode'
+import {DomNode, PlainObject} from 'clientnode/type'
 /* eslint-disable no-unused-vars */
-import registerTest from 'clientnode/test'
 
 import dummyEvent from './mockup'
 // endregion
@@ -46,6 +45,7 @@ export function registerAngularTest(
     productionMode:boolean = false,
     ...additionalParameter:Array<any>
 ):any {
+    // TODO
     return registerTest(async function(
         roundType:string,
         targetTechnology:?string,

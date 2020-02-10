@@ -16,7 +16,7 @@
 */
 // region imports
 import Tools from 'clientnode'
-import type {DomNode, $DomNode, PlainObject} from 'clientnode'
+import {DomNode, $DomNode, PlainObject} from 'clientnode/type'
 import PouchDBAdapterMemory from 'pouchdb-adapter-memory'
 
 import registerAngularTest from './testRunner'

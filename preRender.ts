@@ -11,8 +11,8 @@
     endregion
 */
 // region imports
-import type {DomNode, File, PlainObject, Window} from 'clientnode'
 import Tools, {globalContext} from 'clientnode'
+import {DomNode, File, PlainObject, Window} from 'clientnode/type'
 import {enableProdMode, NgModule} from '@angular/core'
 import {APP_BASE_HREF} from '@angular/common'
 import {

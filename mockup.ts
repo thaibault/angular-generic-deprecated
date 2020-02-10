@@ -23,7 +23,7 @@ import {
     Component, Directive, Injectable, Input, ViewContainerRef, ViewChild
 } from '@angular/core'
 import {NavigationExtras} from '@angular/router'
-import type {PlainObject} from 'clientnode'
+import {PlainObject} from 'clientnode/type'
 import {BehaviorSubject, Subject, Subscription} from 'rxjs'
 // endregion
 // region native
