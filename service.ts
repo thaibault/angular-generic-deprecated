@@ -1606,7 +1606,6 @@ export class DataScopeService {
                     !Array.isArray(specification[key]))
             propertyNames = propertyNames.concat(Object.keys(data).filter((
                 name:string
-            // IgnoreTypeCheck
             ):boolean => !propertyNames.concat(reservedNames).includes(name)))
         }
         let nestedPropertyNames:PlainObject

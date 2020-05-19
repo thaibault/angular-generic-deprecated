@@ -16,7 +16,6 @@ import {platformBrowserDynamic} from '@angular/platform-browser-dynamic'
 
 import {
     PreRenderableModuleNgFactory
-// IgnoreTypeCheck
 } from './aheadOfTimePreRenderableModule.ngfactory'
 import {ApplicationComponent} from './component/application'
 import {applicationDomNodeSelector, Module, routes} from './module'

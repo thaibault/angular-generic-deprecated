@@ -200,7 +200,6 @@ export class AbstractLiveDataComponent implements OnDestroy, OnInit {
                     }
                     action.name = type
                     this.actions.unshift(action)
-                    // IgnoreTypeCheck
                     let result:Promise<boolean>|boolean = this[
                         `onData${this._stringCapitalize(type)}`
                     ](action)
@@ -341,7 +340,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
         ).configuration.database.model.property.name.special.revision
         this._route = get(ActivatedRoute)
         this._router = get(Router)
-        // IgnoreTypeCheck
         this._toolsInstance = get(UtilityService).tools
         /*
             NOTE: Parameter have to be read before data to ensure that all page
@@ -392,7 +390,6 @@ export class AbstractItemsComponent extends AbstractLiveDataComponent
         const oldLimit:number = this.limit
         this.limit = Math.max(1, this.limit || 1)
         this.page = Math.max(1, Math.min(this.page, Math.ceil(
-            // IgnoreTypeCheck
             this.allItems.length / this.limit)))
         return this.page !== oldPage || this.limit !== oldLimit
     }
@@ -2077,14 +2074,11 @@ export class FileInputComponent implements AfterViewInit, OnChanges {
             if (this.input.nativeElement.files.length > 0) {
                 this.file = {
                     /* eslint-disable camelcase */
-                    // IgnoreTypeCheck
                     content_type: this.input.nativeElement.files[0].type ||
                         'text/plain',
                     /* eslint-enable camelcase */
-                    // IgnoreTypeCheck
                     data: this.input.nativeElement.files[0],
                     initialName: this.input.nativeElement.files[0].name,
-                    // IgnoreTypeCheck
                     length: this.input.nativeElement.files[0].size,
                     name: this.input.nativeElement.files[0].name
                 }

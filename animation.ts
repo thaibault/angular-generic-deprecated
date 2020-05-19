@@ -18,7 +18,6 @@
     endregion
 */
 // region imports
-// IgnoreTypeCheck
 import Tools from 'clientnode'
 import {PlainObject} from 'clientnode/type'
 import {

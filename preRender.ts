@@ -194,7 +194,6 @@ export async function render(
         options.globalVariableNamesToInject)
     options.routes = [].concat(options.routes)
     // endregion
-    // IgnoreTypeCheck
     const data:string = await fileSystem.readFile(
         options.htmlFilePath, {encoding: options.encoding})
     // region prepare environment
@@ -230,7 +229,6 @@ export async function render(
         renderScope.innerHTMLToReInject =
             renderScope.applicationDomNode.innerHTML
     renderScope.basePath = options.basePath ? options.basePath :
-        // IgnoreTypeCheck
         renderScope.window.document.getElementsByTagName('base')[0].href
     for (const name:string in renderScope.window)
         if (
@@ -242,11 +240,9 @@ export async function render(
             )
         ) {
             console.info(`Inject variable "${name}".`)
-            // IgnoreTypeCheck
             globalContext[name] = renderScope.window[name]
         }
     Tools.plainObjectPrototypes = Tools.plainObjectPrototypes.concat(
-        // IgnoreTypeCheck
         renderScope.window.Object.prototype)
     Tools.extend(true, globalContext, options.scope)
     // endregion
@@ -344,7 +340,6 @@ export async function render(
             if (options.component) {
                 // region create server pre-renderable module
                 /* eslint-disable require-jsdoc */
-                // IgnoreTypeCheck
                 @NgModule({
                     bootstrap: [options.component],
                     imports: [module, ServerModule],

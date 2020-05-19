@@ -47,7 +47,6 @@ export const dummyEvent = {preventDefault: ():void => {}}
 export default dummyEvent
 // endregion
 // region services
-// IgnoreTypeCheck
 @Injectable()
 /**
  * Mocks the location service.
@@ -77,7 +76,6 @@ export class LocationStub {
         return new Subscription()
     }
 }
-// IgnoreTypeCheck
 @Injectable()
 /**
  * Mocks the router service.
@@ -113,7 +111,6 @@ export class RouterStub {
         this.location._path = url
     }
 }
-// IgnoreTypeCheck
 @Injectable()
 /**
  * Mocks the current route data instance.
@@ -164,7 +161,6 @@ export class ActivatedRouteStub {
 }
 // endregion
 // region directives
-// IgnoreTypeCheck
 @Directive({
     selector: '[routerLink]',
     host: {'(click)': 'onClick()'}
@@ -185,7 +181,6 @@ export class RouterLinkStubDirective {
         this.navigatedTo = this.linkParameter
     }
 }
-// IgnoreTypeCheck
 @Directive({selector: 'directive-with-view-container'})
 /**
  * Mock directive with nested view.
@@ -204,13 +199,11 @@ export class DirectiveWithViewContainer {
 }
 // endregion
 // region components
-// IgnoreTypeCheck
 @Component({selector: 'router-outlet', template: ''})
 /**
  * Mocks the router outlet component.
  */
 export class RouterOutletStubComponent {}
-// IgnoreTypeCheck
 @Component({
     selector: 'component-with-child-view-container',
     template: `

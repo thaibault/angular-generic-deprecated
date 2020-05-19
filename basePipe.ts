@@ -66,7 +66,6 @@ export class AbstractInvertedToolsPipe extends AbstractToolsPipe
      */
     transform(...parameter:Array<any>):any {
         const tools:typeof Tools = UtilityService.tools
-        // IgnoreTypeCheck
         return tools.invertArrayFilter(tools[this.methodName])(...parameter)
     }
 }
@@ -1117,7 +1116,6 @@ export class StringMatchPipe implements PipeTransform {
      * @returns Boolean test result.
      */
     transform(pattern:string, subject:string, modifier:string = ''):boolean {
-        // IgnoreTypeCheck
         return (new RegExp(pattern, modifier)).test(subject)
     }
 }
@@ -1310,9 +1308,9 @@ export class StringSliceMatchPipe implements PipeTransform {
         modifier:string = ''
     ):string {
         if (typeof subject === 'string') {
-            const match:Array<string>|null = subject.match(new RegExp(
-                // IgnoreTypeCheck
-                pattern, modifier))
+            const match:Array<string>|null = subject.match(
+                new RegExp(pattern, modifier)
+            )
             if (match && typeof match[index] === 'string')
                 return match[index]
         }

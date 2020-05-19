@@ -127,7 +127,6 @@ registerAngularTest(function(
     // endregion
     // region extend abstract components
     /* eslint-disable require-jsdoc */
-    // IgnoreTypeCheck
     @Component({
         selector: 'items',
         template: '<div></div>'
@@ -156,7 +155,6 @@ registerAngularTest(function(
     // endregion
     // region host components for simulating on push change detection strategy
     /* eslint-disable require-jsdoc */
-    // IgnoreTypeCheck
     @Component({
         template: `
             <generic-pagination
@@ -236,7 +234,6 @@ registerAngularTest(function(
         bootstrap: ():Array<Object> => {
             // region dummy module
             /* eslint-disable require-jsdoc */
-            // IgnoreTypeCheck
             @NgModule({
                 bootstrap: [ApplicationComponent],
                 declarations: [ApplicationComponent],
@@ -310,7 +307,6 @@ registerAngularTest(function(
                 assert:Object
             ):void => {
                 assert.strictEqual(initialData.configuration.test, true)
-                // IgnoreTypeCheck
                 const $domNode:$DomNode = $('#qunit-fixture')
                 $domNode.attr('a', '{"a": [2, {"a": 3}]}')
                 assert.deepEqual(initialData.retrieveFromDomNode(

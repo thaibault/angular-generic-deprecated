@@ -123,7 +123,6 @@ export function registerAngularTest(
         } = require('@angular/core')
         const {TestBed} = require('@angular/core/testing')
         /* eslint-disable require-jsdoc */
-        // IgnoreTypeCheck
         @Component({selector: '#qunit-fixture', template})
         /* eslint-enable require-jsdoc */
         /**
