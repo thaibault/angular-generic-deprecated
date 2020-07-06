@@ -454,7 +454,9 @@ export class ExtractRawDataPipe implements PipeTransform {
                                     newData[name],
                                     oldData[name],
                                     this.dataScope.determineNestedSpecifcation(
-                                        name, specification))
+                                        name, specification
+                                    )
+                                )
                             if (result.payloadExists) {
                                 payloadExists = true
                                 newData[name] = result.newData
