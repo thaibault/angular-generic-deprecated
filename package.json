@@ -53,6 +53,7 @@
   },
   "scripts": {
     "build": "yarn build:config && yarn build:aot && yarn build:client && yarn build:pre-renderer",
+    "build:test": "ng",
     "build:aot": "ngc --project aheadOfTimeLibraryCompilation.json",
     "build:client": "webOptimizer build '{__reference__: \"target:standalone\"}' && webOptimizer build '{__reference__: [\"target:single\", \"target:testRunner\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:service\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:basePipe\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:pipe\"]}' && yarn build:editor && webOptimizer build '{__reference__: [\"target:single\", \"target:component\"]}' && webOptimizer build '{__reference__: [\"target:single\", \"target:main\"]}'",
     "build:config": "sed --regexp-extended 's/(\"baseUrl\": *\")\\.?/\\1..\\/..\\//' aheadOfTimeLibraryCompilation.json | sed --regexp-extended 's/(\"genDir\": *\")\\.?/\\1..\\/..\\//' | sed --regexp-extended 's/(\"outDir\": *\")\\.?/\\1..\\/..\\//' | sed --regexp-extended 's/(\"rootDir\": *\")\\.?/\\1..\\/..\\//' | sed --regexp-extended 's/(\"index\\.ts\")\\.?/\"..\\/..\\/index.ts\"/' >aheadOfTimeLibraryCompilation.compiled.json",
